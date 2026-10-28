@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from core.contracts import Artifact, Claim, ContractError, Event, Report, verdict  # noqa: E402
+from core.contracts import Artifact, Boundary, Claim, ContractError, Event, Report, verdict  # noqa: E402
 
 CASES: list[tuple[str, bool, callable]] = []
 
@@ -89,6 +89,40 @@ def _():
 def _():
     verdict("кодировку", "корпус", "R", 120)
 
+@case("валидная граница проходит", False)
+def _():
+    Boundary(id="B-0001", owner="ed25519:aaa", version=1, scope="обмен артефактами",
+             allow=("read", "propose"), deny=("publish",),
+             not_claimed=("платежи", "передачу прав")).validate()
+
+
+@case("разрешено и запрещено одновременно — отказ", True)
+def _():
+    Boundary(id="B-0002", owner="ed25519:aaa", version=1, scope="x",
+             allow=("read",), deny=("read",), not_claimed=("ничего",)).validate()
+
+
+@case("граница без not_claimed — отказ", True)
+def _():
+    Boundary(id="B-0003", owner="ed25519:aaa", version=1, scope="x", allow=("read",)).validate()
+
+
+@case("пустая граница — отказ", True)
+def _():
+    Boundary(id="B-0004", owner="ed25519:aaa", version=1, scope="x",
+             not_claimed=("ничего",)).validate()
+
+
+@case("версия меньше единицы — отказ", True)
+def _():
+    Boundary(id="B-0005", owner="ed25519:aaa", version=0, scope="x",
+             allow=("read",), not_claimed=("ничего",)).validate()
+
+
+@case("плохой срок действия — отказ", True)
+def _():
+    Boundary(id="B-0006", owner="ed25519:aaa", version=1, scope="x",
+             allow=("read",), not_claimed=("ничего",), expires="31.12.2026").validate()
 
 def main() -> int:
     failed = 0

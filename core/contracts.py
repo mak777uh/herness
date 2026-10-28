@@ -108,6 +108,41 @@ class Claim:
 
 
 @dataclass(frozen=True)
+class Boundary:
+    """Границы участника, объявленные до взаимодействия.
+
+    Граница без not_claimed — это не граница, а разрешение на всё, что не перечислено.
+    Поэтому поле обязательное: граница обязана говорить, чего она НЕ покрывает.
+    """
+    id: str
+    owner: str
+    version: int
+    scope: str
+    allow: tuple[str, ...] = ()
+    deny: tuple[str, ...] = ()
+    not_claimed: tuple[str, ...] = ()
+    anchor: str | None = None
+    expires: str | None = None
+
+    def validate(self) -> None:
+        if not self.owner.strip():
+            raise ContractError("boundary.owner: пустой владелец")
+        if self.version < 1:
+            raise ContractError("boundary.version: версия должна быть ≥ 1")
+        if not self.scope.strip():
+            raise ContractError("boundary.scope: пустая область")
+        if not self.allow and not self.deny:
+            raise ContractError("boundary: пустая граница — ни разрешений, ни запретов")
+        overlap = set(self.allow) & set(self.deny)
+        if overlap:
+            raise ContractError(f"boundary: противоречие, одновременно разрешено и запрещено: {sorted(overlap)}")
+        if not self.not_claimed:
+            raise ContractError("boundary: нет not_claimed — граница не говорит, чего она не покрывает")
+        if self.expires is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", self.expires):
+            raise ContractError(f"boundary.expires: ожидался YYYY-MM-DD, получено {self.expires!r}")
+
+
+@dataclass(frozen=True)
 class Report:
     """Отчёт прогона. Без границы не существует (P5)."""
     run_id: str
