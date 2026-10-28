@@ -1,0 +1,41 @@
+{
+  "owner": "mak777uh",
+  "docs": [
+    "AGENTS.md",
+    "CLAIMS.md",
+    "NOT-CLAIMED.md",
+    "README.md",
+    "REGISTRY.md",
+    "interop/README.md",
+    "interop/COORDINATION.md"
+  ],
+  "repos": [
+    { "name": "flowguard-spec", "branch": "main" },
+    { "name": "lexspec", "branch": "main" },
+    { "name": "VecDHT", "branch": "main" },
+    { "name": "cases", "branch": "main" },
+    { "name": "lean-agent-verify", "branch": "main" },
+    { "name": "modelproof", "branch": "main" },
+    { "name": "pharos-agent-arena", "branch": "main" },
+    { "name": "tbtc-wormhole-harness", "branch": "main" },
+    { "name": "rocketpool-invariants", "branch": "main" },
+    { "name": "audits", "branch": "main" },
+    { "name": "cicada3301", "branch": "main" },
+    { "name": "cicada3301-import", "branch": "main" },
+    { "name": "mezogig", "branch": "main" },
+    { "name": "specter-diy", "branch": "main" },
+    { "name": "crypto-puzzles", "branch": "main" },
+    { "name": "mail-action-notes", "branch": "main" },
+    { "name": "lasso-rpc-review", "branch": "main" },
+    { "name": "dreamdex-perps-probe", "branch": "main" },
+    { "name": "dreamdex-feedback", "branch": "main" },
+    { "name": "poidh-claims", "branch": "main" },
+    { "name": "poidh-1512-qwerty", "branch": "main" },
+    { "name": "poidh-1510-cash-card", "branch": "main" },
+    { "name": "poidh-freedom-tech", "branch": "main" },
+    { "name": "sealed-coffin", "branch": "main" },
+    { "name": "cc0-halloween", "branch": "main" },
+    { "name": "golem-wsl-provider", "branch": "main" },
+    { "name": "-", "branch": "main" }
+  ]
+}
