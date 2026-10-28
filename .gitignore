@@ -19,3 +19,6 @@ docs/ANSWERS.md
 __pycache__/
 *.pyc
 .venv/
+
+research/dirs.json
+research/repos-api.json
