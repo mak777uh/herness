@@ -546,12 +546,13 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    contracts = ROOT / "tests" / "test_contracts.py"
-    if contracts.exists():
-        proc = subprocess.run([sys.executable, str(contracts)], capture_output=True, text=True,
-                              encoding="utf-8", errors="replace")
-        tail = (proc.stdout.strip().splitlines() or ["нет вывода"])[-1]
-        results.append((proc.returncode == 0, f"контракты: {tail}"))
+    for suite in ("test_contracts.py", "test_m1_journal.py"):
+        path = ROOT / "tests" / suite
+        if path.exists():
+            proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace")
+            tail = (proc.stdout.strip().splitlines() or ["нет вывода"])[-1]
+            results.append((proc.returncode == 0, f"{suite}: {tail}"))
 
     with tempfile.TemporaryDirectory() as tmp3:
         docs = Path(tmp3) / "docs"
