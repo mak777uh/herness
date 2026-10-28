@@ -40,7 +40,7 @@
 ## Как продолжить
 
 ```
-cd C:\111\harness
+cd <репозиторий>
 python bin/hs.py selftest     # 7/7
 python bin/hs.py gates        # 4/4
 python bin/hs.py criteria     # 48 критериев
