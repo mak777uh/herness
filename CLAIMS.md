@@ -29,7 +29,7 @@
 Правило пополнения: новая строка — только вместе с командой, дайджестом артефакта и датой.
 Опровергнутая строка не удаляется, а переводится в `docs/eliminations.md` со ссылкой.
 
-| C-0012 | Запуск dsh headless из CLI без креденшелов падает MISSING_CREDENTIAL; DEEPSEEK_API_KEY из ~/.dsh/.credentials.yaml невалиден (HTTP 401) | observation | python bin/hs.py run "ok" → stderr MISSING_CREDENTIAL / AUTH 401 | runs/20261029T15* | 29.10.2026 |
+| C-0012 | Запуск dsh headless из CLI без креденшелов падает MISSING_CREDENTIAL; DEEPSEEK_API_KEY из ~/.dsh/.credentials.yaml невалиден (HTTP 401) | observation | python bin/hs.py run "ok" | runs/20261029T15* | 29.10.2026 |
 | C-0013 | Ключи приложения недоступны дочернему процессу: креденшелы живут в сервисе DSH, а не в файле | observation | три прогона с --home и с env-ключом, все без инференса | runs/20261029T15* | 29.10.2026 |
 
 
@@ -37,3 +37,4 @@
 | C-0015 | По всем 266 сессиям: 16,9 % без вызовов инструментов; медиана 40,5 вызова; p90 = 141; максимум 7026; 22,0 % всех вызовов — повтор той же команды в той же сессии | statistics | python bin/dist_stats.py | research/sessions/TOOL-USE.md | 29.10.2026 |
 | C-0016 | INSTEAD OF-триггер по умолчанию выполняется как вызывающий пользователь, поэтому UPDATE через view без UPDATE на базовой таблице завершается отказом | observation | разбор схемы sample2 из lab/pilot/T-01 + документация Postgres | lab/failures/F-0011.md | 29.10.2026 |
 | C-0017 | На схеме sample2 у app_rw ровно один рабочий обход: прямой вызов SECURITY DEFINER set_balance; UPDATE через accounts_v падает, если триггерная функция не SECURITY DEFINER | test | прогон на PostgreSQL 17.2, тесты T1–T10 в lab/pilot/out/T-01-L2.evidence.txt | lab/pilot/out/T-01-L2.evidence.txt | 29.10.2026 |
+
