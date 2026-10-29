@@ -684,6 +684,24 @@ def cmd_live(args) -> int:
     extra = {}
     if args.session:
         extra["x-opencode-session"] = args.session
+
+    if getattr(args, "auto", False):
+        from core import profiles, routing
+
+        routes = routing.route(args.task, top=1)
+        class_id = routes[0]["class"] if routes else None
+        profile = profiles.for_class(class_id)
+        args.model = profile.get("model", args.model)
+        args.steps = profile.get("steps", args.steps)
+        args.max_tokens = profile.get("max_tokens", args.max_tokens)
+        if profile.get("tools") is False:
+            args.no_tools = True
+        print(json.dumps({"auto": True, "class": class_id,
+                          "name": routes[0]["name"] if routes else "?",
+                          "model": args.model, "tools": not getattr(args, "no_tools", False),
+                          "steps": args.steps, "max_tokens": args.max_tokens,
+                          "why": profile.get("why", "")}, ensure_ascii=False, indent=2))
+
     client = OpenAICompatProvider(args.base, args.model, args.key_env, extra_headers=extra,
                                   max_tokens=getattr(args, "max_tokens", 2048))
     if not client.has_key():
@@ -1242,6 +1260,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--steps", type=int, default=6)
     p.add_argument("--max-tokens", type=int, default=8000)
     p.add_argument("--no-tools", action="store_true", help="L0: отвечать без инструментов")
+    p.add_argument("--auto", action="store_true", help="выбрать модель и режим по классу задачи")
     p.add_argument("--cwd")
     p.set_defaults(func=cmd_live)
 
@@ -1313,6 +1332,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 
