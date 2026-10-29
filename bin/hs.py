@@ -710,6 +710,25 @@ def cmd_report(args) -> int:
     return 0
 
 
+_CD = re.compile(r'^\s*cd\s+(?:"([^"]+)"|(\S+))\s*(?:;|&&)\s*(.*)$', re.DOTALL)
+
+
+def _strip_cd(command: str, base: Path) -> tuple[str, Path, bool]:
+    """Убирает ведущий `cd ...;` и переносит его в рабочий каталог.
+
+    Наблюдение из журналов: 19 372 команды начинались с cd — это служебный шум,
+    а не работа. Каталог задаётся один раз.
+    """
+    m = _CD.match(command)
+    if not m:
+        return command, base, False
+    target = m.group(1) or m.group(2)
+    rest = m.group(3).strip()
+    if not rest:
+        return command, base, False
+    return rest, (base / target).resolve(), True
+
+
 def _find_previous_command(run_dir: Path, command: str) -> dict | None:
     """Ищет в журнале уже выполненную такую же команду: повтор нужно показать, но не отменять."""
     path = run_dir / "events.jsonl"
@@ -749,8 +768,10 @@ def cmd_step(args) -> int:
         if not command:
             print("нужна команда", file=sys.stderr)
             return 2
+        workdir = Path(args.cwd or ROOT)
+        command, workdir, normalized = _strip_cd(command, workdir)
         previous = _find_previous_command(run_dir, command)
-        out = ShellTool(Path(args.cwd or ROOT)).run(command)
+        out = ShellTool(workdir).run(command)
         call_id = f"step-{int(time.time() * 1000)}"
         journal.tool_call(call_id, "shell", {"command": command,
                                              "repeat_of": previous["seq"] if previous else None})
@@ -762,6 +783,7 @@ def cmd_step(args) -> int:
             "bytes": ref.bytes,
             "artifact": ref.path,
             "repeat_of": previous["seq"] if previous else None,
+            "cwd_normalized": normalized,
             "preview": out.text[:300],
         }, ensure_ascii=False, indent=2))
         return 0 if out.ok else 1
