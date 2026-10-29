@@ -67,7 +67,7 @@ class ReadTool:
 
     def run(self, path: str, offset: int = 1, limit: int = 0) -> ToolOutput:
         target = (self.root / path).resolve()
-        if not str(target).startswith(str(self.root.resolve())):
+        if not target.is_relative_to(self.root.resolve()):
             return ToolOutput(b"", b"path escapes root", 126)
         if not target.exists() or not target.is_file():
             return ToolOutput(b"", f"нет файла: {path}".encode(), 2)
@@ -99,7 +99,10 @@ class GrepTool:
 
         limit = max_results or self.max_results
         hits: list[str] = []
+        root = self.root.resolve()
         for path in sorted(self.root.rglob(glob)):
+            if not path.resolve().is_relative_to(root):
+                continue
             if any(part in SKIP_DIRS for part in path.parts):
                 continue
             if not path.is_file():
@@ -133,7 +136,7 @@ class ListTool:
 
     def run(self, path: str = ".", glob: str = "*", count: bool = False) -> ToolOutput:
         base = (self.root / path).resolve()
-        if not str(base).startswith(str(self.root.resolve())):
+        if not base.is_relative_to(self.root.resolve()):
             return ToolOutput(b"", b"path escapes root", 126)
         if not base.exists() or not base.is_dir():
             return ToolOutput(b"", f"нет каталога: {path}".encode(), 2)

@@ -688,6 +688,14 @@ def cmd_live(args) -> int:
     from core import reply as reply_mod
 
     decision = reply_mod.decide(args.task)
+    if getattr(args, "dry_run", False):
+        from core import routing as routing_mod
+
+        routes = routing_mod.route(args.task, top=1)
+        print(json.dumps({"decision": decision["type"],
+                          "class": routes[0]["class"] if routes else None,
+                          "why": decision["reason"]}, ensure_ascii=False, indent=2))
+        return 0
     if decision["type"] == "REFUSE" and not getattr(args, "force", False):
         print(json.dumps({"action": "refuse", "why": decision["reason"],
                           "alternatives": decision.get("alternatives", []),
@@ -1167,7 +1175,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1277,6 +1285,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--no-tools", action="store_true", help="L0: отвечать без инструментов")
     p.add_argument("--auto", action="store_true", help="выбрать модель и режим по классу задачи")
     p.add_argument("--force", action="store_true", help="выполнить даже при отказе харнесса")
+    p.add_argument("--dry-run", action="store_true", help="только решение, без вызова модели")
     p.add_argument("--cwd")
     p.set_defaults(func=cmd_live)
 
@@ -1348,6 +1357,8 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
 
 
 

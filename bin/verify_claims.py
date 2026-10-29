@@ -58,6 +58,10 @@ def main(argv: list[str]) -> int:
         if only and row["id"] != only:
             continue
         status, full, tail = run_command(row["cmd"])
+        if status == "not-runnable" and row["expect"]:
+            # реестр не должен допускать «измерено, но сверить нечем»
+            status = "fail"
+            tail = "команда неисполняемая, а ожидание задано: " + repr(row["expect"])
         if status == "ok" and row["expect"] and not re.search(row["expect"], full):
             status = "fail"
             tail = "нет совпадения с ожиданием " + repr(row["expect"]) + "; " + tail

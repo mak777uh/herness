@@ -1,0 +1,24 @@
+name: gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Гейты
+        run: python bin/hs.py gates
+      - name: Негативные тесты инструмента
+        run: python bin/hs.py selftest
+      - name: Утверждения и их ожидания
+        run: python bin/verify_claims.py
+      - name: Свидетельства утверждений
+        run: python bin/check_artifacts.py C-0016 && python bin/check_artifacts.py C-0029
