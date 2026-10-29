@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 
 from .provider import ModelReply, StreamError, assemble, parse_sse
 
@@ -40,9 +42,30 @@ class OpenAICompatProvider:
         self.timeout = timeout
         self.extra_headers = extra_headers or {}
 
+    def _key(self) -> str:
+        """Ключ из окружения или из хранилища DSH по имени `store:ИМЯ`.
+
+        Значение не печатается и не логируется: наружу выходит только отпечаток, если спросят.
+        """
+        name = self.api_key_env
+        if not name.startswith("store:"):
+            return os.environ.get(name, "")
+        target = name.split(":", 1)[1]
+        path = Path.home() / ".dsh" / ".credentials.yaml"
+        if not path.exists():
+            return ""
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            match = re.match(r"^\s*" + re.escape(target) + r"\s*:\s*(.+)$", line)
+            if match:
+                return match.group(1).strip().strip("\"'")
+        return ""
+
     def _headers(self) -> dict:
-        key = os.environ.get(self.api_key_env, "")
-        headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
+        key = self._key()
+        headers = {"Content-Type": "application/json",
+                   "Accept": "text/event-stream",
+                   # без User-Agent Cloudflare отбивает запрос 403 и это выглядит как отказ провайдера
+                   "User-Agent": "herness/1.0"}
         if key:
             headers["Authorization"] = f"Bearer {key}"
         headers.update(self.extra_headers)
@@ -56,7 +79,7 @@ class OpenAICompatProvider:
         return urllib.request.build_opener()
 
     def has_key(self) -> bool:
-        return bool(os.environ.get(self.api_key_env, ""))
+        return bool(self._key())
 
     def complete(self, messages, tools=None, stream: bool = True) -> HttpResult:
         payload = {"model": self.model, "messages": messages, "stream": stream}
@@ -98,4 +121,5 @@ class OpenAICompatProvider:
 
 def from_settings(base_url: str, model: str, key_env: str) -> OpenAICompatProvider:
     return OpenAICompatProvider(base_url=base_url, model=model, api_key_env=key_env)
+
 

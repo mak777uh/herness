@@ -44,3 +44,4 @@
 | C-0021 | В docs/PRINCIPLES.md 25 принципов портфеля | statistics | `python bin/count.py principles` | docs/PRINCIPLES.md | 29.10.2026 | `principles=25` |
 | C-0022 | В кэше справочника 25 каталогов репозиториев с документами | statistics | `python bin/count.py repos` | refs-cache/ | 29.10.2026 | `repos=25` |
 | C-0023 | Шаг не выполняется, если прогон уже превысил потолок шагов/времени/объёма: возврат 3 до запуска команды | test | `python tests/test_budget.py` | tests/test_budget.py | 29.10.2026 | `бюджет: 5/5 ok` |
+| C-0024 | На 29.10.2026 ключ OPENCODE_GO_API_KEY валиден, но ни одна из 12 доступных моделей не отвечает: платные 402 (нет средств), free 429 (квота), beam-free 403 RegionError | observation | `python bin/probe_api.py map --check` | вывод карты моделей, 29.10.2026 | 29.10.2026 | `доступно моделей: 0 из 12` |
