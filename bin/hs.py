@@ -747,6 +747,23 @@ def cmd_step(args) -> int:
     finally:
         journal.close()
 
+
+def cmd_plan(args) -> int:
+    sys.path.insert(0, str(ROOT))
+    from core import plan as planner
+
+    if args.stats:
+        data = json.load(open(ROOT / "research" / "sessions" / "digest.json", encoding="utf-8"))
+        samples = [s for s in data.get("task_samples", []) if len(s) > 40][:args.limit or 100]
+        print(json.dumps(planner.summarize(samples), ensure_ascii=False, indent=2))
+        return 0
+
+    if not args.request:
+        print("нужен запрос или --stats", file=sys.stderr)
+        return 2
+    print(json.dumps(planner.plan(args.request), ensure_ascii=False, indent=2))
+    return 0
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
@@ -876,6 +893,12 @@ def main(argv: list[str]) -> int:
     p.add_argument("--claim", nargs="*")
     p.set_defaults(func=cmd_report)
 
+    p = sub.add_parser("plan", help="раскладка запроса на типы и уровень")
+    p.add_argument("request", nargs="?")
+    p.add_argument("--stats", action="store_true", help="точность распознавания на журналах")
+    p.add_argument("--limit", type=int, default=100)
+    p.set_defaults(func=cmd_plan)
+
     p = sub.add_parser("ping", help="живая проверка провайдера")
     p.add_argument("--base", required=True)
     p.add_argument("--model", required=True)
@@ -905,6 +928,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 
