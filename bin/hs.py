@@ -1215,10 +1215,24 @@ def gate_harnesses(root: Path) -> list[str]:
     return problems
 
 
+def gate_depths(root: Path) -> list[str]:
+    """Карта глубин должна покрывать все решения: каждый ADR упомянут в depths.json."""
+    path = root / "depths.json"
+    if not path.exists():
+        return ["нет depths.json"]
+    text = path.read_text(encoding="utf-8")
+    adrs = sorted(p.stem.split("-")[1] for p in (root / "docs").glob("ADR-*.md"))
+    problems = []
+    for number in adrs:
+        if "ADR-" + number not in text:
+            problems.append(f"ADR-{number} не на карте глубин")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
