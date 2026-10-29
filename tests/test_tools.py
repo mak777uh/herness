@@ -68,6 +68,15 @@ def _():
     assert "найдено 1" in out.text, out.text
 
 
+@case("секрет не читается инструментом", False)
+def _():
+    root, _neighbour = fixture()
+    (root / ".secrets").mkdir()
+    (root / ".secrets" / "key").write_text("SECRET-VALUE", encoding="utf-8")
+    out = ReadTool(root).run(".secrets/key")
+    assert out.exit_code == 126 and "SECRET-VALUE" not in out.text, out.text
+
+
 def main() -> int:
     failed = 0
     for name, should_raise, fn in CASES:

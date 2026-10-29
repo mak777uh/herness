@@ -36,6 +36,21 @@ class ToolOutput:
         return self.exit_code == 0
 
 
+DENY_PARTS = {".secrets", ".git", ".ssh"}
+DENY_SUFFIXES = {".pem", ".key", ".pfx", ".p12", ".kdbx"}
+DENY_NAMES = {".env", "credentials.yaml", ".credentials.yaml", "id_rsa", "id_ed25519"}
+
+
+def _denied(path: Path) -> bool:
+    """Секреты не читаются инструментами даже внутри корня."""
+    parts = {part.lower() for part in path.parts}
+    if parts & DENY_PARTS:
+        return True
+    if path.suffix.lower() in DENY_SUFFIXES:
+        return True
+    return path.name.lower() in {name.lower() for name in DENY_NAMES}
+
+
 class ShellTool:
     name = "shell"
 
@@ -69,6 +84,8 @@ class ReadTool:
         target = (self.root / path).resolve()
         if not target.is_relative_to(self.root.resolve()):
             return ToolOutput(b"", b"path escapes root", 126)
+        if _denied(target):
+            return ToolOutput(b"", b"secret path denied", 126)
         if not target.exists() or not target.is_file():
             return ToolOutput(b"", f"нет файла: {path}".encode(), 2)
         lines = target.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -138,6 +155,8 @@ class ListTool:
         base = (self.root / path).resolve()
         if not base.is_relative_to(self.root.resolve()):
             return ToolOutput(b"", b"path escapes root", 126)
+        if _denied(base):
+            return ToolOutput(b"", b"secret path denied", 126)
         if not base.exists() or not base.is_dir():
             return ToolOutput(b"", f"нет каталога: {path}".encode(), 2)
         entries = sorted(p.name + ("/" if p.is_dir() else "") for p in base.glob(glob or "*"))
