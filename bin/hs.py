@@ -840,6 +840,20 @@ def cmd_repeats(args) -> int:
     return 0
 
 
+def cmd_reply(args) -> int:
+    """Какой тип ответа нужен задаче: исполнять, спросить, искать, отказать."""
+    sys.path.insert(0, str(ROOT))
+    from core import reply
+
+    out = reply.decide(args.task)
+    print(f"тип: {out['type']}")
+    print(f"почему: {out['reason']}")
+    if out.get("alternatives"):
+        print(f"альтернативы: {', '.join(out['alternatives'])}")
+    print(f"близость к классу: {out['score']:.3f}")
+    return 0
+
+
 def cmd_route(args) -> int:
     """Семантическая раскладка задачи по классам и инструментам."""
     sys.path.insert(0, str(ROOT))
@@ -1002,7 +1016,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1068,6 +1082,10 @@ def main(argv: list[str]) -> int:
     p.add_argument("--min-single", type=int, default=3)
     p.add_argument("--min-pair", type=int, default=5)
     p.set_defaults(func=cmd_repeats)
+
+    p = sub.add_parser("reply", help="какой тип ответа нужен задаче")
+    p.add_argument("task")
+    p.set_defaults(func=cmd_reply)
 
     p = sub.add_parser("route", help="разложить задачу по классам и инструментам")
     p.add_argument("task")
