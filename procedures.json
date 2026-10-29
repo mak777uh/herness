@@ -9,7 +9,7 @@
       "replaces": "cd <dir>; <команда>",
       "detected": 19386,
       "where": "bin/hs.py: cmd_step",
-      "selftest": "python bin/hs.py step --run selftest-cd \"cd C:\\111\\harness; echo ok\" → cwd_normalized: true",
+      "selftest": "python bin/hs.py step --run selftest-cd \"cd C:\\111\\herness; echo ok\" → cwd_normalized: true",
       "status": "active"
     },
     {
@@ -24,3 +24,5 @@
     }
   ]
 }
+
+
