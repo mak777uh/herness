@@ -147,3 +147,4 @@
 | K117 | повтор ≥3 в сессии или ≥5 связок между сессиями — кандидат в процедуру | док | порог из ADR-0023 | docs/ADR-0023-repetition-to-code.md |
 | K118 | кристаллизуется только то, что имеет детерминированную проверку | док | правило ADR-0023 | docs/ADR-0023-repetition-to-code.md |
 | K119 | преамбула Python заменена процедурой hs py | замер | python bin/hs.py py --code "print(1)" | docs/ADR-0023-repetition-to-code.md |
+| K120 | совместимость двух границ проверяется комбинаторно: конфликт, совместимо, пусто | замер | python tests/test_hohfeld.py (5/5) | tests/test_hohfeld.py |
