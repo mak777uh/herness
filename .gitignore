@@ -30,3 +30,6 @@ research/repos-api.json
 learning.jsonl
 
 .secrets/
+
+ tmp_*
+*.tmp
