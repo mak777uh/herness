@@ -132,6 +132,7 @@ def _():
         questions=("какой провайдер?",),
         experiments=("E-0002",),
         assumptions=("обрыв — отдельная задача",),
+        closures=("ask", "experiment"),
         next_actions=("написать журнал",),
     ).validate()
 
@@ -168,3 +169,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

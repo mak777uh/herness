@@ -155,6 +155,7 @@ class Request:
     questions: tuple[str, ...] = ()
     experiments: tuple[str, ...] = ()
     assumptions: tuple[str, ...] = ()
+    closures: tuple[str, ...] = ()
     contradictions: tuple[str, ...] = ()
     next_actions: tuple[str, ...] = ()
 
@@ -168,6 +169,16 @@ class Request:
                 f"request: неопределённостей {len(self.undefined)}, а закрытий "
                 f"{len(self.questions) + len(self.experiments)} — часть остаётся догадкой"
             )
+        if self.undefined:
+            if len(self.closures) != len(self.undefined):
+                raise ContractError(
+                    f"request.closures: неопределённостей {len(self.undefined)}, "
+                    f"типов закрытия {len(self.closures)} — каждый пункт требует ровно один тип"
+                )
+            allowed = {"ask", "experiment", "assume", "refuse"}
+            for closure in self.closures:
+                if closure not in allowed:
+                    raise ContractError(f"request.closures: неизвестный тип '{closure}'")
         for contradiction in self.contradictions:
             if not contradiction.strip():
                 raise ContractError("request.contradictions: пустая запись")
@@ -200,3 +211,4 @@ def verdict(what: str, against: str, revision: str, coverage: float) -> str:
     if not 0 <= coverage <= 100:
         raise ContractError("verdict: покрытие вне 0..100")
     return VERDICT_TEMPLATE.format(what=what, against=against, revision=revision, coverage=coverage)
+
