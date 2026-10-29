@@ -1,0 +1,185 @@
+DROP DATABASE IF EXISTS t01_probe;
+DROP DATABASE
+CREATE DATABASE t01_probe;
+CREATE DATABASE
+\connect t01_probe
+You are now connected to database "t01_probe" as user "postgres".
+CREATE SCHEMA sample2;
+CREATE SCHEMA
+CREATE TABLE sample2.accounts(id bigserial PRIMARY KEY, balance numeric NOT NULL DEFAULT 0);
+CREATE TABLE
+INSERT INTO sample2.accounts(balance) VALUES (100), (200);
+INSERT 0 2
+CREATE VIEW sample2.accounts_v AS SELECT id, balance FROM sample2.accounts;
+CREATE VIEW
+CREATE FUNCTION sample2.accounts_v_update() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  UPDATE sample2.accounts SET balance = NEW.balance WHERE id = NEW.id;
+  RETURN NEW;
+END $$;
+CREATE FUNCTION
+CREATE FUNCTION sample2.set_balance(p_id bigint, p_amount numeric) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  UPDATE sample2.accounts SET balance = p_amount WHERE id = p_id;
+END $$;
+CREATE FUNCTION
+CREATE FUNCTION sample2.review_transfer(p_from bigint, p_to bigint, p_amount numeric) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  UPDATE sample2.accounts SET balance = balance - p_amount WHERE id = p_from;
+  UPDATE sample2.accounts SET balance = balance + p_amount WHERE id = p_to;
+END $$;
+CREATE FUNCTION
+CREATE TRIGGER accounts_v_write INSTEAD OF UPDATE ON sample2.accounts_v
+  FOR EACH ROW EXECUTE FUNCTION sample2.accounts_v_update();
+CREATE TRIGGER
+GRANT USAGE ON SCHEMA sample2 TO app_rw;
+GRANT
+GRANT SELECT, UPDATE ON sample2.accounts_v TO app_rw;
+GRANT
+GRANT EXECUTE ON FUNCTION sample2.set_balance(bigint, numeric) TO app_rw;
+GRANT
+\echo '=== T1: app_rw -> direct UPDATE sample2.accounts  (EXPECT: permission denied)'
+=== T1: app_rw -> direct UPDATE sample2.accounts  (EXPECT: permission denied)
+SET ROLE app_rw;
+SET
+UPDATE sample2.accounts SET balance = 999 WHERE id = 1;
+RESET ROLE;
+psql:T-01-L2.evidence.sql:49: ERROR:  permission denied for table accounts
+RESET
+\echo '=== T2: app_rw -> SELECT sample2.set_balance(1, 555)  (EXPECT: succeeds, no review_transfer)'
+=== T2: app_rw -> SELECT sample2.set_balance(1, 555)  (EXPECT: succeeds, no review_transfer)
+SET ROLE app_rw;
+SET
+SELECT sample2.set_balance(1, 555);
+ set_balance 
+-------------
+ 
+(1 row)
+
+RESET ROLE;
+RESET
+\echo '=== T3: app_rw -> UPDATE sample2.accounts_v  (EXPECT: permission denied on table accounts)'
+=== T3: app_rw -> UPDATE sample2.accounts_v  (EXPECT: permission denied on table accounts)
+SET ROLE app_rw;
+SET
+UPDATE sample2.accounts_v SET balance = 777 WHERE id = 2;
+RESET ROLE;
+psql:T-01-L2.evidence.sql:59: ERROR:  permission denied for table accounts
+CONTEXT:  SQL statement "UPDATE sample2.accounts SET balance = NEW.balance WHERE id = NEW.id"
+PL/pgSQL function sample2.accounts_v_update() line 3 at SQL statement
+RESET
+\echo '=== T4: state after T1-T3 (EXPECT: id1=555, id2=200)'
+=== T4: state after T1-T3 (EXPECT: id1=555, id2=200)
+SELECT id, balance FROM sample2.accounts ORDER BY id;
+ id | balance 
+----+---------
+  1 |     555
+  2 |     200
+(2 rows)
+
+\echo '=== T5: default function privileges (EXPECT: PUBLIC has EXECUTE on both functions)'
+=== T5: default function privileges (EXPECT: PUBLIC has EXECUTE on both functions)
+SELECT r AS role, has_function_privilege(r, 'sample2.set_balance(bigint,numeric)', 'EXECUTE') AS can_set_balance,
+       has_function_privilege(r, 'sample2.review_transfer(bigint,bigint,numeric)', 'EXECUTE') AS can_review
+FROM unnest(ARRAY['app_rw','app_r0','public']) AS r;
+  role  | can_set_balance | can_review 
+--------+-----------------+------------
+ app_rw | t               | t
+ app_r0 | t               | t
+ public | t               | t
+(3 rows)
+
+\echo '=== T6: role app_r0 with NO grant, only schema USAGE -> set_balance(2, 4242)  (EXPECT: succeeds)'
+=== T6: role app_r0 with NO grant, only schema USAGE -> set_balance(2, 4242)  (EXPECT: succeeds)
+GRANT USAGE ON SCHEMA sample2 TO app_r0;
+GRANT
+SET ROLE app_r0;
+SET
+SELECT sample2.set_balance(2, 4242);
+ set_balance 
+-------------
+ 
+(1 row)
+
+RESET ROLE;
+RESET
+SELECT id, balance FROM sample2.accounts ORDER BY id;
+ id | balance 
+----+---------
+  1 |     555
+  2 |    4242
+(2 rows)
+
+\echo '=== T7: COUNTERFACTUAL: accounts_v_update() made SECURITY DEFINER'
+=== T7: COUNTERFACTUAL: accounts_v_update() made SECURITY DEFINER
+\echo '===     app_rw -> UPDATE sample2.accounts_v  (EXPECT: succeeds -- i.e. the view path opens)'
+===     app_rw -> UPDATE sample2.accounts_v  (EXPECT: succeeds -- i.e. the view path opens)
+ALTER FUNCTION sample2.accounts_v_update() SECURITY DEFINER;
+ALTER FUNCTION
+SET ROLE app_rw;
+SET
+UPDATE sample2.accounts_v SET balance = 31337 WHERE id = 2;
+UPDATE 1
+RESET ROLE;
+RESET
+SELECT id, balance FROM sample2.accounts ORDER BY id;
+ id | balance 
+----+---------
+  1 |     555
+  2 |   31337
+(2 rows)
+
+\echo '=== T8: back to SECURITY INVOKER, trigger dropped (plain updatable view)'
+=== T8: back to SECURITY INVOKER, trigger dropped (plain updatable view)
+\echo '===     app_rw -> UPDATE sample2.accounts_v  (EXPECT: succeeds -- plain view uses owner rights)'
+===     app_rw -> UPDATE sample2.accounts_v  (EXPECT: succeeds -- plain view uses owner rights)
+ALTER FUNCTION sample2.accounts_v_update() SECURITY INVOKER;
+ALTER FUNCTION
+DROP TRIGGER accounts_v_write ON sample2.accounts_v;
+DROP TRIGGER
+SET ROLE app_rw;
+SET
+UPDATE sample2.accounts_v SET balance = 11 WHERE id = 1;
+UPDATE 1
+RESET ROLE;
+RESET
+SELECT id, balance FROM sample2.accounts ORDER BY id;
+ id | balance 
+----+---------
+  1 |      11
+  2 |   31337
+(2 rows)
+
+\echo '=== T9: trigger restored as given (SECURITY INVOKER), same statement'
+=== T9: trigger restored as given (SECURITY INVOKER), same statement
+\echo '===     (EXPECT: permission denied -- the trigger, not the view, closes the path)'
+===     (EXPECT: permission denied -- the trigger, not the view, closes the path)
+CREATE TRIGGER accounts_v_write INSTEAD OF UPDATE ON sample2.accounts_v
+  FOR EACH ROW EXECUTE FUNCTION sample2.accounts_v_update();
+CREATE TRIGGER
+SET ROLE app_rw;
+SET
+UPDATE sample2.accounts_v SET balance = 22 WHERE id = 1;
+RESET ROLE;
+psql:T-01-L2.evidence.sql:99: ERROR:  permission denied for table accounts
+CONTEXT:  SQL statement "UPDATE sample2.accounts SET balance = NEW.balance WHERE id = NEW.id"
+PL/pgSQL function sample2.accounts_v_update() line 3 at SQL statement
+RESET
+\echo '=== T10: final state (EXPECT: id1=11, id2=31337)'
+=== T10: final state (EXPECT: id1=11, id2=31337)
+SELECT id, balance FROM sample2.accounts ORDER BY id;
+ id | balance 
+----+---------
+  1 |      11
+  2 |   31337
+(2 rows)
+
+\connect postgres
+You are now connected to database "postgres" as user "postgres".
+DROP DATABASE t01_probe;
+DROP DATABASE
+\echo '=== probe database dropped; cluster left as found'
+=== probe database dropped; cluster left as found

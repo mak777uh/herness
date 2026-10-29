@@ -1,0 +1,17 @@
+{
+  "answers": [
+    {
+      "id": "q1",
+      "answer": "Only app_rw holds a grant that can write balance, and its write does not pass through review_transfer(): app_rw calls sample2.set_balance() directly, and because that function is SECURITY DEFINER the UPDATE on sample2.accounts runs with the owner's rights. That grant is also redundant - PostgreSQL gives EXECUTE on a new function to PUBLIC, so any role with USAGE on schema sample2, not just app_rw, can call it. The other granted path does not reach the table: accounts_v_update() is not declared SECURITY DEFINER, so the INSTEAD OF trigger's inner UPDATE runs as app_rw and fails with 'permission denied for table accounts' (reproduced on PostgreSQL 17.2: lab/pilot/out/T-01-L2.evidence.txt, tests T1-T10). The view is not what blocks it - with the trigger dropped the same UPDATE through accounts_v succeeds on the view owner's rights, and with the trigger function made SECURITY DEFINER it succeeds as well. Owners of sample2.accounts and superusers can of course write balance directly, and review_transfer() is itself executable by PUBLIC and enforces no check.",
+      "bypasses": [
+        "app_rw -> EXECUTE sample2.set_balance(bigint,numeric): SECURITY DEFINER, so it updates sample2.accounts.balance with the owner's rights and review_transfer() is never invoked (verified: balance 100 -> 555).",
+        "Any role with USAGE on schema sample2 -> the same set_balance(), through PostgreSQL's default PUBLIC EXECUTE on functions; the explicit grant to app_rw restricts nothing (verified with unprivileged role app_r0: balance 200 -> 4242).",
+        "Owner of sample2.accounts and superusers -> plain UPDATE sample2.accounts, entirely outside the declared control point and outside the listed grants."
+      ]
+    }
+  ],
+  "not_claimed": [
+    "Does not prove the behaviour of the real sample2 instance: object ownership, actual schema USAGE grants and role memberships were not given, and the trigger function's security mode was taken as default (SECURITY INVOKER) from the absence of a SECURITY DEFINER mark; the evidence is a local PG 17.2 reconstruction, not the production database.",
+    "Does not cover non-privilege bypasses (injection into review_transfer, audit/WAL tampering, replication or superuser access) and does not claim that review_transfer() enforces anything beyond being the intended entry point."
+  ]
+}
