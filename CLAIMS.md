@@ -43,3 +43,4 @@
 | C-0020 | В журналах 14 729 команд вызывают venv-python, 2164 задают PYTHONIOENCODING, 1048 — ErrorActionPreference: повторяющаяся преамбула; пересчёт 29.10.2026: 14 846 и 2 176 | statistics | `python bin/patterns.py --check` | вывод команды, 29.10.2026 | 29.10.2026 | `venv_python=` |
 | C-0021 | В docs/PRINCIPLES.md 25 принципов портфеля | statistics | `python bin/count.py principles` | docs/PRINCIPLES.md | 29.10.2026 | `principles=25` |
 | C-0022 | В кэше справочника 25 каталогов репозиториев с документами | statistics | `python bin/count.py repos` | refs-cache/ | 29.10.2026 | `repos=25` |
+| C-0023 | Шаг не выполняется, если прогон уже превысил потолок шагов/времени/объёма: возврат 3 до запуска команды | test | `python tests/test_budget.py` | tests/test_budget.py | 29.10.2026 | `бюджет: 5/5 ok` |

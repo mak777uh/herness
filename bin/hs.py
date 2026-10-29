@@ -777,6 +777,19 @@ def cmd_py(args) -> int:
     return proc.returncode
 
 
+def cmd_budget(args) -> int:
+    """Сколько потрачено в прогоне: шаги, время, объём."""
+    sys.path.insert(0, str(ROOT))
+    from core import budget as budget_mod
+
+    run_dir = RUNS / args.run
+    if not run_dir.exists():
+        print(f"нет прогона {args.run}")
+        return 2
+    print(json.dumps(budget_mod.usage(run_dir), ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_step(args) -> int:
     """Один шаг работы: выполнить команду и записать её в журнал как свидетельство.
 
@@ -789,6 +802,13 @@ def cmd_step(args) -> int:
 
     run_dir = RUNS / args.run
     run_dir.mkdir(parents=True, exist_ok=True)
+    from core import budget as budget_mod
+
+    over, reason = budget_mod.exceeded(run_dir, args.max_steps, args.max_seconds, args.max_bytes)
+    if over:
+        print(json.dumps({"stopped": reason, "usage": budget_mod.usage(run_dir)},
+                         ensure_ascii=False, indent=2))
+        return 3
     journal = Journal(run_dir)
     try:
         started = (run_dir / "events.jsonl").exists() and (run_dir / "events.jsonl").stat().st_size > 0
@@ -1066,7 +1086,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1174,12 +1194,19 @@ def main(argv: list[str]) -> int:
     p.add_argument("--preview")
     p.set_defaults(func=cmd_record)
 
+    p = sub.add_parser("budget", help="потрачено в прогоне: шаги, время, объём")
+    p.add_argument("--run", required=True)
+    p.set_defaults(func=cmd_budget)
+
     p = sub.add_parser("step", help="выполнить команду и записать её в журнал")
     p.add_argument("--run", required=True)
     p.add_argument("command", nargs="?", help="команда (позиционно, без флагов)")
     p.add_argument("--task")
     p.add_argument("--cwd")
     p.add_argument("--start", action="store_true", help="открыть прогон этим шагом")
+    p.add_argument("--max-steps", type=int, default=0, help="потолок шагов в прогоне")
+    p.add_argument("--max-seconds", type=float, default=0, help="потолок времени прогона")
+    p.add_argument("--max-bytes", type=int, default=0, help="потолок объёма артефактов")
     p.set_defaults(func=cmd_step)
 
     p = sub.add_parser("report", help="собрать report.md из журнала")
@@ -1225,4 +1252,5 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
