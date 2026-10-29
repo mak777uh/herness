@@ -1,0 +1,17 @@
+{
+  "request": "переименуй файл a.py в b.py",
+  "expected": {
+    "defined": ["старое имя", "новое имя", "одна операция"],
+    "undefined": [],
+    "must_ask": [],
+    "must_experiment": [],
+    "contradictions": []
+  },
+  "parsed": {
+    "goal": "переименовать a.py в b.py",
+    "defined": ["a.py", "b.py"],
+    "undefined": [],
+    "next_actions": ["переименовать", "проверить ссылки"]
+  },
+  "note": "ложное срабатывание протокола здесь — дефект: бьёт по скорости"
+}

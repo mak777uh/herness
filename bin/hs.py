@@ -536,6 +536,24 @@ def cmd_request(args) -> int:
     sys.path.insert(0, str(ROOT))
     from core.contracts import ContractError, Request
 
+    if getattr(args, "corpus", False):
+        cases = sorted((ROOT / "lab" / "requests" / "corpus").glob("*.json"))
+        bad = 0
+        for case_path in cases:
+            data = json.loads(case_path.read_text(encoding="utf-8"))
+            kwargs = {k: (tuple(v) if isinstance(v, list) else v) for k, v in data.get("parsed", {}).items()}
+            try:
+                Request(**kwargs).validate()
+                print(f"[ok] {case_path.name}")
+            except (ContractError, TypeError) as exc:
+                bad += 1
+                print(f"[FAIL] {case_path.name}: {exc}")
+        print(f"\nкорпус: {len(cases) - bad}/{len(cases)} ok")
+        return 0 if not bad else 1
+
+    if not args.file:
+        print("нужен файл разбора или --corpus", file=sys.stderr)
+        return 2
     path = Path(args.file)
     if not path.exists():
         print(f"нет файла: {path}", file=sys.stderr)
@@ -651,7 +669,8 @@ def main(argv: list[str]) -> int:
     sub.add_parser("audit", help="заметки аудита: находки и мнения").set_defaults(func=cmd_audit)
 
     p = sub.add_parser("request", help="проверить разбор запроса")
-    p.add_argument("file")
+    p.add_argument("file", nargs="?")
+    p.add_argument("--corpus", action="store_true", help="проверить корпус регрессии")
     p.set_defaults(func=cmd_request)
 
     p = sub.add_parser("gates", help="секреты, утверждения, ссылки")
@@ -676,3 +695,6 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
+
