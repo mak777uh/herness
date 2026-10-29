@@ -627,6 +627,36 @@ def cmd_failures(args) -> int:
         print(f"  [!] {issue}")
     return 0 if not issues else 1
 
+
+def cmd_execute(args) -> int:
+    """Прогон собственным циклом (mock) с отчётом: задача → журнал → артефакты → report.md."""
+    sys.path.insert(0, str(ROOT))
+    from core import report
+    from core.journal import Journal
+    from core.loop import MockProvider, Step, run as loop_run
+    from core.tools import ShellTool
+
+    run_id = datetime.now().strftime("%Y%m%dT%H%M%S") + "-mock"
+    run_dir = RUNS / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    provider = MockProvider([
+        Step(tool={"name": "shell", "args": {"command": f"echo {args.task}"}}),
+        Step(text="прогон завершён (mock): инструмент вызван, артефакт записан"),
+    ])
+    journal = Journal(run_dir)
+    result = loop_run(args.task, provider, ShellTool(ROOT), journal, max_steps=args.steps)
+
+    boundaries = (
+        "mock-прогон: модель не вызывалась, ответ сценария заранее задан",
+        "поведение на реальном ответе модели не проверено",
+        "артефакт содержит вывод оболочки, а не проверенный факт о мире",
+    )
+    path = report.write(run_dir, args.task, boundaries=boundaries)
+    print(json.dumps({"run": run_id, "status": result["status"], "steps": result["steps"],
+                      "report": str(path)}, ensure_ascii=False, indent=2))
+    return 0
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
@@ -673,7 +703,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_audit.py", "test_failures.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -723,6 +753,10 @@ def main(argv: list[str]) -> int:
     sub.add_parser("failures", help="корпус отказов процесса").set_defaults(func=cmd_failures)
 
     p = sub.add_parser("request", help="проверить разбор запроса")
+    p = sub.add_parser("execute", help="прогон своим циклом (mock) с отчётом")
+    p.add_argument("task")
+    p.add_argument("--steps", type=int, default=8)
+    p.set_defaults(func=cmd_execute)
     p = sub.add_parser("ping", help="живая проверка провайдера")
     p.add_argument("--base", required=True)
     p.add_argument("--model", required=True)
@@ -756,6 +790,8 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
 
 
 
