@@ -685,6 +685,16 @@ def cmd_live(args) -> int:
     if args.session:
         extra["x-opencode-session"] = args.session
 
+    from core import reply as reply_mod
+
+    decision = reply_mod.decide(args.task)
+    if decision["type"] == "REFUSE" and not getattr(args, "force", False):
+        print(json.dumps({"action": "refuse", "why": decision["reason"],
+                          "alternatives": decision.get("alternatives", []),
+                          "note": "решение харнесса, модель не вызывалась"},
+                         ensure_ascii=False, indent=2))
+        return 3
+
     if getattr(args, "auto", False):
         from core import profiles, routing
 
@@ -1261,6 +1271,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--max-tokens", type=int, default=8000)
     p.add_argument("--no-tools", action="store_true", help="L0: отвечать без инструментов")
     p.add_argument("--auto", action="store_true", help="выбрать модель и режим по классу задачи")
+    p.add_argument("--force", action="store_true", help="выполнить даже при отказе харнесса")
     p.add_argument("--cwd")
     p.set_defaults(func=cmd_live)
 
@@ -1332,6 +1343,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 
