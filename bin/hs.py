@@ -500,10 +500,41 @@ def cmd_criteria(args) -> int:
     return 0 if not issues else 1
 
 
+
+def gate_audit(root: Path) -> list[str]:
+    sys.path.insert(0, str(ROOT))
+    from core import audit
+    return audit.problems(root)
+
+
+def cmd_audit(args) -> int:
+    sys.path.insert(0, str(ROOT))
+    from core import audit
+
+    data = audit.summary(ROOT)
+    print(f"заметок: {data['total']}  находок: {len(data['findings'])}  мнений: {len(data['opinions'])}  некорректных: {len(data['invalid'])}")
+    if data["findings"]:
+        print("\nнаходки:")
+        for n in data["findings"]:
+            print(f"  [{n.get('severity', '?'):<6}] -> {n['_target']:<12} {n.get('about', ''):<18} {(n.get('finding') or '')[:90]}")
+    if data["opinions"]:
+        print("\nмнения без воспроизводящего случая (в совет не идут):")
+        for n in data["opinions"]:
+            print(f"  -> {n['_target']:<12} {(n.get('finding') or '')[:90]}")
+    if data["repeats"]:
+        print("\nповторяющиеся:")
+        for (target, finding), count in data["repeats"][:5]:
+            if count > 1:
+                print(f"  ×{count} -> {target}: {finding[:80]}")
+    issues = audit.problems(ROOT)
+    for issue in issues:
+        print(f"  [!] {issue}")
+    return 0 if not issues else 1
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -546,7 +577,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_audit.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -591,6 +622,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("-n", type=int, default=3)
     p.add_argument("--home")
     p.set_defaults(func=cmd_bench)
+
+    sub.add_parser("audit", help="заметки аудита: находки и мнения").set_defaults(func=cmd_audit)
 
     p = sub.add_parser("gates", help="секреты, утверждения, ссылки")
     p.add_argument("--root", default=str(ROOT))
