@@ -146,3 +146,4 @@
 | K116 | повтор команды отмечается в шаге и в отчёте, но не отменяется | замер | hs step → repeat_of; report → «повторов» | core/report.py |
 | K117 | повтор ≥3 в сессии или ≥5 связок между сессиями — кандидат в процедуру | док | порог из ADR-0023 | docs/ADR-0023-repetition-to-code.md |
 | K118 | кристаллизуется только то, что имеет детерминированную проверку | док | правило ADR-0023 | docs/ADR-0023-repetition-to-code.md |
+| K119 | преамбула Python заменена процедурой hs py | замер | python bin/hs.py py --code "print(1)" | docs/ADR-0023-repetition-to-code.md |

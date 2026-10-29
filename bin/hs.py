@@ -747,6 +747,36 @@ def _find_previous_command(run_dir: Path, command: str) -> dict | None:
     return found
 
 
+def _python_exe() -> Path:
+    """Интерпретатор проекта: venv, если он есть, иначе текущий."""
+    venv = Path(r"C:\111\env\python\.venv\Scripts\python.exe")
+    return venv if venv.exists() else Path(sys.executable)
+
+
+def cmd_py(args) -> int:
+    """Процедура: запуск Python с правильным интерпретатором и UTF-8.
+
+    Кристаллизация из ADR-0023: преамбула `$py=...; $env:PYTHONIOENCODING=...` повторялась
+    тысячи раз. Теперь это одна команда.
+    """
+    exe = _python_exe()
+    if args.code:
+        cmd = [str(exe), "-c", args.code]
+    elif args.target:
+        cmd = [str(exe), args.target] + (args.args or [])
+    else:
+        print("нужен файл или --code", file=sys.stderr)
+        return 2
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+    proc = subprocess.run(cmd, cwd=str(Path(args.cwd or ROOT)), env=env,
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
+    out = (proc.stdout or "") + (proc.stderr or "")
+    print(out.rstrip())
+    return proc.returncode
+
+
 def cmd_step(args) -> int:
     """Один шаг работы: выполнить команду и записать её в журнал как свидетельство.
 
@@ -918,6 +948,13 @@ def main(argv: list[str]) -> int:
     p.add_argument("--steps", type=int, default=8)
     p.set_defaults(func=cmd_execute)
 
+    p = sub.add_parser("py", help="запустить Python проекта (venv + UTF-8)")
+    p.add_argument("target", nargs="?")
+    p.add_argument("args", nargs="*")
+    p.add_argument("--code", help="код вместо файла")
+    p.add_argument("--cwd")
+    p.set_defaults(func=cmd_py)
+
     p = sub.add_parser("record", help="записать событие в журнал прогона")
     p.add_argument("--run", required=True)
     p.add_argument("--type", default="note")
@@ -978,6 +1015,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 
