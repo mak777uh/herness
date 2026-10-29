@@ -25,7 +25,7 @@ def from_store(name: str) -> str | None:
     return None
 
 
-def probe(url: str, model: str, key: str) -> dict:
+def probe(url: str, model: str, key: str, session: str = "") -> dict:
     body = json.dumps({
         "model": model,
         "messages": [{"role": "user", "content": "reply with the single word: ok"}],
@@ -36,6 +36,8 @@ def probe(url: str, model: str, key: str) -> dict:
         "Authorization": "Bearer " + key,
         "User-Agent": "herness-live/1.0",
     })
+    if session:
+        request.add_header("x-opencode-session", session)
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         with opener.open(request, timeout=60) as response:
@@ -59,7 +61,10 @@ def main() -> int:
         print("ключ " + name + " не найден в хранилище")
         return 2
 
-    if which == "deepseek":
+    if which == "go":
+        result = probe("https://opencode.ai/inference/go/openai/v1/chat/completions",
+                       "deepseek-v4.1-flash", key, session="herness-live")
+    elif which == "deepseek":
         result = probe("https://api.deepseek.com/chat/completions", "deepseek-chat", key)
     else:
         result = probe("https://opencode.ai/zen/v1/chat/completions", "deepseek-v4.1-flash-free", key)
@@ -70,3 +75,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

@@ -594,7 +594,11 @@ def cmd_ping(args) -> int:
     sys.path.insert(0, str(ROOT))
     from core.http_provider import OpenAICompatProvider
 
-    provider = OpenAICompatProvider(args.base, args.model, args.key_env)
+    extra = {}
+    if getattr(args, "session", None):
+        # Go-эндпоинт требует стабильный id разговора: без него 400 MissingSessionID
+        extra["x-opencode-session"] = args.session
+    provider = OpenAICompatProvider(args.base, args.model, args.key_env, extra_headers=extra)
     if not provider.has_key():
         print(f"нет ключа в переменной {args.key_env}", file=sys.stderr)
         return 2
@@ -1228,6 +1232,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--model", required=True)
     p.add_argument("--key-env", default="OPENCODE_API_KEY")
     p.add_argument("--no-stream", action="store_true")
+    p.add_argument("--session", help="id разговора для x-opencode-session")
     p.set_defaults(func=cmd_ping)
 
     p = sub.add_parser("gates", help="секреты, утверждения, ссылки")
@@ -1252,5 +1257,6 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
