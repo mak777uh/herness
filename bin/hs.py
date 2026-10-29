@@ -710,6 +710,24 @@ def cmd_report(args) -> int:
     return 0
 
 
+def _find_previous_command(run_dir: Path, command: str) -> dict | None:
+    """Ищет в журнале уже выполненную такую же команду: повтор нужно показать, но не отменять."""
+    path = run_dir / "events.jsonl"
+    if not path.exists():
+        return None
+    found = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") != "tool/call":
+            continue
+        if (event.get("payload", {}).get("arguments") or {}).get("command") == command:
+            found = {"seq": event.get("seq"), "ts": event.get("ts")}
+    return found
+
+
 def cmd_step(args) -> int:
     """Один шаг работы: выполнить команду и записать её в журнал как свидетельство.
 
@@ -731,9 +749,11 @@ def cmd_step(args) -> int:
         if not command:
             print("нужна команда", file=sys.stderr)
             return 2
+        previous = _find_previous_command(run_dir, command)
         out = ShellTool(Path(args.cwd or ROOT)).run(command)
         call_id = f"step-{int(time.time() * 1000)}"
-        journal.tool_call(call_id, "shell", {"command": command})
+        journal.tool_call(call_id, "shell", {"command": command,
+                                             "repeat_of": previous["seq"] if previous else None})
         ref = journal.put_artifact(out.text.encode("utf-8"))
         journal.tool_result(call_id, ref, ok=out.ok, preview=out.text[:600])
         print(json.dumps({
@@ -741,6 +761,7 @@ def cmd_step(args) -> int:
             "digest": ref.sha256[:16],
             "bytes": ref.bytes,
             "artifact": ref.path,
+            "repeat_of": previous["seq"] if previous else None,
             "preview": out.text[:300],
         }, ensure_ascii=False, indent=2))
         return 0 if out.ok else 1
