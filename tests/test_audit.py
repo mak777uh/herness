@@ -93,6 +93,25 @@ def _():
         assert data["repeats"] and data["repeats"][0][1] == 2, data["repeats"]
 
 
+INSIGHT_NO_TARGET = """from: a
+to: harness
+about: x
+kind: insight
+repro: python bin/hs.py gates
+insight: гейт мог бы проверять и заметки
+would_change: если окажется, что заметки не читают
+"""
+
+
+@case("инсайт без applies_to не переносим", False)
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _write(root, "e.md", INSIGHT_NO_TARGET)
+        issues = audit.problems(root)
+        assert any("applies_to" in i for i in issues), issues
+
+
 def main() -> int:
     failed = 0
     for name, should_raise, fn in CASES:

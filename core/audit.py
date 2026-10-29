@@ -1,7 +1,9 @@
 """audit — заметки аудита: себя, соседа, харнесса.
 
-Правило (ADR-0017): заметка без воспроизводящего случая — не находка, а мнение.
-Мнения считаются, но в совет не идут.
+Правила (ADR-0017, ADR-0018):
+  - заметка без воспроизводящего случая — не находка, а мнение;
+  - заметка бывает двух видов: finding (не так) и insight (так лучше);
+  - инсайт без applies_to не переносим: неизвестно, куда именно.
 """
 
 from __future__ import annotations
@@ -9,9 +11,12 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-FIELDS = ("from", "to", "about", "severity", "repro", "finding", "would_change")
-REQUIRED = ("from", "to", "finding")
+FIELDS = ("from", "to", "about", "kind", "severity", "repro", "finding",
+          "insight", "applies_to", "would_change")
+REQUIRED = ("from", "to")
+REQUIRED_BODY = ("finding", "insight")
 SEVERITIES = ("low", "medium", "high")
+KINDS = ("finding", "insight")
 LINE = re.compile(r"^([a-z_]+):\s*(.*)$")
 
 
@@ -34,8 +39,14 @@ def parse(path: Path) -> dict:
     return fields
 
 
+def kind_of(note: dict) -> str:
+    return (note.get("kind") or "finding").strip().lower()
+
+
 def classify(note: dict) -> str:
     if any(not note.get(f) for f in REQUIRED):
+        return "invalid"
+    if not (note.get("finding") or note.get("insight")):
         return "invalid"
     repro = (note.get("repro") or "").strip().lower()
     if not repro or repro in {"нет", "-", "no", "none"}:
@@ -54,6 +65,7 @@ def scan(root: Path) -> list[dict]:
         note = parse(path)
         note["_status"] = classify(note)
         note["_target"] = note.get("to", "?")
+        note["_kind"] = kind_of(note)
         notes.append(note)
     return notes
 
@@ -64,10 +76,14 @@ def summary(root: Path) -> dict:
     for n in notes:
         if n["_status"] != "finding":
             continue
-        key = (n["_target"], (n.get("finding") or "").strip().lower()[:120])
+        key = (n["_target"], ((n.get("finding") or n.get("insight") or "").strip().lower())[:120])
         groups[key] = groups.get(key, 0) + 1
+    kinds: dict[str, int] = {}
+    for n in notes:
+        kinds[n["_kind"]] = kinds.get(n["_kind"], 0) + 1
     return {
         "total": len(notes),
+        "kinds": kinds,
         "findings": [n for n in notes if n["_status"] == "finding"],
         "opinions": [n for n in notes if n["_status"] == "opinion"],
         "invalid": [n for n in notes if n["_status"] == "invalid"],
@@ -78,10 +94,18 @@ def summary(root: Path) -> dict:
 def problems(root: Path) -> list[str]:
     out = []
     for note in scan(root):
+        path = note["_path"]
         if note["_status"] == "invalid":
             missing = [f for f in REQUIRED if not note.get(f)]
-            out.append(f"{note['_path']}: нет обязательных полей: {', '.join(missing)}")
+            if not (note.get("finding") or note.get("insight")):
+                missing.append("finding|insight")
+            out.append(f"{path}: нет обязательных полей: {', '.join(missing)}")
+        kind = kind_of(note)
+        if kind not in KINDS:
+            out.append(f"{path}: неизвестный вид заметки '{kind}'")
+        if kind == "insight" and not (note.get("applies_to") or "").strip():
+            out.append(f"{path}: инсайт без applies_to не переносим — неизвестно, куда")
         severity = (note.get("severity") or "").strip().lower()
         if severity and severity not in SEVERITIES:
-            out.append(f"{note['_path']}: неизвестная важность '{severity}'")
+            out.append(f"{path}: неизвестная важность '{severity}'")
     return out

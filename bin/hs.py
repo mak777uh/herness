@@ -512,7 +512,7 @@ def cmd_audit(args) -> int:
     from core import audit
 
     data = audit.summary(ROOT)
-    print(f"заметок: {data['total']}  находок: {len(data['findings'])}  мнений: {len(data['opinions'])}  некорректных: {len(data['invalid'])}")
+    print(f"заметок: {data['total']}  находок: {len(data['findings'])}  мнений: {len(data['opinions'])}  некорректных: {len(data['invalid'])}  виды: {data['kinds']}")
     if data["findings"]:
         print("\nнаходки:")
         for n in data["findings"]:
