@@ -13,9 +13,10 @@
                 "why": "сборка и тесты: длинные команды, нужен запас шагов" },
     "T-0005": { "model": "deepseek-v4.1-flash", "tools": false, "steps": 1, "max_tokens": 4000,
                 "why": "публикация: решение принимается не моделью, а подтверждением владельца" },
-    "T-0006": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 6, "max_tokens": 8000,
+    "T-0006": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 10, "max_tokens": 8000,
                 "why": "анализ журналов: читает и считает" },
     "T-0007": { "model": "deepseek-v4.1-flash", "tools": false, "steps": 1, "max_tokens": 4000,
                 "why": "уточнение: ответ без действий" }
   }
 }
+

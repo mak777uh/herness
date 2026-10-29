@@ -18,6 +18,22 @@ TOOL_SPEC = [
     {
         "type": "function",
         "function": {
+            "name": "list_dir",
+            "description": "Перечислить каталог или посчитать файлы по маске. Для подсчётов используй count=true.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "каталог от корня, например runs"},
+                    "glob": {"type": "string", "description": "маска, например *-live"},
+                    "count": {"type": "boolean", "description": "только число"},
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "grep",
             "description": "Найти строки по регулярному выражению. Возвращает путь:строка: текст.",
             "parameters": {
@@ -61,8 +77,8 @@ TOOL_SPEC = [
 
 SYSTEM_TOOLS = (
     "Ты — исполнитель в харнессе. Среда: Windows, команды идут в cmd.exe (bash-конструкции "
-    "вроде ls/find/wc недоступны). У тебя три инструмента: shell, read_file, grep. "
-    "Для поиска по тексту используй grep, а не findstr через оболочку. "
+    "вроде ls/find/wc недоступны). У тебя четыре инструмента: shell, read_file, grep, list_dir. "
+    "Для поиска по тексту используй grep, для подсчёта — list_dir с count=true, а не find /c. "
     "Если для ответа нужен факт из среды — вызови инструмент. Если не нужен — ответь текстом. "
     "Не выдумывай вывод команд: если не вызывал, не утверждай, что видел результат. "
     "Точный подсчёт строк в выводе делай сам, а не конструкциями оболочки: find /c капризен. "
@@ -135,6 +151,7 @@ class LiveProvider:
             "tool_call_id": "call",
             "content": ("exit=0\n" if ok else "exit!=0\n") + output[:8000],
         })
+
 
 
 

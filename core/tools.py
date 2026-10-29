@@ -122,6 +122,29 @@ class GrepTool:
         return ToolOutput("\n".join(hits).encode("utf-8"), b"", 0)
 
 
+class ListTool:
+    """Перечисление каталога и подсчёт по маске: без оболочки и без кавычек."""
+
+    name = "list_dir"
+
+    def __init__(self, root: Path, limit: int = 200):
+        self.root = Path(root)
+        self.limit = limit
+
+    def run(self, path: str = ".", glob: str = "*", count: bool = False) -> ToolOutput:
+        base = (self.root / path).resolve()
+        if not str(base).startswith(str(self.root.resolve())):
+            return ToolOutput(b"", b"path escapes root", 126)
+        if not base.exists() or not base.is_dir():
+            return ToolOutput(b"", f"нет каталога: {path}".encode(), 2)
+        entries = sorted(p.name + ("/" if p.is_dir() else "") for p in base.glob(glob or "*"))
+        if count:
+            return ToolOutput(f"найдено {len(entries)}".encode("utf-8"), b"", 0)
+        shown = entries[: self.limit]
+        tail = "" if len(entries) <= self.limit else "... (всего " + str(len(entries)) + ")"
+        return ToolOutput((chr(10).join(shown) + tail).encode("utf-8"), b"", 0)
+
+
 class ToolRouter:
     """Маршрутизация вызова по имени инструмента: цикл отдаёт имя и аргументы."""
 
@@ -130,6 +153,7 @@ class ToolRouter:
         self.shell = ShellTool(self.root)
         self.reader = ReadTool(self.root)
         self.grepper = GrepTool(self.root)
+        self.lister = ListTool(self.root)
 
     def run(self, command: str) -> ToolOutput:
         """Совместимость с mock-циклом: без имени — это оболочка."""
@@ -139,7 +163,12 @@ class ToolRouter:
         if name == "read_file":
             return self.reader.run(args.get("path", ""), int(args.get("offset", 1) or 1),
                                    int(args.get("limit", 0) or 0))
+        if name == "list_dir":
+            return self.lister.run(args.get("path", ".") or ".", args.get("glob", "*") or "*",
+                                   bool(args.get("count", False)))
         if name == "grep":
             return self.grepper.run(args.get("pattern", ""), args.get("glob", "*.md") or "*.md",
                                     int(args.get("max_results", 0) or 0))
         return self.shell.run(str(args.get("command", "")))
+
+
