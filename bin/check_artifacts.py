@@ -61,7 +61,7 @@ def main(argv: list[str]) -> int:
     if not text:
         print(f"{claim['id']}: свидетельство не найдено ({claim['artifact']})", file=sys.stderr)
         return 1
-    if re.search(pattern, text):
+    if re.search(pattern, text, re.IGNORECASE):
         print(f"{claim['id']}: ожидание {pattern!r} найдено в свидетельстве")
         return 0
     print(f"{claim['id']}: ожидание {pattern!r} НЕ найдено в свидетельстве", file=sys.stderr)

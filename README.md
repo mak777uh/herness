@@ -26,7 +26,7 @@ DSH_HOME=<свой> dsh --profile headless --dump-config   -> профиль с�
 bin/hs.py          инструмент: факты среды, прогоны, доктор
 docs/              решения (ADR) и реестр исключённого
 lab/               гипотезы, эксперименты, шаблоны
-profile/           наш профиль DSH: package.json + cordis.patch.yml + plugins/
+profile/           планируется в M3: package.json + cordis.patch.yml + plugins/ (сейчас каталога нет)
 home/              изолированный DSH_HOME (в git не едет)
 runs/              журнал прогонов: stdout/stderr/meta/дайджесты (в git не едет)
 ```

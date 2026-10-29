@@ -1,0 +1,9 @@
+{
+ "run": "20261029T204205-live",
+ "events_sha256": "c477ddc7c285a3a269e98e2e78164d09124ed9273c5c532b70779f452dbf431f",
+ "tool_calls": 0,
+ "calls": [],
+ "answer": "{\"answers\": [{\"id\": \"q1\", \"answer\": \"At least two principals are visible in this snapshot, and the grant list is incomplete enough that the set cannot be closed. (1) app_rw: it holds UPDATE on sample2.accounts_v, and that UPDATE fires the INSTEAD OF trigger accounts_v_write -> accounts_v_update(), which writes to sample2.accounts with the view owner's privileges, so an UPDATE of the view moves balance with no call to review_transfer() and without any direct grant on the table. (2) app_rw again (and, because Postgres grants EXECUTE on new functions to PUBLIC by default and no REVOKE is shown, i",
+ "report_excerpt": "# Отчёт прогона: You are analysing a Postgres schema. Use only what is below.\n\n\n\nSchema: sample2\n\n\n\nTables\n\n  sample2.accounts(id bigserial PK, balance numeric NOT NULL DEFAULT 0)\n\n\n\nViews\n\n  sample2.accounts_v AS SELECT id, balance FROM sample2.accounts\n\n\n\nFunctions\n\n  sample2.accounts_v_update() RETURNS trigger\n\n      -- body: UPDATE sample2.accounts SET balance = NEW.balance WHERE id = NEW.id; ",
+ "note": "выжимка прогона; полный журнал остаётся вне git"
+}

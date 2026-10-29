@@ -1,0 +1,14 @@
+{
+ "date": "2026-10-29",
+ "source": "~/.dsh/sessions (вне репозитория)",
+ "command": "python bin/patterns.py && python bin/dist_stats.py",
+ "values": {
+  "calls": 31591,
+  "cd_start": 20523,
+  "venv_python": 15302,
+  "pythonioencoding": 2204,
+  "sessions": 278,
+  "zero": 45
+ },
+ "note": "снимок, а не живое значение: утверждения ссылаются сюда"
+}

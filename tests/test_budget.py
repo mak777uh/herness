@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -15,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from core import budget  # noqa: E402
 
 CASES: list[tuple[str, bool, callable]] = []
+TEMP_DIRS: list[Path] = []
 
 
 def case(name: str, should_raise: bool):
@@ -26,6 +28,7 @@ def case(name: str, should_raise: bool):
 
 def make_run(steps: int, seconds: float = 0.0, artifact_bytes: int = 0) -> Path:
     tmp = Path(tempfile.mkdtemp())
+    TEMP_DIRS.append(tmp)
     lines = []
     for i in range(steps):
         lines.append(json.dumps({"seq": i, "type": "tool/call", "ts": f"2026-10-29T10:00:{i:02d}+00:00",
@@ -85,6 +88,8 @@ def main() -> int:
         ok = raised == should_raise
         failed += 0 if ok else 1
         print(f"[{'ok' if ok else 'FAIL'}] {name}")
+    for leftover in TEMP_DIRS:
+        shutil.rmtree(leftover, ignore_errors=True)
     print(f"\nбюджет: {len(CASES) - failed}/{len(CASES)} ok")
     return 0 if failed == 0 else 1
 

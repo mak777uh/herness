@@ -1148,10 +1148,30 @@ def gate_models(root: Path) -> list[str]:
     return problems
 
 
+def gate_claims_run(root: Path) -> list[str]:
+    """Быстрая проверка утверждений внутри гейтов.
+
+    Аудит 29.10: «0 провалов держится на том, что запускать некому». Гейт запускает проверку сам;
+    сетевые и тяжёлые команды в быстром режиме пропускаются, полный прогон остаётся в CI.
+    """
+    import subprocess
+
+    script = root / "bin" / "verify_claims.py"
+    if not script.exists():
+        return ["нет bin/verify_claims.py"]
+    proc = subprocess.run([__import__("sys").executable, str(script), "--fast"],
+                          cwd=str(root), capture_output=True, text=True, timeout=300,
+                          encoding="utf-8", errors="replace")
+    if proc.returncode == 0:
+        return []
+    tail = " ".join((proc.stdout or "").strip().splitlines()[-2:])
+    return [f"verify_claims --fast: {tail[:200]}"]
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run)]
     total = 0
     for name, fn in checks:
         problems = fn(root)

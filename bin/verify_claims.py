@@ -40,6 +40,9 @@ def run_command(cmd: str, timeout: int = 300) -> tuple[str, str, str]:
     """Возвращает (статус, полный вывод, краткая строка)."""
     if not cmd or not re.search(r"\b(python|pytest|git|bash|pwsh|node)\b", cmd):
         return "not-runnable", "", "команда не исполняемая (описание)"
+    if "hs.py gates" in cmd or "verify_claims" in cmd:
+        # самовызов: утверждение не может проверяться той же проверкой, которая его читает
+        return "fail", "", "команда вызывает саму проверку (рекурсия)"
     try:
         proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout,
                               encoding="utf-8", errors="replace", cwd=ROOT)
@@ -50,9 +53,17 @@ def run_command(cmd: str, timeout: int = 300) -> tuple[str, str, str]:
     return ("ok" if proc.returncode == 0 else "fail"), full, tail or ("rc=" + str(proc.returncode))
 
 
+SLOW = ("live", "ping", "probe_api", "live_cases", "replay_archive", "measure_steps",
+        "dist_stats", "patterns.py", "snapshot_stats", "hs.py tools", "selftest", "hs.py run")
+
+
 def main(argv: list[str]) -> int:
     rows = parse()
-    only = argv[0] if argv else None
+    args = [a for a in argv if not a.startswith("--")]
+    fast = "--fast" in argv
+    if fast:
+        rows = [r for r in rows if not any(word in r["cmd"] for word in SLOW)]
+    only = args[0] if args else None
     failed = 0
     for row in rows:
         if only and row["id"] != only:
@@ -70,7 +81,8 @@ def main(argv: list[str]) -> int:
         mark = {"ok": "ok", "fail": "FAIL", "not-runnable": "—"}[status]
         print("[" + mark.ljust(4) + "] " + row["id"] + " " + row["text"][:70])
         print("        " + tail)
-    print("\nутверждений: " + str(len(rows)) + "; провалено: " + str(failed))
+    mark = " (быстрый режим: без сетевых и живых команд)" if fast else ""
+    print("\nутверждений: " + str(len(rows)) + "; провалено: " + str(failed) + mark)
     return 0 if failed == 0 else 1
 
 

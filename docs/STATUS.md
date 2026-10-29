@@ -11,13 +11,13 @@
 
 | область | состояние | проверка |
 |---|---|---|
-| контракты + Boundary | готово | `python tests/test_contracts.py` → 16/16 |
+| контракты + Boundary | готово | `python tests/test_contracts.py` → 20/20 |
 | M1: журнал, артефакты, порядок событий | готово | `python tests/test_m1_journal.py` → 5/5 |
 | прибор: факты, доктор, прогоны, тулчейны, справочник | готово | `python bin/hs.py doctor` |
-| гейты: секреты, утверждения, ссылки, критерии | готово | `python bin/hs.py gates` → 4/4 |
-| реестр критериев | 53 (16 док, 22 замер, 14 суждение, 1 опровергнуто) | `python bin/hs.py criteria` |
-| анализ журналов DSH | 244 сессии, 1594 сообщения | `python bin/mine.py` |
-| матрица портфеля | 28 репозиториев | `python bin/portfolio.py` |
+| гейты: 10 проверок, включая утверждения | готово | `python bin/hs.py gates` → все [ok] |
+| реестр критериев | 165 (см. вывод) | `python bin/hs.py criteria` |
+| анализ журналов DSH | 278 сессий (снимок 29.10.2026) | `python bin/snapshot_stats.py` |
+| матрица портфеля | 25 репозиториев в кэше справочника | `python bin/count.py repos` |
 | решения | ADR-0001…0014 + PRODUCT + VISION | `docs/` |
 | образ и ядро | не начато | ROADMAP H0, H0b |
 
@@ -41,8 +41,8 @@
 
 ```
 cd <репозиторий>
-python bin/hs.py selftest     # 7/7
-python bin/hs.py gates        # 4/4
+python bin/hs.py selftest     # 13 наборов, 18 проверок
+python bin/hs.py gates        # 10 проверок
 python bin/hs.py criteria     # сводка критериев (число печатает сама команда)
 git log --oneline | head -5   # история решений
 ```

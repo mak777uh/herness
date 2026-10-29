@@ -51,12 +51,12 @@ def main(argv: list[str]) -> int:
     if "--check" not in argv:
         return 0
 
-    # ожидания объявлены заранее; допуск 10 % — числа растут вместе с новыми сессиями
+    # ожидания объявлены заранее; допуск снизу 10 %, сверху 60 % — числа растут с новыми сессиями
     expected = {"cd_start": 19386, "venv_python": 14729}
     failed = 0
     for key, value in expected.items():
         got = counts[key]
-        low, high = value * 0.9, value * 1.6
+        low, high = value * 0.9, value * 1.6  # -10 % / +60 %: новые сессии только добавляют
         ok = low <= got <= high
         failed += 0 if ok else 1
         print(f"[{'ok' if ok else 'FAIL'}] {key}: ожидалось ≈{value}, получено {got}")
