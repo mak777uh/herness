@@ -700,6 +700,39 @@ def cmd_report(args) -> int:
     print(str(path))
     return 0
 
+
+def cmd_step(args) -> int:
+    """Один шаг работы: выполнить команду и записать её в журнал как свидетельство.
+
+    Заменяет собой пять команд ручного протоколирования: вызов, исполнение,
+    артефакт, проверка дайджеста, запись результата — всё за один вызов.
+    """
+    sys.path.insert(0, str(ROOT))
+    from core.journal import Journal
+    from core.tools import ShellTool
+
+    run_dir = RUNS / args.run
+    run_dir.mkdir(parents=True, exist_ok=True)
+    journal = Journal(run_dir)
+    try:
+        if not (run_dir / "events.jsonl").exists() or args.start:
+            journal.run_start(args.task or args.run, model="agent")
+        out = ShellTool(Path(args.cwd or ROOT)).run(args.command)
+        call_id = f"step-{int(time.time() * 1000)}"
+        journal.tool_call(call_id, "shell", {"command": args.command})
+        ref = journal.put_artifact(out.text.encode("utf-8"))
+        journal.tool_result(call_id, ref, ok=out.ok, preview=out.text[:600])
+        print(json.dumps({
+            "exit": out.exit_code,
+            "digest": ref.sha256[:16],
+            "bytes": ref.bytes,
+            "artifact": ref.path,
+            "preview": out.text[:300],
+        }, ensure_ascii=False, indent=2))
+        return 0 if out.ok else 1
+    finally:
+        journal.close()
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
@@ -814,6 +847,14 @@ def main(argv: list[str]) -> int:
     p.add_argument("--preview")
     p.set_defaults(func=cmd_record)
 
+    p = sub.add_parser("step", help="выполнить команду и записать её в журнал")
+    p.add_argument("--run", required=True)
+    p.add_argument("--command", required=True)
+    p.add_argument("--task")
+    p.add_argument("--cwd")
+    p.add_argument("--start", action="store_true", help="открыть прогон этим шагом")
+    p.set_defaults(func=cmd_step)
+
     p = sub.add_parser("report", help="собрать report.md из журнала")
     p.add_argument("--run", required=True)
     p.add_argument("--task", required=True)
@@ -850,6 +891,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 
