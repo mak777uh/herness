@@ -382,7 +382,7 @@ def gate_claims(root: Path) -> list[str]:
         cid, text, ctype, cmd, artifact, _date = cells[:6]
         if not cmd or not artifact:
             problems.append(f"CLAIMS.md:{lineno}: {cid} без команды или артефакта")
-        if ctype not in {"proof", "test", "statistics", "observation", "judgment"}:
+        if ctype not in {"proof", "test", "statistics", "observation", "judgment", "withdrawn", "not established"}:
             problems.append(f"CLAIMS.md:{lineno}: {cid} неизвестный тип '{ctype}'")
         if ctype != "proof" and re.search(r"(?i)доказан|гарантир|всегда", text):
             problems.append(f"CLAIMS.md:{lineno}: {cid} формулировка сильнее типа ({ctype})")
@@ -1225,3 +1225,4 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
