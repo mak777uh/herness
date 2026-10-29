@@ -192,3 +192,4 @@
 | K162 | граница корня проверяется через is_relative_to, а не префикс строки | замер | tests/test_tools.py 5/5 | tests/test_tools.py |
 | K163 | гейты исполняются машиной на push, а не только руками | док | .github/workflows/gates.yml | .github/workflows/gates.yml |
 | K164 | модель закреплена: любая другая в профилях или умолчаниях — находка гейта | замер | гейт «модели»: 0 проблем | profiles.json |
+| K165 | аудит чужого репозитория начинается с запуска их стражей и проверки покрытия гейтов, а не с чтения README | док | cross-audit/README.md | cross-audit/README.md |
