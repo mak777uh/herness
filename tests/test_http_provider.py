@@ -45,10 +45,14 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"error":"boom"}')
             return
+        body = SSE_OK.encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(SSE_OK.encode("utf-8"))
+        self.wfile.write(body)
+        self.wfile.flush()
+        self.close_connection = True
 
 
 def _serve():
@@ -105,4 +109,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 

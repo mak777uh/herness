@@ -10,6 +10,7 @@ import json
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
@@ -47,6 +48,13 @@ class OpenAICompatProvider:
         headers.update(self.extra_headers)
         return headers
 
+    def _opener(self):
+        """Локальные адреса идут мимо системного прокси: иначе запрос к себе уходит в прокси-цепочку."""
+        host = urllib.parse.urlparse(self.base_url).hostname or ""
+        if host in {"127.0.0.1", "localhost", "::1"}:
+            return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        return urllib.request.build_opener()
+
     def has_key(self) -> bool:
         return bool(os.environ.get(self.api_key_env, ""))
 
@@ -61,7 +69,8 @@ class OpenAICompatProvider:
 
         started = time.perf_counter()
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            opener = self._opener()
+            with opener.open(request, timeout=self.timeout) as response:
                 status = response.status
                 if stream:
                     chunks = parse_sse(line.decode("utf-8", errors="replace") for line in response)
@@ -89,3 +98,4 @@ class OpenAICompatProvider:
 
 def from_settings(base_url: str, model: str, key_env: str) -> OpenAICompatProvider:
     return OpenAICompatProvider(base_url=base_url, model=model, api_key_env=key_env)
+
