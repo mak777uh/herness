@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from .loop import Step
 from .provider import ModelReply
@@ -86,13 +87,16 @@ SYSTEM_TOOLS = (
     "bin/*.py, core/*.py, tests/*.py, runs/. Пути в read_file — от корня проекта. "
 )
 
-BRIEF = (
-    "Краткая справка о проекте: herness — инструмент, который проверяет утверждения и показывает "
-    "собственную погрешность. Имя составлено из her + harness (впрягать в работу под конкретного "
-    "человека), а не из английского harness напрямую. В репозитории: CLAIMS.md — реестр утверждений "
-    "с командами, docs/CRITERIA.md — критерии, lab/failures — разобранные отказы, runs — журналы "
-    "прогонов. "
-)
+def _brief() -> str:
+    """Справка о проекте — из файла, а не из кода: одно место правки."""
+    path = Path(__file__).resolve().parents[1] / "docs" / "BRIEF.md"
+    if not path.exists():
+        return ""
+    body = path.read_text(encoding="utf-8").strip()
+    return " ".join(body.split())[:1200]
+
+
+BRIEF = _brief()
 
 SYSTEM_PLAIN = (
     "Ты — аналитик в харнессе. Инструментов у тебя НЕТ: вызвать ничего нельзя, любые команды "
@@ -159,6 +163,7 @@ class LiveProvider:
             "tool_call_id": "call",
             "content": ("exit=0\n" if ok else "exit!=0\n") + output[:8000],
         })
+
 
 
 
