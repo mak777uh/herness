@@ -78,3 +78,4 @@
 | C-0052 | Лестница глубины D0-D5 заведена для шести классов; наше положение: ядро D3, сеть D2, память D2, ОС D1, безопасность D1, модели D1 | statistics | `python bin/depths.py` | depths.json | 30.10.2026 | `D3` |
 | C-0053 | Linux 6.18 и 6.12 — LTS с одинаковым EOL 2028-12-31 (endoflife.date); mainline 7.3 без длинной поддержки; выбрано 6.18, резерв 6.12 | observation | `python bin/check_artifacts.py C-0053` | docs/ADR-0033-kernel-choice.md | 30.10.2026 | `2028-12-31` |
 | C-0054 | Карта глубин покрывает 19 классов и все 32 ADR; гейт «глубины» падает при пропуске | test | `python bin/hs.py gates` | depths.json | 30.10.2026 | `глубины: 0 проблем` |
+| C-0055 | Bing без сессии отдаёт заглушку: релевантность 0.0 по трём запросам при статусе 200 и 10 элементах; hs search возвращает decoy | test | `python tests/test_search.py` | tests/test_search.py | 30.10.2026 | `поиск: 5/5 ok` |
