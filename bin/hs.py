@@ -700,6 +700,11 @@ def cmd_live(args) -> int:
 
         routes = routing.route(args.task, top=1)
         class_id = routes[0]["class"] if routes else None
+        if class_id is None and not getattr(args, "force", False):
+            print(json.dumps({"action": "ask", "why": "класс задачи не определён: ни один не похож",
+                              "note": "догадка запрещена, модель не вызывалась"},
+                             ensure_ascii=False, indent=2))
+            return 4
         profile = profiles.for_class(class_id)
         args.model = profile.get("model", args.model)
         args.steps = profile.get("steps", args.steps)
@@ -1343,6 +1348,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 

@@ -125,6 +125,13 @@ class LiveProvider:
         result = self.client.complete(self.messages, tools=TOOL_SPEC if self.use_tools else None,
                                       stream=False)
         reply = getattr(result, "reply", result)
+        if not (reply.text or "").strip() and (reply.finish_reason or "") == "length":
+            # рассуждение съело лимит: один повтор с удвоенным бюджетом, без бесконечных попыток
+            budget = min(getattr(self.client, "max_tokens", 8000) * 2, 32000)
+            self.client.max_tokens = budget
+            result = self.client.complete(self.messages, tools=TOOL_SPEC if self.use_tools else None,
+                                          stream=False)
+        reply = getattr(result, "reply", result)
         self.last = reply
 
         if reply.tool_calls:
@@ -163,6 +170,7 @@ class LiveProvider:
             "tool_call_id": "call",
             "content": ("exit=0\n" if ok else "exit!=0\n") + output[:8000],
         })
+
 
 
 

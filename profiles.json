@@ -1,22 +1,69 @@
 {
   "schemaVersion": 1,
-  "note": "Профиль под класс задачи: модель, режим, лимиты. Замеры — в docs/MODELS.md, не здесь.",
-  "default": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 6, "max_tokens": 8000 },
+  "note": "Модель одна: deepseek-v4.1-flash. Пороги шагов = замер + 2 (runs/step-measure.json, 29.10.2026).",
+  "default": {
+    "model": "deepseek-v4.1-flash",
+    "tools": true,
+    "steps": 6,
+    "max_tokens": 8000
+  },
   "classes": {
-    "T-0001": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 10, "max_tokens": 8000,
-                "why": "разведка: много вызовов чтения и поиска" },
-    "T-0002": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 8, "max_tokens": 8000,
-                "why": "аудит: читает документы через read_file, сверяет с утверждениями" },
-    "T-0003": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 8, "max_tokens": 8000,
-                "why": "правка: читает файл, вносит изменение, проверяет" },
-    "T-0004": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 10, "max_tokens": 8000,
-                "why": "сборка и тесты: длинные команды, нужен запас шагов" },
-    "T-0005": { "model": "deepseek-v4.1-flash", "tools": false, "steps": 1, "max_tokens": 4000,
-                "why": "публикация: решение принимается не моделью, а подтверждением владельца" },
-    "T-0006": { "model": "deepseek-v4.1-flash", "tools": true, "steps": 10, "max_tokens": 8000,
-                "why": "анализ журналов: читает и считает" },
-    "T-0007": { "model": "deepseek-v4.1-flash", "tools": false, "steps": 1, "max_tokens": 4000,
-                "why": "уточнение: ответ без действий" }
+    "T-0001": {
+      "model": "deepseek-v4.1-flash",
+      "tools": true,
+      "steps": 6,
+      "max_tokens": 8000,
+      "why": "разведка: много вызовов чтения и поиска",
+      "steps_measured": 4
+    },
+    "T-0002": {
+      "model": "deepseek-v4.1-flash",
+      "tools": true,
+      "steps": 6,
+      "max_tokens": 8000,
+      "why": "аудит: читает документы через read_file, сверяет с утверждениями",
+      "steps_measured": 4
+    },
+    "T-0003": {
+      "model": "deepseek-v4.1-flash",
+      "tools": true,
+      "steps": 5,
+      "max_tokens": 8000,
+      "why": "правка: читает файл, вносит изменение, проверяет",
+      "steps_measured": 3
+    },
+    "T-0004": {
+      "model": "deepseek-v4.1-flash",
+      "tools": true,
+      "steps": 4,
+      "max_tokens": 8000,
+      "why": "сборка и тесты: длинные команды, нужен запас шагов",
+      "steps_measured": 2
+    },
+    "T-0005": {
+      "model": "deepseek-v4.1-flash",
+      "tools": false,
+      "steps": 1,
+      "max_tokens": 4000,
+      "why": "публикация: решение принимается не моделью, а подтверждением владельца",
+      "steps_measured": 0,
+      "steps_measured_note": "отказ до модели"
+    },
+    "T-0006": {
+      "model": "deepseek-v4.1-flash",
+      "tools": true,
+      "steps": 6,
+      "max_tokens": 8000,
+      "why": "анализ журналов: читает и считает",
+      "steps_measured": 4
+    },
+    "T-0007": {
+      "model": "deepseek-v4.1-flash",
+      "tools": false,
+      "steps": 3,
+      "max_tokens": 4000,
+      "why": "уточнение: ответ без действий",
+      "steps_measured": 1
+    }
   }
 }
-
