@@ -1,0 +1,28 @@
+You are analysing a Postgres schema. Use only what is below.
+
+Schema: sample
+
+Tables
+  sample.accounts(id bigserial PK, balance numeric NOT NULL DEFAULT 0, updated_at timestamptz NOT NULL DEFAULT now())
+
+Functions
+  sample.update_updated_at_column() RETURNS trigger   -- sets NEW.updated_at = now()
+  sample.apply_transfer(p_from bigint, p_to bigint, p_amount numeric) RETURNS void
+      -- UPDATE sample.accounts SET balance = balance - p_amount WHERE id = p_from;
+      -- UPDATE sample.accounts SET balance = balance + p_amount WHERE id = p_to;
+
+Triggers
+  sample_accounts_updated_at BEFORE UPDATE ON sample.accounts
+      FOR EACH ROW EXECUTE FUNCTION sample.update_updated_at_column()
+
+Grants
+  GRANT INSERT, UPDATE ON sample.accounts TO app_rw
+
+Declared control point: the function sample.review_transfer(), which is supposed to be the only way money moves.
+It is called by the HTTP handler for transfers.
+
+QUESTION (q3): Does an update to sample.accounts reach any code that the transfer control point does not see?
+
+Answer with JSON only, and nothing else. Do not explain before or after the JSON:
+{"answers": [{"id": "<the id you were given>", "answer": "...", "bypasses": ["..."]}]}
+List every bypass you believe exists; an empty list is a valid answer.

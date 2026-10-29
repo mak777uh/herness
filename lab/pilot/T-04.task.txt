@@ -1,0 +1,40 @@
+You are analysing a Postgres schema. Use only what is below.
+
+Schema: sample
+
+Tables
+  sample.accounts(id bigserial PK, balance numeric NOT NULL DEFAULT 0, updated_at timestamptz NOT NULL DEFAULT now())
+
+Functions
+  sample.update_updated_at_column() RETURNS trigger   -- sets NEW.updated_at = now()
+  sample.apply_transfer(p_from bigint, p_to bigint, p_amount numeric) RETURNS void
+      -- UPDATE sample.accounts SET balance = balance - p_amount WHERE id = p_from;
+      -- UPDATE sample.accounts SET balance = balance + p_amount WHERE id = p_to;
+
+Triggers
+  sample_accounts_updated_at BEFORE UPDATE ON sample.accounts
+      FOR EACH ROW EXECUTE FUNCTION sample.update_updated_at_column()
+
+Grants
+  GRANT INSERT, UPDATE ON sample.accounts TO app_rw
+
+Declared control point: the function sample.review_transfer(), which is supposed to be the only way money moves.
+It is called by the HTTP handler for transfers.
+
+Inventory of write paths for sample.accounts (produced by the enumerator)
+
+wp_mig_1eb4c43be996 | function      | function:sample.update_updated_at_column | target=sample.accounts | verbs=stmt:INSERT,stmt:UPDATE | attributed to control point: none
+wp_mig_da45f55b3383 | function      | function:sample.apply_transfer           | target=sample.accounts | verbs=stmt:INSERT,stmt:UPDATE | attributed to control point: none
+wp_mig_70b494c6921b | trigger_chain | trigger:sample_accounts_updated_at       | target=table:sample.accounts | verbs=stmt:UPDATE,stmt:INSERT | attributed to control point: none
+wp_mig_9f8ea01ded6f | privilege     | role:app_rw                              | target=table:sample.accounts | verbs=stmt:INSERT,stmt:UPDATE | attributed to control point: none
+wp_mig_096f278a5c3e | observed_write| stmt:UPDATE sample.accounts              | target=table:sample.accounts | verbs=stmt:UPDATE | attributed to control point: none
+
+Verdict for the claim "review_transfer covers every write to accounts": CONSISTENT_DECLARED
+Coverage: 0.0 (no path reaches the declared control point)
+Not claimed: NC-01 (the inventory may be incomplete), NC-02 (nothing outside the scope is safe)
+
+QUESTION (q5): Which of those bypasses would a grader accept as 'the control point covers every write'?
+
+Answer with JSON only:
+{"answers": [{"id": "q1", "answer": "...", "bypasses": ["..."]}]}
+List every bypass you believe exists; an empty list is a valid answer.

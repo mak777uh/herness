@@ -1,0 +1,45 @@
+You are analysing a Postgres schema. Use only what is below.
+
+Schema: sample2
+
+Tables
+  sample2.accounts(id bigserial PK, balance numeric NOT NULL DEFAULT 0)
+
+Views
+  sample2.accounts_v AS SELECT id, balance FROM sample2.accounts
+
+Functions
+  sample2.accounts_v_update() RETURNS trigger
+      -- body: UPDATE sample2.accounts SET balance = NEW.balance WHERE id = NEW.id; RETURN NEW;
+  sample2.set_balance(p_id bigint, p_amount numeric) RETURNS void
+      -- body: UPDATE sample2.accounts SET balance = p_amount WHERE id = p_id;
+      -- declared SECURITY DEFINER
+  sample2.review_transfer(p_from bigint, p_to bigint, p_amount numeric) RETURNS void
+      -- the declared control point: supposed to be the only way money moves
+
+Triggers
+  accounts_v_write INSTEAD OF UPDATE ON sample2.accounts_v
+      FOR EACH ROW EXECUTE FUNCTION sample2.accounts_v_update()
+
+Grants
+  GRANT SELECT, UPDATE ON sample2.accounts_v TO app_rw
+  GRANT EXECUTE ON FUNCTION sample2.set_balance(bigint, numeric) TO app_rw
+
+
+Inventory of write paths for sample2.accounts (produced by the enumerator)
+
+wp_mig_8f1c  function      | function:sample2.accounts_v_update | target=sample2.accounts | verbs=stmt:UPDATE | attr=none
+wp_mig_3e77  function      | function:sample2.set_balance       | target=sample2.accounts | verbs=stmt:UPDATE | security_definer=true | attr=none
+wp_mig_b012  trigger_chain | trigger:accounts_v_write          | target=table:sample2.accounts_v | verbs=stmt:UPDATE | attr=none
+wp_mig_c5a9  view_trigger  | role:app_rw                       | target=table:sample2.accounts | verbs=stmt:SELECT,stmt:UPDATE
+             how: GRANT SELECT, UPDATE ON view sample2.accounts_v TO app_rw; the view is writable and its write lands on sample2.accounts | attr=none
+wp_mig_d4e0  observed_write| stmt:UPDATE sample2.accounts      | target=table:sample2.accounts | verbs=stmt:UPDATE | attr=none
+
+Verdict for "review_transfer covers every write to sample2.accounts": CONSISTENT_DECLARED
+Coverage: 0.0. Not claimed: NC-01 (the inventory may be incomplete), NC-02 (nothing outside the scope is safe).
+
+QUESTION (q5): Would a grader accept 'review_transfer covers every write' on this schema?
+
+Answer with JSON only, nothing before or after:
+{"answers": [{"id": "<id>", "answer": "...", "bypasses": ["..."]}]}
+List every bypass you believe exists; an empty list is valid.

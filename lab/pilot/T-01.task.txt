@@ -1,0 +1,33 @@
+You are analysing a Postgres schema. Use only what is below.
+
+Schema: sample2
+
+Tables
+  sample2.accounts(id bigserial PK, balance numeric NOT NULL DEFAULT 0)
+
+Views
+  sample2.accounts_v AS SELECT id, balance FROM sample2.accounts
+
+Functions
+  sample2.accounts_v_update() RETURNS trigger
+      -- body: UPDATE sample2.accounts SET balance = NEW.balance WHERE id = NEW.id; RETURN NEW;
+  sample2.set_balance(p_id bigint, p_amount numeric) RETURNS void
+      -- body: UPDATE sample2.accounts SET balance = p_amount WHERE id = p_id;
+      -- declared SECURITY DEFINER
+  sample2.review_transfer(p_from bigint, p_to bigint, p_amount numeric) RETURNS void
+      -- the declared control point: supposed to be the only way money moves
+
+Triggers
+  accounts_v_write INSTEAD OF UPDATE ON sample2.accounts_v
+      FOR EACH ROW EXECUTE FUNCTION sample2.accounts_v_update()
+
+Grants
+  GRANT SELECT, UPDATE ON sample2.accounts_v TO app_rw
+  GRANT EXECUTE ON FUNCTION sample2.set_balance(bigint, numeric) TO app_rw
+
+
+QUESTION (q1): Which principals can change sample2.accounts.balance without calling sample2.review_transfer()?
+
+Answer with JSON only, nothing before or after:
+{"answers": [{"id": "<id>", "answer": "...", "bypasses": ["..."]}]}
+List every bypass you believe exists; an empty list is valid.
