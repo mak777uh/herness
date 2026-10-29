@@ -1168,10 +1168,31 @@ def gate_claims_run(root: Path) -> list[str]:
     return [f"verify_claims --fast: {tail[:200]}"]
 
 
+def gate_harnesses(root: Path) -> list[str]:
+    """Реестр харнессов: обязательные поля, уникальные id, разбираемые даты."""
+    path = root / "harnesses.json"
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    problems = []
+    seen = set()
+    for item in data.get("items", []):
+        for field in ("id", "name", "repo", "stars", "license", "last_push", "what", "when"):
+            if not item.get(field) and item.get(field) != 0:
+                problems.append(f"harnesses.json: {item.get('id', '?')} без поля {field}")
+        if item.get("id") in seen:
+            problems.append(f"harnesses.json: дубликат id {item.get('id')}")
+        seen.add(item.get("id"))
+        pushed = str(item.get("last_push", ""))
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", pushed):
+            problems.append(f"harnesses.json: {item.get('id')} дата push {pushed!r} не в формате YYYY-MM-DD")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
