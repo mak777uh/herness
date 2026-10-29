@@ -7,11 +7,18 @@
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import sys
 import urllib.error
 import urllib.request
+
+
+def local_key() -> str:
+    """Ключ из локального файла .secrets/ (в git не попадает, гейтами пропускается)."""
+    path = pathlib.Path(__file__).resolve().parents[1] / ".secrets" / "opencode_go_key"
+    return path.read_text(encoding="utf-8").strip() if path.exists() else ""
 
 
 def from_store(name: str) -> str | None:
@@ -56,7 +63,7 @@ def main() -> int:
     which = sys.argv[1] if len(sys.argv) > 1 else "deepseek"
     name = {"deepseek": "DEEPSEEK_API_KEY", "opencode": "OPENCODE_API_KEY",
             "go": "OPENCODE_GO_API_KEY"}.get(which, "DEEPSEEK_API_KEY")
-    key = from_store(name)
+    key = os.environ.get(name, "") or (local_key() if which == "go" else "") or from_store(name)
     if not key:
         print("ключ " + name + " не найден в хранилище")
         return 2
@@ -75,4 +82,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 

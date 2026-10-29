@@ -28,3 +28,5 @@ research/repos-api.json
 .gh-token
 
 learning.jsonl
+
+.secrets/
