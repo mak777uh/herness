@@ -574,6 +574,31 @@ def cmd_request(args) -> int:
         print(f"[!] противоречия: {'; '.join(req.contradictions)}")
     return 0
 
+
+def cmd_ping(args) -> int:
+    sys.path.insert(0, str(ROOT))
+    from core.http_provider import OpenAICompatProvider
+
+    provider = OpenAICompatProvider(args.base, args.model, args.key_env)
+    if not provider.has_key():
+        print(f"нет ключа в переменной {args.key_env}", file=sys.stderr)
+        return 2
+    try:
+        result = provider.complete([{"role": "user", "content": "ответь одним словом: ok"}],
+                                   stream=not args.no_stream)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[FAIL] {exc}")
+        return 1
+    print(json.dumps({
+        "status": result.status,
+        "latency_ms": result.latency_ms,
+        "chunks": result.raw_chunks,
+        "text": result.reply.text[:80],
+        "usage": result.reply.usage,
+        "model": args.model,
+    }, ensure_ascii=False, indent=2))
+    return 0
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
@@ -620,7 +645,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_audit.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_audit.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -669,6 +694,13 @@ def main(argv: list[str]) -> int:
     sub.add_parser("audit", help="заметки аудита: находки и мнения").set_defaults(func=cmd_audit)
 
     p = sub.add_parser("request", help="проверить разбор запроса")
+    p = sub.add_parser("ping", help="живая проверка провайдера")
+    p.add_argument("--base", required=True)
+    p.add_argument("--model", required=True)
+    p.add_argument("--key-env", default="OPENCODE_API_KEY")
+    p.add_argument("--no-stream", action="store_true")
+    p.set_defaults(func=cmd_ping)
+
     p.add_argument("file", nargs="?")
     p.add_argument("--corpus", action="store_true", help="проверить корпус регрессии")
     p.set_defaults(func=cmd_request)
@@ -695,6 +727,8 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
 
 
 
