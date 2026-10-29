@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-FIELDS = ("id", "date", "what", "class", "principle", "detect", "test", "cost")
+FIELDS = ("id", "date", "what", "class", "principle", "detect", "test", "cost", "trap", "check")
 REQUIRED = ("id", "date", "what", "class", "principle", "detect", "test")
 ID_RE = re.compile(r"^F-\d{4}$")
 LINE = re.compile(r"^([a-z_]+):\s*(.*)$")
@@ -52,3 +52,4 @@ def summary(root: Path) -> dict:
         cls = case.get("class") or "?"
         classes[cls] = classes.get(cls, 0) + 1
     return {"total": len(cases), "classes": classes, "cases": cases}
+
