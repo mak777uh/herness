@@ -599,10 +599,32 @@ def cmd_ping(args) -> int:
     }, ensure_ascii=False, indent=2))
     return 0
 
+
+def gate_failures(root: Path) -> list[str]:
+    sys.path.insert(0, str(ROOT))
+    from core import failures
+    return failures.problems(root)
+
+
+def cmd_failures(args) -> int:
+    sys.path.insert(0, str(ROOT))
+    from core import failures
+
+    data = failures.summary(ROOT)
+    print(f"отказов: {data['total']}")
+    for cls, count in sorted(data["classes"].items(), key=lambda kv: -kv[1]):
+        print(f"  {cls:<20} {count}")
+    for case in data["cases"]:
+        print(f"  {case.get('id')} [{case.get('class')}] {case.get('what','')[:90]}")
+    issues = failures.problems(ROOT)
+    for issue in issues:
+        print(f"  [!] {issue}")
+    return 0 if not issues else 1
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -645,7 +667,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_audit.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_audit.py", "test_failures.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -692,6 +714,7 @@ def main(argv: list[str]) -> int:
     p.set_defaults(func=cmd_bench)
 
     sub.add_parser("audit", help="заметки аудита: находки и мнения").set_defaults(func=cmd_audit)
+    sub.add_parser("failures", help="корпус отказов процесса").set_defaults(func=cmd_failures)
 
     p = sub.add_parser("request", help="проверить разбор запроса")
     p = sub.add_parser("ping", help="живая проверка провайдера")
@@ -727,6 +750,8 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
 
 
 
