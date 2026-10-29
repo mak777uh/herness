@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from core.contracts import Artifact, Boundary, Claim, ContractError, Event, Report, verdict  # noqa: E402
+from core.contracts import Artifact, Boundary, Claim, ContractError, Event, Report, Request, verdict  # noqa: E402
 
 CASES: list[tuple[str, bool, callable]] = []
 
@@ -123,6 +123,32 @@ def _():
 def _():
     Boundary(id="B-0006", owner="ed25519:aaa", version=1, scope="x",
              allow=("read",), not_claimed=("ничего",), expires="31.12.2026").validate()
+@case("разбор запроса с закрытой неопределённостью проходит", False)
+def _():
+    Request(
+        goal="построить ядро M1",
+        defined=("нужен журнал", "нужен артефакт"),
+        undefined=("что делать при обрыве", "какой провайдер"),
+        questions=("какой провайдер?",),
+        experiments=("E-0002",),
+        assumptions=("обрыв — отдельная задача",),
+        next_actions=("написать журнал",),
+    ).validate()
+
+
+@case("разбор без цели — отказ", True)
+def _():
+    Request(goal="", next_actions=("x",)).validate()
+
+
+@case("разбор без действий — отказ", True)
+def _():
+    Request(goal="что-то").validate()
+
+
+@case("неопределённость без закрытия — отказ", True)
+def _():
+    Request(goal="x", undefined=("a", "b", "c"), questions=("a?",), next_actions=("y",)).validate()
 
 def main() -> int:
     failed = 0

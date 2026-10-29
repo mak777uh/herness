@@ -531,6 +531,31 @@ def cmd_audit(args) -> int:
         print(f"  [!] {issue}")
     return 0 if not issues else 1
 
+
+def cmd_request(args) -> int:
+    sys.path.insert(0, str(ROOT))
+    from core.contracts import ContractError, Request
+
+    path = Path(args.file)
+    if not path.exists():
+        print(f"нет файла: {path}", file=sys.stderr)
+        return 2
+    data = json.loads(path.read_text(encoding="utf-8"))
+    kwargs = {k: (tuple(v) if isinstance(v, list) else v) for k, v in data.items()}
+    try:
+        req = Request(**kwargs)
+        req.validate()
+    except (ContractError, TypeError) as exc:
+        print(f"[FAIL] {exc}")
+        return 1
+    print(f"цель: {req.goal}")
+    print(f"определено: {len(req.defined)}  не определено: {len(req.undefined)}")
+    print(f"вопросов: {len(req.questions)}  экспериментов: {len(req.experiments)}  допущений: {len(req.assumptions)}")
+    print(f"действия: {', '.join(req.next_actions)}")
+    if req.contradictions:
+        print(f"[!] противоречия: {'; '.join(req.contradictions)}")
+    return 0
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
@@ -624,6 +649,10 @@ def main(argv: list[str]) -> int:
     p.set_defaults(func=cmd_bench)
 
     sub.add_parser("audit", help="заметки аудита: находки и мнения").set_defaults(func=cmd_audit)
+
+    p = sub.add_parser("request", help="проверить разбор запроса")
+    p.add_argument("file")
+    p.set_defaults(func=cmd_request)
 
     p = sub.add_parser("gates", help="секреты, утверждения, ссылки")
     p.add_argument("--root", default=str(ROOT))

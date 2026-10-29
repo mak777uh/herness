@@ -143,6 +143,37 @@ class Boundary:
 
 
 @dataclass(frozen=True)
+class Request:
+    """Разбор запроса до действия (REQUEST-PROTOCOL).
+
+    Каждая неопределённость обязана быть закрыта вопросом человеку или экспериментом.
+    Молчаливая догадка — нарушение: она превращает неопределённость в ложную уверенность.
+    """
+    goal: str
+    defined: tuple[str, ...] = ()
+    undefined: tuple[str, ...] = ()
+    questions: tuple[str, ...] = ()
+    experiments: tuple[str, ...] = ()
+    assumptions: tuple[str, ...] = ()
+    contradictions: tuple[str, ...] = ()
+    next_actions: tuple[str, ...] = ()
+
+    def validate(self) -> None:
+        if not self.goal.strip():
+            raise ContractError("request.goal: цель не сформулирована")
+        if not self.next_actions:
+            raise ContractError("request.next_actions: разбор без действий не является разбором")
+        if len(self.undefined) > len(self.questions) + len(self.experiments):
+            raise ContractError(
+                f"request: неопределённостей {len(self.undefined)}, а закрытий "
+                f"{len(self.questions) + len(self.experiments)} — часть остаётся догадкой"
+            )
+        for contradiction in self.contradictions:
+            if not contradiction.strip():
+                raise ContractError("request.contradictions: пустая запись")
+
+
+@dataclass(frozen=True)
 class Report:
     """Отчёт прогона. Без границы не существует (P5)."""
     run_id: str
