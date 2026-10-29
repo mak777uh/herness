@@ -50,7 +50,10 @@ def run(task: str, provider: MockProvider, tool, journal: Journal, max_steps: in
             if step.tool:
                 call_id = f"call-{steps}"
                 journal.tool_call(call_id, step.tool.get("name", "?"), step.tool.get("args", {}))
-                out = tool.run(step.tool.get("args", {}).get("command", ""))
+                if hasattr(tool, "dispatch"):
+                    out = tool.dispatch(step.tool.get("name", "shell"), step.tool.get("args", {}))
+                else:
+                    out = tool.run(step.tool.get("args", {}).get("command", ""))
                 ref = journal.put_artifact(out.text.encode("utf-8"))
                 journal.tool_result(call_id, ref, ok=out.ok, preview=out.text[:400])
                 if hasattr(provider, "observe"):
@@ -65,4 +68,5 @@ def run(task: str, provider: MockProvider, tool, journal: Journal, max_steps: in
         journal.close()
 
     return {"steps": steps, "status": status}
+
 

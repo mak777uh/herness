@@ -647,7 +647,7 @@ def cmd_execute(args) -> int:
     from core import report
     from core.journal import Journal
     from core.loop import MockProvider, Step, run as loop_run
-    from core.tools import ShellTool
+    from core.tools import ShellTool, ToolRouter
 
     run_id = datetime.now().strftime("%Y%m%dT%H%M%S") + "-mock"
     run_dir = RUNS / run_id
@@ -679,12 +679,13 @@ def cmd_live(args) -> int:
     from core.journal import Journal
     from core.live import LiveProvider
     from core.loop import run as loop_run
-    from core.tools import ShellTool
+    from core.tools import ShellTool, ToolRouter
 
     extra = {}
     if args.session:
         extra["x-opencode-session"] = args.session
-    client = OpenAICompatProvider(args.base, args.model, args.key_env, extra_headers=extra)
+    client = OpenAICompatProvider(args.base, args.model, args.key_env, extra_headers=extra,
+                                  max_tokens=getattr(args, "max_tokens", 2048))
     if not client.has_key():
         print(f"нет ключа: {args.key_env}", file=sys.stderr)
         return 2
@@ -693,11 +694,12 @@ def cmd_live(args) -> int:
     run_dir = RUNS / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    provider = LiveProvider(client, args.task, max_steps=args.steps)
+    provider = LiveProvider(client, args.task, max_steps=args.steps,
+                            use_tools=not getattr(args, "no_tools", False))
     journal = Journal(run_dir)
     started = time.perf_counter()
     try:
-        result = loop_run(args.task, provider, ShellTool(Path(args.cwd or ROOT)), journal,
+        result = loop_run(args.task, provider, ToolRouter(Path(args.cwd or ROOT)), journal,
                           max_steps=args.steps)
     finally:
         elapsed = round(time.perf_counter() - started, 1)
@@ -844,7 +846,7 @@ def cmd_step(args) -> int:
     """
     sys.path.insert(0, str(ROOT))
     from core.journal import Journal
-    from core.tools import ShellTool
+    from core.tools import ShellTool, ToolRouter
 
     run_dir = RUNS / args.run
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -1238,6 +1240,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("--key-env", default="OPENCODE_GO_API_KEY")
     p.add_argument("--session", default="herness-live")
     p.add_argument("--steps", type=int, default=6)
+    p.add_argument("--max-tokens", type=int, default=2048)
+    p.add_argument("--no-tools", action="store_true", help="L0: отвечать без инструментов")
     p.add_argument("--cwd")
     p.set_defaults(func=cmd_live)
 
@@ -1309,6 +1313,10 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
+
+
 
 
 

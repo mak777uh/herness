@@ -14,7 +14,24 @@ import json
 from .loop import Step
 from .provider import ModelReply
 
-TOOL_SPEC = [{
+TOOL_SPEC = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Прочитать текстовый файл с номерами строк. Без оболочки и кавычек.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "путь от корня проекта"},
+                    "offset": {"type": "integer", "description": "с какой строки (1-based)"},
+                    "limit": {"type": "integer", "description": "сколько строк"},
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
     "type": "function",
     "function": {
         "name": "shell",
@@ -33,13 +50,16 @@ SYSTEM = (
     "Если для ответа нужен факт из среды — вызови его. Если не нужен — ответь текстом. "
     "Не выдумывай вывод команд: если не вызывал, не утверждай, что видел результат. "
     "Точный подсчёт строк в выводе делай сам, а не конструкциями оболочки: find /c капризен. "
+    "Карта проекта: README.md, CLAIMS.md, AGENTS.md, docs/*.md (включая STATUS.md и ROADMAP.md), "
+    "bin/*.py, core/*.py, tests/*.py, runs/. Пути в read_file — от корня проекта, без префикса docs, "
+    "если файл лежит в корне. "
 )
 
 
 class LiveProvider:
     """Обёртка над сетевым провайдером, совместимая с циклом (метод next)."""
 
-    def __init__(self, client, task: str, max_steps: int = 8):
+    def __init__(self, client, task: str, max_steps: int = 8, use_tools: bool = True):
         self.client = client
         self.max_steps = max_steps
         self.messages: list[dict] = [
@@ -48,10 +68,12 @@ class LiveProvider:
         ]
         self.last: ModelReply | None = None
         self.calls = 0
+        self.use_tools = use_tools
 
     def next(self) -> Step:
         self.calls += 1
-        result = self.client.complete(self.messages, tools=TOOL_SPEC, stream=False)
+        result = self.client.complete(self.messages, tools=TOOL_SPEC if self.use_tools else None,
+                                      stream=False)
         reply = getattr(result, "reply", result)
         self.last = reply
 
@@ -72,8 +94,14 @@ class LiveProvider:
                 args = {"command": ""}
             return Step(tool={"name": call.name, "args": args})
 
-        self.messages.append({"role": "assistant", "content": reply.text})
-        return Step(text=reply.text)
+        text = reply.text or ""
+        if not self.use_tools and ("<tool_call" in text.lower() or "invoke name=" in text.lower()):
+            # без схемы инструментов модель изобретает вызов: это надо назвать, а не выдать за ответ
+            text = "[ВЫДУМАННЫЙ ВЫЗОВ: инструментов не было, а модель выдала синтаксис вызова]\n" + text
+        if not text.strip():
+            text = "(пустой ответ модели: лимит токенов или скрытое рассуждение)"
+        self.messages.append({"role": "assistant", "content": text})
+        return Step(text=text)
 
     def observe(self, output: str, ok: bool) -> None:
         """Возвращает модели результат вызова инструмента."""
@@ -82,5 +110,10 @@ class LiveProvider:
             "tool_call_id": "call",
             "content": ("exit=0\n" if ok else "exit!=0\n") + output[:8000],
         })
+
+
+
+
+
 
 
