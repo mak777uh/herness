@@ -12,7 +12,12 @@
   "repos": [
     {
       "name": "flowguard-spec",
-      "branch": "main"
+      "branch": "main",
+      "docs": [
+        "DOSSIER.md",
+        "docs/00-SYNTHESIS.md",
+        "docs/03-EVAL-ROADMAP.md"
+      ]
     },
     {
       "name": "lexspec",
@@ -127,7 +132,8 @@
       "branch": "main",
       "docs": [
         "manuscript/CLAIMS.md",
-        "docs/eliminations.md"
+        "docs/eliminations.md",
+        "docs/decision-log.md"
       ]
     }
   ]
