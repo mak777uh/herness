@@ -28,14 +28,15 @@ def build(run_dir: Path, task: str, claims: list[Claim] | None = None,
     events = read_events(run_dir)
     artifacts = [e for e in events if e["type"] == "tool/result"]
     calls = [e for e in events if e["type"] == "tool/call"]
-    end = next((e for e in events if e["type"] == "run/end"), {"payload": {}})
+    end = next((e for e in events if e["type"] == "run/end"), None)
+    status = end["payload"].get("status", "?") if end else "не закрыт (нет run/end)"
 
     lines = [
         f"# Отчёт прогона: {task}",
         "",
         f"- прогон: `{Path(run_dir).name}`",
         f"- событий: {len(events)}; вызовов инструментов: {len(calls)}",
-        f"- статус: {end['payload'].get('status', '?')}",
+        f"- статус: {status}",
         "",
         "## Свидетельства",
         "",
@@ -76,3 +77,4 @@ def write(run_dir: Path, task: str, claims: list[Claim] | None = None,
     path = Path(run_dir) / "report.md"
     path.write_text(text, encoding="utf-8")
     return path
+
