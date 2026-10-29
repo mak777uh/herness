@@ -26,3 +26,5 @@ research/repos-api.json
 
 # одноразовый токен для публикации — не в git
 .gh-token
+
+learning.jsonl

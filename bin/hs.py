@@ -840,6 +840,44 @@ def cmd_repeats(args) -> int:
     return 0
 
 
+def cmd_route(args) -> int:
+    """Семантическая раскладка задачи по классам и инструментам."""
+    sys.path.insert(0, str(ROOT))
+    from core import routing
+
+    rows = routing.route(args.task, args.top)
+    if not rows:
+        print("нет совпадений: задача не похожа ни на один класс (это тоже ответ)")
+        return 0
+    for row in rows:
+        tools = ", ".join(row["tools"]) or "—"
+        print(f"  {row['class']} {row['name']:<22} score {row['score']:.3f}  инструменты: {tools}")
+    return 0
+
+
+def cmd_learn(args) -> int:
+    """Запись результата и предложение новых классов по накоплению."""
+    sys.path.insert(0, str(ROOT))
+    from core import routing
+
+    if args.propose:
+        proposals = routing.propose_classes(args.min_support)
+        if not proposals:
+            print(f"предложений нет: нужно ≥{args.min_support} успешных задач вне известных классов")
+            return 0
+        for prop in proposals:
+            print(f"  поддержка {prop['support']}; общие термины: {', '.join(prop['shared_terms'])}; "
+                  f"инструменты: {', '.join(prop['tools'])}")
+        return 0
+
+    if not args.task or not args.tool:
+        print("нужны --task и --tool (или --propose)", file=sys.stderr)
+        return 2
+    record = routing.learn(args.task, args.tool, args.cls, not args.fail)
+    print(json.dumps(record, ensure_ascii=False))
+    return 0
+
+
 def cmd_spread(args) -> int:
     """Куда инструменты могут пойти дальше: соседние классы, где выигрыш ещё не проверен."""
     sys.path.insert(0, str(ROOT))
@@ -1030,6 +1068,20 @@ def main(argv: list[str]) -> int:
     p.add_argument("--min-single", type=int, default=3)
     p.add_argument("--min-pair", type=int, default=5)
     p.set_defaults(func=cmd_repeats)
+
+    p = sub.add_parser("route", help="разложить задачу по классам и инструментам")
+    p.add_argument("task")
+    p.add_argument("--top", type=int, default=3)
+    p.set_defaults(func=cmd_route)
+
+    p = sub.add_parser("learn", help="записать результат и предложить новые классы")
+    p.add_argument("--task")
+    p.add_argument("--tool")
+    p.add_argument("--class", dest="cls")
+    p.add_argument("--fail", action="store_true")
+    p.add_argument("--propose", action="store_true")
+    p.add_argument("--min-support", type=int, default=3)
+    p.set_defaults(func=cmd_learn)
 
     p = sub.add_parser("spread", help="перенос инструментов между классами задач")
     p.add_argument("--min-advantage", type=float, default=0.2)
