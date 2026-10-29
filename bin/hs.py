@@ -715,11 +715,16 @@ def cmd_step(args) -> int:
     run_dir.mkdir(parents=True, exist_ok=True)
     journal = Journal(run_dir)
     try:
-        if not (run_dir / "events.jsonl").exists() or args.start:
+        started = (run_dir / "events.jsonl").exists() and (run_dir / "events.jsonl").stat().st_size > 0
+        if not started or args.start:
             journal.run_start(args.task or args.run, model="agent")
-        out = ShellTool(Path(args.cwd or ROOT)).run(args.command)
+        command = args.command or ""
+        if not command:
+            print("нужна команда", file=sys.stderr)
+            return 2
+        out = ShellTool(Path(args.cwd or ROOT)).run(command)
         call_id = f"step-{int(time.time() * 1000)}"
-        journal.tool_call(call_id, "shell", {"command": args.command})
+        journal.tool_call(call_id, "shell", {"command": command})
         ref = journal.put_artifact(out.text.encode("utf-8"))
         journal.tool_result(call_id, ref, ok=out.ok, preview=out.text[:600])
         print(json.dumps({
@@ -849,7 +854,7 @@ def main(argv: list[str]) -> int:
 
     p = sub.add_parser("step", help="выполнить команду и записать её в журнал")
     p.add_argument("--run", required=True)
-    p.add_argument("--command", required=True)
+    p.add_argument("command", nargs="?", help="команда (позиционно, без флагов)")
     p.add_argument("--task")
     p.add_argument("--cwd")
     p.add_argument("--start", action="store_true", help="открыть прогон этим шагом")
@@ -891,6 +896,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 
