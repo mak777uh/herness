@@ -188,6 +188,17 @@ class ToolRouter:
         if name == "list_dir":
             return self.lister.run(args.get("path", ".") or ".", args.get("glob", "*") or "*",
                                    bool(args.get("count", False)))
+        if name == "fetch":
+            from . import webfetch
+
+            result = webfetch.fetch(args.get("url", ""), int(args.get("max_bytes", 200_000) or 200_000))
+            body = result.text[:8000]
+            header = f"HTTP {result.status} kind={result.kind}"
+            if result.truncated:
+                header += " (обрезано)"
+            if result.error:
+                header += f" error={result.error}"
+            return ToolOutput((header + "\n" + body).encode("utf-8"), b"", 0 if result.ok else 1)
         if name == "grep":
             return self.grepper.run(args.get("pattern", ""), args.get("glob", "*.md") or "*.md",
                                     int(args.get("max_results", 0) or 0))

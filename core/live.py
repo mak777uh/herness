@@ -19,6 +19,21 @@ TOOL_SPEC = [
     {
         "type": "function",
         "function": {
+            "name": "fetch",
+            "description": "Забрать страницу по URL (HTTP, без браузера). Не видит JS и капчу.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "адрес http/https"},
+                    "max_bytes": {"type": "integer", "description": "лимит байтов"},
+                },
+                "required": ["url"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_dir",
             "description": "Перечислить каталог или посчитать файлы по маске. Для подсчётов используй count=true.",
             "parameters": {
