@@ -821,6 +821,50 @@ def cmd_step(args) -> int:
         journal.close()
 
 
+def cmd_repeats(args) -> int:
+    """Кандидаты в процедуры: что повторяется в журналах и сколько шагов это стоит."""
+    sys.path.insert(0, str(ROOT))
+    from core import repeats
+
+    if args.sessions:
+        single, pairs = repeats.scan_sessions(args.limit)
+        source = f"сессии (выборка {args.limit or 'все'})"
+    else:
+        single, pairs = repeats.scan_runs(RUNS)
+        source = "наши прогоны"
+    cands = repeats.candidates(single, pairs, args.min_single, args.min_pair)
+    print(f"источник: {source}; вызовов: {sum(single.values())}; кандидатов: {len(cands)}")
+    for c in cands[: args.top]:
+        mark = "связка" if c["kind"] == "pair" else "команда"
+        print(f"  ×{c['count']:<6} {mark:<8} {c['what']}")
+    return 0
+
+
+def cmd_procs(args) -> int:
+    """Реестр процедур: что кристаллизовано и чем проверяется."""
+    path = ROOT / "procedures.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    rows = data.get("procedures", [])
+    problems = []
+    seen = set()
+    for row in rows:
+        pid = row.get("id", "")
+        if pid in seen:
+            problems.append(f"дубликат id {pid}")
+        seen.add(pid)
+        for field in ("id", "name", "what", "selftest", "status"):
+            if not row.get(field):
+                problems.append(f"{pid}: нет поля {field}")
+        if row.get("status") not in {"active", "candidate", "retired"}:
+            problems.append(f"{pid}: неизвестный статус {row.get('status')!r}")
+    print(f"процедур: {len(rows)}")
+    for row in rows:
+        print(f"  {row.get('id')} [{row.get('status'):<9}] {row.get('name'):<16} заменяет: {str(row.get('replaces'))[:60]}")
+    for issue in problems:
+        print(f"  [!] {issue}")
+    return 0 if not problems else 1
+
+
 def cmd_plan(args) -> int:
     sys.path.insert(0, str(ROOT))
     from core import plan as planner
@@ -843,10 +887,23 @@ def cmd_plan(args) -> int:
     print(json.dumps(planner.plan(args.request), ensure_ascii=False, indent=2))
     return 0
 
+def gate_procs(root: Path) -> list[str]:
+    path = root / "procedures.json"
+    if not path.exists():
+        return ["нет procedures.json"]
+    data = json.loads(path.read_text(encoding="utf-8"))
+    out = []
+    for row in data.get("procedures", []):
+        for field in ("id", "name", "what", "selftest", "status"):
+            if not row.get(field):
+                out.append(f"procedures.json: {row.get('id', '?')} без поля {field}")
+    return out
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -947,6 +1004,16 @@ def main(argv: list[str]) -> int:
     p.add_argument("task")
     p.add_argument("--steps", type=int, default=8)
     p.set_defaults(func=cmd_execute)
+
+    p = sub.add_parser("repeats", help="кандидаты в процедуры по журналам")
+    p.add_argument("--sessions", action="store_true", help="сканировать сессии DSH (медленно)")
+    p.add_argument("--limit", type=int, default=0)
+    p.add_argument("--top", type=int, default=15)
+    p.add_argument("--min-single", type=int, default=3)
+    p.add_argument("--min-pair", type=int, default=5)
+    p.set_defaults(func=cmd_repeats)
+
+    sub.add_parser("procs", help="реестр процедур").set_defaults(func=cmd_procs)
 
     p = sub.add_parser("py", help="запустить Python проекта (venv + UTF-8)")
     p.add_argument("target", nargs="?")

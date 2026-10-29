@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "note": "Процедуры, выведенные из повторов (ADR-0023). Каждая обязана иметь selftest.",
+  "procedures": [
+    {
+      "id": "P-0001",
+      "name": "cwd_normalized",
+      "what": "ведущий `cd <dir>;` в команде перехватывается и становится рабочим каталогом шага",
+      "replaces": "cd <dir>; <команда>",
+      "detected": 19386,
+      "where": "bin/hs.py: cmd_step",
+      "selftest": "python bin/hs.py step --run selftest-cd \"cd C:\\111\\harness; echo ok\" → cwd_normalized: true",
+      "status": "active"
+    },
+    {
+      "id": "P-0002",
+      "name": "hs py",
+      "what": "запуск Python проекта: сам выбирает venv-интерпретатор, ставит UTF-8",
+      "replaces": "$py=\"...\\python.exe\"; $env:PYTHONIOENCODING='utf-8'; & $py <файл>",
+      "detected": 14729,
+      "where": "bin/hs.py: cmd_py",
+      "selftest": "python bin/hs.py py --code \"print('ok')\" → ok",
+      "status": "active"
+    }
+  ]
+}
