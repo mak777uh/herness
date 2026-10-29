@@ -671,6 +671,48 @@ def cmd_execute(args) -> int:
     return 0
 
 
+def cmd_live(args) -> int:
+    """Живой прогон нашим циклом: модель → инструмент → журнал → артефакт → отчёт."""
+    sys.path.insert(0, str(ROOT))
+    from core import report
+    from core.http_provider import OpenAICompatProvider
+    from core.journal import Journal
+    from core.live import LiveProvider
+    from core.loop import run as loop_run
+    from core.tools import ShellTool
+
+    extra = {}
+    if args.session:
+        extra["x-opencode-session"] = args.session
+    client = OpenAICompatProvider(args.base, args.model, args.key_env, extra_headers=extra)
+    if not client.has_key():
+        print(f"нет ключа: {args.key_env}", file=sys.stderr)
+        return 2
+
+    run_id = datetime.now().strftime("%Y%m%dT%H%M%S") + "-live"
+    run_dir = RUNS / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    provider = LiveProvider(client, args.task, max_steps=args.steps)
+    journal = Journal(run_dir)
+    started = time.perf_counter()
+    try:
+        result = loop_run(args.task, provider, ShellTool(Path(args.cwd or ROOT)), journal,
+                          max_steps=args.steps)
+    finally:
+        elapsed = round(time.perf_counter() - started, 1)
+
+    boundaries = (
+        f"живой прогон: модель {args.model}, шагов {result['steps']}, время {elapsed}s",
+        "ответ модели не проверялся третьей стороной: это её вывод, а не факт о мире",
+        "вывод инструментов записан как артефакт, но его истинность не проверялась",
+    )
+    path = report.write(run_dir, args.task, boundaries=boundaries)
+    print(json.dumps({"run": run_id, "status": result["status"], "steps": result["steps"],
+                      "seconds": elapsed, "report": str(path)}, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_record(args) -> int:
     """Записать событие в журнал прогона (для работы агента руками)."""
     sys.path.insert(0, str(ROOT))
@@ -1090,7 +1132,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1189,6 +1231,16 @@ def main(argv: list[str]) -> int:
     p.add_argument("--cwd")
     p.set_defaults(func=cmd_py)
 
+    p = sub.add_parser("live", help="живой прогон: модель, инструмент, журнал, отчёт")
+    p.add_argument("task")
+    p.add_argument("--base", default="https://opencode.ai/inference/go/openai/v1")
+    p.add_argument("--model", default="deepseek-v4.1-flash")
+    p.add_argument("--key-env", default="OPENCODE_GO_API_KEY")
+    p.add_argument("--session", default="herness-live")
+    p.add_argument("--steps", type=int, default=6)
+    p.add_argument("--cwd")
+    p.set_defaults(func=cmd_live)
+
     p = sub.add_parser("record", help="записать событие в журнал прогона")
     p.add_argument("--run", required=True)
     p.add_argument("--type", default="note")
@@ -1257,6 +1309,8 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
 
 
 

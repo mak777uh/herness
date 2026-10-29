@@ -16,7 +16,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-from .provider import ModelReply, StreamError, assemble, parse_sse
+from .provider import ModelReply, StreamError, ToolCall, assemble, parse_sse
 
 
 @dataclass
@@ -35,29 +35,38 @@ class OpenAICompatProvider:
     """
 
     def __init__(self, base_url: str, model: str, api_key_env: str,
-                 timeout: int = 120, extra_headers: dict | None = None):
+                 timeout: int = 120, extra_headers: dict | None = None,
+                 max_tokens: int = 1024):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.api_key_env = api_key_env
         self.timeout = timeout
         self.extra_headers = extra_headers or {}
+        self.max_tokens = max_tokens
 
     def _key(self) -> str:
-        """Ключ из окружения или из хранилища DSH по имени `store:ИМЯ`.
+        """Ключ: окружение → локальный `.secrets/<имя>` → хранилище DSH (`store:ИМЯ`).
 
         Значение не печатается и не логируется: наружу выходит только отпечаток, если спросят.
         """
         name = self.api_key_env
-        if not name.startswith("store:"):
-            return os.environ.get(name, "")
-        target = name.split(":", 1)[1]
-        path = Path.home() / ".dsh" / ".credentials.yaml"
-        if not path.exists():
+        if name.startswith("store:"):
+            target = name.split(":", 1)[1]
+            path = Path.home() / ".dsh" / ".credentials.yaml"
+            if not path.exists():
+                return ""
+            for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                match = re.match(r"^\s*" + re.escape(target) + r"\s*:\s*(.+)$", line)
+                if match:
+                    return match.group(1).strip().strip("\"'")
             return ""
-        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-            match = re.match(r"^\s*" + re.escape(target) + r"\s*:\s*(.+)$", line)
-            if match:
-                return match.group(1).strip().strip("\"'")
+
+        from_env = os.environ.get(name, "")
+        if from_env:
+            return from_env
+        local = Path(__file__).resolve().parents[1] / ".secrets" / name.lower()
+        if local.exists():
+            return local.read_text(encoding="utf-8").strip()
         return ""
 
     def _headers(self) -> dict:
@@ -82,7 +91,8 @@ class OpenAICompatProvider:
         return bool(self._key())
 
     def complete(self, messages, tools=None, stream: bool = True) -> HttpResult:
-        payload = {"model": self.model, "messages": messages, "stream": stream}
+        payload = {"model": self.model, "messages": messages, "stream": stream,
+                   "max_tokens": self.max_tokens}
         if tools:
             payload["tools"] = tools
         body = json.dumps(payload).encode("utf-8")
@@ -102,8 +112,14 @@ class OpenAICompatProvider:
                 else:
                     data = json.loads(response.read().decode("utf-8"))
                     choice = (data.get("choices") or [{}])[0]
+                    message = choice.get("message") or {}
+                    raw_calls = message.get("tool_calls") or []
                     reply = ModelReply(
-                        text=(choice.get("message") or {}).get("content") or "",
+                        text=message.get("content") or "",
+                        tool_calls=[ToolCall(id=call.get("id", ""),
+                                             name=(call.get("function") or {}).get("name", ""),
+                                             arguments=(call.get("function") or {}).get("arguments", ""))
+                                    for call in raw_calls],
                         usage=data.get("usage") or {},
                         finish_reason=choice.get("finish_reason"),
                     )
@@ -121,5 +137,7 @@ class OpenAICompatProvider:
 
 def from_settings(base_url: str, model: str, key_env: str) -> OpenAICompatProvider:
     return OpenAICompatProvider(base_url=base_url, model=model, api_key_env=key_env)
+
+
 
 
