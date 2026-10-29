@@ -752,6 +752,12 @@ def cmd_plan(args) -> int:
     sys.path.insert(0, str(ROOT))
     from core import plan as planner
 
+    if args.compare:
+        data = json.load(open(ROOT / "research" / "sessions" / "digest.json", encoding="utf-8"))
+        samples = [s for s in data.get("task_samples", []) if len(s) > 40][:args.limit or 100]
+        print(json.dumps(planner.compare(samples), ensure_ascii=False, indent=2))
+        return 0
+
     if args.stats:
         data = json.load(open(ROOT / "research" / "sessions" / "digest.json", encoding="utf-8"))
         samples = [s for s in data.get("task_samples", []) if len(s) > 40][:args.limit or 100]
@@ -896,6 +902,7 @@ def main(argv: list[str]) -> int:
     p = sub.add_parser("plan", help="раскладка запроса на типы и уровень")
     p.add_argument("request", nargs="?")
     p.add_argument("--stats", action="store_true", help="точность распознавания на журналах")
+    p.add_argument("--compare", action="store_true", help="насколько правила отличаются от всегда-L1")
     p.add_argument("--limit", type=int, default=100)
     p.set_defaults(func=cmd_plan)
 
@@ -928,6 +935,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 

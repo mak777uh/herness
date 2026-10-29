@@ -70,3 +70,31 @@ def summarize(texts: list[str]) -> dict:
 
 def _strip(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+def compare(texts: list[str]) -> dict:
+    """Насколько правила отличаются от «всегда L1»: верхняя граница их пользы."""
+    total = len(texts)
+    same = 0
+    lower = 0
+    higher = 0
+    unknown = 0
+    for text in texts:
+        result = plan(text)
+        if result["unknown"]:
+            unknown += 1
+            continue
+        level = result["level"]
+        if level == "L1":
+            same += 1
+        elif LEVEL_ORDER[level] < 1:
+            lower += 1
+        else:
+            higher += 1
+    return {
+        "total": total,
+        "rules_unknown": unknown,
+        "rules_l1": same,
+        "rules_lower_than_l1": lower,
+        "rules_higher_than_l1": higher,
+        "differ_pct": round(100 * (lower + higher) / total, 1) if total else 0,
+    }
