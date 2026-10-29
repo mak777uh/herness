@@ -1129,10 +1129,29 @@ def gate_readme_numbers(root: Path) -> list[str]:
     return problems
 
 
+PINNED_MODEL = "deepseek-v4.1-flash"
+
+
+def gate_models(root: Path) -> list[str]:
+    """Модель закреплена: любая другая в профилях или умолчаниях — находка."""
+    problems = []
+    profiles_path = root / "profiles.json"
+    if profiles_path.exists():
+        data = json.loads(profiles_path.read_text(encoding="utf-8"))
+        default = (data.get("default") or {}).get("model")
+        if default and default != PINNED_MODEL:
+            problems.append(f"profiles.json: default {default!r} вместо {PINNED_MODEL!r}")
+        for key, profile in (data.get("classes") or {}).items():
+            model = profile.get("model")
+            if model and model != PINNED_MODEL:
+                problems.append(f"profiles.json: {key} использует {model!r}")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
