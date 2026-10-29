@@ -44,15 +44,21 @@ TOOL_SPEC = [
     },
 }]
 
-SYSTEM = (
+SYSTEM_TOOLS = (
     "Ты — исполнитель в харнессе. Среда: Windows, команды идут в cmd.exe (bash-конструкции "
-    "вроде ls/find/wc недоступны). У тебя есть один инструмент: shell. "
-    "Если для ответа нужен факт из среды — вызови его. Если не нужен — ответь текстом. "
+    "вроде ls/find/wc недоступны). У тебя два инструмента: shell и read_file. "
+    "Если для ответа нужен факт из среды — вызови инструмент. Если не нужен — ответь текстом. "
     "Не выдумывай вывод команд: если не вызывал, не утверждай, что видел результат. "
     "Точный подсчёт строк в выводе делай сам, а не конструкциями оболочки: find /c капризен. "
     "Карта проекта: README.md, CLAIMS.md, AGENTS.md, docs/*.md (включая STATUS.md и ROADMAP.md), "
-    "bin/*.py, core/*.py, tests/*.py, runs/. Пути в read_file — от корня проекта, без префикса docs, "
-    "если файл лежит в корне. "
+    "bin/*.py, core/*.py, tests/*.py, runs/. Пути в read_file — от корня проекта. "
+)
+
+SYSTEM_PLAIN = (
+    "Ты — аналитик в харнессе. Инструментов у тебя НЕТ: вызвать ничего нельзя, любые команды "
+    "и чтения файлов недоступны. Отвечай только тем, что дано в задаче. "
+    "Если данных не хватает — так и скажи, не выдумывай. "
+    "Запрещено выдавать синтаксис вызова инструмента: его не существует. "
 )
 
 
@@ -63,7 +69,7 @@ class LiveProvider:
         self.client = client
         self.max_steps = max_steps
         self.messages: list[dict] = [
-            {"role": "system", "content": SYSTEM},
+            {"role": "system", "content": SYSTEM_TOOLS if use_tools else SYSTEM_PLAIN},
             {"role": "user", "content": task},
         ]
         self.last: ModelReply | None = None
@@ -99,7 +105,10 @@ class LiveProvider:
             # без схемы инструментов модель изобретает вызов: это надо назвать, а не выдать за ответ
             text = "[ВЫДУМАННЫЙ ВЫЗОВ: инструментов не было, а модель выдала синтаксис вызова]\n" + text
         if not text.strip():
-            text = "(пустой ответ модели: лимит токенов или скрытое рассуждение)"
+            usage = getattr(reply, "usage", {}) or {}
+            text = ("(пустой ответ модели: finish={0}, completion_tokens={1}; "
+                    "рассуждение считается в лимит max_tokens)".format(
+                        getattr(reply, "finish_reason", "?"), usage.get("completion_tokens", "?")))
         self.messages.append({"role": "assistant", "content": text})
         return Step(text=text)
 
@@ -110,6 +119,8 @@ class LiveProvider:
             "tool_call_id": "call",
             "content": ("exit=0\n" if ok else "exit!=0\n") + output[:8000],
         })
+
+
 
 
 

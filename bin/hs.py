@@ -1240,7 +1240,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--key-env", default="OPENCODE_GO_API_KEY")
     p.add_argument("--session", default="herness-live")
     p.add_argument("--steps", type=int, default=6)
-    p.add_argument("--max-tokens", type=int, default=2048)
+    p.add_argument("--max-tokens", type=int, default=8000)
     p.add_argument("--no-tools", action="store_true", help="L0: отвечать без инструментов")
     p.add_argument("--cwd")
     p.set_defaults(func=cmd_live)
@@ -1313,6 +1313,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 
