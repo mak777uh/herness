@@ -434,6 +434,15 @@ def cmd_refs(args) -> int:
             return 2
         print(refs.render_search(args.query, args.k))
         return 0
+    if args.action == "watch":
+        before = refs.snapshot()
+        stats = refs.sync(args.repo)
+        changes = refs.diff(before, refs.snapshot())
+        print(json.dumps({"fetched": stats["fetched"], "changes": len(changes)}, ensure_ascii=False))
+        for c in changes:
+            print(f"  {c['status']:<10} {c['source']}/{c['doc']}  {c['from']} -> {c['to']}")
+        return 0
+
     if args.action == "list":
         for row in refs.summary():
             print(f"{row['id']:<28} документов {row['docs']:<2} {row['bytes']:>7} b  {', '.join(row['docs_list'])}")
@@ -879,7 +888,7 @@ def main(argv: list[str]) -> int:
     p.set_defaults(func=cmd_gates)
 
     p = sub.add_parser("refs", help="справочник: репозитории и внешние источники")
-    p.add_argument("action", choices=["sync", "search", "list", "add"])
+    p.add_argument("action", choices=["sync", "search", "list", "add", "watch"])
     p.add_argument("query", nargs="?")
     p.add_argument("-k", type=int, default=8)
     p.add_argument("--repo", nargs="*", help="только эти источники")
@@ -896,6 +905,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 

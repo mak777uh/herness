@@ -102,7 +102,7 @@ def sync(only: list[str] | None = None) -> dict:
         name = repo["name"]
         if only and name not in only:
             continue
-        for doc in pf["docs"]:
+        for doc in list(pf["docs"]) + list(repo.get("docs", [])):
             url = RAW.format(owner=pf["owner"], repo=name, branch=repo.get("branch", "main"), path=doc)
             try:
                 body = _fetch(url)
@@ -228,3 +228,26 @@ def render_search(query: str, k: int = 8, as_json: bool = False) -> str:
         lines.append(f"{i}. {hit['source']}/{hit['doc']}  (score {hit['score']})")
         lines.append(f"   {hit['snippet']}")
     return "\n".join(lines)
+
+def snapshot() -> dict:
+    """Снимок дайджестов: что мы видели в прошлый раз."""
+    index = load_index()
+    return {src: {doc: meta.get("sha") for doc, meta in docs.items()} for src, docs in index.items()}
+
+
+def diff(before: dict, after: dict) -> list[dict]:
+    """Сравнивает два снимка: появилось, изменилось, исчезло."""
+    changes = []
+    for src in sorted(set(before) | set(after)):
+        old = before.get(src, {})
+        new = after.get(src, {})
+        for doc in sorted(set(old) | set(new)):
+            a, b = old.get(doc), new.get(doc)
+            if a is None:
+                changes.append({"source": src, "doc": doc, "status": "новый", "from": None, "to": b})
+            elif b is None:
+                changes.append({"source": src, "doc": doc, "status": "исчез", "from": a, "to": None})
+            elif a != b:
+                changes.append({"source": src, "doc": doc, "status": "изменился", "from": a, "to": b})
+    return changes
+
