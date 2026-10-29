@@ -996,10 +996,34 @@ def gate_wording(root: Path) -> list[str]:
                 problems.append(f"CLAIMS.md:{lineno}: {cid} — слово «{word}» при типе {ctype!r}")
     return problems
 
+def gate_readme_numbers(root: Path) -> list[str]:
+    """Документ не сильнее дерева: число в README обязано иметь владельца в CLAIMS.md.
+
+    Механизм из портфеля (VecDHT check-status-claims): строка, утверждающая наличие, требует
+    доказательства; строка, которая сильнее дерева, — находка.
+    """
+    readme = root / "README.md"
+    claims = root / "CLAIMS.md"
+    if not readme.exists() or not claims.exists():
+        return []
+    body = claims.read_text(encoding="utf-8")
+    problems = []
+    for lineno, line in enumerate(readme.read_text(encoding="utf-8").splitlines(), 1):
+        for match in re.finditer(r"\b(\d{1,4})\b", line):
+            value = match.group(1)
+            number = int(value)
+            if 2020 <= number <= 2030:
+                continue
+            if value in body or str(number) in body:
+                continue
+            problems.append(f"README.md:{lineno}: число {value} без владельца в CLAIMS.md")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
