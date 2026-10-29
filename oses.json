@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "checked_at": "2026-10-30",
-  "note": "Реестр ОС, сведённый из четырёх ответов на P14. Клетки с 'split' — модели расходятся; это главный результат, а не шум. Проверка первоисточников не сделана: сеть недоступна. Проверено напрямую 30.10.2026: lean4 в Guix (200), lean4 в Fedora (404), EOL NixOS 26.05 = 2026-12-31. Не проверено: openSUSE (403), Debian python3.13 (капча). Опровергнуто: утверждение «Ubuntu 26.04 вышла» — страница releases.ubuntu.com показывает до 24.04.4.",
+  "note": "Реестр ОС, сведённый из четырёх ответов на P14. Клетки с 'split' — модели расходятся; это главный результат, а не шум. Проверка первоисточников не сделана: сеть недоступна. Проверено напрямую 30.10.2026: lean4 в Guix (200), lean4 в Fedora (404), EOL NixOS 26.05 = 2026-12-31. Не проверено: openSUSE (403), Debian python3.13 (капча). Опровергнуто: утверждение «Ubuntu 26.04 вышла» — страница releases.ubuntu.com показывает до 24.04.4. P15 (30.10.2026): openSUSE — lean4 только в science; Debian 13 — python 3.13 по умолчанию; RHEL — откат через LVM-снапшот, dnf history только пакеты.",
   "confidence_note": "unanimous — совпали все; majority — большинство; split — расходятся; ours — проверено нами локально; none — нет данных",
   "items": [
     {
@@ -71,8 +71,8 @@
       "libc": "glibc",
       "init": "systemd",
       "complexity": "3",
-      "lean4": "**расхождение**: репо (4.27.0) против «только elan»",
-      "lean4_conf": "split",
+      "lean4": "нет в официальном OSS-репо; сторонний science 4.15.0",
+      "lean4_conf": "majority",
       "rust": "репо (один ответ)",
       "python313": "репо (один ответ)",
       "postgres": "репо",
@@ -97,8 +97,8 @@
       "libc": "glibc",
       "init": "systemd",
       "complexity": "2",
-      "lean4": "нет данных / elan",
-      "lean4_conf": "split",
+      "lean4": "нет в официальном репо; сторонний science 4.15.0",
+      "lean4_conf": "majority",
       "rust": "нет данных",
       "python313": "нет (в Leap 16 не официальный)",
       "postgres": "репо",
@@ -123,8 +123,8 @@
       "libc": "glibc",
       "init": "systemd",
       "complexity": "3",
-      "lean4": "нет в репо; elan (или COPR — один ответ)",
-      "lean4_conf": "split",
+      "lean4": "нет в официальном репо; COPR petersen/lean4",
+      "lean4_conf": "majority",
       "rust": "нет данных",
       "python313": "нет данных",
       "postgres": "нет данных",
@@ -176,14 +176,15 @@
       "lean4": "нет в репо; elan",
       "lean4_conf": "majority",
       "rust": "репо 1.85 (один ответ)",
-      "python313": "репо 3.13 (два ответа)",
+      "python313": "репо 3.13.5 (по умолчанию)",
       "postgres": "репо 17 (один) / 16+",
       "zstd": "нет данных",
       "git": "репо",
       "docker": "репо docker.io",
       "sources": [
         "https://www.debian.org/releases/trixie/"
-      ]
+      ],
+      "python313_conf": "majority"
     },
     {
       "id": "ubuntu",
@@ -215,9 +216,9 @@
       "id": "rhel",
       "name": "RHEL 9 / Rocky 9",
       "version": "9.x",
-      "rollback": "расхождение: dnf history против boom boot entries",
+      "rollback": "LVM-снапшот для системы; boom — загрузочные записи; dnf history undo — только пакеты",
       "rollback_cmd": "dnf history undo <id> / boom create",
-      "rollback_conf": "split",
+      "rollback_conf": "majority",
       "reproducible": "частично (Ansible/Kickstart)",
       "repro_conf": "majority",
       "support": "10 лет; Rocky security до 2032-05-31",

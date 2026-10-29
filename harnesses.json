@@ -157,10 +157,10 @@
       "state": "есть",
       "tools": "есть",
       "permissions": "есть",
-      "secrets": "есть",
+      "secrets": "есть: Secret Registry маскирует значения в выводе (проверено нами по доке)",
       "recovery": "есть",
       "evidence": "частично",
-      "budget": "нет данных",
+      "budget": "спорно: заявлен max_budget_per_task, на странице настроек не найден",
       "multiagent": "есть",
       "signals": {
         "P4": 4,
@@ -176,7 +176,8 @@
         "P5": "есть",
         "P9": "частично",
         "P11": "есть",
-        "P10": "нет"
+        "P10": "нет",
+        "P6": "есть"
       }
     },
     {
@@ -193,7 +194,7 @@
       "tools": "есть",
       "permissions": "есть",
       "secrets": "нет данных",
-      "recovery": "есть",
+      "recovery": "спорно: shadow-git чекпойнты после каждого вызова (заявлено)",
       "evidence": "частично",
       "budget": "нет данных",
       "multiagent": "нет",
@@ -298,7 +299,7 @@
       "tools": "есть",
       "permissions": "частично",
       "secrets": "нет данных",
-      "recovery": "есть",
+      "recovery": "спорно: from_checkpoint без повторного выполнения задач (заявлено)",
       "evidence": "частично",
       "budget": "есть",
       "multiagent": "есть",
@@ -351,7 +352,8 @@
         "P5": "есть",
         "P9": "есть",
         "P11": "есть",
-        "P10": "частично"
+        "P10": "частично",
+        "P3": "спорно: заявлен GOOSE_ENABLE_ROUTER (tool selection strategy)"
       }
     },
     {
@@ -650,7 +652,7 @@
       "secrets": "нет данных",
       "recovery": "частично",
       "evidence": "частично",
-      "budget": "есть",
+      "budget": "спорно: заявлены per_instance_cost_limit / total_cost_limit (страница не открылась)",
       "multiagent": "нет",
       "signals": {
         "P4": 12,
