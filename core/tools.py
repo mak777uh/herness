@@ -1,17 +1,22 @@
-"""Инструменты цикла: оболочка, чтение файла и маршрутизатор по имени.
+"""Инструменты цикла: оболочка, чтение файла, поиск по шаблону и маршрутизатор.
 
 Зачем читалка: на живом прогоне модель потратила все шаги на борьбу с кавычками в `findstr`
-и `python -c`, вместо того чтобы читать документ. Инструмент должен соответствовать задаче,
-иначе модель тратит шаги на сантехнику.
+и `python -c`, вместо того чтобы читать документ.
+
+Зачем поиск: сверка «где это сказано» — это регексп по файлам, а не оболочка. С `grep` модель
+делает один вызов вместо трёх-четырёх попыток с кавычками.
 """
 
 from __future__ import annotations
 
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
 IS_WIN = __import__("sys").platform == "win32"
+
+SKIP_DIRS = {".git", "runs", "refs-cache", "node_modules", "__pycache__", ".secrets", "home", ".venv"}
 
 
 @dataclass
@@ -77,6 +82,46 @@ class ReadTool:
         return ToolOutput((body + tail).encode("utf-8"), b"", 0)
 
 
+class GrepTool:
+    """Поиск регекспа по файлам: выдаёт путь, номер строки и саму строку."""
+
+    name = "grep"
+
+    def __init__(self, root: Path, max_results: int = 120):
+        self.root = Path(root)
+        self.max_results = max_results
+
+    def run(self, pattern: str, glob: str = "*.md", max_results: int = 0) -> ToolOutput:
+        try:
+            regex = re.compile(pattern)
+        except re.error as exc:
+            return ToolOutput(b"", f"плохой шаблон: {exc}".encode(), 2)
+
+        limit = max_results or self.max_results
+        hits: list[str] = []
+        for path in sorted(self.root.rglob(glob)):
+            if any(part in SKIP_DIRS for part in path.parts):
+                continue
+            if not path.is_file():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for number, line in enumerate(text.splitlines(), 1):
+                if regex.search(line):
+                    rel = path.relative_to(self.root)
+                    hits.append(f"{rel}:{number}: {line.strip()[:200]}")
+                    if len(hits) >= limit:
+                        break
+            if len(hits) >= limit:
+                break
+
+        if not hits:
+            return ToolOutput("(совпадений нет)".encode("utf-8"), b"", 0)
+        return ToolOutput("\n".join(hits).encode("utf-8"), b"", 0)
+
+
 class ToolRouter:
     """Маршрутизация вызова по имени инструмента: цикл отдаёт имя и аргументы."""
 
@@ -84,6 +129,7 @@ class ToolRouter:
         self.root = Path(root)
         self.shell = ShellTool(self.root)
         self.reader = ReadTool(self.root)
+        self.grepper = GrepTool(self.root)
 
     def run(self, command: str) -> ToolOutput:
         """Совместимость с mock-циклом: без имени — это оболочка."""
@@ -93,4 +139,7 @@ class ToolRouter:
         if name == "read_file":
             return self.reader.run(args.get("path", ""), int(args.get("offset", 1) or 1),
                                    int(args.get("limit", 0) or 0))
+        if name == "grep":
+            return self.grepper.run(args.get("pattern", ""), args.get("glob", "*.md") or "*.md",
+                                    int(args.get("max_results", 0) or 0))
         return self.shell.run(str(args.get("command", "")))

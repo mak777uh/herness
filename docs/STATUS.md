@@ -61,9 +61,10 @@ git log --oneline | head -5   # история решений
 ## Переименование (29.10.2026)
 
 Репозиторий переименован: `harness` → **`herness`** (her + harness).
-GitHub: https://github.com/mak777uh/herness, remote обновлён.
+GitHub: https://github.com/mak777uh/herness, remote обновлён (проверка: `git remote -v`).
 
 Локально каталог `C:\111\harness` **переименовать не удалось**: его держит посторонний процесс
 (в системе висят старые сессии). Пока работает junction `C:\111\herness` → `C:\111\harness`;
 настоящее переименование — после того, как процессы закроются.
+
 

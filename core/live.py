@@ -18,6 +18,21 @@ TOOL_SPEC = [
     {
         "type": "function",
         "function": {
+            "name": "grep",
+            "description": "Найти строки по регулярному выражению. Возвращает путь:строка: текст.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pattern": {"type": "string", "description": "регулярное выражение"},
+                    "glob": {"type": "string", "description": "маска файлов, например docs/*.md"},
+                },
+                "required": ["pattern"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "read_file",
             "description": "Прочитать текстовый файл с номерами строк. Без оболочки и кавычек.",
             "parameters": {
@@ -46,7 +61,8 @@ TOOL_SPEC = [
 
 SYSTEM_TOOLS = (
     "Ты — исполнитель в харнессе. Среда: Windows, команды идут в cmd.exe (bash-конструкции "
-    "вроде ls/find/wc недоступны). У тебя два инструмента: shell и read_file. "
+    "вроде ls/find/wc недоступны). У тебя три инструмента: shell, read_file, grep. "
+    "Для поиска по тексту используй grep, а не findstr через оболочку. "
     "Если для ответа нужен факт из среды — вызови инструмент. Если не нужен — ответь текстом. "
     "Не выдумывай вывод команд: если не вызывал, не утверждай, что видел результат. "
     "Точный подсчёт строк в выводе делай сам, а не конструкциями оболочки: find /c капризен. "
@@ -119,6 +135,7 @@ class LiveProvider:
             "tool_call_id": "call",
             "content": ("exit=0\n" if ok else "exit!=0\n") + output[:8000],
         })
+
 
 
 
