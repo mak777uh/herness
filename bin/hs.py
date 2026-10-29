@@ -970,10 +970,36 @@ def gate_procs(root: Path) -> list[str]:
     return out
 
 
+RESERVED_WORDS = ("доказан", "гарантир", "неизбежн", "полностью исключ")
+RESERVED_TYPES = {"proof", "test"}
+
+
+def gate_wording(root: Path) -> list[str]:
+    """Потолок формулировки: слово силы допустимо только для типа, который его выдерживает.
+
+    Правило взято из портфеля (docs/CLAIMS.md в spec и flowguard-spec): утверждение не может быть
+    сформулировано сильнее, чем позволяет тип свидетельства.
+    """
+    claims = root / "CLAIMS.md"
+    if not claims.exists():
+        return []
+    problems = []
+    for lineno, line in enumerate(claims.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.startswith("| C-"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 3:
+            continue
+        cid, text, ctype = cells[0], cells[1].lower(), cells[2].lower()
+        for word in RESERVED_WORDS:
+            if word in text and ctype not in RESERVED_TYPES:
+                problems.append(f"CLAIMS.md:{lineno}: {cid} — слово «{word}» при типе {ctype!r}")
+    return problems
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -1175,25 +1201,3 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

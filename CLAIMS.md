@@ -39,5 +39,5 @@
 | C-0017 | На схеме sample2 у app_rw ровно один рабочий обход: прямой вызов SECURITY DEFINER set_balance; UPDATE через accounts_v падает, если триггерная функция не SECURITY DEFINER | test | прогон на PostgreSQL 17.2, тесты T1–T10 в lab/pilot/out/T-01-L2.evidence.txt | lab/pilot/out/T-01-L2.evidence.txt | 29.10.2026 |
 
 | C-0018 | Включение VPN не снимает 429 на free-модели: лимит привязан к учётке, а не к IP | observation | POST https://opencode.ai/zen/v1/chat/completions с VPN → 429 FreeUsageLimitError | вывод пробы, 29.10.2026 | 29.10.2026 |
-| C-0019 | Из 44 507 вызовов инструментов 19 372 (43,5 %) начинаются с `cd` — служебный шум, а не работа | statistics | подсчёт префиксов команд по всем сессиям | вывод команды, 29.10.2026 | 19372 |
-| C-0020 | В журналах 14 729 команд вызывают venv-python, 2164 задают PYTHONIOENCODING, 1048 — ErrorActionPreference: это повторяющаяся преамбула, а не работа | statistics | подсчёт шаблонов по всем сессиям | вывод команды, 29.10.2026 | venv-python |
+| C-0019 | Из 44 507 вызовов инструментов 19 372 (43,5 %) начинаются с `cd` — служебный шум, а не работа; на 29.10.2026 пересчёт даёт 19 590 | statistics | `python bin/patterns.py --check` | вывод команды, 29.10.2026 | 29.10.2026 | `cd_start=` |
+| C-0020 | В журналах 14 729 команд вызывают venv-python, 2164 задают PYTHONIOENCODING, 1048 — ErrorActionPreference: повторяющаяся преамбула; пересчёт 29.10.2026: 14 846 и 2 176 | statistics | `python bin/patterns.py --check` | вывод команды, 29.10.2026 | 29.10.2026 | `venv_python=` |
