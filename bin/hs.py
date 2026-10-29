@@ -74,15 +74,18 @@ def cli_path() -> Path | None:
 
 def cli_command(cli: Path, args: list[str]) -> list[str]:
     """Prefer invoking the Electron binary directly: one process, no cmd wrapper,
-    so a timeout can kill the whole tree instead of orphaning grandchildren."""
+    so a timeout can kill the whole tree instead of orphaning grandchildren.
+
+    Путь к cli.js лежит внутри app.asar и виртуален: файловая система его не видит,
+    читает его Electron. Поэтому существование не проверяем.
+    """
     if cli.suffix.lower() in {".cmd", ".bat"} and len(cli.parents) >= 5:
         exe = cli.parents[4] / "DeepSeek Harness.exe"
-        js = cli.parents[4] / "resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/cli.js"
-        if exe.exists() and js.exists():
+        js = cli.parents[3] / "app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/cli.js"
+        if exe.exists():
             return [str(exe), "--expose-internals", str(js), *args]
         return ["cmd", "/c", str(cli), *args]
     return [str(cli), *args]
-
 
 def mem_gb() -> tuple[float, float]:
     if IS_WIN:
@@ -194,6 +197,7 @@ def cmd_doctor(args) -> int:
     home.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     env["DSH_HOME"] = str(home)
+    env["ELECTRON_RUN_AS_NODE"] = "1"
     env.pop("DSH_PROFILE", None)
     if cli:
         rc, text = run_capture(cli_command(cli, ["--profile", "headless", "--dump-config"]), timeout=120, env=env)
@@ -235,6 +239,7 @@ def cmd_run(args) -> int:
     home.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     env["DSH_HOME"] = str(home)
+    env["ELECTRON_RUN_AS_NODE"] = "1"
     env.pop("DSH_PROFILE", None)
 
     cmd = cli_command(cli, ["--profile", args.profile, args.task])
@@ -302,6 +307,7 @@ def cmd_bench(args) -> int:
     home.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     env["DSH_HOME"] = str(home)
+    env["ELECTRON_RUN_AS_NODE"] = "1"
     env.pop("DSH_PROFILE", None)
 
     samples = []
@@ -750,6 +756,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 

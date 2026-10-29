@@ -29,3 +29,5 @@
 Правило пополнения: новая строка — только вместе с командой, дайджестом артефакта и датой.
 Опровергнутая строка не удаляется, а переводится в `docs/eliminations.md` со ссылкой.
 
+| C-0012 | Запуск dsh headless из CLI без креденшелов падает MISSING_CREDENTIAL; DEEPSEEK_API_KEY из ~/.dsh/.credentials.yaml невалиден (HTTP 401) | observation | python bin/hs.py run "ok" → stderr MISSING_CREDENTIAL / AUTH 401 | runs/20261029T15*, 29.10.2026 |
+| C-0013 | Ключи приложения недоступны дочернему процессу: креденшелы живут в сервисе DSH, а не в файле | observation | три прогона с --home и с env-ключом, все без инференса | то же |
