@@ -151,3 +151,5 @@
 | K121 | процедуры сокращают число шагов на одной задаче (12 → 8) без потери результата | замер | E-0011 | lab/experiments/E-0011-procedures-save-steps.md |
 | K122 | обнаружение повторов автоматизировано: hs repeats по журналам, реестр в procedures.json | замер | python bin/hs.py repeats --sessions --limit 25 | procedures.json |
 | K123 | верхние повторы в журналах — циклы ожидания, а не разрозненные команды | замер | 25 сессий: 202 повтора library_wake --check | docs/ADR-0023-repetition-to-code.md |
+| K124 | перенос инструмента между классами требует измеренного выигрыша и близости классов | замер | python tests/test_propagation.py (5/5) | tests/test_propagation.py |
+| K125 | перенос идёт по одному классу за раз, с пробным периодом | док | правило R3 в ADR-0025 | docs/ADR-0025-tool-propagation.md |

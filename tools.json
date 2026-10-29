@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "note": "Инструменты и их распространение по классам (ADR-0025). advantage — измеренный выигрыш в этом классе.",
+  "tools": [
+    {
+      "id": "I-0001",
+      "name": "hs py",
+      "actions": ["run"],
+      "classes": {
+        "T-0003": { "status": "active", "advantage": 0.33, "evidence": "E-0011" },
+        "T-0004": { "status": "active", "advantage": 0.33, "evidence": "E-0011" }
+      }
+    },
+    {
+      "id": "I-0002",
+      "name": "hs step",
+      "actions": ["run", "read", "write", "report"],
+      "classes": {
+        "T-0002": { "status": "active", "advantage": null, "evidence": "E-0010" },
+        "T-0006": { "status": "trial", "advantage": null, "evidence": null }
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "note": "Классы задач и их словарь действий. Близость классов считается по пересечению действий.",
+  "classes": [
+    { "id": "T-0001", "name": "разведка", "actions": ["read", "fetch", "grep", "cite"] },
+    { "id": "T-0002", "name": "аудит утверждений", "actions": ["read", "grep", "compare", "cite", "report"] },
+    { "id": "T-0003", "name": "локальная правка", "actions": ["read", "write", "run"] },
+    { "id": "T-0004", "name": "сборка и тесты", "actions": ["run", "write", "report"] },
+    { "id": "T-0005", "name": "публикация", "actions": ["run", "confirm", "report"] },
+    { "id": "T-0006", "name": "анализ журналов", "actions": ["read", "grep", "count", "report"] },
+    { "id": "T-0007", "name": "уточнение", "actions": ["answer"] }
+  ]
+}

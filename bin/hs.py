@@ -840,6 +840,24 @@ def cmd_repeats(args) -> int:
     return 0
 
 
+def cmd_spread(args) -> int:
+    """Куда инструменты могут пойти дальше: соседние классы, где выигрыш ещё не проверен."""
+    sys.path.insert(0, str(ROOT))
+    from core import propagation
+
+    classes = propagation.load_classes()
+    tools = propagation.load_tools()
+    rows = []
+    for tool in tools:
+        rows.extend(propagation.suggest(tool, classes, args.min_advantage, args.min_similarity))
+    print(f"инструментов: {len(tools)}; предложений переноса: {len(rows)}")
+    for row in rows:
+        print(f"  {row['tool']}: {row['from']} → {row['to']}  ({row['reason']})")
+    if not rows:
+        print("  переносить нечего: либо нет измеренного выигрыша, либо соседние классы уже пробованы")
+    return 0
+
+
 def cmd_procs(args) -> int:
     """Реестр процедур: что кристаллизовано и чем проверяется."""
     path = ROOT / "procedures.json"
@@ -946,7 +964,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1012,6 +1030,11 @@ def main(argv: list[str]) -> int:
     p.add_argument("--min-single", type=int, default=3)
     p.add_argument("--min-pair", type=int, default=5)
     p.set_defaults(func=cmd_repeats)
+
+    p = sub.add_parser("spread", help="перенос инструментов между классами задач")
+    p.add_argument("--min-advantage", type=float, default=0.2)
+    p.add_argument("--min-similarity", type=float, default=0.5)
+    p.set_defaults(func=cmd_spread)
 
     sub.add_parser("procs", help="реестр процедур").set_defaults(func=cmd_procs)
 
