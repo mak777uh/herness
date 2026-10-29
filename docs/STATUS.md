@@ -43,7 +43,7 @@
 cd <репозиторий>
 python bin/hs.py selftest     # 7/7
 python bin/hs.py gates        # 4/4
-python bin/hs.py criteria     # 53 критерия
+python bin/hs.py criteria     # сводка критериев (число печатает сама команда)
 git log --oneline | head -5   # история решений
 ```
 
@@ -54,5 +54,6 @@ git log --oneline | head -5   # история решений
 - Не ставим ОС на эту машину: 15,3 ГБ свободно, кэш Mathlib съест 6 ГБ.
 - Не публикуем репозиторий: зоны B/C не размечены до конца.
 - Не форкаем DSH и не трогаем установку.
+
 
 

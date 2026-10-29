@@ -657,6 +657,49 @@ def cmd_execute(args) -> int:
                       "report": str(path)}, ensure_ascii=False, indent=2))
     return 0
 
+
+def cmd_record(args) -> int:
+    """Записать событие в журнал прогона (для работы агента руками)."""
+    sys.path.insert(0, str(ROOT))
+    from core.journal import Journal
+
+    run_dir = RUNS / args.run
+    run_dir.mkdir(parents=True, exist_ok=True)
+    journal = Journal(run_dir)
+    try:
+        if args.artifact:
+            data = Path(args.artifact).read_bytes()
+            ref = journal.put_artifact(data, Path(args.artifact).suffix or ".txt")
+            journal.tool_result(args.call_id, ref, ok=True, preview=args.preview or "")
+            print(json.dumps({"artifact": ref.path, "sha256": ref.sha256, "bytes": ref.bytes}, ensure_ascii=False))
+        else:
+            journal.event(args.type, json.loads(args.payload) if args.payload else {})
+            print("ok")
+    finally:
+        journal.close()
+    return 0
+
+
+def cmd_report(args) -> int:
+    """Собрать report.md из журнала готового прогона."""
+    sys.path.insert(0, str(ROOT))
+    from core import report
+    from core.contracts import Claim
+
+    claims = []
+    for raw in args.claim or []:
+        cid, text, ctype, origin = (raw.split("|", 3) + ["", "", "", ""])[:4]
+        claims.append(Claim(id=cid.strip(), text=text.strip(), type=ctype.strip() or "observation",
+                            origin=origin.strip() or "observed", evidence=("journal",),
+                            not_claimed=("что это проверено повторно",)))
+    try:
+        path = report.write(RUNS / args.run, args.task, claims=claims, boundaries=tuple(args.boundary or ()))
+    except Exception as exc:  # noqa: BLE001
+        print(f"[FAIL] {exc}")
+        return 1
+    print(str(path))
+    return 0
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
@@ -753,20 +796,37 @@ def main(argv: list[str]) -> int:
     sub.add_parser("failures", help="корпус отказов процесса").set_defaults(func=cmd_failures)
 
     p = sub.add_parser("request", help="проверить разбор запроса")
+    p.add_argument("file", nargs="?")
+    p.add_argument("--corpus", action="store_true", help="проверить корпус регрессии")
+    p.set_defaults(func=cmd_request)
+
     p = sub.add_parser("execute", help="прогон своим циклом (mock) с отчётом")
     p.add_argument("task")
     p.add_argument("--steps", type=int, default=8)
     p.set_defaults(func=cmd_execute)
+
+    p = sub.add_parser("record", help="записать событие в журнал прогона")
+    p.add_argument("--run", required=True)
+    p.add_argument("--type", default="note")
+    p.add_argument("--payload")
+    p.add_argument("--artifact")
+    p.add_argument("--call-id", default="cli")
+    p.add_argument("--preview")
+    p.set_defaults(func=cmd_record)
+
+    p = sub.add_parser("report", help="собрать report.md из журнала")
+    p.add_argument("--run", required=True)
+    p.add_argument("--task", required=True)
+    p.add_argument("--boundary", nargs="*")
+    p.add_argument("--claim", nargs="*")
+    p.set_defaults(func=cmd_report)
+
     p = sub.add_parser("ping", help="живая проверка провайдера")
     p.add_argument("--base", required=True)
     p.add_argument("--model", required=True)
     p.add_argument("--key-env", default="OPENCODE_API_KEY")
     p.add_argument("--no-stream", action="store_true")
     p.set_defaults(func=cmd_ping)
-
-    p.add_argument("file", nargs="?")
-    p.add_argument("--corpus", action="store_true", help="проверить корпус регрессии")
-    p.set_defaults(func=cmd_request)
 
     p = sub.add_parser("gates", help="секреты, утверждения, ссылки")
     p.add_argument("--root", default=str(ROOT))
@@ -790,6 +850,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
 
 
 

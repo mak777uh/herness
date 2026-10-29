@@ -19,7 +19,7 @@
 | C-0003 | Пакеты DSH опубликованы в npm и допускают использование вне Electron-приложения | observation | `python bin/hs.py facts` | `docs/DECISION-0001*` | 29.10.2026 |
 | C-0004 | Холодный старт headless-профиля (dump-config, без модели) p50 = 0,46 с на этой машине | statistics | `python bin/hs.py bench -n 3` | вывод команды, 29.10.2026 | 29.10.2026 |
 | C-0005 | IronClaw (nearai) применяет инъекцию ключей на границе хоста, allowlist эндпоинтов и скан утечек | observation | `python bin/hs.py refs search "wasm sandbox credentials allowlist leak"` | `refs-cache/nearai/ironclaw/README.md` | 29.10.2026 |
-| C-0006 | Гейты отбивают посаженные нарушения: контракты 10/10, selftest 6/6 | test | `python bin/hs.py selftest` | вывод команды, 29.10.2026 | 29.10.2026 |
+| C-0006 | Гейты отбивают посаженные нарушения: контракты 20/20, семь наборов тестов зелёные | test | `python bin/hs.py selftest` | вывод команды, 29.10.2026 (обновлено) | 29.10.2026 |
 | C-0007 | На машине уже стоят тулчейны на 8,65 ГБ: Lean 3 тулчейна (6,0), Rust (2,2), Foundry (0,5); cargo 1.99.1, forge 1.8.5 | observation | `python bin/hs.py tools` | вывод команды, 29.10.2026 | 29.10.2026 |
 | C-0008 | Тулчейн `leanprover/lean4:v4.36.0-rc1` (0,2 ГБ) не содержит `lake` и проекты не собирает; 4.30.0 и 4.33.1 полные | observation | `python bin/hs.py tools` | вывод команды, 29.10.2026 | 29.10.2026 |
 | C-0009 | Записать результат инструмента без проверенного артефакта невозможно; порядок событий: run/start → tool/call → tool/result → assistant/message → run/end | test | `python tests/test_m1_journal.py` | вывод 5/5, 29.10.2026 | 29.10.2026 |
@@ -29,5 +29,7 @@
 Правило пополнения: новая строка — только вместе с командой, дайджестом артефакта и датой.
 Опровергнутая строка не удаляется, а переводится в `docs/eliminations.md` со ссылкой.
 
-| C-0012 | Запуск dsh headless из CLI без креденшелов падает MISSING_CREDENTIAL; DEEPSEEK_API_KEY из ~/.dsh/.credentials.yaml невалиден (HTTP 401) | observation | python bin/hs.py run "ok" → stderr MISSING_CREDENTIAL / AUTH 401 | runs/20261029T15*, 29.10.2026 |
-| C-0013 | Ключи приложения недоступны дочернему процессу: креденшелы живут в сервисе DSH, а не в файле | observation | три прогона с --home и с env-ключом, все без инференса | то же |
+| C-0012 | Запуск dsh headless из CLI без креденшелов падает MISSING_CREDENTIAL; DEEPSEEK_API_KEY из ~/.dsh/.credentials.yaml невалиден (HTTP 401) | observation | python bin/hs.py run "ok" → stderr MISSING_CREDENTIAL / AUTH 401 | runs/20261029T15* | 29.10.2026 |
+| C-0013 | Ключи приложения недоступны дочернему процессу: креденшелы живут в сервисе DSH, а не в файле | observation | три прогона с --home и с env-ключом, все без инференса | runs/20261029T15* | 29.10.2026 |
+
+
