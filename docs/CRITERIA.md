@@ -130,3 +130,5 @@
 | K101 | правила уровня отличаются от «всегда L1» лишь в 6,9 % реальных запросов | замер | python bin/hs.py plan --compare | docs/ADR-0022-routing-rules-first.md |
 | K102 | методика оценки маршрутизации не требует изобретения: cost-quality против оракула и константы | док | RouterBench, LLMRouterBench, RouterEval | research/PRIOR-ART-ROUTING.md |
 | K103 | маршрутизация уровня обвязки (L0/L1/L2) не покрыта известными работами | док | поиск: маршрутизируют модель/провайдера/инструмент | research/PRIOR-ART-ROUTING.md |
+| K104 | в замере маршрутизации обязателен контрольный срез без инструментов | док | приём из When2Tool / ToolFailBench | research/DIGEST-routing.md |
+| K105 | строгость L2 выбирается на каждый вызов, а не на задачу целиком | док | меню режимов CASEL | research/DIGEST-routing.md |
