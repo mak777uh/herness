@@ -1,0 +1,374 @@
+[
+ {
+  "title": "Proof of Usefulness Hackathon Final Winners Announced 🎉",
+  "score": null,
+  "traction": [
+   "downloads 12k",
+   "stars 209"
+  ],
+  "file": "01-proof-of-usefulness-hackathon-final-winners-announced.txt",
+  "size": 19699
+ },
+ {
+  "title": "Inauguration Earns an 88.46 Proof of Usefulness Score by Building a Cross-Language Compiler That Breaks Down Language Barriers",
+  "score": 88.46,
+  "traction": [],
+  "file": "02-inauguration-earns-an-8846-proof-of-usefulness-score-by-building-a-cross-languag.txt",
+  "size": 11182
+ },
+ {
+  "title": "MethodSeal Earns an 89.79 Proof of Usefulness Score for Enforcing Reproducible Experiments",
+  "score": 89.79,
+  "traction": [],
+  "file": "03-methodseal-earns-an-8979-proof-of-usefulness-score-for-enforcing-reproducible-ex.txt",
+  "size": 20928
+ },
+ {
+  "title": "AgenC Earns a 91.56 Proof of Usefulness Score With an On-Chain Marketplace for AI Agents",
+  "score": 91.56,
+  "traction": [],
+  "file": "04-agenc-earns-a-9156-proof-of-usefulness-score-with-an-on-chain-marketplace-for-ai.txt",
+  "size": 10598
+ },
+ {
+  "title": "PMB (Personal Memory Brain) Earns a 115 Proof of Usefulness Score by Building Local-First Persistent",
+  "score": 115.0,
+  "traction": [],
+  "file": "05-pmb-personal-memory-brain-earns-a-115-proof-of-usefulness-score-by-building-loca.txt",
+  "size": 11755
+ },
+ {
+  "title": "CodeWithAhsan Earns a 119.77 Proof of Usefulness Score by Building an Automated Developer Mentorship and Open-Source Ecosystem",
+  "score": 119.77,
+  "traction": [],
+  "file": "06-codewithahsan-earns-a-11977-proof-of-usefulness-score-by-building-an-automated-d.txt",
+  "size": 12749
+ },
+ {
+  "title": "PaperPulse Earns a 62 Proof of Usefulness Score by Building an AI-Powered Daily Digest for Chinese-Speaking Researchers",
+  "score": 62.0,
+  "traction": [
+   "stars 500+",
+   "users 10,000"
+  ],
+  "file": "07-paperpulse-earns-a-62-proof-of-usefulness-score-by-building-an-ai-powered-daily-.txt",
+  "size": 11875
+ },
+ {
+  "title": "FoxPlug Earns a 67.19 Proof of Usefulness Score by Building an Automated White-Label Launch Kit Generator",
+  "score": 67.19,
+  "traction": [],
+  "file": "08-foxplug-earns-a-6719-proof-of-usefulness-score-by-building-an-automated-white-la.txt",
+  "size": 14663
+ },
+ {
+  "title": "Laraplugins.io Earns a 93.09 Proof of Usefulness Score by Building an Algorithmic Health Score and MCP Server for Laravel Plugins",
+  "score": 93.09,
+  "traction": [],
+  "file": "09-larapluginsio-earns-a-9309-proof-of-usefulness-score-by-building-an-algorithmic-.txt",
+  "size": 7054
+ },
+ {
+  "title": "TransactionLink Earns a 66.13 Proof of Usefulness Score by Building Automated KYB and KYC Onboarding Workflows",
+  "score": 66.13,
+  "traction": [],
+  "file": "10-transactionlink-earns-a-6613-proof-of-usefulness-score-by-building-automated-kyb.txt",
+  "size": 11176
+ },
+ {
+  "title": "FlowMind Earns a 47 Proof of Usefulness Score by Building an AI Project Manager that Auto-Assigns Tasks",
+  "score": 47.0,
+  "traction": [],
+  "file": "11-flowmind-earns-a-47-proof-of-usefulness-score-by-building-an-ai-project-manager-.txt",
+  "size": 12596
+ },
+ {
+  "title": "x402-recovery Earns a 62 Proof of Usefulness Score by Building Programmable Payment Recovery for Failing Networks",
+  "score": 62.0,
+  "traction": [
+   "stars ,"
+  ],
+  "file": "12-x402-recovery-earns-a-62-proof-of-usefulness-score-by-building-programmable-paym.txt",
+  "size": 12699
+ },
+ {
+  "title": "Wisetube-ai Earns a 35 Proof of Usefulness Score by Building an AI-Powered Video Knowledge Extraction Layer",
+  "score": 35.0,
+  "traction": [],
+  "file": "13-wisetube-ai-earns-a-35-proof-of-usefulness-score-by-building-an-ai-powered-video.txt",
+  "size": 19443
+ },
+ {
+  "title": "Ella's AI Agent Earns a 46.06 Proof of Usefulness Score by Building an Autonomous E-Commerce AI Support Agent",
+  "score": 46.06,
+  "traction": [],
+  "file": "14-ellas-ai-agent-earns-a-4606-proof-of-usefulness-score-by-building-an-autonomous-.txt",
+  "size": 11206
+ },
+ {
+  "title": "Visby Earns a 76 Proof of Usefulness Score for Tracking Brand Visibility Across AI Search",
+  "score": 76.0,
+  "traction": [
+   "users 2,500"
+  ],
+  "file": "15-visby-earns-a-76-proof-of-usefulness-score-for-tracking-brand-visibility-across-.txt",
+  "size": 17088
+ },
+ {
+  "title": "Yokai OS Earns a 57.23 Proof of Usefulness Score by Building a Telegram-Native AI Community Operating System",
+  "score": 57.23,
+  "traction": [
+   "users 10k+"
+  ],
+  "file": "16-yokai-os-earns-a-5723-proof-of-usefulness-score-by-building-a-telegram-native-ai.txt",
+  "size": 11235
+ },
+ {
+  "title": "hello.cv Earns a 63 Proof of Usefulness Score by Building AI-Powered Profiles That Network Autonomously",
+  "score": 63.0,
+  "traction": [
+   "downloads ,",
+   "users 38,000"
+  ],
+  "file": "17-hellocv-earns-a-63-proof-of-usefulness-score-by-building-ai-powered-profiles-tha.txt",
+  "size": 11025
+ },
+ {
+  "title": "Autonomous Company Deep Research Agent Earns a 52 Proof of Usefulness Score by Building Automated VC-Style Company Research Reports",
+  "score": 52.0,
+  "traction": [],
+  "file": "18-autonomous-company-deep-research-agent-earns-a-52-proof-of-usefulness-score-by-b.txt",
+  "size": 12517
+ },
+ {
+  "title": "The HackerNoon Newsletter: Post-Quantum TLS for Cloud APIs and Microservices (8/14/2026)",
+  "score": null,
+  "traction": [],
+  "file": "19-8-14-2026-newsletter.txt",
+  "size": 8898
+ },
+ {
+  "title": "HackerNoon Projects of the Week: Atlarix, Scribe, and Emisary",
+  "score": null,
+  "traction": [],
+  "file": "20-hackernoon-projects-of-the-week-atlarix-scribe-and-emisary.txt",
+  "size": 10668
+ },
+ {
+  "title": "Tinky Town Earns a 97.61 Proof of Usefulness Score by Building a QR-Code-Based Auxiliary Communication Infrastructure",
+  "score": 97.61,
+  "traction": [
+   "users ."
+  ],
+  "file": "21-tinky-town-earns-a-9761-proof-of-usefulness-score-by-building-a-qr-code-based-au.txt",
+  "size": 16022
+ },
+ {
+  "title": "AI-Texture-Pipeline Scores 60.95 With an Open-Source Web3 Pipeline for 4K Game Textures",
+  "score": null,
+  "traction": [],
+  "file": "22-ai-texture-pipeline-scores-6095-with-an-open-source-web3-pipeline-for-4k-game-te.txt",
+  "size": 13550
+ },
+ {
+  "title": "Slick Search Earns an 81 Proof of Usefulness Score by Giving Users Control Over Search Rankings",
+  "score": 81.0,
+  "traction": [
+   "users 90"
+  ],
+  "file": "23-slick-search-earns-an-81-proof-of-usefulness-score-by-giving-users-control-over-.txt",
+  "size": 16153
+ },
+ {
+  "title": "sos-vault Earns a 50.6 Proof of Usefulness Score by Building a Secure, AI-Assisted Platform for Analyzing sosreport Archives",
+  "score": 50.6,
+  "traction": [],
+  "file": "24-sos-vault-earns-a-506-proof-of-usefulness-score-by-building-a-secure-ai-assisted.txt",
+  "size": 15643
+ },
+ {
+  "title": "GeoBounties Earns a 75.61 Proof of Usefulness Score by Building a Location-Based Task Marketplace Connecting AI to Real-World Physical Actions",
+  "score": 75.61,
+  "traction": [],
+  "file": "25-geobounties-earns-a-7561-proof-of-usefulness-score-by-building-a-location-based-.txt",
+  "size": 21289
+ },
+ {
+  "title": "My Solar Atlas Earns a 40.77 Proof of Usefulness Score by Building an Objective Solar Quote Comparison Tool",
+  "score": 40.77,
+  "traction": [
+   "users ,"
+  ],
+  "file": "26-my-solar-atlas-earns-a-4077-proof-of-usefulness-score-by-building-an-objective-s.txt",
+  "size": 12801
+ },
+ {
+  "title": "DELAX GEO-RISK INTELLIGENCE Earns a 64.63 Proof of Usefulness Score by Building an AI-Powered Geopolitical Decision-Ready View",
+  "score": 64.63,
+  "traction": [],
+  "file": "27-delax-geo-risk-intelligence-earns-a-6463-proof-of-usefulness-score-by-building-a.txt",
+  "size": 12352
+ },
+ {
+  "title": "AgentFeed Earns a 77.5 Proof of Usefulness Score With Machine-to-Machine Crypto Data Payments",
+  "score": 77.5,
+  "traction": [],
+  "file": "29-agentfeed-earns-a-775-proof-of-usefulness-score-with-machine-to-machine-crypto-d.txt",
+  "size": 20250
+ },
+ {
+  "title": "Aiden Earns a 60 Proof of Usefulness Score by Building a Physical Mobile AI Agent Device",
+  "score": 60.0,
+  "traction": [],
+  "file": "30-aiden-earns-a-60-proof-of-usefulness-score-by-building-a-physical-mobile-ai-agen.txt",
+  "size": 16911
+ },
+ {
+  "title": "HelpRent Da Nang Earns a 62.43 Proof of Usefulness Score by Building an AI-Powered Plain Language Rental Platform",
+  "score": 62.43,
+  "traction": [
+   "users 148"
+  ],
+  "file": "31-helprent-da-nang-earns-a-6243-proof-of-usefulness-score-by-building-an-ai-powere.txt",
+  "size": 21193
+ },
+ {
+  "title": "Sentinel Quant Earns a 77.91 Proof of Usefulness Score by Building Dual-Model AI Governance for Algorithmic Trading",
+  "score": 77.91,
+  "traction": [],
+  "file": "32-sentinel-quant-earns-a-7791-proof-of-usefulness-score-by-building-dual-model-ai-.txt",
+  "size": 16090
+ },
+ {
+  "title": "BrandNata Earns a 53 Proof of Usefulness Score by Building an AI-Powered Brand Intelligence Platform",
+  "score": 53.0,
+  "traction": [],
+  "file": "33-brandnata-earns-a-53-proof-of-usefulness-score-by-building-an-ai-powered-brand-i.txt",
+  "size": 16094
+ },
+ {
+  "title": "AITHURA Earns a 51 Proof of Usefulness Score by Building an Ultra-Hardened, Local-First AI Security Platform",
+  "score": 51.0,
+  "traction": [],
+  "file": "34-aithura-earns-a-51-proof-of-usefulness-score-by-building-an-ultra-hardened-local.txt",
+  "size": 21011
+ },
+ {
+  "title": "Freshist Earns a 58.28 Proof of Usefulness Score by Building a Subscription-Free, Native macOS Cleaner",
+  "score": 58.28,
+  "traction": [],
+  "file": "35-freshist-earns-a-5828-proof-of-usefulness-score-by-building-a-subscription-free-.txt",
+  "size": 18112
+ },
+ {
+  "title": "The HackerNoon Newsletter: Designing an XP System for Real-Life Skills (8/7/2026)",
+  "score": null,
+  "traction": [],
+  "file": "36-8-7-2026-newsletter.txt",
+  "size": 8746
+ },
+ {
+  "title": "HackerNoon Projects of the Week: Image to Photo, Granary, and Nexio",
+  "score": null,
+  "traction": [
+   "users 500"
+  ],
+  "file": "37-hackernoon-projects-of-the-week-image-to-photo-granary-and-nexio.txt",
+  "size": 11128
+ },
+ {
+  "title": "HOL Guard Earns a 301.76 Proof of Usefulness Score by Building a Firewall for AI Agents",
+  "score": 301.76,
+  "traction": [
+   "downloads 400k+",
+   "stars 400+",
+   "PRs 1,100+"
+  ],
+  "file": "38-hol-guard-earns-a-30176-proof-of-usefulness-score-by-building-a-firewall-for-ai-.txt",
+  "size": 14948
+ },
+ {
+  "title": "The HackerNoon Newsletter: How GMX Liquidity Pools Work (8/3/2026)",
+  "score": null,
+  "traction": [],
+  "file": "39-8-3-2026-newsletter.txt",
+  "size": 8644
+ },
+ {
+  "title": "Meet the Hackathon Winner: Packworks on the Future of Phygital Retail and Building With Bright Data",
+  "score": null,
+  "traction": [],
+  "file": "40-meet-the-hackathon-winner-packworks-on-the-future-of-phygital-retail-and-buildin.txt",
+  "size": 13306
+ },
+ {
+  "title": "Omniosocial AI Earns a 47 Proof of Usefulness Score by Building an Enterprise Agentic AI Platform",
+  "score": 47.0,
+  "traction": [],
+  "file": "41-omniosocial-ai-earns-a-47-proof-of-usefulness-score-by-building-an-enterprise-ag.txt",
+  "size": 10573
+ },
+ {
+  "title": "HRAP Suite Earns a 50.4 Proof of Usefulness Score by Building a Unified Workforce Operating System",
+  "score": 50.4,
+  "traction": [],
+  "file": "42-hrap-suite-earns-a-504-proof-of-usefulness-score-by-building-a-unified-workforce.txt",
+  "size": 15075
+ },
+ {
+  "title": "Applaa AI Earns a 48.27 Proof of Usefulness Score by Building an Offline Agentic AI Learning Platform",
+  "score": 48.27,
+  "traction": [],
+  "file": "43-applaa-ai-earns-a-4827-proof-of-usefulness-score-by-building-an-offline-agentic-.txt",
+  "size": 10751
+ },
+ {
+  "title": "The HackerNoon Newsletter: Meet the Hackathon Winner: SpyderBot on the Future of Brand Discovery in AI Search (8/1/2026)",
+  "score": null,
+  "traction": [],
+  "file": "44-8-1-2026-newsletter.txt",
+  "size": 7931
+ },
+ {
+  "title": "Meet the Hackathon Winner: SpyderBot on the Future of Brand Discovery in AI Search",
+  "score": null,
+  "traction": [],
+  "file": "45-meet-the-hackathon-winner-spyderbot-on-the-future-of-brand-discovery-in-ai-searc.txt",
+  "size": 11682
+ },
+ {
+  "title": "HackerNoon Projects of the Week: Data Horizon, Hub, and Deploy Humans",
+  "score": null,
+  "traction": [],
+  "file": "46-hackernoon-projects-of-the-week-data-horizon-hub-and-deploy-humans.txt",
+  "size": 11402
+ },
+ {
+  "title": "$118K+ Is Still Up for Grabs, but the Proof of Usefulness Hackathon Deadline Is Closing In",
+  "score": null,
+  "traction": [],
+  "file": "47-$118k-is-still-up-for-grabs-but-the-proof-of-usefulness-hackathon-deadline-is-cl.txt",
+  "size": 10624
+ },
+ {
+  "title": "Hiddenkick AI Earns a 44 Proof of Usefulness Score by Building an ML-Powered Scouting Platform",
+  "score": 44.0,
+  "traction": [],
+  "file": "48-hiddenkick-ai-earns-a-44-proof-of-usefulness-score-by-building-an-ml-powered-sco.txt",
+  "size": 11758
+ },
+ {
+  "title": "Algomarket Earns a 46 Proof of Usefulness Score by Building a Cross-Venue Prediction Market Analytics Platform",
+  "score": 46.0,
+  "traction": [],
+  "file": "49-algomarket-earns-a-46-proof-of-usefulness-score-by-building-a-cross-venue-predic.txt",
+  "size": 11750
+ },
+ {
+  "title": "Road Sorties Earns a 56.18 Proof of Usefulness Score by Building a Scenic Route Planner and Navigation App",
+  "score": 56.18,
+  "traction": [],
+  "file": "50-road-sorties-earns-a-5618-proof-of-usefulness-score-by-building-a-scenic-route-p.txt",
+  "size": 12475
+ }
+]
