@@ -9,9 +9,13 @@
 from __future__ import annotations
 
 import json
+import pathlib
 import re
+import shutil
+import subprocess
 import time
 import urllib.parse
+import urllib.request
 from dataclasses import dataclass, field
 
 from .mcp_client import MCPClient
@@ -32,6 +36,79 @@ OWN_HOSTS = {
 EXTRACT_JS = """() => JSON.stringify(Array.from(document.querySelectorAll('a[href^="http"]'))
   .map(a => ({h: a.href, t: (a.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 160)}))
   .filter(x => x.t.length > 15).slice(0, 60))"""
+
+
+
+CHROME_PATHS = (
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+)
+PROFILE_SRC = pathlib.Path.home() / "AppData/Local/Google/Chrome/User Data"
+PROFILE_DST = pathlib.Path(r"C:\111\chrome-cdp")
+
+
+def port_alive(port: int = 9222, timeout: float = 1.5) -> bool:
+    """Отвечает ли Chrome по CDP. Локальные запросы идут мимо прокси из окружения."""
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(f"http://127.0.0.1:{port}/json/version", timeout=timeout):
+            return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def ensure_chrome(port: int = 9222, timeout: float = 25.0) -> tuple[bool, str]:
+    """Поднимает Chrome с CDP, если порт закрыт. Копирует cookie, когда они доступны."""
+    if port_alive(port):
+        return True, "Chrome уже слушает"
+
+    chrome = next((path for path in CHROME_PATHS if pathlib.Path(path).exists()), None)
+    if chrome is None:
+        return False, "Chrome не найден"
+
+    (PROFILE_DST / "Default" / "Network").mkdir(parents=True, exist_ok=True)
+    copied, locked = 0, 0
+    for rel in ("Local State", "Default/Preferences", "Default/Secure Preferences",
+                "Default/Network/Cookies", "Default/Login Data", "Default/Web Data"):
+        source = PROFILE_SRC / rel
+        if not source.exists():
+            continue
+        try:
+            shutil.copy2(source, PROFILE_DST / rel)
+            copied += 1
+        except Exception:  # noqa: BLE001
+            locked += 1
+
+    subprocess.Popen([chrome, f"--remote-debugging-port={port}",
+                      f"--user-data-dir={PROFILE_DST}", "--no-first-run",
+                      "--no-default-browser-check", "about:blank"],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if port_alive(port):
+            note = f"Chrome поднят (cookie скопировано {copied}"
+            note += f", занято {locked})" if locked else ")"
+            return True, note
+        time.sleep(0.4)
+    return False, "Chrome не поднялся за отведённое время"
+
+
+def wait_for_links(client: "MCPClient", limit: int = 10, timeout: float = 8.0) -> list[dict]:
+    """Опрашивает страницу, пока не появятся ссылки. Быстрее фиксированной паузы."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            result = client.call("browser_evaluate", {"function": EXTRACT_JS})
+        except Exception:  # noqa: BLE001
+            time.sleep(0.3)
+            continue
+        text = "".join(item.get("text", "") for item in result.get("content", [])
+                       if item.get("type") == "text")
+        items = _parse_payload(text)
+        if items:
+            return items
+        time.sleep(0.3)
+    return []
 
 
 @dataclass
@@ -113,18 +190,20 @@ def relevance(hits: list[Hit], query: str) -> float:
 
 
 def search(query: str, engine: str = "ddg", limit: int = 10,
-           endpoint: str = ENDPOINT, wait: float = 7.0) -> BrowserResult:
+           endpoint: str = ENDPOINT, wait: float = 8.0, ensure: bool = False) -> BrowserResult:
     if engine not in ENGINES:
         return BrowserResult(query, engine, "error", note=f"неизвестный движок {engine}")
+    if ensure:
+        alive, note = ensure_chrome(int(endpoint.rsplit(":", 1)[-1]))
+        if not alive:
+            return BrowserResult(query, engine, "error", note=note)
     client = MCPClient(["node", CLI, "--cdp-endpoint", endpoint], cwd=r"C:\111\browser-mcp")
+    items: list[dict] = []
     try:
         client.initialize()
         url = ENGINES[engine].format(q=urllib.parse.quote_plus(query))
         client.call("browser_navigate", {"url": url})
-        time.sleep(wait)
-        result = client.call("browser_evaluate", {"function": EXTRACT_JS})
-        text = "".join(item.get("text", "") for item in result.get("content", [])
-                       if item.get("type") == "text")
+        items = wait_for_links(client, limit, timeout=wait)
         page = _page_text(client)
     except Exception as exc:  # noqa: BLE001
         return BrowserResult(query, engine, "error", note=f"{type(exc).__name__}: {str(exc)[:100]}")
@@ -138,7 +217,7 @@ def search(query: str, engine: str = "ddg", limit: int = 10,
     own = OWN_HOSTS[engine]
     hits: list[Hit] = []
     seen: set[str] = set()
-    for item in _parse_payload(text):
+    for item in items:
         target = _decode(item.get("h", ""))
         host = urllib.parse.urlparse(target).netloc.lower()
         if not host or own in host or target in seen:

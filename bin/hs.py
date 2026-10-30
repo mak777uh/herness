@@ -676,7 +676,8 @@ def cmd_browser(args) -> int:
     sys.path.insert(0, str(ROOT))
     from core import browser_search
 
-    result = browser_search.search(args.query, engine=args.engine, limit=args.limit)
+    result = browser_search.search(args.query, engine=args.engine, limit=args.limit,
+                                    ensure=args.ensure)
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     if args.run:
         from core.journal import Journal
@@ -690,31 +691,6 @@ def cmd_browser(args) -> int:
                               {"query": args.query, "engine": args.engine})
             ref = journal.put_artifact(json.dumps(result.to_dict(), ensure_ascii=False).encode("utf-8"))
             journal.tool_result("browser-1", ref, ok=result.kind == "ok", preview=result.note)
-            journal.run_end("done" if result.kind == "ok" else "error")
-            print("журнал:", run_dir)
-        finally:
-            journal.close()
-    return 0 if result.kind == "ok" else 1
-
-
-def cmd_search(args) -> int:
-    """Поиск с проверкой релевантности: decoy отличается от ok (E-0004)."""
-    sys.path.insert(0, str(ROOT))
-    from core import search as search_core
-
-    result = search_core.search(args.query, limit=args.limit)
-    print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
-    if args.run:
-        from core.journal import Journal
-
-        run_dir = RUNS / args.run
-        run_dir.mkdir(parents=True, exist_ok=True)
-        journal = Journal(run_dir)
-        try:
-            journal.run_start("search " + args.query, model="search")
-            journal.tool_call("search-1", "search", {"query": args.query, "limit": args.limit})
-            ref = journal.put_artifact(json.dumps(result.to_dict(), ensure_ascii=False).encode("utf-8"))
-            journal.tool_result("search-1", ref, ok=result.kind == "ok", preview=result.note)
             journal.run_end("done" if result.kind == "ok" else "error")
             print("журнал:", run_dir)
         finally:
@@ -1326,7 +1302,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_search.py", "test_browser_search.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1429,14 +1405,10 @@ def main(argv: list[str]) -> int:
     p.add_argument("query")
     p.add_argument("--engine", default="ddg", choices=["ddg", "google", "startpage", "bing"])
     p.add_argument("--limit", type=int, default=10)
+    p.add_argument("--ensure", action="store_true", help="поднять Chrome с CDP, если порт закрыт")
     p.add_argument("--run")
     p.set_defaults(func=cmd_browser)
 
-    p = sub.add_parser("search", help="поиск с проверкой релевантности (decoy != ok)")
-    p.add_argument("query")
-    p.add_argument("--limit", type=int, default=10)
-    p.add_argument("--run")
-    p.set_defaults(func=cmd_search)
 
     p = sub.add_parser("fetch", help="забрать URL: лимит байтов, классификация, журнал")
     p.add_argument("url")
