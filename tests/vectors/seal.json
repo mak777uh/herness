@@ -1,0 +1,26 @@
+[
+ {
+  "name": "простое тело",
+  "input": "тело\n## Seal\nпечать",
+  "canonical": "тело\n",
+  "sha256": "643fe261918f28e67762c983f1fd3f3642bdd42ddd7f57f9f6f51090d73cab67"
+ },
+ {
+  "name": "CRLF",
+  "input": "тело\r\n## Seal\r\nпечать",
+  "canonical": "тело\n",
+  "sha256": "643fe261918f28e67762c983f1fd3f3642bdd42ddd7f57f9f6f51090d73cab67"
+ },
+ {
+  "name": "хвостовые пробелы",
+  "input": "тело   \n\n## Seal",
+  "canonical": "тело\n",
+  "sha256": "643fe261918f28e67762c983f1fd3f3642bdd42ddd7f57f9f6f51090d73cab67"
+ },
+ {
+  "name": "без маркера",
+  "input": "тело без маркера",
+  "canonical": "тело без маркера\n",
+  "sha256": "d68bfb0dbda72cf7787a8fc21d88cc679cef56ae080ecff075b1a53fba5f77a6"
+ }
+]

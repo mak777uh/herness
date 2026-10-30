@@ -1,0 +1,41 @@
+{
+ "canonical": "{\"payload\":{\"args\":{\"path\":\"a.md\"},\"name\":\"read_file\"},\"seq\":2,\"type\":\"tool/call\"}",
+ "chain": [
+  {
+   "event": {
+    "seq": 1,
+    "type": "run/start",
+    "payload": {
+     "task": "проверка"
+    }
+   },
+   "prev": "",
+   "hash": "3bf6b85f23bad24223fbeda28a09a0f9c73f99e819f348b8420fff7c1ca69051"
+  },
+  {
+   "event": {
+    "seq": 2,
+    "type": "tool/call",
+    "payload": {
+     "name": "read_file",
+     "args": {
+      "path": "a.md"
+     }
+    }
+   },
+   "prev": "3bf6b85f23bad24223fbeda28a09a0f9c73f99e819f348b8420fff7c1ca69051",
+   "hash": "d0f9b229907127ce989781ed7918055d9bfff1903eeb7e8439b64d2639295e91"
+  },
+  {
+   "event": {
+    "seq": 3,
+    "type": "run/end",
+    "payload": {
+     "status": "done"
+    }
+   },
+   "prev": "d0f9b229907127ce989781ed7918055d9bfff1903eeb7e8439b64d2639295e91",
+   "hash": "e191202467e28ef25c544b15d062215ab9f4e7ec10635a9c191ff1ce45e859a1"
+  }
+ ]
+}

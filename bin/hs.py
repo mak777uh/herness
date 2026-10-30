@@ -1443,10 +1443,48 @@ def gate_compile(root: Path) -> list[str]:
     return problems
 
 
+def gate_vectors(root: Path) -> list[str]:
+    """Замороженные векторы должны воспроизводиться: иначе контракт для Rust сломан."""
+    import hashlib
+
+    sys.path.insert(0, str(root))
+    from bin.seal import canonical
+
+    problems = []
+    vectors = root / "tests" / "vectors"
+
+    journal_path = vectors / "journal.json"
+    if not journal_path.exists():
+        problems.append("нет tests/vectors/journal.json")
+    else:
+        data = json.loads(journal_path.read_text(encoding="utf-8"))
+        prev = ""
+        for index, row in enumerate(data.get("chain", []), start=1):
+            body = json.dumps({**row["event"], "prev": prev}, ensure_ascii=False,
+                              sort_keys=True, separators=(",", ":"))
+            digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+            if digest != row["hash"] or prev != row["prev"]:
+                problems.append(f"journal: цепочка расходится на событии {index}")
+                break
+            prev = digest
+
+    seal_path = vectors / "seal.json"
+    if not seal_path.exists():
+        problems.append("нет tests/vectors/seal.json")
+    else:
+        for case in json.loads(seal_path.read_text(encoding="utf-8")):
+            if canonical(case["input"]) != case["canonical"]:
+                problems.append(f"seal: канонизация разошлась ({case['name']})")
+            digest = hashlib.sha256(canonical(case["input"]).encode("utf-8")).hexdigest()
+            if digest != case["sha256"]:
+                problems.append(f"seal: хеш разошёлся ({case['name']})")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
