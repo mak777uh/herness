@@ -34,3 +34,9 @@ learning.jsonl
  tmp_*
 *.tmp
 tmp_*.py
+lab/**/trace/artifacts/
+lab/**/P16-RESULTS.md
+lab/**/P17-RESULTS.md
+lab/**/P18-RESULTS.md
+lab/**/SELF-WORK.md
+lab/**/CYCLE.md
