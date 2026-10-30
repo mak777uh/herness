@@ -54,7 +54,7 @@ def run_command(cmd: str, timeout: int = 300) -> tuple[str, str, str]:
 
 
 SLOW = ("live", "ping", "probe_api", "live_cases", "replay_archive", "measure_steps",
-        "dist_stats", "patterns.py", "snapshot_stats", "hs.py tools", "selftest", "hs.py run")
+        "dist_stats", "patterns.py", "snapshot_stats", "hs.py tools", "hs.py browser", "selftest", "hs.py run")
 
 
 def main(argv: list[str]) -> int:
