@@ -36,10 +36,10 @@ def validate(data: dict) -> list[str]:
             referenced.add(Path(prereg).stem)
             if not (ROOT / prereg).exists():
                 problems.append(f"{exp_id}: файла пре-регистрации нет ({prereg})")
-        elif experiment.get("status") != "retro":
+        elif experiment.get("status") not in ("retro", "case"):
             problems.append(f"{exp_id}: нет пре-регистрации, а статус {experiment.get('status')}")
         conclusion = experiment.get("conclusion")
-        if experiment.get("status") in ("closed", "retro"):
+        if experiment.get("status") in ("closed", "retro", "case"):
             if not conclusion:
                 problems.append(f"{exp_id}: закрыт без вывода (conclusion)")
             elif not (ROOT / conclusion).exists():
