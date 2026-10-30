@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PREREG = ROOT / "lab" / "prereg"
 REQUIRED = ("id", "date", "question", "hypothesis", "criterion", "arms", "sensitivity")
+REQUIRED_V2 = ("unit_of_analysis", "primary_metric", "test", "stopping_rule")
 
 
 def entries() -> tuple[list[dict], list[str]]:
@@ -23,7 +24,10 @@ def entries() -> tuple[list[dict], list[str]]:
         except json.JSONDecodeError as exc:
             problems.append(f"{path.name}: не JSON ({exc.msg})")
             continue
-        missing = [field for field in REQUIRED if not data.get(field)]
+        required = list(REQUIRED)
+        if data.get("schema", 1) >= 2:
+            required += list(REQUIRED_V2)
+        missing = [field for field in required if not data.get(field)]
         if missing:
             problems.append(f"{path.name}: нет полей {', '.join(missing)}")
         if data.get("closed") and not data.get("conclusion"):
