@@ -1,0 +1,14 @@
+{
+  "request": "Проверь, есть ли lean4 в официальном репозитории openSUSE, и добавь запись в реестр, если его нет.",
+  "assumptions": [
+    { "id": "a1", "text": "каталог пакетов — авторитетный источник", "basis": "declared" },
+    { "id": "a2", "text": "сеть доступна и прокси работает", "basis": "measured", "evidence": "hs ping" },
+    { "id": "a3", "text": "реестр харнессов — единственное место учёта", "basis": "declared" }
+  ],
+  "parts": [
+    { "id": "p1", "text": "Проверь, есть ли lean4 в официальном репозитории openSUSE",
+      "modality": "requires", "action": "проверить", "object": "источник", "anchor": "fetch" },
+    { "id": "p2", "text": "добавь запись в реестр",
+      "modality": "requires", "action": "добавить", "object": "реестр", "anchor": "shell" }
+  ]
+}

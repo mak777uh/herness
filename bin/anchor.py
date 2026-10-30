@@ -41,9 +41,19 @@ class Part:
 
 
 @dataclass
+class Assumption:
+    id: str
+    text: str
+    basis: str = ""          # declared | measured
+    evidence: str = ""
+    error: str = ""
+
+
+@dataclass
 class Field:
     request: str
     parts: list[Part] = field(default_factory=list)
+    assumptions: list[Assumption] = field(default_factory=list)
     codes: list[str] = field(default_factory=list)
     coverage: float = 0.0
     verdict: str = "REFUSED"
@@ -117,6 +127,18 @@ def check(request: dict, caps: dict) -> Field:
                 part.closed = False
                 part.error = part.error or "S4_NO_CHECKER"
 
+    # 3c. допущения: у каждого основание; «измерено» требует свидетельства
+    for raw in request.get("assumptions", []):
+        item = Assumption(id=raw.get("id", "?"), text=raw.get("text", ""),
+                          basis=raw.get("basis", ""), evidence=raw.get("evidence", ""))
+        if item.basis not in ("declared", "measured"):
+            item.error = "S6_ASSUMPTION_NO_BASIS"
+        elif item.basis == "measured" and not item.evidence.strip():
+            item.error = "S6_ASSUMPTION_NO_EVIDENCE"
+        if item.error:
+            field_obj.codes.append(item.error)
+        field_obj.assumptions.append(item)
+
     # 4. согласованность: противоположные модальности на одном действии и объекте
     for i, first in enumerate(field_obj.parts):
         for second in field_obj.parts[i + 1:]:
@@ -135,7 +157,7 @@ def check(request: dict, caps: dict) -> Field:
         field_obj.verdict = "REFUSED"
     elif "S3_OPPOSITE" in field_obj.codes:
         field_obj.verdict = "REFUSED"
-    elif any(code.startswith(("S4_", "S5_")) for code in field_obj.codes):
+    elif any(code.startswith(("S4_", "S5_", "S6_")) for code in field_obj.codes):
         field_obj.verdict = "REFUSED"
     elif field_obj.coverage >= 1.0:
         field_obj.verdict = "ANCHORED"
@@ -158,6 +180,11 @@ def main(argv: list[str]) -> int:
         status = "closed" if part.closed else part.error
         print(f"{part.text[:29]:<30}{part.modality:<12}{part.anchor or '—':<14}{status}")
     print(f"\nпокрытие: {field_obj.coverage:.2f}; вердикт: {field_obj.verdict}")
+    if field_obj.assumptions:
+        print("допущения:")
+        for item in field_obj.assumptions:
+            print(f"  {item.id}: {item.text[:60]} [{item.basis or '—'}]"
+                  + (f" — {item.error}" if item.error else ""))
     if field_obj.codes:
         print("коды:", ", ".join(sorted(set(field_obj.codes))))
     return 0 if field_obj.verdict == "ANCHORED" else 1

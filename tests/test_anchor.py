@@ -112,6 +112,33 @@ def _():
     assert result.verdict == "ANCHORED", result
 
 
+@case("допущение без основания даёт S6_ASSUMPTION_NO_BASIS", False)
+def _():
+    result = check({"request": "проверь файл", "assumptions": [
+        {"id": "a1", "text": "файл существует", "basis": ""}],
+        "parts": [{"id": "p1", "text": "проверь файл", "modality": "requires",
+                   "action": "проверить", "object": "файл", "anchor": "grep"}]}, CAPS)
+    assert "S6_ASSUMPTION_NO_BASIS" in result.codes and result.verdict == "REFUSED", result
+
+
+@case("измеренное допущение без свидетельства отвергается", False)
+def _():
+    result = check({"request": "проверь файл", "assumptions": [
+        {"id": "a1", "text": "сеть работает", "basis": "measured", "evidence": ""}],
+        "parts": [{"id": "p1", "text": "проверь файл", "modality": "requires",
+                   "action": "проверить", "object": "файл", "anchor": "grep"}]}, CAPS)
+    assert "S6_ASSUMPTION_NO_EVIDENCE" in result.codes, result
+
+
+@case("объявленные допущения не мешают, но попадают в поле", False)
+def _():
+    result = check({"request": "проверь файл", "assumptions": [
+        {"id": "a1", "text": "источник авторитетен", "basis": "declared"}],
+        "parts": [{"id": "p1", "text": "проверь файл", "modality": "requires",
+                   "action": "проверить", "object": "файл", "anchor": "grep"}]}, CAPS)
+    assert result.verdict == "ANCHORED" and len(result.assumptions) == 1, result
+
+
 def main() -> int:
     failed = 0
     for name, should_raise, fn in CASES:
@@ -124,6 +151,7 @@ def main() -> int:
         failed += 0 if ok else 1
         print(f"[{'ok' if ok else 'FAIL'}] {name}")
     print(f"\nпривязка: {len(CASES) - failed}/{len(CASES)} ok")
+    print(f"провалов: {failed}")
     return 0 if failed == 0 else 1
 
 
