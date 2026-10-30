@@ -671,6 +671,32 @@ def cmd_execute(args) -> int:
     return 0
 
 
+def cmd_browser(args) -> int:
+    """Поиск через живой браузер (CDP): обходит капчу, потому что браузер человеческий."""
+    sys.path.insert(0, str(ROOT))
+    from core import browser_search
+
+    result = browser_search.search(args.query, engine=args.engine, limit=args.limit)
+    print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    if args.run:
+        from core.journal import Journal
+
+        run_dir = RUNS / args.run
+        run_dir.mkdir(parents=True, exist_ok=True)
+        journal = Journal(run_dir)
+        try:
+            journal.run_start("browser " + args.query, model="browser")
+            journal.tool_call("browser-1", "browser_search",
+                              {"query": args.query, "engine": args.engine})
+            ref = journal.put_artifact(json.dumps(result.to_dict(), ensure_ascii=False).encode("utf-8"))
+            journal.tool_result("browser-1", ref, ok=result.kind == "ok", preview=result.note)
+            journal.run_end("done" if result.kind == "ok" else "error")
+            print("журнал:", run_dir)
+        finally:
+            journal.close()
+    return 0 if result.kind == "ok" else 1
+
+
 def cmd_search(args) -> int:
     """Поиск с проверкой релевантности: decoy отличается от ok (E-0004)."""
     sys.path.insert(0, str(ROOT))
@@ -1300,7 +1326,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_search.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_search.py", "test_browser_search.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1398,6 +1424,13 @@ def main(argv: list[str]) -> int:
     p.add_argument("--code", help="код вместо файла")
     p.add_argument("--cwd")
     p.set_defaults(func=cmd_py)
+
+    p = sub.add_parser("browser", help="поиск через живой Chrome по CDP (обход капчи)")
+    p.add_argument("query")
+    p.add_argument("--engine", default="ddg", choices=["ddg", "google", "startpage", "bing"])
+    p.add_argument("--limit", type=int, default=10)
+    p.add_argument("--run")
+    p.set_defaults(func=cmd_browser)
 
     p = sub.add_parser("search", help="поиск с проверкой релевантности (decoy != ok)")
     p.add_argument("query")
