@@ -82,6 +82,16 @@
    "note": "J-0001 (три рецензии: upheld/killed/unclear) и J-0002 (репликация) прошли через supervisor; первый запуск поймал сломанный review.py (F-0017)",
    "conclusion": "lab/qa/U-0002.md",
    "claim": "C-0095"
+  },
+  {
+   "id": "E-0008",
+   "title": "H-0004: репликация на qwen3.8-flash (третье семейство)",
+   "hypothesis": "H-0004",
+   "prereg": "lab/prereg/H-0004.json",
+   "status": "closed",
+   "note": "recall 0.95 против 0.00; эффект устойчив на трёх семействах; короткое плечо даёт меньше утверждений",
+   "conclusion": "lab/h2qwen/RESULT.md",
+   "claim": "C-0097"
   }
  ]
 }

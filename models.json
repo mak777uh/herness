@@ -1,0 +1,54 @@
+{
+ "models": [
+  {
+   "id": "deepseek-v4.1-flash",
+   "family": "deepseek",
+   "price_in": 0.15,
+   "price_out": 0.6,
+   "role": "основная: дешёвые прогоны, рецензии"
+  },
+  {
+   "id": "deepseek-v4-pro",
+   "family": "deepseek",
+   "price_in": 0.66,
+   "price_out": 1.98,
+   "role": "рецензент по умолчанию и репликация"
+  },
+  {
+   "id": "qwen3.8-flash",
+   "family": "qwen",
+   "price_in": 0.15,
+   "price_out": 0.47,
+   "role": "третье семейство для внешней валидности",
+   "ping": {
+    "ok": true,
+    "seconds": 3.4,
+    "reply": "работает"
+   }
+  },
+  {
+   "id": "glm-5.3-flash",
+   "family": "glm",
+   "price_in": 0.15,
+   "price_out": 0.5,
+   "role": "четвёртое семейство; на анализе длинных документов отдавал пустой ответ",
+   "ping": {
+    "ok": true,
+    "seconds": 2.5,
+    "reply": "Работает ✔️"
+   }
+  },
+  {
+   "id": "mimo-v2.6-flash",
+   "family": "mimo",
+   "price_in": 0.14,
+   "price_out": 0.28,
+   "role": "самое дешёвое; не проверялось",
+   "ping": {
+    "ok": true,
+    "seconds": 5.9,
+    "reply": "работает"
+   }
+  }
+ ]
+}

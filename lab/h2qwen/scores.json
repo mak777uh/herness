@@ -1,0 +1,30 @@
+[
+ {
+  "arm": "A",
+  "run": 1,
+  "status": "done",
+  "chars": 5143,
+  "claims": 21,
+  "cited": 20,
+  "recall": 0.95,
+  "citations": 30,
+  "precision_checked": 14,
+  "precision_ok": 14,
+  "invented_numbers": 0,
+  "invented_sample": []
+ },
+ {
+  "arm": "B",
+  "run": 1,
+  "status": "done",
+  "chars": 2009,
+  "claims": 5,
+  "cited": 0,
+  "recall": 0.0,
+  "citations": 0,
+  "precision_checked": 0,
+  "precision_ok": 0,
+  "invented_numbers": 0,
+  "invented_sample": []
+ }
+]

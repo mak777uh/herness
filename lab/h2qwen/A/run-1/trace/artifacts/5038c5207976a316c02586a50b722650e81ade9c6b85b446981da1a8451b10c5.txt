@@ -1,0 +1,35 @@
+CYCLE.md:11: 2. **Наши данные.** Что уже измерено у нас: журналы `runs/`, `research/claims-coverage.json`,
+CYCLE.md:12: `lab/reviews/`, `lab/failures/`. Новая гипотеза опирается на наши данные, а не на память.
+CYCLE.md:13: 3. **Гипотеза с критерием — до запуска.** `lab/prereg/H-XXXX.json`: вопрос, гипотеза, критерий
+CYCLE.md:16: 4. **Прогон и сырой артефакт.** `runs/<id>/` с хеш-цепочкой, `run/snapshot` до прогона,
+CYCLE.md:18: 5. **Отчёт.** `lab/exp*/RESULT.md` или `lab/journal-batch/ANALYSIS.md`: что получилось, что нет, границы.
+CYCLE.md:19: 6. **Строка в реестре.** `lab/registry.json`: эксперимент, статус, вывод, утверждение; и
+CYCLE.md:21: 7. **Утверждение и рецензия.** `CLAIMS.md` с типом и ожиданием; `bin/review.py` — враждебная проверка.
+CYCLE.md:32: - есть запись в `lab/registry.json` со ссылкой на отчёт;
+CYCLE.md:33: - есть утверждение в `CLAIMS.md`, и оно прошло рецензию.
+P16-RESULTS.md:76: Разбор отказа — `lab/failures/F-0015.md`; правило — K237: отказ проверки не равен отсутствию.
+P17-RESULTS.md:17: Записано как `lab/failures/F-0015.md`, правило — **K237**: отказ проверки ≠ отсутствие факта. Перед
+P18-RESULTS.md:67: 3. **Запечатана пре-регистрация** `lab/prereg/H-0002.json`; гейт «печати» проверяет её на каждом
+P18-RESULTS.md:70: 4. `CLAIMS.md` намеренно **не** запечатан: он меняется каждый день, и печать превратилась бы в шум.
+SELF-WORK.md:12: | утверждений в реестре | **89** | `CLAIMS.md` |
+SELF-WORK.md:14: | отказов (failures) | **15** | `lab/failures/F-0001..F-0015` |
+SELF-WORK.md:15: | рецензий | **6**, все `upheld` | `lab/reviews/index.json` |
+SELF-WORK.md:18: | пре-регистраций | **1**, запечатана | `lab/prereg/H-0002.json` + `.sha256` |
+trace\artifacts\25db46d3415db51ff2d372f8eec0b5c00b45984a9ceb3ac9c330b232f63eface.txt:17: 17: Записано как `lab/failures/F-0015.md`, правило — **K237**: отказ проверки ≠ отсутствие факта. Перед
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:12: 12: | утверждений в реестре | **89** | `CLAIMS.md` |
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:14: 14: | отказов (failures) | **15** | `lab/failures/F-0001..F-0015` |
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:15: 15: | рецензий | **6**, все `upheld` | `lab/reviews/index.json` |
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:18: 18: | пре-регистраций | **1**, запечатана | `lab/prereg/H-0002.json` + `.sha256` |
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:11: 11: 2. **Наши данные.** Что уже измерено у нас: журналы `runs/`, `research/claims-coverage.json`,
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:12: 12:    `lab/reviews/`, `lab/failures/`. Новая гипотеза опирается на наши данные, а не на память.
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:13: 13: 3. **Гипотеза с критерием — до запуска.** `lab/prereg/H-XXXX.json`: вопрос, гипотеза, критерий
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:16: 16: 4. **Прогон и сырой артефакт.** `runs/<id>/` с хеш-цепочкой, `run/snapshot` до прогона,
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:18: 18: 5. **Отчёт.** `lab/exp*/RESULT.md` или `lab/journal-batch/ANALYSIS.md`: что получилось, что нет, границы.
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:19: 19: 6. **Строка в реестре.** `lab/registry.json`: эксперимент, статус, вывод, утверждение; и
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:21: 21: 7. **Утверждение и рецензия.** `CLAIMS.md` с типом и ожиданием; `bin/review.py` — враждебная проверка.
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:32: 32: - есть запись в `lab/registry.json` со ссылкой на отчёт;
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:33: 33: - есть утверждение в `CLAIMS.md`, и оно прошло рецензию.
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:67: 67: 3. **Запечатана пре-регистрация** `lab/prereg/H-0002.json`; гейт «печати» проверяет её на каждом
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:70: 70: 4. `CLAIMS.md` намеренно **не** запечатан: он меняется каждый день, и печать превратилась бы в шум.
+trace\artifacts\fe341e4fc720610f2105f90bc17112829ca7142ae140cc8188dff3bd0e40e060.txt:76: 76: Разбор отказа — `lab/failures/F-0015.md`; правило — K237: отказ проверки не равен отсутствию.
+trace\events.jsonl:25: {"seq": 25, "ts": "2026-10-30T19:37:27.088+00:00", "type": "tool/call", "payload": {"call_id": "call-12", "name": "grep", "arguments": {"pattern": "CLAIMS|lab/|runs/", "glob": "*"}}, "prev": "20ce9e43

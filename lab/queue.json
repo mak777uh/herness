@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-10-30T22:26:38",
+ "updated_at": "2026-10-30T22:39:23",
  "budget": {
   "max_jobs_per_day": 20,
   "max_seconds_total": 3600,
@@ -51,6 +51,29 @@
     "H2_DIR": "lab/h2pro"
    },
    "last_run": "20261030T222458",
+   "last_exit": 0
+  },
+  {
+   "id": "J-0003",
+   "title": "Репликация H-0002 на qwen3.8-flash (третье семейство)",
+   "kind": "replicate",
+   "exploration": false,
+   "prereg": "lab/prereg/H-0004.json",
+   "command": [
+    "python",
+    "bin/run_h2.py",
+    "1"
+   ],
+   "env": {
+    "H2_MODEL": "qwen3.8-flash",
+    "H2_DIR": "lab/h2qwen"
+   },
+   "scorer": "bin/score_h2.py",
+   "budget_seconds": 600,
+   "acceptance": "recall(A) > recall(B) на qwen при 5 источниках; иначе зафиксировать границу",
+   "anchor": "сверить один ответ вручную",
+   "status": "done",
+   "last_run": "20261030T223558",
    "last_exit": 0
   }
  ]
