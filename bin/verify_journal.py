@@ -33,7 +33,12 @@ def verify_run(run_dir: Path) -> ChainReport:
         # каталог без журнала — не подмена, а другой формат прогона
         return ChainReport(str(run_dir), 0, True, 0, "нет events.jsonl: пропуск")
     
-    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    raw = path.read_text(encoding="utf-8")
+    torn_tail = bool(raw) and not raw.endswith("\n")
+    lines = [line for line in raw.splitlines() if line.strip()]
+    if torn_tail:
+        # оборванная последняя запись — карантин, а не порча всей цепочки
+        lines = lines[:-1]
     if not lines:
         return ChainReport(str(run_dir), 0, False, 1, "пустой журнал")
     events = []
@@ -61,7 +66,10 @@ def verify_run(run_dir: Path) -> ChainReport:
         prev = event["hash"]
         if int(event.get("seq", index)) != index:
             return ChainReport(str(run_dir), len(events), False, index, "дырка в нумерации")
-    return ChainReport(str(run_dir), len(events), legacy, 0, "legacy: без цепочки" if legacy else "ок")
+    note = "legacy: без цепочки" if legacy else "ок"
+    if torn_tail:
+        note += "; оборванный хвост в карантине"
+    return ChainReport(str(run_dir), len(events), legacy, 0, note)
 
 
 def main(argv: list[str]) -> int:

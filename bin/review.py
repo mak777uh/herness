@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 from core.http_provider import OpenAICompatProvider  # noqa: E402
 
 MODEL = "deepseek-v4.1-flash"
+REVIEWER_MODEL = "deepseek-v4-pro"  # по умолчанию рецензент — другая модель, чем производитель
 BASE = "https://opencode.ai/inference/go/openai/v1"
 KEY_ENV = "OPENCODE_GO_API_KEY"
 REVIEWS = ROOT / "lab" / "reviews"
@@ -66,27 +67,29 @@ def artifact_text(path: str, limit: int = 6000) -> str:
         return ""
 
 
-def review(claim_id: str, row: dict) -> dict:
+def review(claim_id: str, row: dict, model: str = REVIEWER_MODEL) -> dict:
     body = artifact_text(row["artifact"])
     user = (f"УТВЕРЖДЕНИЕ: {row['claim']}\n"
             f"КОМАНДА: {row['command']}\n"
             f"ОЖИДАНИЕ В АРТЕФАКТЕ: {row['expect']}\n"
             f"АРТЕФАКТ ({row['artifact']}):\n{body or '(не найден или пуст)'}")
     extra = {"x-opencode-session": f"herness-review-{claim_id}-{int(time.time())}"}
-    client = OpenAICompatProvider(BASE, MODEL, KEY_ENV, extra_headers=extra, max_tokens=4000)
+    client = OpenAICompatProvider(BASE, model, KEY_ENV, extra_headers=extra, max_tokens=4000)
     result = client.complete([{"role": "system", "content": PROMPT},
                               {"role": "user", "content": user}], stream=False)
     reply = getattr(result, "reply", result)
     text = (reply.text or "").strip()
     match = re.search(r"\{.*\}", text, re.S)
     if not match:
-        return {"verdict": "unclear", "artifact_checked": row["artifact"],
+        return {"verdict": "unclear", "artifact_checked": row["artifact"], "model": model,
                 "reasons": [f"модель не вернула JSON: {text[:200]}"],
                 "what_would_kill_it": "не удалось разобрать ответ"}
     try:
-        return json.loads(match.group(0))
+        parsed = json.loads(match.group(0))
+        parsed["model"] = model
+        return parsed
     except json.JSONDecodeError:
-        return {"verdict": "unclear", "artifact_checked": row["artifact"],
+        return {"verdict": "unclear", "artifact_checked": row["artifact"], "model": model,
                 "reasons": ["JSON не разобрался"], "what_would_kill_it": "не удалось разобрать ответ"}
 
 
@@ -100,7 +103,7 @@ def write_review(claim_id: str, row: dict, verdict: dict) -> Path:
         f"claim: {row['claim']}\n"
         f"verdict: {verdict.get('verdict', 'unclear')}\n"
         f"artifact_checked: {verdict.get('artifact_checked', row['artifact'])}\n"
-        f"method: чтение артефакта моделью-рецензентом, сверка с ожиданием\n"
+        f"method: рецензент {verdict.get(\"model\", \"deepseek-v4-pro\")}: чтение артефакта и сверка с ожиданием\n"
         f"reasons:\n{reasons}\n"
         f"what_would_kill_it: {verdict.get('what_would_kill_it', '—')}\n",
         encoding="utf-8")
@@ -109,13 +112,18 @@ def write_review(claim_id: str, row: dict, verdict: dict) -> Path:
 
 def main(argv: list[str]) -> int:
     rows = claims()
-    ids = argv or sorted(rows)[:3]
+    args = [arg for arg in argv if not arg.startswith("--")]
+    model = MODEL
+    for arg in argv:
+        if arg.startswith("--model="):
+            model = arg.split("=", 1)[1]
+    ids = args or sorted(rows)[:3]
     for claim_id in ids:
         if claim_id not in rows:
             print(f"{claim_id}: нет такого утверждения")
             continue
         row = rows[claim_id]
-        verdict = review(claim_id, row)
+        verdict = review(claim_id, row, model=model)
         path = write_review(claim_id, row, verdict)
         print(f"{claim_id}: {verdict.get('verdict')} -> {path.relative_to(ROOT)}")
     return 0
