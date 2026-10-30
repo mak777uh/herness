@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "note": "Реестр харнессов для сравнения подходов. Звёзды, лицензия и последний push проверены через GitHub API 2026-10-29. Свойства (цикл, состояние, бюджет и т.д.) взяты из ответов моделей на P12 и НЕ проверены по коду — при использовании открывать репозиторий. Проекты, добавленные поиском GitHub 2026-10-29 (deepseek-harness, openclaw, superpowers, ECC, hermes-agent, pi, orca, paperclip, deer-flow, ruflo, browser-use): числа проверены API, свойства не проверялись — стоят «нет данных». Добавлены nearai/ironclaw (Agent OS: WASM-песочница, секреты вне инструментов) и nearai/putnambench-deepseek (672 задачи PutnamBench в Lean 4 одним bash). Добавлен osolmaz/switch: decision-модель выбирает из конечного списка шагов, вызовы формирует код (не модель). Добавлен k3nfalt/longtails: проверяемый бюджет входит в утверждение, Comparator — независимый аудит.",
+  "note": "Реестр харнессов для сравнения подходов. Звёзды, лицензия и последний push проверены через GitHub API 2026-10-29. Свойства (цикл, состояние, бюджет и т.д.) взяты из ответов моделей на P12 и НЕ проверены по коду — при использовании открывать репозиторий. Проекты, добавленные поиском GitHub 2026-10-29 (deepseek-harness, openclaw, superpowers, ECC, hermes-agent, pi, orca, paperclip, deer-flow, ruflo, browser-use): числа проверены API, свойства не проверялись — стоят «нет данных». Добавлены nearai/ironclaw (Agent OS: WASM-песочница, секреты вне инструментов) и nearai/putnambench-deepseek (672 задачи PutnamBench в Lean 4 одним bash). Добавлен osolmaz/switch: decision-модель выбирает из конечного списка шагов, вызовы формирует код (не модель). Добавлен k3nfalt/longtails: проверяемый бюджет входит в утверждение, Comparator — независимый аудит. Добавлены CodeWhale (режимы Plan/Agent/YOLO, RLM) и Reasonix (чекпойнт на каждый ход, гейт на вызов) из чата researchim-ai, метаданные проверены API.",
   "properties_note": "есть / частично / нет / нет данных",
   "checked_at": "2026-10-29",
   "items": [
@@ -1178,6 +1178,44 @@
       "recovery": "нет данных",
       "evidence": "есть: Comparator проверяет теорему и бюджет",
       "budget": "есть в утверждении: budget входит в теорему",
+      "multiagent": "нет данных"
+    },
+    {
+      "id": "codewhale",
+      "name": "CodeWhale",
+      "repo": "Hmbown/CodeWhale",
+      "stars": 41152,
+      "license": "MIT",
+      "last_push": "2026-10-30",
+      "what": "терминальный агент на Rust: режимы Plan/Agent/YOLO, авто-выбор модели, RLM (Python REPL), песочница Landlock/Seatbelt/AppContainer",
+      "when": "сравнить режимы прав (Plan read-only) и RLM как код-как-действие",
+      "loop": "нет данных",
+      "state": "нет данных",
+      "tools": "нет данных",
+      "permissions": "нет данных",
+      "secrets": "нет данных",
+      "recovery": "нет данных",
+      "evidence": "нет данных",
+      "budget": "нет данных",
+      "multiagent": "нет данных"
+    },
+    {
+      "id": "reasonix",
+      "name": "Reasonix",
+      "repo": "esengine/DeepSeek-Reasonix",
+      "stars": 36005,
+      "license": "MIT",
+      "last_push": "2026-10-30",
+      "what": "локальный агент на Go: чекпойнт на каждый ход с откатом, гейт на каждый вызов инструмента, саб-агенты с изолированным инструментарием",
+      "when": "изучить чекпойнт-подход: у нас нет восстановления после падения",
+      "loop": "нет данных",
+      "state": "нет данных",
+      "tools": "нет данных",
+      "permissions": "нет данных",
+      "secrets": "нет данных",
+      "recovery": "нет данных",
+      "evidence": "нет данных",
+      "budget": "нет данных",
       "multiagent": "нет данных"
     }
   ]

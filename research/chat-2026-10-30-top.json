@@ -1,0 +1,620 @@
+[
+ {
+  "id": 32,
+  "date": "2024-10-21",
+  "author": "igor tokarev",
+  "length": 2195,
+  "themes": [],
+  "links": [
+   "https://arxiv.org/abs/2212.09741",
+   "https://arxiv.org/abs/2212.10560",
+   "https://github.com/yizhongw/self-instruct",
+   "https://arxiv.org/abs/2302.14691",
+   "https://arxiv.org/abs/2306.03341"
+  ],
+  "score": 30.2,
+  "text": "NLP PAPERS:\nOne Embedder, Any Task: Instruction-Finetuned Text Embeddings  https://arxiv.org/abs/2212.09741 \n\nSelf-Instruct: Aligning Language Models with Self-Generated Instructions  https://arxiv.org/abs/2212.10560   https://github.com/yizhongw/self-instruct \n\nIn-Context Instruction Learning  https://arxiv.org/abs/2302.14691 \n\nInference-Time Intervention: Eliciting Truthful Answers from a Language Model  https://arxiv.org/abs/2306.03341 \n\nTinyStories: How Small Can Language Models Be and Still Speak Coherent English?  https://arxiv.org/abs/2305.07759 \n\nDistilling Step-by-Step! Outperforming Larger Language Models with Less Training Data and Smaller Model Sizes  https://arxiv.org/abs/2305.02301 \n\n https://www.anyscale.com/blog/continuous-batching-llm-inference \n\nLet's Verify Step by Step  https://arxiv.org/abs/2305.20050 \n\nRetroformer: Retrospective Large Language Agents with Policy Gradient Optimization  https://arxiv.org/abs/2308.02151 \n\nStructured State Space Models for In-Context Reinforcement Learning   https://arxiv.org/abs/2303.03982 \n\nUncovering mesa-optimization algorithms in Transformers  https://arxiv.org/abs/2309.05858 \n\n https://openai.com/research/unsupervised-sentiment-neuron \n\nPretrained Transformers as Universal Computation Engines  https://arxiv.org/abs/2103.05247 \n\n https://habr.com/ru/articles/682476/ \n\n https://rusvectores.org/ru/models/ \n\n https://github.com/mit-han-lab/streaming-llm \n\nThink before you speak: Training Language Models With Pause Tokens  https://arxiv.org/abs/2310.02226 \n\n https://www.ai-transparency.org/ \n\n https://habr.com/ru/articles/454926/ \n\n https://agi-sphere.com/retrieval-augmented-generation-llama2/ \n\nTRAINING PAPERS AND LIBRARIES:\n\nPyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel  https://arxiv.org/abs/2304.11277 \n\n https://habr.com/ru/articles/582620/ \n\n https://habr.com/ru/companies/just_ai/articles/740698/ \n\nABOUT LONG CONTEXT:\n https://normxu.github.io/ \n\nYaRN: Efficient Context Window Extension of Large Language Models\n https://arxiv.org/abs/2309.00071 \n https://github.com/jquesnelle/yarn \n\nLLM Maybe LongLM: Self-Extend LLM Context Window Without Tuning\n https://github.com/datamllab/LongLM"
+ },
+ {
+  "id": 7003,
+  "date": "2026-09-02",
+  "author": "igor tokarev",
+  "length": 1720,
+  "themes": [],
+  "links": [
+   "https://arxiv.org/abs/1712.01815",
+   "https://www.alphaxiv.org/ru/abs/1712.01815",
+   "https://arxiv.org/abs/1911.08265",
+   "https://www.alphaxiv.org/ru/abs/1911.08265",
+   "https://arxiv.org/abs/2104.06294"
+  ],
+  "score": 23.72,
+  "text": "Сделаем короче проще - список *Zero алгоритмов одним постом\n\nMastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm\n https://arxiv.org/abs/1712.01815 \n https://www.alphaxiv.org/ru/abs/1712.01815 \n\nMastering Atari, Go, Chess and Shogi by Planning with a Learned Model\n https://arxiv.org/abs/1911.08265 \n https://www.alphaxiv.org/ru/abs/1911.08265 \n\nOnline and Offline Reinforcement Learning by Planning with a Learned Model\n https://arxiv.org/abs/2104.06294 \n https://www.alphaxiv.org/ru/abs/2104.06294 \n\nLearning and Planning in Complex Action Spaces\n https://arxiv.org/abs/2104.06303 \n https://www.alphaxiv.org/ru/abs/2104.06303 \n\nMastering Atari Games with Limited Data\n https://arxiv.org/abs/2111.00210 \n https://www.alphaxiv.org/ru/abs/2111.00210 \n\nEfficientZero V2: Mastering Discrete and Continuous Control with Limited Data\n https://arxiv.org/abs/2403.00564 \n https://www.alphaxiv.org/ru/abs/2403.00564 \n\nReZero: Boosting MCTS-based Algorithms by Backward-view and Entire-buffer Reanalyze\n https://arxiv.org/abs/2404.16364 \n https://www.alphaxiv.org/ru/abs/2404.16364 \n\nUniZero: Generalized and Efficient Planning with Scalable Latent World Models\n https://arxiv.org/abs/2406.10667 \n https://www.alphaxiv.org/ru/abs/2406.10667 \n\nOne Model for All Tasks: Leveraging Efficient World Models in Multi-Task Planning\n https://arxiv.org/abs/2509.07945 \n https://www.alphaxiv.org/ru/abs/2509.07945 \n\nObject-Centric World Models Meet Monte Carlo Tree Search\n https://arxiv.org/abs/2601.06604 \n https://www.alphaxiv.org/ru/abs/2601.06604 \n\nPriorZero: Bridging Language Priors and World Models for Decision Making\n https://arxiv.org/abs/2605.12289 \n https://www.alphaxiv.org/ru/abs/2605.12289"
+ },
+ {
+  "id": 6680,
+  "date": "2026-07-19",
+  "author": "igor tokarev",
+  "length": 2706,
+  "themes": [
+   "харнесс/агент",
+   "модели"
+  ],
+  "links": [
+   "https://github.com/researchim-ai/state-of-ai",
+   "https://github.com/researchim-ai/re-oil-production-llm",
+   "https://github.com/researchim-ai/oil-simulator-py",
+   "https://github.com/researchim-ai/re-synthetic-docs",
+   "https://github.com/researchim-ai/re-grpo"
+  ],
+  "score": 18.71,
+  "text": "Обновлю списочек наших проектов:\n\n https://github.com/researchim-ai/state-of-ai \nии по отрослям так сказать. репозиторий с широкой инфой (чатгпт ресерчи например) по ии. Где и как применяется, какие-нибудь большие вводные/учебные материалы по разделам иишки/мля\n\n https://github.com/researchim-ai/re-oil-production-llm \nпроект по ллм в добыче нефти. моделирование скважин, трен ллм на данных и все такое. Щас активно делаю, прорабатываю генерацию данных чтобы датасеты собирать можно было. Тут дофига чего можно делать.\nВероятно в будущем перерастет в нефтьгпт.\nСейчас в нефтьгпт у нас очень простой симулятор. \n\nС целью создания полноценного симулятора нефтянки начат проект\n https://github.com/researchim-ai/oil-simulator-py \nСейчас там есть моделирование пласта и инжекторные скважины (воду закачивают) и нефтяные.\nДалее разработка связности между скважинами и остальная инфраструктура\n\n https://github.com/researchim-ai/re-synthetic-docs \nпроект по генерации синтетических документов с целью тюнинга VLM моделек для распознавания доков.\n\n https://github.com/researchim-ai/re-grpo \nэто так сказать свой имплемент грпо на базе tiny-grpo проекта. Добавлен был пример с использованием тулов и мультитерн грпо. Тут скорее надо в порядок привести, сделаю как руки дотянутся.\n+ хочу завести улучшения из dr.grpo статьи\n\n https://github.com/researchim-ai/re-rl \nпроект по генерации синтетических датасетов для ризонинга. логические задачки и вот это все. Тут можно тоже очень сильно развивать.\n\n https://github.com/researchim-ai/fast-start-ai \nэто проектик куда хочется собирать инфу для быстрого старта в ии. в том смысле, что туторы, инструкции по развертыванию чего-нибудь и тд\n\n https://github.com/researchim-ai/quantum-computing-sim-py \nСимулятор квантовых вычислений с возможностью подключения к нему LLM и RL \n\n https://github.com/researchim-ai/atomic-sim \nсимулятор атомного реактора\n\n https://github.com/researchim-ai/one-click-coding-agent \nполностью локальный кодинговый агент на базе Qwen моделей\n\n https://github.com/researchim-ai/one-click-research-agent \nполностью локальный ресеч агент на базе Qwen моделей\nесть дипресеч\n\n https://github.com/researchim-ai/models-at-home \nвизуальная студия для того чтобы делать модельки у себя дома удобно в одном интерфейсе\nПо задумке это будет единой точкой входа для всех кто хочет научиться делать свои модельки или уже шарит и хочет тренировать модельки разных размеров\nсейчас работаем с LLM (претрен/sft/grpo) в будущем планируется добавление DL моделек по многим разным направлениям\nНа этот проект имеются очень большие планы\n\nТакже стараемся вести апдейт статей и информации по ИИ\n\nИдеи приветствуются, пуши приветствуются, звездочки приветствуются)  🥰"
+ },
+ {
+  "id": 5583,
+  "date": "2026-01-10",
+  "author": "igor tokarev",
+  "length": 2497,
+  "themes": [
+   "модели"
+  ],
+  "links": [
+   "https://github.com/researchim-ai/state-of-ai",
+   "https://github.com/researchim-ai/re-oil-production-llm",
+   "https://github.com/researchim-ai/oil-simulator-py",
+   "https://github.com/researchim-ai/re-synthetic-docs",
+   "https://github.com/researchim-ai/re-grpo"
+  ],
+  "score": 14.5,
+  "text": "А пока модельки дома готовятся обновляем листик ресечим проектов в которых можно поучаствовать\n\n https://github.com/researchim-ai/state-of-ai \nии по отрослям так сказать. репозиторий с широкой инфой (чатгпт ресерчи например) по ии. Где и как применяется, какие-нибудь большие вводные/учебные материалы по разделам иишки/мля\n\n https://github.com/researchim-ai/re-oil-production-llm \nпроект по ллм в добыче нефти. моделирование скважин, трен ллм на данных и все такое. Щас активно делаю, прорабатываю генерацию данных чтобы датасеты собирать можно было. Тут дофига чего можно делать.\nВероятно в будущем перерастет в нефтьгпт.\nСейчас в нефтьгпт у нас очень простой симулятор. \n\nС целью создания полноценного симулятора нефтянки начат проект\n https://github.com/researchim-ai/oil-simulator-py \nСейчас там есть моделирование пласта и инжекторные скважины (воду закачивают) и нефтяные.\nДалее разработка связности между скважинами и остальная инфраструктура\n\n https://github.com/researchim-ai/re-synthetic-docs \nпроект по генерации синтетических документов с целью тюнинга VLM моделек для распознавания доков.\n\n https://github.com/researchim-ai/re-grpo \nэто так сказать свой имплемент грпо на базе tiny-grpo проекта. Добавлен был пример с использованием тулов и мультитерн грпо. Тут скорее надо в порядок привести, сделаю как руки дотянутся.\n+ хочу завести улучшения из dr.grpo статьи\n\n https://github.com/researchim-ai/re-rl \nпроект по генерации синтетических датасетов для ризонинга. логические задачки и вот это все. Тут можно тоже очень сильно развивать.\n\n https://github.com/researchim-ai/fast-start-ai \nэто проектик куда хочется собирать инфу для быстрого старта в ии. в том смысле, что туторы, инструкции по развертыванию чего-нибудь и тд\n\n https://github.com/researchim-ai/quantum-computing-sim-py \nСимулятор квантовых вычислений с возможностью подключения к нему LLM и RL \n\n https://github.com/researchim-ai/atomic-sim \nсимулятор атомного реактора\n\n https://github.com/researchim-ai/models-at-home \nвизуальная студия для того чтобы делать модельки у себя дома удобно в одном интерфейсе\nПо задумке это будет единой точкой входа для всех кто хочет научиться делать свои модельки или уже шарит и хочет тренировать модельки разных размеров\nсейчас работаем с LLM (претрен/sft/grpo) в будущем планируется добавление DL моделек по многим разным направлениям\nНа этот проект имеются очень большие планы\n\nТакже стараемся вести апдейт статей и информации по ИИ\n\nИдеи приветствуются, пуши приветствуются)  🥰"
+ },
+ {
+  "id": 4711,
+  "date": "2025-08-26",
+  "author": "igor tokarev",
+  "length": 1893,
+  "themes": [
+   "исследование/эксперимент",
+   "модели"
+  ],
+  "links": [
+   "https://huggingface.co/ESpeech",
+   "https://github.com/Den4ikAI/ESpeech/blob/main/ESpeech_techreport.pdf",
+   "https://huggingface.co/spaces/Den4ikAI/ESpeech-TTS",
+   "https://huggingface.co/spaces/ESpeech/open_tts_leaderboard_ru",
+   "https://t.me/den4ikresearch"
+  ],
+  "score": 12.89,
+  "text": "Наш русскоязычный датасет для TTS опубликован! \n\nСегодня выкладываем открытые корпуса на 4000+ часов речи, а еще синтезатор речи ESpeech-TTS-1\n\nНаш датасет содержит больше 4000 часов русской речи. Статистика по корпусам:\n\n Многоголосые: \n ESpeech-podcasts  - 3200 часов\n ESpeech-webinars  - 850 часов\n\n Одноголосые: \n ESpeech-igm  - 220 часов\n ESpeech-buldjat  - 54 часа\n ESpeech-upvote  - 296 часов\n ESpeech-tuchniyzhab  - 306 часов\n\nДанные лежат вот тут:  https://huggingface.co/ESpeech \n\nТехрепорт датасета доступен тут:  https://github.com/Den4ikAI/ESpeech/blob/main/ESpeech_techreport.pdf \n\n\nТакже, мы решили провести некоторые эксперименты с TTS. Получилось обучить F5-TTS на 10000 часов речи и сделать одну из лучших по нашим замерам моделей в опенсурсе для русского языка. \n\n Какие модели доступны? \n ESpeech-TTS-1 [RL] V1  - Первая версия модели с RL\n ESpeech-TTS-1 [RL] V2  - Вторая версия модели с RL\n ESpeech-TTS-1 PODCASTER [SFT]  - Модель обученная только на подкастах, лучше генерирует спонтанную речь\n ESpeech-TTS-1 [SFT] 95K  - чекпоинт с 95000 шагов (на нем основана RL V1)\n ESpeech-TTS-1 [SFT] 265K  - чекпоинт с 265000 шагов (на нем основана RL V2)\n\nЛайкайте модель которая больше понравится чтобы мы понимали есть ли смысл запускать RL.\n\n Послушать модели без скачивания можно вот здесь: \n\n https://huggingface.co/spaces/Den4ikAI/ESpeech-TTS\n \nСовместно с  @speech_recognition_ru  ещё сделали  лидерборд русского ТТС , где можно глянуть метрики:\n\n https://huggingface.co/spaces/ESpeech/open_tts_leaderboard_ru \nЗадать вопросы по поводу данных и модели можно в наших телеграм каналах:\n https://t.me/den4ikresearch \n https://t.me/voice_stuff_chat \n\nВы можете мне задонатить, чтобы у меня были ресурсы делать более крутые модели и датасеты:\n\nUSDT (TRC20): TEpEM4VVmGmqKHn4Xz1FxM7qZiXjWtUEUB\nBTC: bc1qw5lq7fc455e47hggax6zp8txw4ru7yvsxvawv3\n https://www.tbank.ru/cf/7WKnNMqWtOx"
+ },
+ {
+  "id": 6418,
+  "date": "2026-04-14",
+  "author": "igor tokarev",
+  "length": 3574,
+  "themes": [],
+  "links": [
+   "https://t.me/forodirchNEWS/3165",
+   "https://www.kaggle.com/competitions/cayley-py-megaminx/leaderboard",
+   "https://www.kaggle.com/competitions/cayleypy-ihes-cube",
+   "https://www.kaggle.com/competitions/cayley-py-444-cube",
+   "https://github.com/cayleypy/cayleypy"
+  ],
+  "score": 11.57,
+  "text": "🚀 Серия соревнований по МЛ ! С денежными и другими  призами !  Кому интересен МЛ/RL или математика или пазлы или роботы. \n\nПриглашаем Вас принять участие в серии челленджей. \n\nСоревнование организуется совместно с учеными лаборатории интеллектуальных технологий робототехники  МФТИ , (руководит проектом -  Илья Осокин), которые поставили себе амбициозную цель создать робота, который побьет мировой рекорд по сборке Мегаминкса ! Узнать больше о робототехнической части проекта Вы можете  в сообщении  https://t.me/forodirchNEWS/3165  ,  хабре  или в чате  @starkitmega .\n\nПроект  CayleyPy  предлагает Вам принять участие в решении алгоритмической части задачи - создании алгоритмов - которые смогут получать наиболее короткие (близкие к оптимальным ) решения. Методы решения важны в широком круге проблем от математики до квантовых компьютеров, МЛ/РЛ и теории струн. Для этого мы организовали соревнования на платформе Каггл. \n\nПервый разыгрываемый приз - 10 000 рублей.\nУсловия  первого этапа очень простые.\nЕсть три челленджа на Каггле\nМегаминкс\n https://www.kaggle.com/competitions/cayley-py-megaminx/leaderboard \nКубик Рубика 333\n https://www.kaggle.com/competitions/cayleypy-ihes-cube \nКубик Рубика 444\n https://www.kaggle.com/competitions/cayley-py-444-cube  \n\nПриз будет получен первым, кто достигнет ЛЮБУЮ из целей:\n1 Или  в конкурсе Мегаминкс - кто достигает скор 80 000 - и опубликует публичное решение\n2 Или обогнать Томаса Рокицкого в конкурсах по кубику 333 или 444  (любом из них) и тоже опубликовать публичное решение. (Томас Рокицкий - легендарный специалист по вычислительным аспектам головоломок - именно его команда нашла \" число Бога \" кубика Рубика в 2010 году - подведя итог более 30 годам усилий большого количества специалистов). \n\nПодробное описание соревнований -- по ссылкам выше. Кратко: даны 1000 состояний пазлов и Вам надо предъявить их решения -- чем короче решение тем лучше (то есть чем меньше шагов/\"мувов\"). Score  на лидерборде = сумма длин решений по всем пазлам.  Соревнования полностью аналогичны  соревнованию  Каггл Санта 2023  -- можно навайбкодить изменения лучших решений оттуда. Также стоит взять наш подход  CayleyPy  и изменить в нем образующие на мегаминкс. Это сделали те, кто сейчас в топе. Дополнительную информацию, обсуждение и советы - см. чаты -  @starkitmega   @sberlogasci . Вводные лекции:  четверг 19.00 ,  пятница 20.00  (время по Москве).\n\nДополнительным призом будет возможное участие в научных публикациях. Наши цели амбициозны - мы уже  добились  исключительных результатов, которые имеют приложение в МЛ, математике, теории струн, квантовых вычислениях и т.д. Публикации отмечены  NIPS spotlight . Узнать больше Вы можете в наших  статьях . Если у Вас есть несколько свободных часов в неделю, знание Питона или математики  и Вам интересно принять участие - пишите  @alexander_v_c  - мы рады всем - начинающим и профи.\n\nПланируется серия челленджей и призов. Когда первый приз будет разыгран - мы объявим о втором этапе. \n\n================\nА также мы ищем Cпоносоров.\nВы можете поддержать нас переведя на карту Илье Осокину  2202208362030505 \nИли напишите  @alexander_v_c  (Александр Червов)\n\nИ кидайте нам, пожалуйста,  звезды на гитхаб, Вы нам очень поможите: \n https://github.com/cayleypy/cayleypy \n\n================\nВыражаем благодарность компании RYBE - толстовки для айтишников:  https://rybe.store   https://t.me/rybe_store  \n================\nВыражаем благодарность агентству BLASTIM за поддержку:  \n\n❤️ Наши курсы:  agency.blastim.ru \n🥨 Свежие вакансии в биотехе:  blastim.ru \n🤝  https://t.me/blastim"
+ },
+ {
+  "id": 7211,
+  "date": "2026-10-01",
+  "author": "#iamafunguy1381",
+  "length": 3574,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "инструменты/код"
+  ],
+  "links": [
+   "https://github.com/rikohomeless",
+   "https://github.com/ProverCoderAI/docker-git"
+  ],
+  "score": 11.57,
+  "text": "#резюме   #Resume   #CV   #SoftwareEngineer   #FullStackDeveloper   #FrontendDeveloper   #AIEngineer   #ReactDeveloper   #TypeScript   #NodeJS   #AI   #OpenToWork   #Remote   #Relocate \n\n💼 Должность: Middle+ Software Engineer / Full Stack Developer / Frontend Developer / AI Engineer  \n🌍 Формат работы: Remote / On-site / Relocation — anywhere  \n⚙️ Занятость: Full-time  \n💰 Ожидания: $950–1500\n\nЯ Middle+ Software Engineer с 4+ годами коммерческого опыта в разработке web- и mobile-продуктов, SaaS-систем, внутренних бизнес-инструментов, AI-решений и интеграционных проектов.\n\nОсновной стек — React, React Native, TypeScript и Node.js. Также работаю с Next.js, NestJS, Django, PostgreSQL и Docker.\n\nОтдельное направление моей работы — AI Engineering. Имею практический опыт работы с OpenAI API, Claude API, Gemini API, MCP, RAG, vector databases и agent-based системами.\n\nЯ также полностью самостоятельно создал ProverCoderAI — собственную AI / vibe-coding платформу, в которой AI-агенты работают в изолированных окружениях, взаимодействуют с кодом и инструментами разработки и могут выполнять задачи внутри подготовленной среды.\n\n🎯 Рассматриваю позиции:\n\n— Software Engineer  \n— Full Stack Developer  \n— Frontend Developer  \n— React / TypeScript Developer  \n— AI Engineer / AI Product Developer\n\n✅ Чем могу быть полезен:\n\n— Разработка web-приложений на React / Next.js / TypeScript.\n\n— Backend-разработка на Node.js / NestJS и работа с PostgreSQL.\n\n— Разработка кроссплатформенных приложений на React Native.\n\n— Разработка продукта с нуля: от архитектуры и прототипа до рабочего production-решения.\n\n— Интеграция REST API, сторонних сервисов, платежных систем и банковских API.\n\n— Разработка AI-powered продуктов и внедрение LLM в существующие системы.\n\n— Работа с OpenAI, Claude и Gemini API.\n\n— Создание AI Agents, MCP-интеграций, RAG-систем и решений с vector databases.\n\n— Docker и создание изолированных сред для выполнения приложений и AI-агентов.\n\n— Разработка Telegram Mini Apps и интеграция Telegram Stars.\n\n🏆 Опыт и проекты:\n\n— Frontend-разработка food delivery платформы уровня Glovo/Wolt: приложения для клиентов и курьеров, real-time навигация и dispatch-система.\n\n— Разработка healthcare-системы для клиники с интеграцией Bitrix24, собственной базой данных и онлайн-записью для пациентов, врачей и администраторов.\n\n— Разработка Telegram Mini Apps с gamification-механиками и платежами через Telegram Stars.\n\n— Полностью самостоятельно создал ProverCoderAI — AI-платформу для разработки программного обеспечения с использованием автономных AI-агентов и изолированных environments.\n\n— Разработал full-stack POS-систему с базой данных, управлением складом, генерацией штрихкодов и поддержкой barcode-принтеров.\n\n— Интегрировал POS-систему с Bank of Georgia и TBC Bank через официальные API для взаимодействия с банковскими платежными терминалами.\n\n🛠 Tech Stack:\n\nReact.js • React Native • TypeScript • JavaScript • Next.js • Node.js • NestJS • Django • PostgreSQL • Docker • Git • GitHub • REST API\n\n🤖 AI:\n\nOpenAI API • Claude API • Gemini API • MCP • RAG • Vector Databases • AI Agents • LLM Integrations\n\n🗣 Языки:\n\nRussian — Native  \nEnglish — B2-C1\nGeorgian — B2  \nArmenian — B2\n\n📍 Tbilisi, Georgia\n\nОткрыт к Remote, On-site и Relocation практически в любую страну. Особенно интересны продуктовые команды, AI-проекты, SaaS и проекты, где можно совмещать классическую software-разработку с современными AI-инструментами.\n\n📩 Telegram:  @rikohomeless   \n💻 GitHub:  https://github.com/rikohomeless   \n🤖 ProverCoderAI:  https://github.com/ProverCoderAI/docker-git"
+ },
+ {
+  "id": 4888,
+  "date": "2025-10-10",
+  "author": "igor tokarev",
+  "length": 2100,
+  "themes": [],
+  "links": [
+   "https://github.com/researchim-ai/state-of-ai",
+   "https://github.com/researchim-ai/re-oil-production-llm",
+   "https://github.com/researchim-ai/quantum-computing-sim-py",
+   "https://github.com/researchim-ai/re-synthetic-docs",
+   "https://github.com/researchim-ai/re-grpo"
+  ],
+  "score": 11.1,
+  "text": "Листик ресечим проектов в которых можно поучаствовать\n\n https://github.com/researchim-ai/state-of-ai \nии по отрослям так сказать. репозиторий с широкой инфой (чатгпт ресерчи например) по ии. Где и как применяется, какие-нибудь большие вводные/учебные материалы по разделам иишки/мля\n\n https://github.com/researchim-ai/re-oil-production-llm \nпроект по ллм в добыче нефти. моделирование скважин, трен ллм на данных и все такое. Щас активно делаю, прорабатываю генерацию данных чтобы датасеты собирать можно было. Тут дофига чего можно делать.\nВероятно в будущем перерастет в нефтьгпт.\nСейчас в нефтьгпт у нас очень простой симулятор. \n\nС целью создания полноценного симулятора нефтянки начат проект\n https://github.com/researchim-ai/quantum-computing-sim-py \nСейчас там есть моделирование пласта и инжекторные скважины (воду закачивают) и нефтяные.\nДалее разработка связности между скважинами и остальная инфраструктура\n\n https://github.com/researchim-ai/re-synthetic-docs \nпроект по генерации синтетических документов с целью тюнинга VLM моделек для распознавания доков.\n\n https://github.com/researchim-ai/re-grpo \nэто так сказать свой имплемент грпо на базе tiny-grpo проекта. Добавлен был пример с использованием тулов и мультитерн грпо. Тут скорее надо в порядок привести, сделаю как руки дотянутся.\n+ хочу завести улучшения из dr.grpo статьи\n\n https://github.com/researchim-ai/re-rl \nпроект по генерации синтетических датасетов для ризонинга. логические задачки и вот это все. Тут можно тоже очень сильно развивать.\n\n https://github.com/researchim-ai/fast-start-ai \nэто проектик куда хочется собирать инфу для быстрого старта в ии. в том смысле, что туторы, инструкции по развертыванию чего-нибудь и тд\n\n https://github.com/researchim-ai/quantum-computing-sim-py \nСимулятор квантовых вычислений с возможностью подключения к нему LLM и RL \n\n https://github.com/researchim-ai/atomic-sim \nсимулятор атомного реактора\n\nВсе проекты в начальных довольно стадиях. Вайбкод по самые штаны.\n\nСбор ИИнфы идет в непрерывном режиме каждый день по сути в этом чате)\n\nИдеи приветствуются, пуши приветствуются)  🥰"
+ },
+ {
+  "id": 7153,
+  "date": "2026-09-14",
+  "author": "Artem <\\>",
+  "length": 758,
+  "themes": [
+   "харнесс/агент",
+   "проверка/свидетельства",
+   "модели",
+   "инструменты/код",
+   "память/контекст"
+  ],
+  "links": [],
+  "score": 10.76,
+  "text": "AGGG — это прошивка и рабочая среда для AI-агентов. \n\nОн работает поверх привычных  harness'ов  и меняет то, как агент работает с моделью, проектом и инструментами.\nВнутри:  память, skills, инструкции, research, хуки, гейты, проверки, evidence, сабагенты, SPEC, стили и автоматизация. \nТо есть вместо:\n модель → промпт → ответ \nполучается:\n модель → агент → память → инструменты → проверки → результат. \nAGGG не является отдельной нейросетью и не привязан к одной модели или harness'у.\n Модель — мозг.\nHarness — интерфейс.\nAGGG — система, которая связывает и прокачивает всё вокруг агента. \n\nЦель — сделать работу AI-агента  более самостоятельной, воспроизводимой и эффективной. \n\nПопробовать 4.0 бесплатно —  Ссылка \nПопробовать мощную 3.0 —  Ссылка \n\n AGGG"
+ },
+ {
+  "id": 1144,
+  "date": "2025-01-14",
+  "author": "igor tokarev",
+  "length": 693,
+  "themes": [],
+  "links": [
+   "https://huggingface.co/collections/cfahlgren1/reasoning-datasets-6776eee5820f96f021edf9aa",
+   "https://huggingface.co/datasets/PowerInfer/QWQ-LONGCOT-500K",
+   "https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT",
+   "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT",
+   "https://huggingface.co/datasets/amphora/QwQ-LongCoT-130K"
+  ],
+  "score": 10.69,
+  "text": "Коллекция англоязычных сетов по ризонингу:\n https://huggingface.co/collections/cfahlgren1/reasoning-datasets-6776eee5820f96f021edf9aa \n\n https://huggingface.co/datasets/PowerInfer/QWQ-LONGCOT-500K \n https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT \n https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT \n https://huggingface.co/datasets/amphora/QwQ-LongCoT-130K \n https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT-Ultra \n https://huggingface.co/datasets/fluently-sets/reasoning-1-1k \n https://huggingface.co/datasets/prithivMLmods/Deepthink-Reasoning \n https://huggingface.co/datasets/amphora/QwQ-LongCoT-130K-2 \n https://huggingface.co/datasets/AI-MO/NuminaMath-CoT"
+ },
+ {
+  "id": 6765,
+  "date": "2026-08-08",
+  "author": "Artem <\\>",
+  "length": 2602,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "инструменты/код"
+  ],
+  "links": [
+   "https://github.com/Hmbown/CodeWhale",
+   "https://github.com/esengine/DeepSeek-Reasonix"
+  ],
+  "score": 10.6,
+  "text": "Обзор: CodeWhale + Reasonix — связка на DeepSeek V4 \n Для кого: кто сидит в терминале, работает через свой DeepSeek API-ключ и хочет автономного агента, который можно оставить «докручивать задачу», а не телеграфировать каждый шаг вручную. \n\n🐋 CodeWhale  (codewhale.ai) \nТерминальный агент под DeepSeek V4. MIT, open source ( github.com/Hmbown/CodeWhale  ( https://github.com/Hmbown/CodeWhale )). Ставится npm install -g codewhale (есть Cargo, Homebrew, бинарники и Docker-образ для CI).\n Что внутри: \n ➖  3 режима через Tab — Plan (read-only разведка), Agent (работа с подтверждениями), YOLO (всё автоматом, для CI). Плюс Auto Mode: агент сам выбирает модель и уровень рассуждений на каждый ход — V4 Flash для быстрых действий, V4 Pro для архитектуры.\n ➖ Саб-агенты  — agent_open/agent_eval/agent_close: открывает дочерние сессии для параллельной работы. Плюс необычная фишка — RLM (recursive LM): Python REPL, в котором модель сама рекурсивно исследует файлы/URLы.\n ➖ Видимое рассуждение — стримит «thinking» прямо в терминал, Shift+Tab меняет глубину рассуждений.\n ➖ Безопасность по умолчанию  — каждая команда и запись файла требует одобрения, песочница через Landlock/Seatbelt/AppContainer.\n ➖ MCP и Skills  — серверы из ~/.deepseek/mcp.json, навыки из ~/.deepseek/skills/ просто кладёшь папку с  SKILL.md .\n ➖ Любые модели  — не только DeepSeek: провайдеры через codewhale auth set --provider ... — OpenAI, OpenRouter, NVIDIA NIM, Fireworks, Novita, vLLM, sglang, Ollama (локально!).\n\n ⚡️  Reasonix ( reasonix.io )\nЛокальный агент, который можно оставить работать часами. MIT, Go-бинарник без зависимостей ( github.com/esengine/DeepSeek-Reasonix  ( https://github.com/esengine/DeepSeek-Reasonix ), ~33k звёзд, 98 контрибьюторов). Один движок, четыре входа: терминал, десктоп-приложение, браузер (reasonix serve) и редактор через ACP.\nКозыри:\n ➖  Checkpoint на каждый ход — можно откатиться к любому моменту шестичасового прогона, не трогая git-историю.\n ➖   Гейт на каждый вызов инструмента + песочница: даже после «yes» команда не выходит за workspace.\n ➖  Саб-агенты с изолированным инструментарием: explore / research / review / security-review —  как раз для глубокого ресёрча, который у CodeWhale «не самый плохой, но не лучший» .\n ➖  Локально-first: свой ключ, код не уходит никуда кроме модели. npm i -g reasonix (версия 1.x — Go, 0.x больше не поддерживается).\n\n Вердикт : если omp (Oh My Pi) уже ощущается тесновато — попробуй CodeWhale; если нужен долгий автономный прогон, который можно читать и откатывать — Reasonix. Вместе они закрывают почти всё.  😍 \n\nПодписывайтесь 👉  @aidvizhenie"
+ },
+ {
+  "id": 3777,
+  "date": "2025-05-09",
+  "author": "igor tokarev",
+  "length": 2140,
+  "themes": [],
+  "links": [
+   "https://github.com/researchim-ai/state-of-ai",
+   "https://github.com/researchim-ai/re-oil-production-llm",
+   "https://github.com/researchim-ai/quantum-computing-sim-py",
+   "https://github.com/researchim-ai/re-synthetic-docs",
+   "https://github.com/researchim-ai/re-grpo"
+  ],
+  "score": 10.14,
+  "text": "Листик ресечим проектов в которых можно поучаствовать\n\n https://github.com/researchim-ai/state-of-ai \nии по отрослям так сказать. репозиторий с широкой инфой (чатгпт ресерчи например) по ии. Где и как применяется, какие-нибудь большие вводные/учебные материалы по разделам иишки/мля\n\n https://github.com/researchim-ai/re-oil-production-llm \nпроект по ллм в добыче нефти. моделирование скважин, трен ллм на данных и все такое. Щас активно делаю, прорабатываю генерацию данных чтобы датасеты собирать можно было. Тут дофига чего можно делать.\nВероятно в будущем перерастет в нефтьгпт.\nСейчас в нефтьгпт у нас очень простой симулятор. \n\nС целью создания полноценного симулятора нефтянки начат проект\n https://github.com/researchim-ai/quantum-computing-sim-py \nСейчас там есть моделирование пласта и инжекторные скважины (воду закачивают) и нефтяные.\nДалее разработка связности между скважинами и остальная инфраструктура\n\n https://github.com/researchim-ai/re-synthetic-docs \nпроект по генерации синтетических документов с целью тюнинга VLM моделек для распознавания доков.\n\n https://github.com/researchim-ai/re-grpo \nэто так сказать свой имплемент грпо на базе tiny-grpo проекта. Добавлен был пример с использованием тулов и мультитерн грпо. Тут скорее надо в порядок привести, сделаю как руки дотянутся.\n+ хочу завести улучшения из dr.grpo статьи\n\n https://github.com/researchim-ai/re-rl \nпроект по генерации синтетических датасетов для ризонинга. логические задачки и вот это все. Тут можно тоже очень сильно развивать.\n\n https://github.com/researchim-ai/fast-start-ai \nэто проектик куда хочется собирать инфу для быстрого старта в ии. в том смысле, что туторы, инструкции по развертыванию чего-нибудь и тд\n\n https://github.com/researchim-ai/quantum-computing-sim-py \nСимулятор квантовых вычислений с возможностью подключения к нему LLM и RL \n\nВсе проекты в начальных довольно стадиях. Вайбкод по самые штаны.\n\nПара вещей еще на подходе, пока на уровне идей.\nсоздания своего чата/агента\n+ проработка темы ии в промышленности\n\nСбор ИИнфы идет в непрерывном режиме каждый день по сути в этом чате)\n\nИдеи приветствуются, пуши приветствуются)  🥰"
+ },
+ {
+  "id": 6912,
+  "date": "2026-08-25",
+  "author": "Artem <\\>",
+  "length": 1202,
+  "themes": [
+   "харнесс/агент",
+   "проверка/свидетельства",
+   "модели"
+  ],
+  "links": [
+   "https://github.com/aidvizhhub/caveman-dvizh-skills",
+   "https://github.com/aidvizhhub/caveman-dvizh-skills"
+  ],
+  "score": 9.2,
+  "text": "🗿   Caveman Dvizh Skills   —  набор скиллов, который превращает AI-агента из болтуна в нормального инженера .\n\nНе просто «говори короче». Тут  17 Agent Skills  для ресёрча, диагностики, кода, проверки фактов, безопасного запуска/убийства процессов, мышления с откатом и инженерной дисциплины.\n\n 🔥   Сила : один набор → Claude Code, OpenCode, Codex, Gemini CLI и другие skills-совместимые агенты.\n\n🪨  Незабываемость : агент начинает работать по правилам, а не каждый раз изобретать процесс заново.\n\n Нужно , когда AI уже умеет писать код, но часто:\n ➖  гадает вместо ресёрча\n ➖  делает лишнее\n ➖  забывает проверить результат\n ➖ ломает процессы\n ➖  плохо диагностирует проблемы\n ➖  теряет инженерную дисциплину.\n\n Как поставить: \n\n git clone https://github.com/aidvizhhub/caveman-dvizh-skills\ncd caveman-dvizh-skills\n./install.sh all \n\n Или одной командой: \n\n npx skills add aidvizhhub/caveman-dvizh-skills --list \n\nПосле установки можно просто сказать агенту:  «пользуйся caveman-loop» ,  «сделай ресёрч» ,  «проверь дотошно»  — подходящий skill подхватится сам.\n\n🗿  AI должен не больше говорить. AI должен лучше работать. \n\n 🔗    https://github.com/aidvizhhub/caveman-dvizh-skills \n\nВаш,  @aidvizhenie"
+ },
+ {
+  "id": 6606,
+  "date": "2026-06-06",
+  "author": "Victor",
+  "length": 1066,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "инструменты/код",
+   "память/контекст"
+  ],
+  "links": [],
+  "score": 9.07,
+  "text": "1. Мозг (Локальная GPU + Gemma/ Qwen): \nДля агентских задач критически важна точность вызова инструментов (tool calling) и удержания контекста. Модели семейства  Qwen  (например, плотная  Gemma 31B  или быстрая MoE  Qwen-3.6-35B-A3B ) отлично справляются с этой ролью. Запуск через  vLLM  на локальной GPU обеспечит высокую скорость и параллельную обработку запросов от нескольких агентов одновременно .\n\n2. Оркестратор (LangChain Deep Agents ):\nОтвечает за логику исследования, память и управление процессами:\n  - Планирование:  Перед выполнением задачи агент строит структурированный TODO-лист.\n  - Под-агенты:  Сложные задачи параллельно делегируются изолированным под-агентам (один ищет статьи, другой парсит базы данных).\n  - Файловая система:  Объемные промежуточные результаты сохраняются на диск, чтобы не перегружать контекстное окно модели.\n \n3. Tools/ Инструментарий (DeepMind Science Skills): \nПредоставляет готовые адаптеры и API-клиенты для работы со специализированными научными базами (UniProt, AlphaGenome, PubMed, базы химических соединений и др.)."
+ },
+ {
+  "id": 6900,
+  "date": "2026-08-23",
+  "author": "Victor",
+  "length": 1567,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "инструменты/код"
+  ],
+  "links": [
+   "https://youtu.be/tCW5V-MdAe4"
+  ],
+  "score": 8.57,
+  "text": "https://youtu.be/tCW5V-MdAe4 \n\nBuild AI Agents for Life Sciences with NVIDIA BioNeMo and Nebius in partnership with J.P.Morgan 👆\n\nКлючевая идея вебинара NVIDIA + Nebius: AI-агент в биологии - это не одна “умная модель”, а оркестратор специализированных научных инструментов\n\n• NVIDIA сделала BioNeMo Agent Toolkit - агент получает готовые skills и понимает, какую биологическую/химическую модель когда и как вызывать\n\n• Можно использовать Claude, Codex, NVIDIA-модели или своего агента - BioNeMo не привязан к одному LLM\n\n• Пример: задача по protein binder design - один агент последовательно использует около 7 разных моделей: поиск данных → структура белка → генерация кандидатов → folding/co-folding → оценка binding → ranking\n\n• Главный эффект skills: меньше ошибок и hallucinations, меньше токенов, быстрее выполнение workflow\n\n• Nebius - инфраструктурный слой: LLM через Token Factory, GPU/ NIM endpoints, MCP, Tavily для web research, batch processing, private deployment в своём tenant\n\n• Оркестратор OpenClaw может работать на маленьком CPU-инстансе примерно < $3 за рабочий день, GPU inference оплачивается отдельно\n\n• Всё максимально открыто: GitHub, open models, skills, примеры, возможность добавлять свои модели и инструменты\n\n• Но это пока не автономное drug discovery: scientific accuracy всё равно нужно проверять собственными evals и лабораторной валидацией\n\nСамая важная мысль: LLM становится “мозгом и диспетчером”, а специализированные scientific models - его инструментами. Это уже похоже на agentic OS для computational biology/ drug discovery."
+ },
+ {
+  "id": 6082,
+  "date": "2026-02-19",
+  "author": "Re",
+  "length": 2541,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "инструменты/код"
+  ],
+  "links": [],
+  "score": 8.54,
+  "text": "Всем привет!\n\n\n Ищем CTO / Tech Lead (AI + Vibe-coding) в IT-студию внедрения ИИ для среднего и крупного бизнеса \n\nМы — студия, которая  аудирует процессы , находит точки максимального ROI от ИИ и  делает готовые решения “под ключ”  (от идеи и прототипа до продакшена и поддержки).\n\nСейчас делаем стратегический поворот:  переходим на парадигму   “vibe-coding”   конвеера  — быструю инженерную разработку с LLM-ассистентами и агентами, где важны системность, архитектура и качество, а не “просто писать код быстрее”. \n\n Наша задача - быстро тестировать гипотезы и доводить их до prod-ready в случае позитивного результата. \n\n Кого ищем:  сильного инженера, который способен стать техническим лидером направления: построить инженерную систему, команду и культуру разработки в эпоху LLM. Проектировать и управлять командой для реализации AI-решений end2end.\n\n Что будешь делать: \n • вести техчасть проектов: от аудита и архитектуры до продакшена;\n • строить pipeline vibe-coding: правила, шаблоны, quality gates, CI/CD, тестирование;\n • выбирать стек и подходы (агенты/оркестрация/инструменты), делать быстрые PoC и доводить до результата;\n • собирать и растить команду (core + подрядчики), выстраивать процессы;\n • будем вместе внедрять новые подходы в разработке - Linear, культуру использования shared  Agents.MD  и т.д \n • отвечать за качество, скорость, безопасность и эксплуатацию.\n\n Нужно: \n • сильный SWE-бэкграунд (проектирование архитектур, оценка нагрузки, ответственность);\n • опыт lead/CTO/tech-lead роли или готовность вырасти в неё;\n • уверенное владение современными LLM-инструментами разработки (Copilot/Claude/ChatGPT, IDE-агенты, prompt-engineering, agentic workflows);\n • умение превращать “бизнес-боль” в понятный техплан и результат.\n\n Плюсом будет: \n • опыт внедрения AI в компании (RAG, интеграции, автоматизация, внутренние продукты);\n • опыт с Python/TypeScript, backend, интеграции, облака, DevOps;\n • понимание security техник/ролевых доступов/данных (для B2B это критично).\n\n Что даём: \n • реальные бизнес-кейсы (не “пет-проекты”), быстрый цикл от идеи до внедрения;\n • свободу в выборе техподходов и инструментов;\n • конкурентную компенсацию + бонусы за результат (возможны опции/доля — обсуждаемо);\n • опытных наставников, с которыми можно вырасти по хард и софт скиллам \n • сильную предпринимательскую среду и влияние: ты формируешь основу нового направления.\n\n Как откликнуться:  напиши в личку:\n1) пару слов о себе, \n2) ссылки (GitHub/LinkedIn/проекты)\n3) что считаешь лучшим примером твоей инженерной работы."
+ },
+ {
+  "id": 3638,
+  "date": "2025-05-01",
+  "author": "igor tokarev",
+  "length": 438,
+  "themes": [
+   "модели"
+  ],
+  "links": [
+   "https://arxiv.org/abs/2504.21801",
+   "https://www.alphaxiv.org/ru/overview/2504.21801",
+   "https://github.com/deepseek-ai/DeepSeek-Prover-V2",
+   "https://huggingface.co/deepseek-ai/DeepSeek-Prover-V2-7B",
+   "https://huggingface.co/deepseek-ai/DeepSeek-Prover-V2-671B"
+  ],
+  "score": 8.44,
+  "text": "DeepSeek-Prover-V2: Advancing Formal Mathematical Reasoning via Reinforcement Learning for Subgoal Decomposition\n https://arxiv.org/abs/2504.21801 \n https://www.alphaxiv.org/ru/overview/2504.21801 \n\n https://github.com/deepseek-ai/DeepSeek-Prover-V2 \n\n https://huggingface.co/deepseek-ai/DeepSeek-Prover-V2-7B \n https://huggingface.co/deepseek-ai/DeepSeek-Prover-V2-671B \n\n https://huggingface.co/datasets/deepseek-ai/DeepSeek-ProverBench"
+ },
+ {
+  "id": 5498,
+  "date": "2025-12-23",
+  "author": "igor tokarev",
+  "length": 1273,
+  "themes": [
+   "проверка/свидетельства",
+   "модели"
+  ],
+  "links": [
+   "https://huggingface.co/collections/nebius/openhands-trajectories",
+   "https://nebius.com/blog/posts/openhands-trajectories-with-qwen3-coder-480b",
+   "https://x.com/ibragim_bad/status/2003423706861936856"
+  ],
+  "score": 8.27,
+  "text": "🎄  Релизим 67 074 траектории Qwen3-Coder с OpenHands + 2 RFT чекпоинта. \n\n> Мы выкладываем: 67 000+ траекторий по 3 800 решенным задачам в 1 800+ Python репозиториях.\n\n> Примерно в 3 раза больше успешных траекторий и в 1.5 раза больше репозиториев, чем в нашем  прошлом датасете. \n\n>  Траектории длинные:  в среднем 64 шага, до 100 шагов и контекст до 131k токенов.\n\n>  RFT на этих данных, SWE-bench Verified: \nQwen3-30B-Instruct: 25.7% → 50.3% Pass@1.\nQwen3-235B-Instruct: 46.2% → 61.7% Pass@1.\nТакже сильный рост на SWE-rebench September (цифры в блог посте)\n\n>  Мы сделали много эвалов. \nпрогнали OpenHands с лимитом 100 и 500 шагов.\nЗапускаем на SWE-bench Verified и сентябрьском SWE-rebench.\n\n>  Мы отдельно проверяем тесты, которые пишет модель .\nСчитаем, как часто тесты корректны.\nПроверяем, как часто финальный патч модели проходит ее собственные тесты.\nВ итоге получаем пул данных в том числе для обучения верифаеров.\n\n Полностью Permissive License \n Датасет и модели:   https://huggingface.co/collections/nebius/openhands-trajectories \n\n Подробный блогпост:    https://nebius.com/blog/posts/openhands-trajectories-with-qwen3-coder-480b \n\n Пост в x :  https://x.com/ibragim_bad/status/2003423706861936856 \n\nP.S. Прошу поддержать пост в x, если у вас есть аккаунт!"
+ },
+ {
+  "id": 7039,
+  "date": "2026-09-06",
+  "author": "Artem <\\>",
+  "length": 1149,
+  "themes": [
+   "харнесс/агент",
+   "инструменты/код"
+  ],
+  "links": [
+   "https://pi.dev/",
+   "https://pi.dev/install.sh",
+   "https://pi.dev/install.ps1"
+  ],
+  "score": 8.15,
+  "text": "🫥    https://pi.dev/  — могучий плагин опенсурс\nУстановка и настройка в 1 клик (на выбор один из):\n curl -fsSL https://pi.dev/install.sh | sh \n\n powershell -c \"irm https://pi.dev/install.ps1 | iex\" \n\n npm install -g --ignore-scripts @earendil-works/pi-coding-agent \n\n pnpm add -g --ignore-scripts @earendil-works/pi-coding-agent \n\n bun add -g --ignore-scripts @earendil-works/pi-coding-agent \n\nСами плагины(команды) для установки дополнительного кода в  PI  CLI (например тот же pi-subagents , pi-mcp-adapter и прочих)\nУспешный билд в PI  plugins.md \n\nТак же стоит отменить удобную телеграмм интеграцию и наконец то удачный билд плагинов.\nТак же на много легче чем  omp  — быстрее кодит, качество кода не страдает и как раз является частью экосистемы AGGG 4.2.\n\nКонечно, всё  может быть субъективно  (но говорю из своего опыта итераций и использования opencode2, omp круглосуточно)\n PI мне зашел  и  не зря я ему дал время  подпилить свои расширения и экосистему.\nМногие боятся что его нужно настраивать.\n\n Ну что же , сам md уже содержит всю информацию  чтобы всё установить в 1 клик, дерзайте!  🔥  👍 \n\n Ваш,  @aidvizhenie  \nСоздано для:  AGGG Info"
+ },
+ {
+  "id": 5737,
+  "date": "2026-01-23",
+  "author": "Кайсар",
+  "length": 1108,
+  "themes": [
+   "модели"
+  ],
+  "links": [
+   "https://github.com/QwenLM/Qwen3-TTS",
+   "https://huggingface.co/collections/Qwen/qwen3-tts",
+   "https://huggingface.co/spaces/Qwen/Qwen3-TTS",
+   "https://qwen.ai/blog?id=qwen3tts-0115",
+   "https://github.com/QwenLM/Qwen3-TTS/blob/main/assets/Qwen3_TTS.pdf"
+  ],
+  "score": 8.11,
+  "text": "🗣  Qwen3-TTS - мощный open-source релиз (voice design + клонирование голоса) \n\nQwen официально выпустили  Qwen3-TTS  и полностью открыли всю линейку моделей -  Base / CustomVoice / VoiceDesign .\n\nЧто внутри:\n-  5 моделей  (0.6B и 1.8B классы)\n-  Free-form Voice Design  - генерация/редаквтирование голоса по описанию\n-  Voice Cloning  - клонирование голоса\n-  10 языков \n-  12Hz tokenizer  - сильная компрессия аудио без сильной потери качества\n-  полная поддержка fine-tuning \n- заявляют  SOTA качество  на ряде метрик\n\nРаньше лучшие генераторы были в закрытых API, а теперь появляется  полноценный open-source стек TTS , где можно:\n- обучать под домен,\n- делать кастомные голоса,\n- и не зависеть от провайдера.\n\n\n▪ GitHub :  https://github.com/QwenLM/Qwen3-TTS   \n▪ Hugging Face :  https://huggingface.co/collections/Qwen/qwen3-tts   \n▪ Демо (HF ):  https://huggingface.co/spaces/Qwen/Qwen3-TTS   \n▪ Блог :  https://qwen.ai/blog?id=qwen3tts-0115   \n▪ Paper :  https://github.com/QwenLM/Qwen3-TTS/blob/main/assets/Qwen3_TTS.pdf \n\n @ai_machinelearning_big_data \n\n #AI   #TTS   #Qwen   #OpenSource   #SpeechAI"
+ },
+ {
+  "id": 5085,
+  "date": "2025-11-12",
+  "author": "igor tokarev",
+  "length": 3970,
+  "themes": [
+   "харнесс/агент",
+   "исследование/эксперимент"
+  ],
+  "links": [],
+  "score": 7.97,
+  "text": "Что произошло — в 2 словах\n\nКитайский экспериментальный ториевый расплавно-солевой реактор TMSR-LF1 (2 МВтₜ, Увэй, Ганьсу) впервые в мире выполнил конверсию тория в уран в работающем МСР и получил первые международные экспериментальные данные по ториевому топливу. Об этом Шанхайский институт прикладной физики (SINAP, АН Китая) сообщил 1 ноября 2025. Ранее: строительство началось в 2018-м, разрешение на пуск — 2022, лицензия — 2023, первую критичность реактор достиг 11 октября 2023, а в октябре 2024 в него впервые добавили торий. \nWorld Nuclear News\n\nЧто это за реактор и как он устроен\n\nТип: жидкотопливный расплавно-солевой (MSR), графит-модерированный, тепловой спектр. Мощность: 2 МВт тепла (электричества не выдаёт — это исследовательская установка). \nWorld Nuclear News\n\nСтартовое топливо: уран ≤ 19,75% U-235 (HALEU) в виде UF₄, растворённый в расплаве фторидов; торий — как воспроизводящий материал. Запасы тория ~50 кг, расчётный коэффициент конверсии ~0,1. \nWorld Nuclear News\n\nСоль: FLiBe (LiF-BeF₂) с обеднённым по Li-6 литием (~99,95% Li-7) — это снижает образование трития и подходит для длительной работы с низкой коррозией. \nWorld Nuclear News\n+2\nWorld Nuclear Association\n+2\n\nКлючевая особенность: топливо жидкое, циркулирует вместе с охлаждающей солью; дозаправка и удаление газообразных продуктов деления возможны без остановки, что SINAP отдельно подчёркивает. \nWorld Nuclear News\n\nПочему это важно\n\nВпервые на действующем МСР с торием получены экспериментальные данные по цепочке Th-232 → Pa-233 → U-233, подтверждающие реализуемость ториевого цикла в современном исполнении. \nWorld Nuclear News\n+1\n\nЭто — исследовательская платформа, а не энергетический блок: цель — отработка топлива, химии солей, перезаправки «на ходу» и материалов. В июне 2024 установка выходила на полную тепловую мощность; затем в 2024-м SINAP выполнил первую загрузку тория. \nCTBTO Conferences and Workshops (Indico)\n+1\n\nКраткая хронология\n\n2018: старт строительства (планировали завершить к 2024, фактически ускорили до 2021).\n\nАвг 2022: одобрен план пусконаладочных работ.\n\nИюн 2023: выдана операционная лицензия.\n\n11 окт 2023: первая критичность.\n\nИюн 2024: работа на полной тепловой мощности (2 МВтₜ).\n\nОкт 2024: первая дозагрузка тория.\n\n1 ноя 2025: объявлена первая конверсия тория-уран. \nWorld Nuclear News\n+1\n\nЧто дальше планирует Китай\n\nSINAP заявляет о демонстрационном ториевом МСР на ~100 МВтₜ к 2035 г. (инженерная отработка и «демо-приложения»). В ряде материалов также фигурирует этапность с промежуточными установками, однако официально подчёркивается именно цель 100 МВтₜ к 2035. \nWorld Nuclear News\n+1\n\nПреимущества и ограничения технологии — без розовых очков\n\nЧто привлекает:\n\nНизкое давление и высокая температура → простая пассивная безопасность и высокий термодинамический КПД. \nWorld Nuclear Association\n\nОнлайн-перезаправка и перспектива замыкания ториевого цикла → потенциально меньше долгоживущих трансуранов по сравнению с классическими ЛВР при внедрении переработки солей. \nWorld Nuclear Association\n\nЧто ещё предстоит доказать/довести:\n\nМатериалы и коррозия (фторидные соли, tellurium-индуцированное растрескивание, ресурс графита). Исторические уроки MSRE/ORNL и современные обзоры фиксируют проблемы, требующие долговременной верификации. \nGain Nuclear\n+2\nScienceDirect\n+2\n\nТритий и изотопный состав лития: нужен обеднённый Li-6 (≈99,95–99,995% Li-7), иначе вырастает генерация H-3 и усложняются барьеры. \nWorld Nuclear Association\n+1\n\nХимия/переработка солей: промышленно зрелые процессы по обслуживанию и кондиционированию отработанных солей ещё формируются. \nArgonne National Laboratory Publications\n\nУчёт и гарантии по U-233: жидкое топливо и онлайн-процессы добавляют задач для safeguards и измерений. \nOak Ridge National Laboratory\n\nМасштабирование и регуляторика: путь от 2 МВтₜ к сотням МВт потребует тиражируемости материалов, поставок Li-7/HALEU и зрелых регламентов. \nWorld Nuclear Association\n\nМини-справка по ториевому циклу"
+ },
+ {
+  "id": 6944,
+  "date": "2026-08-27",
+  "author": "Victor",
+  "length": 1844,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "память/контекст"
+  ],
+  "links": [],
+  "score": 7.84,
+  "text": "DSH, день 2, словил сразу несколько ошибок: \n1.  GPU/X freeze 8 сек.  Выкрутил inference почти на 100% GPU на той же карте, которая держит desktop. Получил NVIDIA watchdog / CUDA timeout, X завис примерно на 8 секунд,  llama.cpp  потерял CUDA-контекст. Т.е. из-за того что GPU жестко ушла под 100%, GUI повис на 8 сек, ubuntu дропнула процесс llama.cpp\n\nВывод: нужен compute/power headroom, а ещё лучше -  headless inference без GUI на этой GPU \n\n2.  Context нельзя использовать до 100%.  Физический лимит был  131072 , Harness дошёл до  131095  и упал. Compaction уже не смог спасти сессию.\n→ DSH ставлю  ~125K при физических 131K  + раньше compact/ handoff. Т.е. Harness не умеет предсказывать переполнение контекста, обычно делает auto-compact при 80%+ контекста, thresholdRatio: 0.8 (можно настраивать под каждую модель и работает очень стабильно), но если таска была c большим ризонингом (а Qwen3.8 ппц болтливый), она случайно может перелететь лимит\n\n3.  NVIDIA stack должен совпадать целиком.  Получил kernel module  595.71.05  + userspace  595.84  → API mismatch и нестабильную CUDA\n\n→ исправлено:  kernel 7.0.0-30 + NVIDIA 595.84 везде \n\n4.  Long run должен быть restartable.  Workspace - состояние на диске, session log/checkpoints - страховка. После reboot Harness реально продолжил работу.\n\n 5. Лучше NP1.  Один агент → один inference slot. Несколько проектов лучше гонять последовательно.\n\nСледующий эксперимент: завершить  всё тот же ~8h autonomous task , но теперь добавляю сравнение 1)  GPT-5.6 Sol vs GPT-5.6 Luna + DSH vs просто GPT-5.6 Luna   vs Qwen3.8-27B + DSH  + сравнение качества, времени, токенов и стоимости\n\nЕщё по мои замерам, скорость падает до 2х при заполнении контекста под 100%:  0–10% ctx: ~49–53 tok/s → 25% ctx: ~40–45 tps → 50% ctx: ~33–38 tps → 75% ctx: ~29–31 tps → 85% (105K): ~28 tps → 90%+: ~25–28 tps"
+ },
+ {
+  "id": 713,
+  "date": "2025-01-06",
+  "author": "igor tokarev",
+  "length": 717,
+  "themes": [],
+  "links": [
+   "https://physics.allen-zhu.com/",
+   "https://arxiv.org/abs/2305.13673",
+   "https://arxiv.org/abs/2407.20311",
+   "https://arxiv.org/abs/2408.16293",
+   "https://arxiv.org/abs/2309.14316"
+  ],
+  "score": 7.72,
+  "text": "Сайт:\n https://physics.allen-zhu.com/ \n\nPhysics of Language Models: Part 1, Learning Hierarchical Language Structures\n https://arxiv.org/abs/2305.13673 \n\nPhysics of Language Models: Part 2.1, Grade-School Math and the Hidden Reasoning Process\n https://arxiv.org/abs/2407.20311 \n\nPhysics of Language Models: Part 2.2, How to Learn From Mistakes on Grade-School Math Problems\n https://arxiv.org/abs/2408.16293 \n\nPhysics of Language Models: Part 3.1, Knowledge Storage and Extraction\n https://arxiv.org/abs/2309.14316 \n\nPhysics of Language Models: Part 3.2, Knowledge Manipulation\n https://arxiv.org/abs/2309.14402 \n\nPhysics of Language Models: Part 3.3, Knowledge Capacity Scaling Laws\n https://arxiv.org/abs/2404.05405"
+ },
+ {
+  "id": 6702,
+  "date": "2026-07-30",
+  "author": "banzay",
+  "length": 1639,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "память/контекст"
+  ],
+  "links": [],
+  "score": 7.64,
+  "text": "я вот юзаю опенклау. С дипсик работает отлично, подключал МиМо - часто возникает ошибка контекста - и запускается процесс компакции контекста (именно ошибка, опенклау неправильно считает).  ТАк же использовал с опенклау локальные модели. Самая стабильная vLLM с QWen3/6-27B была, и работала модель очень хорошо, но на моем железе контекст только 130к был - это очень мало для агента. Так же пробовал llama - ошибка tool calls постоянно с любыми моделями, ollama - вполне норм, но нет поддержки MTP для Квенов, использовал Ornith 1.0 (MoE модель 35B на базе архитектуры квен) - хорошая скорость, неплохое качество -  но до уровня 27B модели не дотягивает немного. Так же пробовал новую (недавно гугл обновил) Gemma4 31B В MTP режиме на Ollama - какой-то ужас. Модель прям не ахти. Скорость была хорошая. В ответах рассказывает истории, много не нужной инфы - вместо действий. (это всё с одним и тем же агентским контекстом). К опенклау надо нормальную векторную память прикручивать - по умолчанию там файловая - скажем так - не очень вариант. Сейчас вот хочу SGlang попробовать. Хочется всё таки иметь локальную модель Qwen3.6-27B с нормальным контекстом (250к) и MTP активным. Также инсайт, так сказать, недавно был. Майнинговые P-104-100 8Gb - есть поддержка в Ollama - можно спокойно заускать небольшие модельки для несложных задач (распознавание голоса, визион, написание несложного кода (задачи ставит большая модель), OCR и т.д. У меня этих карт полно просто)) И можно мелкие задачи делегировать этим моделькам - экономить токены/время большой модели\nUpdate. В итоге вернулся на vLLM - подобрал правильную модель и квантовании kv-кэша"
+ },
+ {
+  "id": 6771,
+  "date": "2026-08-10",
+  "author": "Artem <\\>",
+  "length": 1362,
+  "themes": [
+   "проверка/свидетельства",
+   "исследование/эксперимент",
+   "модели"
+  ],
+  "links": [],
+  "score": 7.36,
+  "text": "🎙 🎙  Нашёл эталонный пресет улучшения голоса в микрофоне \n\nПосле ~30 экспериментов с самодельными настройками микрофона (шумодав, эквалайзеры, компрессоры — всё по-разному «не то») поставил готовый пресет сообщества — и вот оно.\nЧто за пресет:  Masc NPR Voice + Noise Reduction от jtrv  (173★, вики EasyEffects → Community Presets). Голос «как на радио NPR» + шумоподавление.\n\n Цепочка из 6 звеньев: \n1. RNNoise — нейросетевой шумодав (та же технология, что в Discord)\n2. Gate — мягко пригибает фон между фразами, не режет речь\n3. Equalizer — кривая мужского голоса (убирает «бубнение», добавляет разборчивость)\n4. Compressor — «радио»-плотность: голос ровный и близкий\n5. De-Esser — приглушает шипящие «с/ш»\n6. Limiter — защита от клипа\n\n Ставится за минуту: \n# пресет -> ~/.local/share/easyeffects/input/npr.json\nnohup easyeffects --service-mode >/dev/null 2>&1 & disown; sleep 6\neasyeffects -l npr\nИ в приложениях выбираешь микрофон «Easy Effects Source».\nУрок дня: на шумном встроенном кодеке готовый проверенный пресет сообщества бьёт самодельные эксперименты — и экономит два часа жизни 😄\nСсылка:  gist.github.com/jtrv/47542c8be6345951802eebcf9dc7da31 \n\nПротестировано на Fedora Linux . Можно  аналогично раскатать и под ваши ОС . На плохих вводных звук микрофона лучше, лучший разбор текста(проверенно на транскрибировании)\n\nПодписывайтесь 👉  @aidvizhenie"
+ },
+ {
+  "id": 6533,
+  "date": "2026-05-27",
+  "author": "Гадюка Татарстана",
+  "length": 3217,
+  "themes": [
+   "харнесс/агент",
+   "модели"
+  ],
+  "links": [],
+  "score": 7.22,
+  "text": "VecDHT: децентрализованный семантический поиск для AI-агентов\n\n    AI-агенты сегодня не умеют находить друг друга. Каждый живёт в своей среде — ChatGPT, Claude, локальный инференс — и понятия не имеет, кто рядом решает похожую задачу. \n\n    VecDHT — протокол, который даёт агентам общую P2P-сеть без центрального сервера.\n\n    Как работает\n\n    Агент берёт свою задачу и превращает её в компактный цифровой «отпечаток» (fingerprint) — 16 байт, которые кодируют смысл запроса, но не раскрывают исходный текст. Этот отпечаток публикуется в децентрализованный индекс (DHT). Index-ноды — обычные узлы сети с достаточной памятью — держат ANN-индекс и отвечают на поиск: «найди 10 самых похожих отпечатков». Агент получает ответ, выбирает подходящий peer и устанавливает прямое зашифрованное соединение (QUIC/Noise + end-to-end шифрование).\n\n    Никакой raw text не покидает агента. Центральный сервер не нужен. Если index-нода ушла — её роль подхватывает другой узел с ресурсами.\n\n    Почему VecDHT сложно заблокировать\n\n    Для традиционных пабов и поисковых систем блокировка сводится к одному IP или домену. VecDHT спроектирован так, что единой точки отказа нет:\n\n    - Fingerprint'ы (16 байт) неотличимы от случайных данных без embedding-модели. А модель распространяется как открытый артефакт — скачать её может кто угодно.\n    - Трафик идёт через libp2p с Noise-шифрованием. Даже если relay зафиксирован, он видит только зашифрованные байты — не fingerprint, не intent, не адресата.\n    - Index-ноды живут динамически: сегодня один узел держит shard, завтра — другой. Нет списка «официальных серверов».\n    - DHT не хранит содержимое — только provider records (200 байт). Нет базы данных, которую можно изъять.\n    - PoW-защита означает, что создать фейковый fingerprint в масштабе дорого, но узел с реальной задачей платит копейки.\n    - Если отваливается bootstrap-пир, сеть продолжает работать через ранее обнаруженные peer'ы и DHT-маршрутизацию.\n\n    Иными словами, VecDHT наследует устойчивость BitTorrent-подобных сетей, но добавляет семантический слой поверх. Для блокировки пришлось бы глушить P2P-трафик на уровне протокола — что не делает ни один провайдер в промышленных масштабах.\n\n    Сценарии\n\n    - Распределённый code review: агент публикует «нужен review Python-кода», находит агента-ревьювера с подходящим профилем.\n    - Децентрализованный маркетплейс задач: агенты находят друг друга по смыслу задачи, а не по ключевым словам.\n    - P2P-обмен данными: агенты обмениваются файлами и артефактами без центрального хранилища.\n    - Устойчивые коммуникации в средах с цензурой: сеть не требует регистрации, не имеет модерационного слоя на уровне протокола.\n\n    Технически\n\n    Единственная embedding-модель на сеть — Granite 97M multilingual (384-мерные вектора). Индекс: IVFPQ (baseline, ~87 MB на 1M записей) + опциональный HNSW-ускоритель. Поиск: сначала ANN по fingerprint, затем точный rerank через Asymmetric Distance Computation. Сеть: libp2p, Kademlia (только provider records), QUIC/Noise. WAL + snapshot для crash recovery. Pure Rust, без C++ зависимостей.\n\nПо сути это p2p интернет для координации агентов\n\nНо я чуть уже поменял архитектуру, не совсем матч с описанием, точная в файле выше"
+ },
+ {
+  "id": 6834,
+  "date": "2026-08-17",
+  "author": "Artem <\\>",
+  "length": 1204,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "инструменты/код"
+  ],
+  "links": [],
+  "score": 7.2,
+  "text": "Пост по поводу эффективности Deepseek V4Flash/Pro и где брать?\n \nЯ не буду говорить что прям тонко специализируюсь и понимаю в этих расчетах .Одно скажу точно, лучше брать на  platform.deepseek.com  , чем в OpencodeGO\n\nOff API чувствуется бодрее, глубже. В opencode go — мне кажется просто есть резка /плохой стриминг или другие примеры экономии агентских сценариев . Честно говоря я не вижу смысла в таком посреднике . Где мне DeepSeek V4 Pro отвечает за 39 секунд а должен за 3-5 минут... И так же не донося качественный вывод, упрощая инструменты, diff и прочее .\n\nТестирую я на том же opencode2 и перед этим потратил суммарно 100$ на Deepseek API . Скажу, мне Opencode GO провайдер не зашел!. Пускай я буду предвзятым, но я чувствую разницу и чувствую уже не первый раз.\n\nА так конечно берем Deepseek V4Flash/Pro Off API и кайфуем , особенно с AGGG AGI  👌 👍 \n\nЛучше уж брать Flash для всего и только 1-2 раза в 10-20 промтов прогнать Pro моделью Deepseek V4 . Ура, вот такой гайдик.\nИспользовать можно  opencode2  ,  reasonix   ли же  deepseek-harness  .  По моим ощущения в reasonix или deepseek hanress встроенная экономия даже лучше .Но мне пока заходит opencode2 и я готов \"возможно\" переплатить."
+ },
+ {
+  "id": 3324,
+  "date": "2025-04-14",
+  "author": "Max Gaevoy",
+  "length": 3063,
+  "themes": [
+   "харнесс/агент",
+   "инструменты/код"
+  ],
+  "links": [],
+  "score": 7.06,
+  "text": "Ищу партнёров (ML/AI-разработчиков) для создания, запуска и продажи ИИ-агентов. Реальный бизнес-кейс + доля в прибыли. \n\nЦели: \n1. Автоматизация и масштабирование действующего бизнеса, посредством внедрения AI-агентов \n2. Создание и монетизация AI-агентов в новых проектах\n\nКто я:\nПривет! Меня зовут Макс. У меня есть действующий бизнес в сфере финтех. На рынке с 2017 года. Работа ведется онлайн, по всей России. Поток клиентов в основном идёт через наработанную агентскую сеть, и пока IT-инфраструктура нам была не особенно критична — всё шло через ручную обработку, таблицы и личные коммуникации.\nСейчас я хочу перевести бизнес на новый уровень через внедрение ИИ-агентов — автоматизировать первичную обработку заявок, лидогенерацию, маркетинг, коммуникации с агентами, учёт, и в целом — построить полноценную AI-экосистему вокруг уже работающей модели.\n\nПараллельно я хочу упаковать решения в виде AI-продуктов для других бизнесов. Начать с MVP на базе своего кейса, потом масштабироваться и предлагать это как отдельные сервисы.\n\n\nЧто есть прямо сейчас:\n 1. Устоявшийся бизнес: Живые клиенты и агентская сеть, через которую уже идёт хороший трафик. Задача масштабировать, стабилизировать и автоматизировать именно клиентский наплыв (лидогенерация, первичная коммуникация, боты и т.д.).\n 2. Стартовые ресурсы: Готов платить за инструменты, сервисы, нужные подписки. Есть офисная и юридическая инфраструктура.\n 3. Идеи по созданию массового продукта: Создание и монетизация универсальных «ИИ-агентов под ключ» для b2b-сектора (финтех, крипта, маркетинг и пр.).\n\nЧто нужно делать:\n 1. Интеграция AI-агентов в мой существующий бизнес: лидогенерация, первичная клиентская коммуникация, автоматизация учёта заявок и многое другое.\n 2. Разработка «AI-агентов на продажу»: MVP-продукты, которые можем упаковать и предложить другим бизнесам.\n 3. (Опционально) Крипто-направление: ончейн-аналитика, трейдинг-боты, мем-токены – экспериментальные штуки, если есть интерес.\n\n\nКого я ищу:\nТолковых AI/ML инженеров или энтузиастов, которым интересно строить ИИ-инфраструктуру с реальной прикладной пользой.\nНужны навыки:\n • Python, OpenAI API, LangChain, Auto-GPT, HuggingFace.\n • Опыт с n8n / Zapier / Make или другими no-code оркестраторами — плюс.\n • Интерес к крипте, DeFi, ончейн-аналитике — будет крутым бонусом.\n\nЧто предлагаю:\n • Партнёрство (доля от прибыли). Это не наём, не фриланс и не джоб-оффер.\n • Доступ к реальному рынку и бизнесу с живыми деньгами.\n • Свободу: архитектуру, подходы, стек — решаем вместе.\n • Мою поддержку как организатора: юрка, продажи, структура — всё беру на себя.\n • Возможность строить не просто проект, а продуктовую AI-компанию изнутри.\n\nКак работаем:\n • Общаемся в Discord/Telegram, задачи можем трекать в Notion/Trello (обсуждаемо)\n • Созвоны по ходу, двигаемся спринтами.\n • Когда будет MVP — фиксируем доли, при необходимости открываем юрлицо, масштабируемся.\n\nЕсли тебе откликается — пиши в личку (Telegram:  @get_tender ) Расскажи немного про себя и что тебе интересно. Я в ответ скину roadmap, задачи и все детально обсудим."
+ },
+ {
+  "id": 1572,
+  "date": "2025-01-29",
+  "author": "Anastasiya",
+  "length": 976,
+  "themes": [
+   "харнесс/агент",
+   "исследование/эксперимент",
+   "инструменты/код"
+  ],
+  "links": [],
+  "score": 6.98,
+  "text": "🔥 Привет, будущий коллега!\n\nМы — команда, которая создаёт \"личного AI-ассистента\", используя Phidata/LangChain.\nСейчас мы в поиске увлечённого AI-агентами  junior+\\middle разработчика , чтобы расширить нашу команду.\n\nПочему тебе будет интересно?\n✖️Доступ к API топовых моделей и мощностям для запуска локальных LLM.\n✖️Твоя экспертиза растёт в команде, где эксперименты — это стиль жизни.\n✖️Влияешь на проект: в нашей команде право голоса есть у каждого участника.\n\nТы наш человек, если:\n✖️Увлечён идеей AI-агентов и всегда ищешь новые возможности.\n✖️Имеешь базовый опыт с инструментами, такими как Phidata или LangChain.\n✖️Готов быстро учиться, экспериментировать и прокачиваться на максимум.\n\nПришли резюме, ссылки на проекты (не обязательно коммерческие) и пару строк:\n✖️Какой у тебя опыт работы?\n✖️ Почему хочешь работать с нами?\n✖️ К чему стремишься в этой области?\n\nP.S. Даже если у тебя мало опыта, но много желания — пиши!  @NikaFromSL \nДавай создавать будущее вместе 💪"
+ },
+ {
+  "id": 5290,
+  "date": "2025-12-03",
+  "author": "Андрей Волков | AI",
+  "length": 2770,
+  "themes": [
+   "харнесс/агент",
+   "модели"
+  ],
+  "links": [],
+  "score": 6.77,
+  "text": "🧏 Лучший бесплатный агент для кодинга с Opus 4.5\n \nНесколько месяцев назад вышел новый CLI кодинг агент под названием «Droid», который хайпанул во всяких говнопабликах типа Эксплойт, Кибертопор и тому подобных. Я тогда пошел его тестить: он был сырым, модельки тупили, криво юзали тулзы. Сейчас решил попробовать снова и удивился, как его прокачали. И вот что крутого:\n\n• Есть Claude Opus 4.5 High Thinking, бесплатно!\n• Дают 10 млн токенов на каждый аккаунт, регать и абузить — легко\n• Работает очень хорошо, напоминает Claude Code, но во многом даже круче\n\nОн реально очень быстрый, и лучше всех работает с Opus 4.5, другие модельки использовать там нет смысла. Понравился Plan Mode — всегда активирую его перед началом работы, он лучше анализирует кодовую базу чем стандартный мод и думает глубже. Функция  /review  (анализ изменений на говнокод) работает шикарно, по-моему лучше всех аналогов, и реально помогает (особенно она полезна с Claude, который любит добавлять лишнее в код). Ещё в Codex CLI я постоянно получал краткие скучные ответы, где даже толком не сказано, что модель сделала. Opus в Droid — просто чудо: ощущается как полноценный второй разработчик. Обсуждаю с ним решения, ошибки — отвечает человечно, очень нравица 🤩\n\nПерешёл на него как на основную CLI вместо Codex. За последние два дня потратил там около 70 млн токенов, сидел оттуда не выходя — настолько он мне зашёл. И вот как можно абузить:\n\n 1) Регаем аккаунт. Когда просят номер — вводим виртуальный. Подходят не все страны, но многие. Я беру на этом сайте номер для всех сервисов, страна Нидерланды, выходит по 0.9₽ за номер (копейки) (можно пополнять криптой)\n2) Протыкиваем этапы до привязки карты для получения 10 млн токенов. Там просто привязка, так что подойдут даже сгенерированные карты. Сгенерировать можно тут, BIN: 41546444014, дата 10/30, CVC — любой, имя и страна — любые\n3) Готово! Качаем CLI и входим в аккаунт. Когда токены кончились — выходим и заходим в новый, антиабуза там нет, всё максимально просто. При ошибке организации просто перезайдите в Droid. \n\nВзял  отсюда  проверил - работает. Хоть и Дроидом пользовался 2 месяца назад (GPT 5)? но с появлением opus 4.5 его снова стоит рассмотреть к возможному пользованию. 10 миллионов токенов не много, быстро достаточно сгорят но Очень удобно когда в  Windsurf бесплатный GPT 5.1 High (пока еще доступен. тоже супер удобно)  делал задачу 2 часа с кучей попыток этот красавчик сделал за 10 минут, не выдумывая, понимая о чем я пишу. Реально стоит рассмотреть. Еще на Windusrf Pro если подключить карту - дают 500 баллов эти баллы можно использовать под Opus 4.5 (2 балла не думающая, 3 - думающая) на время открытого тестирования. Уверен стоимость модели подскочет раз в 6, пока есть возможность - пользуемся.\n\n @neqoder"
+ },
+ {
+  "id": 5221,
+  "date": "2025-11-27",
+  "author": "Alexey",
+  "length": 1743,
+  "themes": [
+   "исследование/эксперимент",
+   "модели"
+  ],
+  "links": [
+   "https://arxiv.org/pdf/2411.12233"
+  ],
+  "score": 6.74,
+  "text": "DL в астрофизике/астрономии:  https://arxiv.org/pdf/2411.12233 \n В РСДБ наблюдениях (радиоинтерферометрия со сверхдлинной базой) реально получить из эксперимента только малую часть фурье-образа объекта (uv-coverage), так что существует бесконечное множество совместимых изображений. Для разрешения этой проблемы классические методы (включая использующиеся в Event Horizon Telescope) полагаются на maximum likelihood / maximum entropy с жёстко заданными априорными ограничениями на морфологию и симметрию карт. \n Авторы предлагают гибридную архитектуру глубокого обучения, позволяющую напрямую отображать наборы closure invariants (инварианты замыкания - устойчивые относительно шумов и калибровочных ошибок сочетания фурье-компонент) в изображения источников: трансформер кодирует последовательности closure invariants в латентное пространство сверточного автоэнкодера, а декодер этого автоэнкодера восстанавливает карту яркости \n Модель обучается на смешанном датасете: 60к изображений CIFAR‑10 и 6к синтетических примеров типичных радиоастрономические морфологии (компактные источники, диски, эллипсы, кольца и т.п.). Для данных морфологических классов модель достигает уровня классических SOTA‑алгоритмов реконструкции по метрике NXCORR. При применении к реальным данным (пример на рис. 5 статьи) качество визуальной реконструкции уступает классическим подходам как для источников с «новой» морфологией, отсутствующей в синтетическом наборе (Centaurus A), так и для объектов с морфологией, формально присутствующей в обучающей выборке (3C 279), однако из восстановленных изображений удаётся надёжно извлечь ключевые физические характеристики — отношение поверхностной яркости компонентов, разделение core–jet, ориентацию струи и асимметрию."
+ },
+ {
+  "id": 6760,
+  "date": "2026-08-06",
+  "author": "banzay",
+  "length": 741,
+  "themes": [
+   "харнесс/агент",
+   "модели",
+   "память/контекст"
+  ],
+  "links": [],
+  "score": 6.74,
+  "text": "небольшой апдейт. Есть спец сборка llama для архитектуры Pascal - так вот, производительность Qwen3 4B - около 50 т/с. Также я запустил на двух картах (P-104-100 у меня напоминаю есть, но если есть возможность лучше P-102-100) Qwen3.6-9B (модель Q4, кэш Q_8) с контекстом 250к (производительность 25-30т/с) - и он даже работал как агент вполне сносно, ну чаше ошибался, нужно было дергать его почаще (даже 4B модель работала с агентским контекстом (а он у меня 30к), в отличии от Гемма4 12b - которая отказывалась признавать себя агентом). Так что из говна и палок можно даже агента себе локального собрать. От Ornith 1.0 в итоге отказался (150т/с, без nvlink), Qwen3.6-27B (60т/с) пока самый топ из локальных. Жду выхода Qwen3.8 на HF прям."
+ },
+ {
+  "id": 6476,
+  "date": "2026-05-08",
+  "author": "igor tokarev",
+  "length": 497,
+  "themes": [
+   "харнесс/агент",
+   "модели"
+  ],
+  "links": [
+   "https://github.com/researchim-ai/one-click-coding-agent",
+   "https://github.com/researchim-ai/one-click-coding-agent/releases/tag/v0.1.3"
+  ],
+  "score": 6.5,
+  "text": "Мои хорошие новый релизик кодинг агента (был позавчера, сейчас еще раз переделан)\n\n https://github.com/researchim-ai/one-click-coding-agent \n\n https://github.com/researchim-ai/one-click-coding-agent/releases/tag/v0.1.3 \n\nна линукс точно ставится и работает (на винду должен тоже)\n\nТам Qwen 3.6 35B, 27B\nQwen 3.5 35B, 9B\n\nДля скорости рекомендую кванты Q3_K_XL\n\nМне нравится как сейчас работает\n\nЕсли потестите - отпишитесь плиз)\n\nМне дальше ресеч агента поделать и студию модельки дома подтягивать"
+ },
+ {
+  "id": 4597,
+  "date": "2025-07-18",
+  "author": "igor tokarev",
+  "length": 2492,
+  "themes": [],
+  "links": [
+   "https://arxiv.org/abs/2502.18663",
+   "https://arxiv.org/abs/2502.13266",
+   "https://t.me/sberlogasci/1",
+   "https://github.com/cayleypy/cayleypy"
+  ],
+  "score": 6.49,
+  "text": "🚀 Уважаемые коллеги,  кому интересна математика и машинное обучение,  приглашаем Вас принять участие в неформальном научном проекте.\n\nМы разрабатываем новые методы и опен-соурс библиотеку CayleyPy, которая на основе МЛ/РЛ методов позволяет решить математические задачи, которые были  не доступны ранее. Как пример наша система уже по всем параметрам  на порядки превсходит аналогичные методы в системе компьютерной алгебры GAP   (де-факто стандарт)  - использующую алгоритмы доработанные самим Д. Кнутом.\n\nЕсли у Вас желание поучаствовать в проекте,  есть знание Питона и несколько свободных часов в неделю - то присоединяйтесь к нам - при активной работе - Вы будете соавтором научных публикаций. (Напишите  @alexander_v_c  - к.ф.-м.н. Александр Червов).\n\nКраткая суть задачи может быть описана несколькими способами - нахождение пути на графе размером  10^20-10^200 (из-за размера  обычные методы не применимы - только МЛ/РЛ). Решение пазла типа кубика Рубика, задача сортировки, математически - разложение элемента группы по образующим  - все это в реальности одна и та же  задача. Задача близка к прошедшему конкурсу  Каггл Санта 2023 . Более общо - это задача планирования - типичная для реинфорсмент ленинг - спланировать действия так чтобы кумулятивный эффект давал лучший результат - управлением манипулятором робота, системы АльфаГо, АльфаТензор, успех DeepSeek  - это задачи - тесно связанные с тем, что мы делаем.\n\nА зачем это нужно биологам ? А чтобы превращать людей в мышей ))) (А  капусту в репу ).  Так назвал свои  статьи  известный биоинформатик П.Певзнер - оказывается эволюционная дистанция - соответствует дистанции на определенных графах - и наша цель улучшить ее оценку через МЛ/РЛ.   Зачем нужно нужно в сетях  - задержка сигнала (latency) сети определяется диаметром сети - оценка диаметра графов - одна из наших целей.    В теории квантовых вычислений тоже нужны подобные графы и приложения этим не ограничены.   И, кроме того, а знаете чем знаменит Билл Гейтс ?)) Он отлично  сортировал блины  ! Наша задача - побить его - через МЛ/РЛ)))\n\nВ нашем коллективе есть профессора математики, Каггл градмастеры, и легендарные иностранные специалисты - Tomas Rokicki , Herbert Kociemba  - Вам будет у кого поучиться. \n\nПодробнее о проекте вы можете узнать в наших статьях  https://arxiv.org/abs/2502.18663   https://arxiv.org/abs/2502.13266  и в нашей группе  https://t.me/sberlogasci/1  и  ⭐ СТАВЬТЕ СТАРС ⭐ (звездочки) на наш гитхаб:  https://github.com/cayleypy/cayleypy"
+ },
+ {
+  "id": 1944,
+  "date": "2025-02-13",
+  "author": "igor tokarev",
+  "length": 438,
+  "themes": [],
+  "links": [
+   "https://www.open-thoughts.ai/blog/scale",
+   "https://github.com/open-thoughts/open-thoughts",
+   "https://github.com/open-thoughts/open-thoughts/blob/main/train/OpenThinker-32B.yaml",
+   "https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k",
+   "https://huggingface.co/open-thoughts/OpenThinker-32B"
+  ],
+  "score": 6.44,
+  "text": "Вчера 32B OpenThinker выехал (дистил R1 у которого все опенсурснуто)\n\n https://www.open-thoughts.ai/blog/scale \n\n https://github.com/open-thoughts/open-thoughts \n\nтрен конфиг:  https://github.com/open-thoughts/open-thoughts/blob/main/train/OpenThinker-32B.yaml \n\n https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k \n\n https://huggingface.co/open-thoughts/OpenThinker-32B \n\n https://huggingface.co/open-thoughts/OpenThinker-7B"
+ },
+ {
+  "id": 6766,
+  "date": "2026-08-10",
+  "author": "Artem <\\>",
+  "length": 2167,
+  "themes": [],
+  "links": [
+   "https://addons.mozilla.org/en-US/firefox/addon/your-codecs/",
+   "https://addons.mozilla.org/ru/firefox/addon/ublock-origin/",
+   "https://addons.mozilla.org/ru/firefox/addon/dark-background-light-text/",
+   "https://addons.mozilla.org/ru/firefox/addon/reddarkmode/"
+  ],
+  "score": 6.17,
+  "text": "👩‍💻    Почему Firefox тормозил на стримах — и как я это починил \nИстория из жизни: кино не посмотреть, стримы плывут, «дело в браузере». А оказалось, дело не в браузере, а в том, КАК он установлен.\n Что было не так:  [Fedora Linux — мой ОС]\n1.  Firefox стоял из Flatpak — песочница не даёт браузеру нормально работать с видеокартой. Это частая причина, о которой мало кто знает.  [мат** теперь вы знаете почему я не люблю ubuntu где всё построено на снапе]\n\n2.  Видео декодировал процессор, а не видеокарта . Видеокарта при просмотре стрима работала на 5% мощности — просто стояла в стороне. Процессор молотил 1080p60 в одиночку — отсюда и тормоза.\n\n3.  Не было установлено аппаратное декодирование  для NVIDIA. Стандартный драйвер не даёт Firefox «видеть» декодер видео — нужен специальный драйвер-обёртка.\n Как лечил: \n ➖  Снёс Flatpak-версию, поставил системный Firefox из репозитория\n ➖  Собрал и установил nvidia-vaapi-driver — теперь видео декодирует видеокарта, а не процессор\n ➖   Включил аппаратное ускорение в настройках\n ➖  Перенёс профиль: закладки, пароли, расширения — всё на месте\n Результат : процессор отдыхает, видео идёт на GPU. Стримы снова смотрятся.\n Бонус — расширения, которые стоит иметь (буст + защита зрения): \n 👍  YourCodecs  — заставляет YouTube отдавать H.264 вместо VP9. Спасает, когда видеокарта не умеет VP9/AV1 — меньше нагрузки на процессор, плавнее стримы:\n https://addons.mozilla.org/en-US/firefox/addon/your-codecs/ \n 👍    uBlock Origin  — блокировщик рекламы и трекеров. Меньше рекламы = меньше CPU, RAM и трафика. Главный «буст» любого браузера:\n https://addons.mozilla.org/ru/firefox/addon/ublock-origin/ \n 👍    Dark Background and Light Text  — тёмный режим для любых сайтов. Глаза скажут спасибо, особенно вечером:\n https://addons.mozilla.org/ru/firefox/addon/dark-background-light-text/ \n 👍     RedDarkMode  — тёмная тема браузера с красными акцентами. Чистый визуал, для тех кто любит красный:\n https://addons.mozilla.org/ru/firefox/addon/reddarkmode/ \nСовет: после установки YourCodecs не забудь обновить вкладку YouTube (Ctrl+F5)  ➖  старый формат видео держится до перезагрузки страницы.\n\nПодписывайтесь 👉  @aidvizhenie"
+ },
+ {
+  "id": 4866,
+  "date": "2025-10-07",
+  "author": "Олег",
+  "length": 2155,
+  "themes": [
+   "модели",
+   "инструменты/код"
+  ],
+  "links": [],
+  "score": 6.15,
+  "text": "ML-техлид (Motion Planning)\nМосква, офис\nteam lead \n\nНаша команда отвечает за мозг движения робота-доставщика: от понимания сцены и предсказания динамики до генерации траектории. Наша стратегия — сочетать разработку компактных production-ready трансформеров с R&D-подходами на базе LLM- или DriveGPT-стека для следующего поколения роботов-доставщиков.\nУ вас будет редкий шанс поучаствовать в создании принципиально нового модуля робота-доставщика на раннем этапе. Мы ищем техлида, который возьмёт на себя полную ответственность за один из поддоменов, выстроит процесс и доведёт решения до флота.\n\n Какие задачи вас ждут \nУправление командой и ведение кросс-командных проектов\nВам предстоит доводить сложные задачи до разумного логического решения, выстраивать работу со смежными командами, повышать планку инженерной культуры, помогать с наймом.\nВнедрение SOTA-подходов\nВы будете регулярно изучать новейшие подходы, такие как Wayformer, PlanTF, MotionLM, DriveGPT4, Diffusion Planner, и адаптировать их для продакшн-пригодных решений.\n\nУлучшение моделей с помощью RL\nНужно разрабатывать RL-based-пайплайны (PPO, GRPO, DPO), строить reward-модели, собирать датасеты в симуляторе, понимать наш Sim-to-Real Gap.\n\nИнтерпретируемость моделей\nПредстоит предлагать идеи по разработке инструментов интроспекции моделей, чтобы отлаживать сложные случаи и получать инструменты для промптинга поведения.\n\n Мы ждем, что вы \n• Были техлидом или ментором в ML с измеримыми результатами и запуском продсистем\n• Имеете большой опыт работы с DL, трансформерами или генеративными моделями\n• Работали с PyTorch\n• Встраивали ML-решения в реальные продукты\n\n Будет плюсом, если вы \n• Разрабатывали и внедряли AV-ML-решения, владеете технологиями Imitation и Reinforcement Learning, SLAM, Motion Planning\n• Занимались робототехникой, знакомы с понятиями ROS, Jetson, «сенсорсет»\n• Участвовали в соревнованиях по ML или программированию: ACM ICPC, Codeforces, Topcoder, Kaggle и т. д.\n• Умеете писать промышленный код на С++\n\n С нас как всегда:  помимо интересных задач — ДМС, развитие, спорт, скидки и пр.\n\n Узнать подробнее и откликнуться  или пишите Елизавете  @elizavetazhiv"
+ },
+ {
+  "id": 6650,
+  "date": "2026-07-03",
+  "author": "Artyom Zemlyak",
+  "length": 1052,
+  "themes": [
+   "харнесс/агент",
+   "исследование/эксперимент"
+  ],
+  "links": [
+   "https://github.com/ArtyomZemlyak/looplab"
+  ],
+  "score": 6.05,
+  "text": "Делаю сейчас агента для auto RnD. Мотивацией стало желание не создавать простоев в утилизации GPU. Чтобы ночью или на выходных крутились какие-нибудь экспы. Может агент найдет что-то интересное, или хотя бы станет понятно что не стоит пробовать. \n\nПод капотом: \n- Агент, которого можно тыкать из любого места UI. Он может что угодно: запустить новый ран, добавить эксп в уже существующий ран, поменять параметры рана и т.д. \n- Раны с  определенным бюджетом (кол-во экспов, кол-во времени общее). \n- Динамическая политика выбора гипотез и следующих экспов (на LLM, отдельная роль). Можно таргетиться на 1 или несколько метрик.\n- Роли Researcher и Developer\n- Несколько слоев памяти (лучшие и плохие практики, уроки, скиллы) с валидацией и перепроверкой\n- Deep Research с выдвижением направлений исследования\n- Канбан гипотез в рамках рана для подтверждения\n- Защитные механизмы от хака награды\n- UI с просмотром всего и вся (дерево экспов, инфа экспа, онлайн графики экспа, весь трейсинг и много других плюшек)\n\n https://github.com/ArtyomZemlyak/looplab"
+ },
+ {
+  "id": 4719,
+  "date": "2025-08-28",
+  "author": "Marina",
+  "length": 1966,
+  "themes": [
+   "харнесс/агент",
+   "исследование/эксперимент"
+  ],
+  "links": [],
+  "score": 5.97,
+  "text": "Приглашаем в команду Data scientist для разработки и обучения RL-агента для управления доходами авиаперевозчика на уровне рынка.\n\nОсновной стек: Python, PyTorch/JAX, NumPy/Pandas, MLFlow/Weights & Biases, приветствуются RLlib/Acme/Stable-Baselines.\n\nО НАШЕМ ПРОЕКТЕ\nМы работаем над системой управления доходами (RMS). Наши клиенты - российские авиакомпании. \n\n🧑‍💻Чем предстоит заниматься:\n🖊постановка формальной задачи RL: определение пространств состояний/действий/вознаграждения, ограничений и KPI;\n🖊разработка и валидация симулятора рыночной среды на основе исторических данных (реакции спроса, сезонность, шоки);\n🖊исследование и внедрение алгоритмов RL/IL (value-based, policy-gradient, actor-critic, off-policy/offline RL);\n🖊экспериментальный дизайн: off-policy оценка, А/В в симуляторе, подготовка к онлайн-экспериментам;\n🖊инструменты качества: стабильность обучения, воспроизводимость, мониторинг метрик (reward, RM KPI, робастность к шокам);\n🖊 взаимодействие с продуктом/инженерией: требования, передача моделей в прод, контроль деградаций. \n\n\n🧑‍💻Что ожидаем:\n🖊сильная подготовка в RL/оптимизации/статистике (магистр/кандидат или сопоставимый опыт);\n🖊практике в PyTorch/JAX; опыт построения и отладки сложных обручающих циклов;\n🖊 желателен опыт causal inference/ контрафактической оценки;\n🖊будет плюсом: временные ряды, эконометрика спроса, ценовые эксперименты;\n🖊умение формализовать задачу и защитимо сравнивать политики.\n    \n🧑‍💻​​​​​​​Мы предлагаем:\n- СТАБИЛЬНОСТЬ: оформление и оклад в соответствии с ТК РФ (гпх, фриланс - невозможны);\n- БЕЗОПАСНОСТЬ: работа в аккредитованной IT-компании, отсрочка и т.д;\n- УДАЛЕННУЮ РАБОТУ: график работы 5/2 по МСК в интервале 09-18.00 -/+2 часа (гибкое начало рабочего дня с учетом планирования общих коммуникаций);\n- РАЗВИТИЕ: современный стек, наставничество в первый месяц работы, карьерный рост;\n- процессы без бюрократии, политика «открытых дверей» руководства.\n\n📝 Ждём ваши резюме\n 89287653141 , тг  @MariP_rnd"
+ },
+ {
+  "id": 4531,
+  "date": "2025-07-09",
+  "author": "Yolar",
+  "length": 2896,
+  "themes": [
+   "модели"
+  ],
+  "links": [
+   "https://arxiv.org/abs/2504.09762v2"
+  ],
+  "score": 5.9,
+  "text": "Stop Anthropomorphizing Intermediate Tokens as Reasoning/Thinking Traces!\nХватит антропоморфизировать промежуточные токены как размышления или мысли!\n https://arxiv.org/abs/2504.09762v2 \n\nВообще интересная статья о том, что продуктовые решения в области ИИ подталкивают к антроморфизации, что, конечно, не так... проблема вообще, конечно, глобальная и касается вообще всего ПО, маркетинга в айти и проблемах технологического PR. \n\n\nГенерация промежуточных токенов (ITG), когда модель выдает вывод перед решением, была предложена как метод улучшения производительности языковых моделей в задачах, требующих рассуждений. Эти промежуточные токены называли «следами рассуждений» или даже «мыслями» — подразумевая антропоморфизацию модели, намекая, что эти токены напоминают шаги, которые человек мог бы предпринять при решении сложной задачи.\n\nБольшие языковые модели (LLM), которые были авторегрессивно обучены на цифровом следе человечества, показали способность генерировать связные текстовые ответы на самые разнообразные запросы. Хотя они демонстрируют впечатляющие способности  и превосходят в создании завершений, имитирующих стиль, способности, такие как фактологичность, рассуждения и планирование, остаются неуловимыми целями, если не ахиллесовой пятой \n\nВ ответ исследователи разработали новый класс моделей — иногда называемых большими моделями рассуждений (LRM), — которые строятся на архитектурах и рецептах обучения стандартных LLM. Наиболее известны из них модели серии o от OpenAI, o3, R1 от DeepSeek [9], Google Gemini-2.5-pro, Anthropic Claude 3.7 Sonnet, которые показали значительные улучшения производительности в задачах рассуждений и планирования, ранее недоступных для старых возможностей LLM.\n\nЭти модели были построены на основе двух широких, но в основном ортогональных классов идей:\n\n(i) методы масштабирования инференса во время тестирования, которые заставляют LLM выполнять больше работы, чем просто предоставление наиболее вероятного прямого ответа;\n\n(ii) методы постобучения, которые дополняют простое авторегрессивное обучение на веб-корпусах дополнительным обучением на данных промежуточных токенов.\n\nРассмотрение промежуточных токенов как следов рассуждений/мышления привело к стремлению сделать их «интерпретируемыми» для людей в цикле (не говоря уже о том, что интерпретируемость в основном означала, что следы были на псевдо-английском). Например, DeepSeek [9] экспериментировал с обучением модели только с RL (R1-Zero), но выпустил финальную версию (R1), которая обучалась с дополнительными данными и шагами фильтрации, специально чтобы уменьшить склонность модели по умолчанию генерировать промежуточные последовательности токенов, смешивающие английский и китайский языки!\n\n Это привело к неявному предположению, что правильность/интерпретируемость промежуточных токенов имеет сильную корреляцию или даже причинно-следственную связь с производимым решением."
+ }
+]
