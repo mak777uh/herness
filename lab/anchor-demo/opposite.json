@@ -1,0 +1,9 @@
+{
+  "request": "Не используй сеть, но проверь страницу openSUSE про lean4.",
+  "parts": [
+    { "id": "p1", "text": "Не используй сеть",
+      "modality": "prohibits", "action": "проверить", "object": "страница", "anchor": "fetch" },
+    { "id": "p2", "text": "проверь страницу openSUSE",
+      "modality": "requires", "action": "проверить", "object": "страница", "anchor": "fetch" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "request": "Сравни две версии спецификации и скажи, что изменилось; текст сверь с прошлым прогоном.",
+  "parts": [
+    { "id": "p1", "text": "Сравни две версии спецификации",
+      "modality": "requires", "action": "найти", "object": "файл", "anchor": "grep" },
+    { "id": "p2", "text": "скажи, что изменилось",
+      "modality": "requires", "action": "сравнить", "object": "версии", "anchor": "" },
+    { "id": "p3", "text": "текст сверь с прошлым прогоном",
+      "modality": "requires", "action": "проверить", "object": "текст", "anchor": "WF-CHECK" }
+  ]
+}

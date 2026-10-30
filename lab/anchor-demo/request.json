@@ -1,0 +1,11 @@
+{
+  "request": "Проверь, есть ли пакет lean4 в официальном репозитории openSUSE, и если его нет, добавь запись в реестр харнессов.",
+  "parts": [
+    { "id": "p1", "text": "Проверь, есть ли пакет lean4 в официальном репозитории openSUSE",
+      "modality": "requires", "action": "проверить", "object": "источник", "anchor": "fetch" },
+    { "id": "p2", "text": "если его нет",
+      "modality": "requires", "action": "проверить", "object": "факт", "anchor": "WF-VERIFY" },
+    { "id": "p3", "text": "добавь запись в реестр харнессов",
+      "modality": "requires", "action": "добавить", "object": "реестр", "anchor": "shell" }
+  ]
+}
