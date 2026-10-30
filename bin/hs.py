@@ -1359,10 +1359,30 @@ def gate_prereg(root: Path) -> list[str]:
     return problems
 
 
+def gate_lab(root: Path) -> list[str]:
+    """Реестр программы: фаза, следующие гипотезы, связь экспериментов с отчётами и утверждениями."""
+    sys.path.insert(0, str(root))
+    try:
+        from bin.lab import load, validate
+    except Exception as exc:  # noqa: BLE001
+        return [f"валидатор лаборатории недоступен: {type(exc).__name__}"]
+    if not (root / "lab" / "registry.json").exists():
+        return ["нет lab/registry.json"]
+    return validate(load())
+
+
+def cmd_lab(args) -> int:
+    """Стенд: где мы, что закрыто, что дальше (docs/CYCLE.md)."""
+    sys.path.insert(0, str(ROOT))
+    from bin import lab as lab_mod
+
+    return lab_mod.main([args.action])
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -1512,6 +1532,10 @@ def main(argv: list[str]) -> int:
     p.add_argument("--run")
     p.set_defaults(func=cmd_browser)
 
+
+    p = sub.add_parser("lab", help="научный цикл: статус программы и валидация реестра")
+    p.add_argument("action", nargs="?", default="status", choices=["status", "validate"])
+    p.set_defaults(func=cmd_lab)
 
     p = sub.add_parser("verify-journal", help="проверить цепочку журналов")
     p.add_argument("paths", nargs="*")

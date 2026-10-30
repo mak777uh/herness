@@ -67,4 +67,4 @@ GitHub: https://github.com/mak777uh/herness, remote обновлён (прове
 (в системе висят старые сессии). Пока работает junction `C:\111\herness` → `C:\111\harness`;
 настоящее переименование — после того, как процессы закроются.
 
-
+- Процесс: `docs/CYCLE.md`; фаза и следующие гипотезы — `python bin/hs.py lab`.
