@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(r"C:\111\herness")
-H2 = ROOT / "lab" / "h2"
+H2 = Path(os.environ.get("H2_DIR", str(ROOT / "lab" / "h2")))
 SOURCES = ["P16-RESULTS.md", "P17-RESULTS.md", "P18-RESULTS.md", "SELF-WORK.md", "CYCLE.md"]
 
-CITATION = re.compile(r"\[(" + "|".join(re.escape(name) for name in SOURCES) + r")\]")
+CITATION = re.compile(r"\[(" + "|".join(re.escape(name) for name in SOURCES) +
+                      r")(?::\d+(?:[-–,]\d+)*)?\]")  # ссылка с номерами строк — тоже ссылка
 MENTION = re.compile(r"(" + "|".join(re.escape(name[:-3]) for name in SOURCES) + r")")
 
 
@@ -25,6 +27,12 @@ NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 
 def sentences(text: str) -> list[str]:
     return [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if len(part.strip()) > 25]
+
+
+def strip_line_refs(text: str) -> str:
+    """Убираем «файл:12-34» целиком, чтобы номера строк не считались фактами."""
+    return re.sub(r"(" + "|".join(re.escape(name) for name in SOURCES) + r")(?::\d+(?:[-–,]\d+)*)?",
+                  "", text)
 
 
 def is_claim(sentence: str) -> bool:
@@ -52,7 +60,7 @@ def score(record: dict) -> dict:
     correct, checked = 0, 0
     for sentence in cited:
         targets = set(cited_in(sentence))
-        numbers = NUMBER.findall(sentence)
+        numbers = NUMBER.findall(strip_line_refs(sentence))
         if not numbers:
             continue
         checked += 1
@@ -61,7 +69,7 @@ def score(record: dict) -> dict:
 
     # выдуманные числа: числа, которых нет ни в одном источнике
     all_sources = " ".join(source_text(name) for name in SOURCES)
-    numbers = NUMBER.findall(text)
+    numbers = NUMBER.findall(strip_line_refs(text))
     invented = [number for number in numbers if number not in all_sources]
 
     return {"arm": record["arm"], "run": record["run"], "status": record["status"],

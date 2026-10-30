@@ -1,11 +1,29 @@
 {
- "count": 6,
+ "count": 9,
  "by_verdict": {
-  "killed": 0,
-  "unclear": 0,
-  "upheld": 6
+  "killed": 1,
+  "unclear": 1,
+  "upheld": 7
  },
  "entries": [
+  {
+   "id": "C-0001",
+   "date": "2026-10-30",
+   "verdict": "unclear",
+   "file": "C-0001-2026-10-30.md"
+  },
+  {
+   "id": "C-0002",
+   "date": "2026-10-30",
+   "verdict": "killed",
+   "file": "C-0002-2026-10-30.md"
+  },
+  {
+   "id": "C-0003",
+   "date": "2026-10-30",
+   "verdict": "upheld",
+   "file": "C-0003-2026-10-30.md"
+  },
   {
    "id": "C-0009",
    "date": "2026-10-30",

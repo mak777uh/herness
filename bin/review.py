@@ -103,7 +103,7 @@ def write_review(claim_id: str, row: dict, verdict: dict) -> Path:
         f"claim: {row['claim']}\n"
         f"verdict: {verdict.get('verdict', 'unclear')}\n"
         f"artifact_checked: {verdict.get('artifact_checked', row['artifact'])}\n"
-        f"method: рецензент {verdict.get(\"model\", \"deepseek-v4-pro\")}: чтение артефакта и сверка с ожиданием\n"
+        f"method: рецензент {verdict.get('model', 'deepseek-v4-pro')}: чтение артефакта и сверка с ожиданием\n"
         f"reasons:\n{reasons}\n"
         f"what_would_kill_it: {verdict.get('what_would_kill_it', '—')}\n",
         encoding="utf-8")

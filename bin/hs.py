@@ -1413,10 +1413,23 @@ def gate_absence(root: Path) -> list[str]:
     return problems
 
 
+def gate_compile(root: Path) -> list[str]:
+    """Все скрипты bin/ и core/ должны компилироваться: синтаксис ломается незаметно."""
+    import py_compile
+
+    problems = []
+    for path in sorted(list((root / "bin").glob("*.py")) + list((root / "core").glob("*.py"))):
+        try:
+            py_compile.compile(str(path), doraise=True)
+        except py_compile.PyCompileError as exc:
+            problems.append(f"{path.name}: {str(exc.msg).splitlines()[-1][:90]}")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -1459,7 +1472,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_assert_bound.py", "test_coverage.py", "test_seal.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_assert_bound.py", "test_coverage.py", "test_seal.py", "test_compile.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,

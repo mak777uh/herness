@@ -62,6 +62,26 @@
    "note": "три круга, два отклонения записаны в пре-регистрации; итог: recall 0.67 против 0.00, precision 10/10, выдуманных чисел 0 и 0",
    "conclusion": "lab/h2/RESULT.md",
    "claim": "C-0092"
+  },
+  {
+   "id": "E-0006",
+   "title": "H-0003: репликация H-0002 на deepseek-v4-pro",
+   "hypothesis": "H-0003",
+   "prereg": "lab/prereg/H-0003.json",
+   "status": "closed",
+   "note": "эффект переносится: recall 0.91 против 0.00; pro цитирует по строкам; n=1 на плечо",
+   "conclusion": "lab/h2pro/RESULT.md",
+   "claim": "C-0096"
+  },
+  {
+   "id": "E-0007",
+   "title": "Пилот очереди: супервизор, бюджет, отказ без пре-регистрации",
+   "hypothesis": null,
+   "prereg": null,
+   "status": "case",
+   "note": "J-0001 (три рецензии: upheld/killed/unclear) и J-0002 (репликация) прошли через supervisor; первый запуск поймал сломанный review.py (F-0017)",
+   "conclusion": "lab/qa/U-0002.md",
+   "claim": "C-0095"
   }
  ]
 }

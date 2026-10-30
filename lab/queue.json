@@ -1,0 +1,57 @@
+{
+ "schema_version": 1,
+ "updated_at": "2026-10-30T22:26:38",
+ "budget": {
+  "max_jobs_per_day": 20,
+  "max_seconds_total": 3600,
+  "note": "супервизор отказывается запускать job без пре-регистрации (кроме exploration) и без бюджета"
+ },
+ "jobs": [
+  {
+   "id": "J-0001",
+   "title": "Враждебная рецензия трёх непроверенных утверждений (flash)",
+   "kind": "review",
+   "exploration": true,
+   "why_documented": "проверка очереди на реальной работе: рецензент должен дать вердикт и причины, а не подтвердить всё подряд",
+   "prereg": null,
+   "command": [
+    "python",
+    "bin/review.py",
+    "C-0001",
+    "C-0002",
+    "C-0003",
+    "--model=deepseek-v4.1-flash"
+   ],
+   "scorer": "lab/reviews/index.json",
+   "budget_seconds": 180,
+   "acceptance": "три файла рецензий с полями, вердикт из словаря, причины непустые",
+   "anchor": "одну из трёх рецензий проверить вручную",
+   "status": "done",
+   "last_run": "20261030T222406",
+   "last_exit": 0
+  },
+  {
+   "id": "J-0002",
+   "title": "Репликация H-0002 на другой модели (deepseek-v4-pro): переносится ли эффект",
+   "kind": "replicate",
+   "exploration": false,
+   "prereg": "lab/prereg/H-0003.json",
+   "command": [
+    "python",
+    "bin/run_h2.py",
+    "1"
+   ],
+   "scorer": "bin/score_h2.py",
+   "budget_seconds": 600,
+   "acceptance": "по одному прогону на плечо; recall(A) выше recall(B) при 5 источниках",
+   "anchor": "сверить один ответ вручную с источниками",
+   "status": "done",
+   "env": {
+    "H2_MODEL": "deepseek-v4-pro",
+    "H2_DIR": "lab/h2pro"
+   },
+   "last_run": "20261030T222458",
+   "last_exit": 0
+  }
+ ]
+}

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
 import time
@@ -23,9 +24,9 @@ from core.loop import run as loop_run  # noqa: E402
 from core.tools import ToolRouter  # noqa: E402
 
 BASE = "https://opencode.ai/inference/go/openai/v1"
-MODEL = "deepseek-v4.1-flash"
+MODEL = os.environ.get("H2_MODEL", "deepseek-v4.1-flash")
 KEY_ENV = "OPENCODE_GO_API_KEY"
-H2 = ROOT / "lab" / "h2"
+H2 = Path(os.environ.get("H2_DIR", str(ROOT / "lab" / "h2")))
 
 SOURCES = {
     "P16-RESULTS.md": ROOT / "research" / "P16-RESULTS-2026-10-30.md",
