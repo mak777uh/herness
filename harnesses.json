@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "note": "Реестр харнессов для сравнения подходов. Звёзды, лицензия и последний push проверены через GitHub API 2026-10-29. Свойства (цикл, состояние, бюджет и т.д.) взяты из ответов моделей на P12 и НЕ проверены по коду — при использовании открывать репозиторий. Проекты, добавленные поиском GitHub 2026-10-29 (deepseek-harness, openclaw, superpowers, ECC, hermes-agent, pi, orca, paperclip, deer-flow, ruflo, browser-use): числа проверены API, свойства не проверялись — стоят «нет данных».",
+  "note": "Реестр харнессов для сравнения подходов. Звёзды, лицензия и последний push проверены через GitHub API 2026-10-29. Свойства (цикл, состояние, бюджет и т.д.) взяты из ответов моделей на P12 и НЕ проверены по коду — при использовании открывать репозиторий. Проекты, добавленные поиском GitHub 2026-10-29 (deepseek-harness, openclaw, superpowers, ECC, hermes-agent, pi, orca, paperclip, deer-flow, ruflo, browser-use): числа проверены API, свойства не проверялись — стоят «нет данных». Добавлены nearai/ironclaw (Agent OS: WASM-песочница, секреты вне инструментов) и nearai/putnambench-deepseek (672 задачи PutnamBench в Lean 4 одним bash).",
   "properties_note": "есть / частично / нет / нет данных",
   "checked_at": "2026-10-29",
   "items": [
@@ -1054,6 +1054,76 @@
         "P9": "частично",
         "P11": "есть",
         "P10": "нет"
+      }
+    },
+    {
+      "id": "putnambench",
+      "name": "putnambench-deepseek",
+      "repo": "nearai/putnambench-deepseek",
+      "stars": 44,
+      "license": "нет (не указана)",
+      "last_push": "2026-08-27",
+      "what": "агент на DeepSeek V4 Flash решил все 672 задачи PutnamBench в Lean 4, машинная валидация; единственный инструмент — bash",
+      "when": "проверить, хватает ли одного инструмента и как устроена машинная проверка результата",
+      "loop": "нет данных",
+      "state": "нет данных",
+      "tools": "нет данных",
+      "permissions": "нет данных",
+      "secrets": "нет данных",
+      "recovery": "нет данных",
+      "evidence": "нет данных",
+      "budget": "нет данных",
+      "multiagent": "нет данных",
+      "signals": {
+        "P4": 0,
+        "P5": 0,
+        "P9": 0,
+        "P11": 0,
+        "P10": 0,
+        "P7b": 0
+      },
+      "marked_from": "git ls-files, 6 файлов, 2026-10-30",
+      "problems": {
+        "P4": "нет",
+        "P5": "нет",
+        "P9": "нет",
+        "P11": "нет",
+        "P10": "нет"
+      }
+    },
+    {
+      "id": "ironclaw",
+      "name": "IronClaw",
+      "repo": "nearai/ironclaw",
+      "stars": 12690,
+      "license": "MIT OR Apache-2.0",
+      "last_push": "2026-10-29",
+      "what": "Agent OS на Rust: WASM-песочница для инструментов, секреты не попадают в инструменты, allowlist эндпоинтов, MCP",
+      "when": "сравнить изоляцию, защиту секретов и allowlist с нашими deny-листами",
+      "loop": "нет данных",
+      "state": "нет данных",
+      "tools": "нет данных",
+      "permissions": "нет данных",
+      "secrets": "нет данных",
+      "recovery": "нет данных",
+      "evidence": "нет данных",
+      "budget": "нет данных",
+      "multiagent": "нет данных",
+      "signals": {
+        "P4": 8,
+        "P5": 852,
+        "P9": 15,
+        "P11": 556,
+        "P10": 2,
+        "P7b": 104
+      },
+      "marked_from": "git ls-files, 5011 файлов, 2026-10-30",
+      "problems": {
+        "P4": "есть",
+        "P5": "есть",
+        "P9": "есть",
+        "P11": "есть",
+        "P10": "частично"
       }
     }
   ]
