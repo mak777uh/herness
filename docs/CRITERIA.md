@@ -247,3 +247,4 @@
 | K217 | допущения запроса выписаны с основанием; измеренное требует свидетельства | замер | tests/test_anchor.py 13/13, коды S6_* | bin/anchor.py |
 | K218 | ресурсные числа в утверждениях проверяются исполнением (assert_bound), а не подстрокой | замер | tests/test_assert_bound.py 6/6; C-0078 | bin/assert_bound.py |
 | K219 | у ресурсных утверждений тип measurement и проверка через assert_bound | замер | C-0078: selftest в 300 с | bin/assert_bound.py |
+| K220 | приоритет источников истины проговорён: артефакт → карточка → индекс → отчёт | док | PROFILE-PINS, Morphogenesis §2 | research/PROFILE-PINS-2026-10-30.md |
