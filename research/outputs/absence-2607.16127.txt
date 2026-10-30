@@ -1,0 +1,5 @@
+утверждение: arXiv 2607.16127 не существует (C-0087, до исправления)
+попытка 1: GET https://arxiv.org/abs/2607.16127 -> HTTPError (5xx/сбой домена), время 30.10.2026 20:47
+попытка 2: GET https://arxiv.org/abs/2607.16127 -> 200, заголовок «CADAQUES: A Cost-Aware Dual Architecture...»
+попытка 3: GET https://ar5iv.labs.arxiv.org/html/2607.16127 -> TimeoutError
+вывод: статья существует; первая попытка была отказом, а не отсутствием (F-0015)

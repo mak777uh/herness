@@ -383,7 +383,7 @@ def gate_claims(root: Path) -> list[str]:
         if not cmd or not artifact:
             problems.append(f"CLAIMS.md:{lineno}: {cid} без команды или артефакта")
         if ctype not in {"proof", "test", "statistics", "observation", "judgment", "withdrawn",
-                         "not established", "measurement"}:
+                         "not established", "measurement", "absence"}:
             problems.append(f"CLAIMS.md:{lineno}: {cid} неизвестный тип '{ctype}'")
         if ctype != "proof" and re.search(r"(?i)доказан|гарантир|всегда", text):
             problems.append(f"CLAIMS.md:{lineno}: {cid} формулировка сильнее типа ({ctype})")
@@ -1394,10 +1394,29 @@ def gate_seals(root: Path) -> list[str]:
     return problems
 
 
+def gate_absence(root: Path) -> list[str]:
+    """Утверждение об отсутствии обязано иметь артефакт попыток проверки."""
+    problems = []
+    for line in (root / "CLAIMS.md").read_text(encoding="utf-8").splitlines():
+        if not line.startswith("| C-"):
+            continue
+        cells = [cell.strip().strip("`").strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 5 or cells[2] != "absence":
+            continue
+        artifact = root / cells[4]
+        if not artifact.exists():
+            problems.append(f"{cells[0]}: артефакта попыток нет ({cells[4]})")
+            continue
+        text = artifact.read_text(encoding="utf-8", errors="replace")
+        if not any(marker in text.lower() for marker in ("попыт", "attempt", "http", "код ответа")):
+            problems.append(f"{cells[0]}: артефакт не похож на журнал попыток")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
