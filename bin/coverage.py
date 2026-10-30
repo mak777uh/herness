@@ -59,6 +59,8 @@ def main(argv=None) -> int:
 
     print(f"утверждений: {total}, закрытых: {closed}, покрытие: {coverage:.2f}")
     print(f"битых строк: {malformed} (входят в знаменатель)")
+    print("всего строк реестра — это все утверждения, включая те, у которых нет команды; "
+          "проверка команд считает только исполняемые (verify_claims)")
 
     if coverage >= 1.0:
         verdict = "CHECKED_ANCHORED"

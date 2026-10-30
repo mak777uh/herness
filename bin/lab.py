@@ -71,16 +71,21 @@ def main(argv: list[str]) -> int:
 
     program = data["program"]
     print(f"программа: {program['name']} | фаза: {program['phase']}")
-    print(f"состояние: {program['status_note'][:300]}")
+    note = program["status_note"]
+    if len(note) > 300:
+        cut = note[:300].rpartition(" ")[0]
+        note = cut.rstrip(" ,;:") + "…"
+    print(f"состояние: {note}")
     print("\nэксперименты:")
     for experiment in data.get("experiments", []):
         conclusion = experiment.get("conclusion") or "—"
         exists = "есть" if experiment.get("conclusion") and (ROOT / experiment["conclusion"]).exists() else "нет"
-        print(f"  {experiment['id']:<7} {experiment.get('status', '?'):<7} {experiment.get('title', '')[:60]}")
+        print(f"  {experiment['id']:<7} {experiment.get('status', '?'):<7} {experiment.get('title', '')[:60].rstrip() + '…'}")
         print(f"          вывод: {conclusion} ({exists})")
     print("\nследующие гипотезы:")
     for hypothesis in program["next_hypotheses"]:
         print("  -", hypothesis)
+    print("\nдальше: hs lab validate | hs coverage | hs review-debt | hs gates")
     return 0
 
 

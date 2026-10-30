@@ -39,7 +39,16 @@ def latest_by_claim() -> dict[str, dict]:
 def main() -> int:
     latest = latest_by_claim()
     debt = [item for item in latest.values() if item.get("verdict") != "upheld"]
-    print(f"рецензий по утверждениям: {len(latest)} | с долгом: {len(debt)}")
+
+    claims = [line for line in (ROOT / "CLAIMS.md").read_text(encoding="utf-8").splitlines()
+              if line.startswith("| C-")]
+    total = len(claims)
+    reviewed = len(latest)
+    unreviewed = max(0, total - reviewed)
+    print(f"утверждений: {total} | прошли рецензию: {reviewed} | не проходили: {unreviewed} "
+          f"| с вердиктом не upheld: {len(debt)}")
+    if unreviewed:
+        print(f"долг: {unreviewed} утверждений без враждебной проверки — это тоже долг, а не ноль")
     for item in sorted(debt, key=lambda row: row.get("id", "")):
         print(f"\n{item.get('id')}: {item.get('verdict')}")
         print(f"  утверждение: {item.get('claim', '')[:110]}")
