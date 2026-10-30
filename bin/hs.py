@@ -1348,10 +1348,21 @@ def gate_reviews(root: Path) -> list[str]:
     return problems
 
 
+def gate_prereg(root: Path) -> list[str]:
+    """Пре-регистрация: обязательные поля на месте, закрытие — только с выводом."""
+    sys.path.insert(0, str(root))
+    try:
+        from bin.prereg import entries
+    except Exception as exc:  # noqa: BLE001
+        return [f"проверка пре-регистраций недоступна: {type(exc).__name__}"]
+    _items, problems = entries()
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
