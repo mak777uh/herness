@@ -1256,10 +1256,35 @@ def gate_depths(root: Path) -> list[str]:
     return problems
 
 
+def gate_capabilities(root: Path) -> list[str]:
+    """Карта способностей не должна расходиться с кодом: иначе привязка проверяет вымысел."""
+    path = root / "capabilities.json"
+    if not path.exists():
+        return ["нет capabilities.json"]
+    sys.path.insert(0, str(root))
+    try:
+        from bin.gen_capabilities import build
+    except Exception as exc:  # noqa: BLE001
+        return [f"генератор способностей недоступен: {type(exc).__name__}"]
+    expected = build()
+    actual = json.loads(path.read_text(encoding="utf-8"))
+    problems = []
+    if expected["tools"] != actual.get("tools"):
+        problems.append("список инструментов в capabilities.json расходится с кодом")
+    if expected["workflow"] != actual.get("workflow"):
+        problems.append("список шагов воркфлоу расходится с кодом")
+    # у каждого инструмента роутера должна быть памятка о возможностях
+    from core.tools import GrepTool, ListTool, ReadTool, ShellTool
+    for cls in (ShellTool, ReadTool, GrepTool, ListTool):
+        if not getattr(cls, "meta", None):
+            problems.append(f"у {cls.__name__} нет meta: инструмент не описывает себя")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -1302,7 +1327,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,

@@ -53,6 +53,9 @@ def _denied(path: Path) -> bool:
 
 class ShellTool:
     name = "shell"
+    meta = {"actions": ("запустить", "изменить", "добавить", "записать", "установить", "удалить", "сравнить"),
+            "objects": ("команда", "файл", "реестр", "запись", "версии"),
+            "effects": ("read", "write", "exec")}
 
     def __init__(self, cwd: Path, timeout: int = 120):
         self.cwd = Path(cwd)
@@ -75,6 +78,9 @@ class ReadTool:
     """Чтение файла с номерами строк: без кавычек, без оболочки, без сюрпризов."""
 
     name = "read_file"
+    meta = {"actions": ("прочитать", "открыть", "проверить"),
+            "objects": ("файл", "документ", "текст"),
+            "effects": ("read",)}
 
     def __init__(self, root: Path, max_lines: int = 400):
         self.root = Path(root)
@@ -103,6 +109,9 @@ class GrepTool:
     """Поиск регекспа по файлам: выдаёт путь, номер строки и саму строку."""
 
     name = "grep"
+    meta = {"actions": ("найти", "искать", "проверить", "сравнить"),
+            "objects": ("файл", "строка", "код", "текст", "версии"),
+            "effects": ("read",)}
 
     def __init__(self, root: Path, max_results: int = 120):
         self.root = Path(root)
@@ -146,6 +155,9 @@ class ListTool:
     """Перечисление каталога и подсчёт по маске: без оболочки и без кавычек."""
 
     name = "list_dir"
+    meta = {"actions": ("посмотреть", "перечислить"),
+            "objects": ("каталог", "файлы"),
+            "effects": ("read",)}
 
     def __init__(self, root: Path, limit: int = 200):
         self.root = Path(root)
