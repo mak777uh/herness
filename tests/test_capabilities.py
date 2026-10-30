@@ -45,7 +45,7 @@ def _():
 
 @case("все эффекты из известного набора", False)
 def _():
-    known = {"read", "write", "exec", "net"}
+    known = {"read", "write", "exec", "net", "periodic"}
     for tool in build()["tools"]:
         assert set(tool["effects"]) <= known, tool
 

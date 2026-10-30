@@ -111,6 +111,7 @@ def main() -> int:
         print(f"[{'ok' if ok else 'FAIL'}] {name}")
     SERVER.shutdown()
     print(f"\nсеть: {len(CASES) - failed}/{len(CASES)} ok")
+    print(f"провалов: {failed}")
     return 0 if failed == 0 else 1
 
 

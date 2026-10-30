@@ -12,11 +12,15 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CLAIMS = ROOT / "CLAIMS.md"
+CLAIMS = ROOT / "CLAIMS.md"  # переопределяется первым аргументом
 COLUMNS = 7
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    global CLAIMS
+    argv = argv if argv is not None else sys.argv[1:]
+    if argv:
+        CLAIMS = Path(argv[0])
     rows = []
     malformed = 0
     for line in CLAIMS.read_text(encoding="utf-8").splitlines():
@@ -71,13 +75,15 @@ def main() -> int:
             print(f"  {row['id']}: {row['why']}")
 
     out = ROOT / "research" / "claims-coverage.json"
-    out.write_text(json.dumps({"total": total, "closed": closed, "coverage": round(coverage, 3),
-                               "verdict": verdict, "open": open_rows}, ensure_ascii=False, indent=1),
+    out.write_text(json.dumps({"total": total, "closed": closed, "malformed": malformed,
+                               "coverage": round(coverage, 3), "verdict": verdict,
+                               "open": open_rows}, ensure_ascii=False, indent=1),
                    encoding="utf-8")
     print(f"\nзаписано: {out}")
-    # сильный вердикт требует всех закрытых записей; порог 0.8 не решает\n    return 0 if coverage >= 1.0 else 1
+    # сильный вердикт требует всех закрытых записей; порог 0.8 не решает
+    return 0 if coverage >= 1.0 else 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
 

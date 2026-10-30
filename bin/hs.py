@@ -1328,10 +1328,30 @@ def gate_capabilities(root: Path) -> list[str]:
     return problems
 
 
+def gate_reviews(root: Path) -> list[str]:
+    """Рецензии: поля на месте, вердикт из словаря, индекс не разошёлся с файлами."""
+    sys.path.insert(0, str(root))
+    try:
+        from bin.build_reviews_index import collect
+    except Exception as exc:  # noqa: BLE001
+        return [f"сборщик рецензий недоступен: {type(exc).__name__}"]
+    entries, problems = collect()
+    index_path = root / "lab" / "reviews" / "index.json"
+    if not index_path.exists():
+        problems.append("нет lab/reviews/index.json: пересобрать build_reviews_index.py")
+        return problems
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    files = sorted(item.get("file") for item in entries)
+    indexed = sorted(item.get("file") for item in index.get("entries", []))
+    if files != indexed:
+        problems.append("индекс рецензий расходится с файлами: пересобрать")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -1374,7 +1394,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_assert_bound.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_assert_bound.py", "test_coverage.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,

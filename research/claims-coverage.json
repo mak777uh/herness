@@ -1,7 +1,15 @@
 {
- "total": 79,
- "closed": 79,
- "coverage": 1.0,
- "verdict": "CHECKED_ANCHORED",
- "open": []
+ "total": 1,
+ "closed": 0,
+ "malformed": 0,
+ "coverage": 0.0,
+ "verdict": "REFUSED",
+ "open": [
+  {
+   "id": "C-0001",
+   "closed": false,
+   "why": "нет ожидания",
+   "kind": "observation"
+  }
+ ]
 }

@@ -1,0 +1,14 @@
+{
+  "query": "nixos 26.05 release notes",
+  "engine": "ddg",
+  "kind": "empty",
+  "relevance": 0.0,
+  "hits": 1,
+  "note": "релевантность 0.00",
+  "items": [
+    {
+      "title": "Браузер для Android",
+      "url": "https://play.google.com/store/apps/details?id=com.duckduckgo.mobile.android&referrer=utm_campaign%3Dserp-atb-serp%26origin%3Dfunnel_playstore_searchresults"
+    }
+  ]
+}

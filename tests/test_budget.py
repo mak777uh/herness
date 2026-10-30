@@ -91,6 +91,7 @@ def main() -> int:
     for leftover in TEMP_DIRS:
         shutil.rmtree(leftover, ignore_errors=True)
     print(f"\nбюджет: {len(CASES) - failed}/{len(CASES)} ok")
+    print(f"провалов: {failed}")
     return 0 if failed == 0 else 1
 
 

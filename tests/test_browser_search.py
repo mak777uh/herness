@@ -72,6 +72,7 @@ def main() -> int:
         failed += 0 if ok else 1
         print(f"[{'ok' if ok else 'FAIL'}] {name}")
     print(f"\nбраузер: {len(CASES) - failed}/{len(CASES)} ok")
+    print(f"провалов: {failed}")
     return 0 if failed == 0 else 1
 
 

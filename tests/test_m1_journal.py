@@ -47,6 +47,7 @@ def _():
         events = _read_events(root / "run")
         types = [e["type"] for e in events]
         assert types == ["run/start", "tool/call", "tool/result", "assistant/message", "run/end"], types
+        print(f"порядок событий: {' → '.join(types)}")
 
         res = next(e for e in events if e["type"] == "tool/result")
         artifact = root / "run" / res["payload"]["artifact"]["path"]
@@ -105,6 +106,7 @@ def main() -> int:
         failed += 0 if ok else 1
         print(f"[{'ok' if ok else 'FAIL'}] {name}")
     print(f"\nM1: {len(CASES) - failed}/{len(CASES)} ok")
+    print(f"провалов: {failed}")
     return 0 if failed == 0 else 1
 
 

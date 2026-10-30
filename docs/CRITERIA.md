@@ -248,3 +248,6 @@
 | K218 | ресурсные числа в утверждениях проверяются исполнением (assert_bound), а не подстрокой | замер | tests/test_assert_bound.py 6/6; C-0078 | bin/assert_bound.py |
 | K219 | у ресурсных утверждений тип measurement и проверка через assert_bound | замер | C-0078: selftest в 300 с | bin/assert_bound.py |
 | K220 | приоритет источников истины проговорён: артефакт → карточка → индекс → отчёт | док | PROFILE-PINS, Morphogenesis §2 | research/PROFILE-PINS-2026-10-30.md |
+| K221 | рецензент ищет, что убьёт утверждение, и пишет вердикт отдельно от правки | замер | 6 рецензий, все upheld после сужения утверждений | bin/review.py |
+| K222 | артефакт утверждения — вывод прогона, а не исходник; иначе рецензент ставит killed | замер | 7 утверждений перепривязаны на research/outputs | lab/reviews/README.md |
+| K223 | индекс рецензий собирается скриптом и сверяется гейтом | замер | bin/build_reviews_index.py + gate_reviews | bin/build_reviews_index.py |
