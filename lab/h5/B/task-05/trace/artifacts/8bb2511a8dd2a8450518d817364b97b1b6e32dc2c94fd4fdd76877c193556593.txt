@@ -1,0 +1,3 @@
+
+[stderr]
+нет каталога: lab/failures

@@ -1,0 +1,362 @@
+[
+ {
+  "arm": "A",
+  "task": 1,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "A",
+  "task": 2,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "A",
+  "task": 10,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "A",
+  "task": 11,
+  "claims": 13,
+  "cited": 11,
+  "share": 0.85,
+  "pass": true,
+  "status": "done"
+ },
+ {
+  "arm": "A",
+  "task": 12,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "A",
+  "task": 14,
+  "claims": 12,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "A",
+  "task": 15,
+  "claims": 16,
+  "cited": 13,
+  "share": 0.81,
+  "pass": true,
+  "status": "done"
+ },
+ {
+  "arm": "A",
+  "task": 16,
+  "claims": 5,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "A",
+  "task": 17,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "A",
+  "task": 18,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "A",
+  "task": 19,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "B",
+  "task": 2,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "B",
+  "task": 3,
+  "claims": 1,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 5,
+  "claims": 7,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 6,
+  "claims": 6,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 7,
+  "claims": 1,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 8,
+  "claims": 10,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 9,
+  "claims": 6,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 10,
+  "claims": 3,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 11,
+  "claims": 2,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 12,
+  "claims": 3,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 13,
+  "claims": 1,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 14,
+  "claims": 3,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 15,
+  "claims": 3,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 16,
+  "claims": 3,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 18,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "B",
+  "task": 19,
+  "claims": 4,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 20,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "flail"
+ },
+ {
+  "arm": "A",
+  "task": 3,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "error:ConnectionResetError"
+ },
+ {
+  "arm": "A",
+  "task": 4,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "error:StreamError"
+ },
+ {
+  "arm": "A",
+  "task": 5,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "error:StreamError"
+ },
+ {
+  "arm": "A",
+  "task": 6,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "error:StreamError"
+ },
+ {
+  "arm": "A",
+  "task": 7,
+  "claims": 12,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "A",
+  "task": 8,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ },
+ {
+  "arm": "A",
+  "task": 9,
+  "claims": 6,
+  "cited": 4,
+  "share": 0.67,
+  "pass": true,
+  "status": "done"
+ },
+ {
+  "arm": "A",
+  "task": 13,
+  "claims": 12,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "A",
+  "task": 20,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "error:StreamError"
+ },
+ {
+  "arm": "B",
+  "task": 1,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "error:RemoteDisconnected"
+ },
+ {
+  "arm": "B",
+  "task": 4,
+  "claims": 6,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "done"
+ },
+ {
+  "arm": "B",
+  "task": 17,
+  "claims": 0,
+  "cited": 0,
+  "share": 0.0,
+  "pass": false,
+  "status": "budget"
+ }
+]

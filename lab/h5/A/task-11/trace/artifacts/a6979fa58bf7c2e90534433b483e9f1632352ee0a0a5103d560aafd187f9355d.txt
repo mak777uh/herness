@@ -1,0 +1,3 @@
+P18-RESULTS.md:10: | arXiv **2609.36043** SAGE | **есть** |
+P18-RESULTS.md:43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+P18-RESULTS.md:76: - Числа SAGE и «When Should…» взяты из абстрактов (проверено существование статей, не таблицы).

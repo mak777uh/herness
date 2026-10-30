@@ -1,0 +1,8 @@
+P17-RESULTS.md:42: | **Q11 solved-then-broke** | метрика существует: в Reasonix поля `FirstCorrectMs`, `PostSolveWasteMs`, `SolvedThenBroken`; в литературе-обзорах числа **36.5 % → 0 %** (сломанные решённые) и **19.1 %*
+P18-RESULTS.md:10: | arXiv **2609.36043** SAGE | **есть** |
+P18-RESULTS.md:11: | arXiv **2609.35832** «When Should LLMs Trust Their Own Revisions?» | **есть** |
+P18-RESULTS.md:43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+P18-RESULTS.md:44: **36.5 % → 0 %** на LiveMath и **42.8 % → 0 %** на OfficeQA (DeepSeek-V4).
+P18-RESULTS.md:45: - **When Should LLMs Trust Their Own Revisions?**, arXiv:2609.35832: у Llama-3.1-8B на GSM8K
+P18-RESULTS.md:46: второй проход даёт +25.5 п.п., но **19.1 %** изначально верных ответов становятся неверными
+P18-RESULTS.md:47: (44 вредных изменения на 230 верных).

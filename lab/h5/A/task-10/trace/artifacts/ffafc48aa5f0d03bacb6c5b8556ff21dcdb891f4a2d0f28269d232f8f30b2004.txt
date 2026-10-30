@@ -1,0 +1,4 @@
+P17-RESULTS.md:28: | GitHub **eleata/costwright-mcp** | есть: «MCP server: static worst-case token-budget analysis for LLM-agent workflows» |
+P17-RESULTS.md:39: | **Q7 чекпойнты** | есть у Reasonix (файлы, **bash не отслеживается**), OpenHands (`persistence_dir`: `base_state.json` + события), LangGraph (state на super-step, лимиты SQLite 2 ГБ). **Измеренной с
+P17-RESULTS.md:50: | **Q10 бюджет** | «cadaques/costwright не найдены» против «costwright-mcp существует» | **costwright-mcp есть**, cadaques = 2607.16127 (существует); машинно проверяемого бюджета вне LongTails по-преж
+P18-RESULTS.md:54: обновление бюджета, запись в ledger и сбор результатов. Против 65 мс запроса к оракулу это **0.04 %**.

@@ -1,0 +1,5 @@
+P17-RESULTS.md:50: | **Q10 бюджет** | «cadaques/costwright не найдены» против «costwright-mcp существует» | **costwright-mcp есть**, cadaques = 2607.16127 (существует); машинно проверяемого бюджета вне LongTails по-преж
+P18-RESULTS.md:12: | cadaques §5.4, дословно | «median bare-loop time was **4.0 µs** per iteration, whereas the fully metered campaign required **28.8 µs**. The difference, approximately **25 µs** per query»; Oracle ≈65
+P18-RESULTS.md:51: ### Q4. Накладные расходы учёта — 25 µs на запрос
+P18-RESULTS.md:53: Проверено дословно: 4.0 µs «голый» цикл, 28.8 µs с полным учётом, разница ~25 µs включает
+P18-RESULTS.md:54: обновление бюджета, запись в ledger и сбор результатов. Против 65 мс запроса к оракулу это **0.04 %**.

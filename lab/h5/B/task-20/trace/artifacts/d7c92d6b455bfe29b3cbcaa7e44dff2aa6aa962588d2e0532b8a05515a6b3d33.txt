@@ -1,0 +1,4 @@
+P16-RESULTS.md:45: | Q4 | замер **citation recall/precision** (метрики ALCE) на 1/3/5/10 источниках, а не только правильность | ~2 ч |
+P17-RESULTS.md:38: | **Q5 атрибуция** | падение **~42 %** при росте вызовов 2 → 150; база **39–77 %**; вывод авторов: «more retrieval does not produce more accurate citations» |
+P17-RESULTS.md:58: точность. Заменяю на замер citation recall/precision, а не на ограничение.
+P18-RESULTS.md:20: (317 файлов). Другой указал, что цитаты — из Telegram-канала `@researchim` (тот самый чат, откуда мы

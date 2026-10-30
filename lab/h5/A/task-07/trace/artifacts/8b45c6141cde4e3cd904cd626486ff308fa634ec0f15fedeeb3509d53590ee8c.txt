@@ -1,0 +1,2 @@
+P16-RESULTS.md:12: | arXiv **2607.01641** «When Agents Do Not Stop: Uncovering Infinite Agentic Loops in LLM Agents» | **есть**, 02.07.2026; IAL-Scan на **6 549** репозиториях, **74** находки |
+P18-RESULTS.md:38: Ключевая находка: их хук **fail-open** — при ошибке разбора или недоступном реестре вызов

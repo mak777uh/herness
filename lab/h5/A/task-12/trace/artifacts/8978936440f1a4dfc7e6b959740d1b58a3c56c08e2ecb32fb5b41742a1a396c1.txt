@@ -1,0 +1,6 @@
+P16-RESULTS.md:10: | arXiv **2605.06635** «Cited but Not Verified: Parsing and Evaluating Source Attribution in LLM Deep Research Agents» | **есть**, 07.05.2026; в абстракте: 14 моделей, три измерения, «link validity ab
+P17-RESULTS.md:80: ## Вытащенная таблица (проверено по HTML статьи 2605.06635, §4.3 / Figure 2)
+P17-RESULTS.md:82: | вызовов | Link Works | Relevant | Fact Check |
+P17-RESULTS.md:84: | 2 | 100 % | 100 % | **80.0 %** |
+P17-RESULTS.md:90: | 150 | 100 % | 100 % | **57.9 %** |
+P17-RESULTS.md:92: Падает именно фактическая проверяемость (80 → 57.9), а доступность ссылок и релевантность держатся.

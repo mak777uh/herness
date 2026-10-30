@@ -1,0 +1,17 @@
+CYCLE.md:14: подтверждения и опровержения, плечи, **арифметика чувствительности** (чем метрика различит плечи).
+P16-RESULTS.md:10: | arXiv **2605.06635** «Cited but Not Verified: Parsing and Evaluating Source Attribution in LLM Deep Research Agents» | **есть**, 07.05.2026; в абстракте: 14 моделей, три измерения, «link validity ab
+P16-RESULTS.md:11: | arXiv **2605.24660** «How Many Tools Should an LLM Agent See? A Chance-Corrected Answer» | **есть**, 23.05.2026; реестры **20–3 251** инструментов, метрика BoR; на BFCL (370) политика даёт **90.3 %*
+P16-RESULTS.md:45: | Q4 | замер **citation recall/precision** (метрики ALCE) на 1/3/5/10 источниках, а не только правильность | ~2 ч |
+P17-RESULTS.md:38: | **Q5 атрибуция** | падение **~42 %** при росте вызовов 2 → 150; база **39–77 %**; вывод авторов: «more retrieval does not produce more accurate citations» |
+P17-RESULTS.md:42: | **Q11 solved-then-broke** | метрика существует: в Reasonix поля `FirstCorrectMs`, `PostSolveWasteMs`, `SolvedThenBroken`; в литературе-обзорах числа **36.5 % → 0 %** (сломанные решённые) и **19.1 %*
+P17-RESULTS.md:66: 3. **Q11:** добавить в батч метрику «решил, а потом испортил» — она дешёвая и ловит то, чего наш журнал
+P17-RESULTS.md:78: отрицает.
+P18-RESULTS.md:3: Четыре ответа, три проверки сделаны мной.
+P18-RESULTS.md:9: | OSF `h64gm` через API | **публичен**, внутри папка `methodseal-v1.0.0`; файлы: `VERSION`, `CHANGELOG.md`, `LICENSE`, `EXPERIMENT_DISCIPLINE.md`, `experiment_gate.py`, `SHA256SUMS`, `README.md`, `ver
+P18-RESULTS.md:19: Orchestrator», «methodology pack» 1.7 МБ, **794 файла**, внутри `agent/`, `harness/`, `skills/`
+P18-RESULTS.md:49: Это сильный аргумент за метрику «испортил после успеха» в нашем батче.
+P18-RESULTS.md:70: 4. `CLAIMS.md` намеренно **не** запечатан: он меняется каждый день, и печать превратилась бы в шум.
+SELF-WORK.md:8: ## Метрики собственного труда (из наших следов, не на память)
+SELF-WORK.md:46: 4. **Отрицание без попыток** — «нет в природе» на основании одного неудачного запроса.
+SELF-WORK.md:55: **Плохое:** он **не умеет** проверять отрицания; рецензент работает только по артефактам и слеп к
+SELF-WORK.md:67: - Метрика «поймано 6 из 7» — по тому, что мы заметили; сколько дефектов не заметили, неизвестно.

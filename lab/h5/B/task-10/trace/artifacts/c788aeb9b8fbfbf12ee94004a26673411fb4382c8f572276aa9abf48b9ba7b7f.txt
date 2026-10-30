@@ -1,0 +1,10 @@
+P16-RESULTS.md:15: | arXiv **2607.16127** | **есть** — CADAQUES (первая попытка дала HTTPError, вторая — 200). У одного агента этот ID использован **дважды**: для cadaques (верно) и для Sentinel Quant (неверно) |
+P16-RESULTS.md:69: `arxiv.org/abs/2607.16127` открывается — это **CADAQUES: A Cost-Aware Dual Architecture for
+P16-RESULTS.md:73: Что остаётся верным: у одного агента этот ID был использован **дважды** — для cadaques (верно) и для
+P17-RESULTS.md:11: | `arxiv.org/abs/2607.16127` (вторая попытка) | **200** — «CADAQUES: A Cost-Aware Dual Architecture for Query-Efficient Autonomous Discovery» |
+P17-RESULTS.md:14: Что осталось верным: у того агента ID использован **дважды** — для cadaques (правильно) и для
+P17-RESULTS.md:25: | arXiv **2607.16127** = CADAQUES | **есть** |
+P17-RESULTS.md:50: | **Q10 бюджет** | «cadaques/costwright не найдены» против «costwright-mcp существует» | **costwright-mcp есть**, cadaques = 2607.16127 (существует); машинно проверяемого бюджета вне LongTails по-преж
+P18-RESULTS.md:12: | cadaques §5.4, дословно | «median bare-loop time was **4.0 µs** per iteration, whereas the fully metered campaign required **28.8 µs**. The difference, approximately **25 µs** per query»; Oracle ≈65
+trace\events.jsonl:1: {"seq": 1, "ts": "2026-10-30T20:21:53.945+00:00", "type": "run/start", "payload": {"task": "Сколько стоит учёт бюджета на транзакцию в cadaques?", "model": "mock"}, "prev": "genesis", "hash": "87717e7
+trace\events.jsonl:5: {"seq": 5, "ts": "2026-10-30T20:22:03.514+00:00", "type": "tool/call", "payload": {"call_id": "call-2", "name": "grep", "arguments": {"pattern": "(?i)cadaques", "glob": "*"}}, "prev": "31cd5e58d5f19f9

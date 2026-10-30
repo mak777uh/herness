@@ -1,0 +1,12 @@
+CYCLE.md:19: 6. **Строка в реестре.** `lab/registry.json`: эксперимент, статус, вывод, утверждение; и
+CYCLE.md:32: - есть запись в `lab/registry.json` со ссылкой на отчёт;
+CYCLE.md:45: | наблюдение над собственной работой | статус `case`: отчёт и утверждение обязательны, пре-регистрация нет |
+P17-RESULTS.md:28: | GitHub **eleata/costwright-mcp** | есть: «MCP server: static worst-case token-budget analysis for LLM-agent workflows» |
+P18-RESULTS.md:36: 6. SHA-256 по UTF-8, lowercase hex. Сортировки ключей нет.
+SELF-WORK.md:74: Что сделано: введён статус `case` для наблюдений над собственной работой (отчёт и утверждение
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:74: 74: Что сделано: введён статус `case` для наблюдений над собственной работой (отчёт и утверждение
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:19: 19: 6. **Строка в реестре.** `lab/registry.json`: эксперимент, статус, вывод, утверждение; и
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:32: 32: - есть запись в `lab/registry.json` со ссылкой на отчёт;
+trace\artifacts\67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae.txt:45: 45: | наблюдение над собственной работой | статус `case`: отчёт и утверждение обязательны, пре-регистрация нет |
+trace\events.jsonl:1: {"seq": 1, "ts": "2026-10-30T20:14:39.295+00:00", "type": "run/start", "payload": {"task": "Чем отличается статус retro от case в реестре?", "model": "mock"}, "prev": "genesis", "hash": "b646a57951e29
+trace\events.jsonl:11: {"seq": 11, "ts": "2026-10-30T20:15:00.212+00:00", "type": "tool/call", "payload": {"call_id": "call-5", "name": "grep", "arguments": {"glob": "**/*", "pattern": "case|registry"}}, "prev": "4b45590af6

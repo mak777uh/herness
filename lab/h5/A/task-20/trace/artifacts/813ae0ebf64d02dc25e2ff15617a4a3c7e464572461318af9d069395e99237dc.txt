@@ -1,0 +1,1 @@
+P17-RESULTS.md:38: | **Q5 атрибуция** | падение **~42 %** при росте вызовов 2 → 150; база **39–77 %**; вывод авторов: «more retrieval does not produce more accurate citations» |

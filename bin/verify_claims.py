@@ -36,7 +36,7 @@ def parse(path: Path = CLAIMS) -> list[dict]:
     return rows
 
 
-def run_command(cmd: str, timeout: int = 300) -> tuple[str, str, str]:
+def run_command(cmd: str, timeout: int = 120) -> tuple[str, str, str]:
     """Возвращает (статус, полный вывод, краткая строка)."""
     if not cmd or not re.search(r"\b(python|pytest|git|bash|pwsh|node)\b", cmd):
         return "not-runnable", "", "команда не исполняемая (описание)"

@@ -1,0 +1,9 @@
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:12: 12: | утверждений в реестре | **89** | `CLAIMS.md` |
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:15: 15: | рецензий | **6**, все `upheld` | `lab/reviews/index.json` |
+trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt:66: 66: - Рецензий всего 6 из 89 утверждений: остальные **не проходили** враждебную проверку, и это долг.
+trace\artifacts\3c5bf878c5d3585e4f3255f8c6d50f0f85bc99ec6865088cc45cadbb4058c423.txt:1: 171d703f5eefeb58106189fc37838f2a900b2ac08bf08c1b8de487214140628c.txt
+trace\artifacts\3c5bf878c5d3585e4f3255f8c6d50f0f85bc99ec6865088cc45cadbb4058c423.txt:2: 3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt
+trace\artifacts\3c5bf878c5d3585e4f3255f8c6d50f0f85bc99ec6865088cc45cadbb4058c423.txt:3: a7aa03879ace2e51b0125d8221abc3e9f5b5970989263f57acb8d09965d71d82.json
+trace\artifacts\e599f6541d290a02dceb4ac6841c5e4d9b20e609fce2c38a413a9b5f54b619b4.txt:6: CYCLE.md:41: | подтверждённая гипотеза | отчёт + утверждение типа `test`/`statistics` + рецензия `upheld` |
+trace\artifacts\e599f6541d290a02dceb4ac6841c5e4d9b20e609fce2c38a413a9b5f54b619b4.txt:18: SELF-WORK.md:12: | утверждений в реестре | **89** | `CLAIMS.md` |
+trace\artifacts\e599f6541d290a02dceb4ac6841c5e4d9b20e609fce2c38a413a9b5f54b619b4.txt:27: SELF-WORK.md:66: - Рецензий всего 6 из 89 утверждений: остальные **не проходили** враждебную проверку, и это долг.

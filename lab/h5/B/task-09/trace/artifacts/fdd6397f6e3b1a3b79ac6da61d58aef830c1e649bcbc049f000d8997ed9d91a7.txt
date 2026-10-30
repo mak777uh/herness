@@ -1,0 +1,6 @@
+P16-RESULTS.md:25: | **Q2 MethodSeal** | «Hardseal/CMMC» против «SHA-256 + хук» | репозитория и спецификации нет, единственный источник — вендорская статья. Считаю **непроверенным** |
+P16-RESULTS.md:54: 2. **MethodSeal** — механика подтверждена только вендорской статьёй; спецификации нет.
+P17-RESULTS.md:27: | OSF **10.17605/OSF.IO/H64GM** (MethodSeal) | страница открывается |
+P17-RESULTS.md:36: | **Q2 MethodSeal** | **существует**: MIT, v1.0.0, 2026-07-25, DOI OSF; файлы `experiment.md`, `experiment_gate.py`, `seal_prereg.py`; хеш на `hypotheses/validator/thresholds/analysis plan`; **PreTool
+P18-RESULTS.md:27: ### Q2. MethodSeal — публичен, схема печати известна, но хук **fail-open**
+P18-RESULTS.md:65: 2. **Печать работает fail-closed**, в отличие от MethodSeal: нет sidecar или он не сходится — это

@@ -1,0 +1,6 @@
+
+[stderr]
+  File "<string>", line 1
+    "
+    ^
+SyntaxError: unterminated string literal (detected at line 1)

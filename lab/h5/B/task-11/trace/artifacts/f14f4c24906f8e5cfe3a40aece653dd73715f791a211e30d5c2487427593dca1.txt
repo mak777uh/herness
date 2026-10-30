@@ -1,0 +1,6 @@
+CYCLE.md
+P16-RESULTS.md
+P17-RESULTS.md
+P18-RESULTS.md
+SELF-WORK.md
+trace/

@@ -1,0 +1,5 @@
+P18-RESULTS.md:10: | arXiv **2609.36043** SAGE | **есть** |
+P18-RESULTS.md:11: | arXiv **2609.35832** «When Should LLMs Trust Their Own Revisions?» | **есть** |
+P18-RESULTS.md:43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+P18-RESULTS.md:45: - **When Should LLMs Trust Their Own Revisions?**, arXiv:2609.35832: у Llama-3.1-8B на GSM8K
+P18-RESULTS.md:76: - Числа SAGE и «When Should…» взяты из абстрактов (проверено существование статей, не таблицы).

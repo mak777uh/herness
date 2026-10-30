@@ -1,0 +1,18 @@
+trace\artifacts\11b9046c97c214cc854953f0a36d3a95cfae1142245776c819cc70041e84fcdf.txt:1: P16-RESULTS.md:22: | **Q5 порог числа инструментов** | «10–15» против «20–25» | **ни одного из этих чисел нет в абстракте** 2605.24660. Есть проверяемое: шортлист из **7** инструментов почти не уступа
+trace\artifacts\11b9046c97c214cc854953f0a36d3a95cfae1142245776c819cc70041e84fcdf.txt:5: P17-RESULTS.md:82: | вызовов | Link Works | Relevant | Fact Check |
+trace\artifacts\171d703f5eefeb58106189fc37838f2a900b2ac08bf08c1b8de487214140628c.txt:1: artifacts/
+trace\artifacts\25db46d3415db51ff2d372f8eec0b5c00b45984a9ceb3ac9c330b232f63eface.txt:66: 66: 3. **Q11:** добавить в батч метрику «решил, а потом испортил» — она дешёвая и ловит то, чего наш журнал
+trace\artifacts\25db46d3415db51ff2d372f8eec0b5c00b45984a9ceb3ac9c330b232f63eface.txt:80: 80: ## Вытащенная таблица (проверено по HTML статьи 2605.06635, §4.3 / Figure 2)
+trace\artifacts\25db46d3415db51ff2d372f8eec0b5c00b45984a9ceb3ac9c330b232f63eface.txt:82: 82: | вызовов | Link Works | Relevant | Fact Check |
+trace\artifacts\3fa6a7779bc4a8935576e147596d8c60dfcdfdf0ffe979c4f50e2c644f094e5e.txt:5: 47844d83e7609b51f43bbe84f09a51b12c1a239a3251466d995325f6e6f0ef27.txt
+trace\artifacts\3fa6a7779bc4a8935576e147596d8c60dfcdfdf0ffe979c4f50e2c644f094e5e.txt:6: 897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt
+trace\artifacts\3fa6a7779bc4a8935576e147596d8c60dfcdfdf0ffe979c4f50e2c644f094e5e.txt:8: 9f93b07413e0f6632cdeae00f543355fc04a9908582fe0c7926c92ad10f5a795.json
+trace\artifacts\47844d83e7609b51f43bbe84f09a51b12c1a239a3251466d995325f6e6f0ef27.txt:1: P17-RESULTS.md:82: | вызовов | Link Works | Relevant | Fact Check |
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:66: 66:    провал гейта, а не «разрешаем».
+trace\artifacts\8978936440f1a4dfc7e6b959740d1b58a3c56c08e2ecb32fb5b41742a1a396c1.txt:1: P16-RESULTS.md:10: | arXiv **2605.06635** «Cited but Not Verified: Parsing and Evaluating Source Attribution in LLM Deep Research Agents» | **есть**, 07.05.2026; в абстракте: 14 моделей, три измерения
+trace\artifacts\8978936440f1a4dfc7e6b959740d1b58a3c56c08e2ecb32fb5b41742a1a396c1.txt:2: P17-RESULTS.md:80: ## Вытащенная таблица (проверено по HTML статьи 2605.06635, §4.3 / Figure 2)
+trace\artifacts\8978936440f1a4dfc7e6b959740d1b58a3c56c08e2ecb32fb5b41742a1a396c1.txt:3: P17-RESULTS.md:82: | вызовов | Link Works | Relevant | Fact Check |
+trace\artifacts\fe341e4fc720610f2105f90bc17112829ca7142ae140cc8188dff3bd0e40e060.txt:10: 10: | arXiv **2605.06635** «Cited but Not Verified: Parsing and Evaluating Source Attribution in LLM Deep Research Agents» | **есть**, 07.05.2026; в абстракте: 14 моделей, три измерения, «link validit
+trace\artifacts\fe341e4fc720610f2105f90bc17112829ca7142ae140cc8188dff3bd0e40e060.txt:11: 11: | arXiv **2605.24660** «How Many Tools Should an LLM Agent See? A Chance-Corrected Answer» | **есть**, 23.05.2026; реестры **20–3 251** инструментов, метрика BoR; на BFCL (370) политика даёт **90.
+trace\artifacts\fe341e4fc720610f2105f90bc17112829ca7142ae140cc8188dff3bd0e40e060.txt:22: 22: | **Q5 порог числа инструментов** | «10–15» против «20–25» | **ни одного из этих чисел нет в абстракте** 2605.24660. Есть проверяемое: шортлист из **7** инструментов почти не уступает показу 50 (9
+trace\artifacts\fe341e4fc720610f2105f90bc17112829ca7142ae140cc8188dff3bd0e40e060.txt:66: 66: ## Исправление 30.10.2026 (после второго круга)

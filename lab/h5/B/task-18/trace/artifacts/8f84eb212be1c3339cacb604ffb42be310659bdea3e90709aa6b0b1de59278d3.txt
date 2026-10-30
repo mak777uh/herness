@@ -1,0 +1,9 @@
+trace\artifacts\039f74077cafbfb464799f2ee056b89e4e7afdba8ea3320d7d1e71e06b82896e.txt:1: P16-RESULTS.md:76: Разбор отказа — `lab/failures/F-0015.md`; правило — K237: отказ проверки не равен отсутствию.
+trace\artifacts\039f74077cafbfb464799f2ee056b89e4e7afdba8ea3320d7d1e71e06b82896e.txt:2: P17-RESULTS.md:17: Записано как `lab/failures/F-0015.md`, правило — **K237**: отказ проверки ≠ отсутствие факта. Перед
+trace\artifacts\5cfafdc156f72fb9c25d7508d98250918ea09c6e16be3e12036cb0dd336ccbd1.txt:4: P16-RESULTS.md:76: Разбор отказа — `lab/failures/F-0015.md`; правило — K237: отказ проверки не равен отсутствию.
+trace\artifacts\5cfafdc156f72fb9c25d7508d98250918ea09c6e16be3e12036cb0dd336ccbd1.txt:7: P17-RESULTS.md:17: Записано как `lab/failures/F-0015.md`, правило — **K237**: отказ проверки ≠ отсутствие факта. Перед
+trace\events.jsonl:1: {"seq": 1, "ts": "2026-10-30T20:24:35.740+00:00", "type": "run/start", "payload": {"task": "Что говорит правило K252 и как оно появилось?", "model": "mock"}, "prev": "genesis", "hash": "de40d99db58800
+trace\events.jsonl:3: {"seq": 3, "ts": "2026-10-30T20:24:39.841+00:00", "type": "tool/call", "payload": {"call_id": "call-1", "name": "grep", "arguments": {"pattern": "K252"}}, "prev": "ddeeb49088ec7dc993c49a4c7b02381a6b6d
+trace\events.jsonl:11: {"seq": 11, "ts": "2026-10-30T20:24:53.493+00:00", "type": "tool/call", "payload": {"call_id": "call-5", "name": "shell", "arguments": {"command": "grep -rn -i \"K25\\|правило\\|rule\" --include=* . |
+trace\events.jsonl:14: {"seq": 14, "ts": "2026-10-30T20:24:59.084+00:00", "type": "tool/result", "payload": {"call_id": "call-6", "artifact": {"sha256": "5cfafdc156f72fb9c25d7508d98250918ea09c6e16be3e12036cb0dd336ccbd1", "p
+trace\events.jsonl:18: {"seq": 18, "ts": "2026-10-30T20:25:05.942+00:00", "type": "tool/result", "payload": {"call_id": "call-8", "artifact": {"sha256": "039f74077cafbfb464799f2ee056b89e4e7afdba8ea3320d7d1e71e06b82896e", "p

@@ -1,0 +1,3 @@
+
+[stderr]
+нет файла: lab/prereg/H-0002.json

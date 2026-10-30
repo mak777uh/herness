@@ -1,0 +1,7 @@
+trace\events.jsonl:1: {"seq": 1, "ts": "2026-10-30T20:12:59.018+00:00", "type": "run/start", "payload": {"task": "Какие двери отказов есть в правиле закрытия эксперимента?", "model": "mock"}, "prev": "genesis", "hash": "87
+trace\events.jsonl:5: {"seq": 5, "ts": "2026-10-30T20:13:05.229+00:00", "type": "tool/call", "payload": {"call_id": "call-2", "name": "grep", "arguments": {"pattern": "(?i)закрыт|двер|отказ|refus", "glob": "*.md"}}, "prev"
+trace\events.jsonl:6: {"seq": 6, "ts": "2026-10-30T20:13:05.266+00:00", "type": "tool/result", "payload": {"call_id": "call-2", "artifact": {"sha256": "361759363e13222e817ccc7fca1719766cdc4a87f13562587584b29184f126a0", "pa
+trace\events.jsonl:8: {"seq": 8, "ts": "2026-10-30T20:13:07.500+00:00", "type": "tool/result", "payload": {"call_id": "call-3", "artifact": {"sha256": "67e4367ae246d0c0029b483ce4ed1db70bfad4e3a822103ad5ff5f77e96cc9ae", "pa
+trace\events.jsonl:9: {"seq": 9, "ts": "2026-10-30T20:13:12.330+00:00", "type": "tool/call", "payload": {"call_id": "call-4", "name": "grep", "arguments": {"glob": "*.md", "pattern": "(?i)retro|case|исключен|обойти|лазейк|
+trace\events.jsonl:10: {"seq": 10, "ts": "2026-10-30T20:13:12.363+00:00", "type": "tool/result", "payload": {"call_id": "call-4", "artifact": {"sha256": "3e15fbadcbf2bfa5d4c5a358238b71ce49c34817a7ce26724d1fdf267bad4f5d", "p
+trace\events.jsonl:15: {"seq": 15, "ts": "2026-10-30T20:13:23.908+00:00", "type": "tool/call", "payload": {"call_id": "call-7", "name": "grep", "arguments": {"pattern": "(?i)двер|door|закрыт", "glob": "trace/*"}}, "prev": "

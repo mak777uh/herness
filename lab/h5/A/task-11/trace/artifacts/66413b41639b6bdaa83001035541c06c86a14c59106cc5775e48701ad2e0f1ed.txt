@@ -1,0 +1,4 @@
+P18-RESULTS.md:11: | arXiv **2609.35832** «When Should LLMs Trust Their Own Revisions?» | **есть** |
+P18-RESULTS.md:43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+P18-RESULTS.md:44: **36.5 % → 0 %** на LiveMath и **42.8 % → 0 %** на OfficeQA (DeepSeek-V4).
+P18-RESULTS.md:45: - **When Should LLMs Trust Their Own Revisions?**, arXiv:2609.35832: у Llama-3.1-8B на GSM8K

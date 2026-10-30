@@ -1,0 +1,5 @@
+trace\events.jsonl:1: {"seq": 1, "ts": "2026-10-30T19:55:17.970+00:00", "type": "run/start", "payload": {"task": "Сколько рецензий прошло на 30.10.2026 и какие были вердикты?", "model": "mock"}, "prev": "genesis", "hash": 
+trace\events.jsonl:4: {"seq": 4, "ts": "2026-10-30T19:55:22.031+00:00", "type": "tool/result", "payload": {"call_id": "call-1", "artifact": {"sha256": "f14f4c24906f8e5cfe3a40aece653dd73715f791a211e30d5c2487427593dca1", "pa
+trace\events.jsonl:6: {"seq": 6, "ts": "2026-10-30T19:55:24.759+00:00", "type": "tool/result", "payload": {"call_id": "call-2", "artifact": {"sha256": "3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521", "pa
+trace\events.jsonl:8: {"seq": 8, "ts": "2026-10-30T19:55:28.052+00:00", "type": "tool/result", "payload": {"call_id": "call-3", "artifact": {"sha256": "171d703f5eefeb58106189fc37838f2a900b2ac08bf08c1b8de487214140628c", "pa
+trace\events.jsonl:9: {"seq": 9, "ts": "2026-10-30T19:55:30.892+00:00", "type": "tool/call", "payload": {"call_id": "call-4", "name": "grep", "arguments": {"pattern": "review|upheld|реценз", "glob": "trace/events.jsonl"}},

@@ -1,0 +1,22 @@
+trace\artifacts\26e6bab2018520fc689ee8a7e99b48e34b0a04f50d6da759c6ea6c66b779557f.txt:1: P17-RESULTS.md:42: | **Q11 solved-then-broke** | метрика существует: в Reasonix поля `FirstCorrectMs`, `PostSolveWasteMs`, `SolvedThenBroken`; в литературе-обзорах числа **36.5 % → 0 %** (сломанные ре
+trace\artifacts\26e6bab2018520fc689ee8a7e99b48e34b0a04f50d6da759c6ea6c66b779557f.txt:2: P18-RESULTS.md:10: | arXiv **2609.36043** SAGE | **есть** |
+trace\artifacts\26e6bab2018520fc689ee8a7e99b48e34b0a04f50d6da759c6ea6c66b779557f.txt:4: P18-RESULTS.md:43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+trace\artifacts\26e6bab2018520fc689ee8a7e99b48e34b0a04f50d6da759c6ea6c66b779557f.txt:5: P18-RESULTS.md:44: **36.5 % → 0 %** на LiveMath и **42.8 % → 0 %** на OfficeQA (DeepSeek-V4).
+trace\artifacts\26e6bab2018520fc689ee8a7e99b48e34b0a04f50d6da759c6ea6c66b779557f.txt:7: P18-RESULTS.md:46: второй проход даёт +25.5 п.п., но **19.1 %** изначально верных ответов становятся неверными
+trace\artifacts\66413b41639b6bdaa83001035541c06c86a14c59106cc5775e48701ad2e0f1ed.txt:2: P18-RESULTS.md:43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+trace\artifacts\66413b41639b6bdaa83001035541c06c86a14c59106cc5775e48701ad2e0f1ed.txt:3: P18-RESULTS.md:44: **36.5 % → 0 %** на LiveMath и **42.8 % → 0 %** на OfficeQA (DeepSeek-V4).
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:10: 10: | arXiv **2609.36043** SAGE | **есть** |
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:43: 43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:44: 44:   **36.5 % → 0 %** на LiveMath и **42.8 % → 0 %** на OfficeQA (DeepSeek-V4).
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:46: 46:   второй проход даёт +25.5 п.п., но **19.1 %** изначально верных ответов становятся неверными
+trace\artifacts\897272f4b25843f055d353bf311ea151ca918efc7b1dfe3866a07983be8a6d47.txt:76: 76: - Числа SAGE и «When Should…» взяты из абстрактов (проверено существование статей, не таблицы).
+trace\artifacts\9072f70f64aa349e40303cceff3daa1e79de8d8bd56c999b610a40a8c68b7b75.txt:42: 42: | **Q11 solved-then-broke** | метрика существует: в Reasonix поля `FirstCorrectMs`, `PostSolveWasteMs`, `SolvedThenBroken`; в литературе-обзорах числа **36.5 % → 0 %** (сломанные решённые) и **19.
+trace\artifacts\a6979fa58bf7c2e90534433b483e9f1632352ee0a0a5103d560aafd187f9355d.txt:1: P18-RESULTS.md:10: | arXiv **2609.36043** SAGE | **есть** |
+trace\artifacts\a6979fa58bf7c2e90534433b483e9f1632352ee0a0a5103d560aafd187f9355d.txt:2: P18-RESULTS.md:43: - **SAGE: A Statistical Acceptance Gate for Self-Evolving Agents**, arXiv:2609.36043: регрессия
+trace\artifacts\a6979fa58bf7c2e90534433b483e9f1632352ee0a0a5103d560aafd187f9355d.txt:3: P18-RESULTS.md:76: - Числа SAGE и «When Should…» взяты из абстрактов (проверено существование статей, не таблицы).
+trace\events.jsonl:1: {"seq": 1, "ts": "2026-10-30T20:09:51.967+00:00", "type": "run/start", "payload": {"task": "Какие числа дают SAGE и When Should LLMs Trust Their Own Revisions?", "model": "mock"}, "prev": "genesis", "
+trace\events.jsonl:7: {"seq": 7, "ts": "2026-10-30T20:10:07.661+00:00", "type": "tool/call", "payload": {"call_id": "call-3", "name": "grep", "arguments": {"pattern": "SAGE"}}, "prev": "953c713a104be363d08b21821016b026ead0
+trace\events.jsonl:8: {"seq": 8, "ts": "2026-10-30T20:10:07.703+00:00", "type": "tool/result", "payload": {"call_id": "call-3", "artifact": {"sha256": "a6979fa58bf7c2e90534433b483e9f1632352ee0a0a5103d560aafd187f9355d", "pa
+trace\events.jsonl:12: {"seq": 12, "ts": "2026-10-30T20:10:17.536+00:00", "type": "tool/result", "payload": {"call_id": "call-5", "artifact": {"sha256": "26e6bab2018520fc689ee8a7e99b48e34b0a04f50d6da759c6ea6c66b779557f", "p
+trace\events.jsonl:16: {"seq": 16, "ts": "2026-10-30T20:10:25.180+00:00", "type": "tool/result", "payload": {"call_id": "call-7", "artifact": {"sha256": "66413b41639b6bdaa83001035541c06c86a14c59106cc5775e48701ad2e0f1ed", "p
+trace\events.jsonl:21: {"seq": 21, "ts": "2026-10-30T20:10:34.664+00:00", "type": "tool/call", "payload": {"call_id": "call-10", "name": "grep", "arguments": {"pattern": "36\\.5|42\\.8|25\\.5|19\\.1|SAGE", "glob": "trace/**

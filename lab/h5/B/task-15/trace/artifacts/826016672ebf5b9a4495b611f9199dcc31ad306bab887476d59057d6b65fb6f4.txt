@@ -1,0 +1,3 @@
+CYCLE.md:16: 4. **Прогон и сырой артефакт.** `runs/<id>/` с хеш-цепочкой, `run/snapshot` до прогона,
+CYCLE.md:17: `research/outputs/` с выводом команд.
+SELF-WORK.md:17: | записанных выводов прогонов | **10** | `research/outputs/*.txt` |

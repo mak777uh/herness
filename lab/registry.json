@@ -102,6 +102,16 @@
    "note": "по ответам трёх агентов: n=3 — пилот; наши репликации имеют n=1 задача (case study); метрика прослеживаемости ≠ атрибуция; судья требует anchor set",
    "conclusion": "research/P19-RESULTS-2026-10-30.md",
    "claim": "C-0099"
+  },
+  {
+   "id": "E-0010",
+   "title": "H-0005: 20 задач, два плеча, парный McNemar",
+   "hypothesis": "H-0005",
+   "prereg": "lab/prereg/H-0005.json",
+   "status": "closed",
+   "note": "незавершённый опыт: b=3, c=0, p=0.25; 8/20 у A в бюджете",
+   "conclusion": "lab/h5/RESULT.md",
+   "claim": "C-0100"
   }
  ]
 }

@@ -1,0 +1,16 @@
+C:\111\herness\lab\h5\B\task-17\CYCLE.md
+C:\111\herness\lab\h5\B\task-17\P16-RESULTS.md
+C:\111\herness\lab\h5\B\task-17\P17-RESULTS.md
+C:\111\herness\lab\h5\B\task-17\P18-RESULTS.md
+C:\111\herness\lab\h5\B\task-17\SELF-WORK.md
+C:\111\herness\lab\h5\B\task-17\trace
+C:\111\herness\lab\h5\B\task-17\trace\artifacts
+C:\111\herness\lab\h5\B\task-17\trace\events.jsonl
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\164295df74040807d62218c7d0ea58e6e844805df5e65959f68c5e6b8e8a239e.txt
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\171d703f5eefeb58106189fc37838f2a900b2ac08bf08c1b8de487214140628c.txt
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\358423b35ca75e0b8f3e3bd5f874a101e5be5f4f176bcaa00b8e81ddfd5ca127.txt
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\3b4e6ff8276208cf6818bf99d5e269fa99b3b37d99e1e8d29131e662448940f3.json
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\7bc2a2f69d89db7fd0efcc40335a3c7fba03c6d7bd13271743d1d99bd990bde4.txt
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\a922909430744bbc8db7cda0990fe3f6f1d3f4295300f167d2fda90e0cad670a.json
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\e69ba5cc2f6006833437b2f0ba36bdfe09b6a3ab8892d27b377c9353e827900a.txt
+C:\111\herness\lab\h5\B\task-17\trace\artifacts\f14f4c24906f8e5cfe3a40aece653dd73715f791a211e30d5c2487427593dca1.txt

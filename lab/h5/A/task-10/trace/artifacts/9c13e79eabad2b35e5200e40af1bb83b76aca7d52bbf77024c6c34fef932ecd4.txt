@@ -1,0 +1,1 @@
+P18-RESULTS.md:12: | cadaques §5.4, дословно | «median bare-loop time was **4.0 µs** per iteration, whereas the fully metered campaign required **28.8 µs**. The difference, approximately **25 µs** per query»; Oracle ≈65

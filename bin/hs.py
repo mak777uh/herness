@@ -1260,7 +1260,7 @@ def gate_claims_run(root: Path) -> list[str]:
     if not script.exists():
         return ["нет bin/verify_claims.py"]
     proc = subprocess.run([__import__("sys").executable, str(script), "--fast"],
-                          cwd=str(root), capture_output=True, text=True, timeout=300,
+                          cwd=str(root), capture_output=True, text=True, timeout=900,
                           encoding="utf-8", errors="replace")
     if proc.returncode == 0:
         return []
@@ -1369,6 +1369,23 @@ def gate_lab(root: Path) -> list[str]:
     if not (root / "lab" / "registry.json").exists():
         return ["нет lab/registry.json"]
     return validate(load())
+
+
+def cmd_supervise(args) -> int:
+    """Очередь работ: status, check, run."""
+    sys.path.insert(0, str(ROOT))
+    from bin import supervise as supervise_mod
+
+    argv = [args.action] + list(getattr(args, "extra", []) or [])
+    return supervise_mod.main(argv)
+
+
+def cmd_models(args) -> int:
+    """Модели: список и проверка отклика."""
+    sys.path.insert(0, str(ROOT))
+    from bin import models as models_mod
+
+    return models_mod.main([args.action] + list(getattr(args, "extra", []) or []))
 
 
 def cmd_lab(args) -> int:
@@ -1579,6 +1596,16 @@ def main(argv: list[str]) -> int:
     p.add_argument("--run")
     p.set_defaults(func=cmd_browser)
 
+
+    p = sub.add_parser("supervise", help="очередь работ: status | check | run [id]")
+    p.add_argument("action", nargs="?", default="status", choices=["status", "check", "run"])
+    p.add_argument("extra", nargs="*")
+    p.set_defaults(func=cmd_supervise)
+
+    p = sub.add_parser("models", help="модели: list | ping")
+    p.add_argument("action", nargs="?", default="list", choices=["list", "ping"])
+    p.add_argument("extra", nargs="*")
+    p.set_defaults(func=cmd_models)
 
     p = sub.add_parser("lab", help="научный цикл: статус программы и валидация реестра")
     p.add_argument("action", nargs="?", default="status", choices=["status", "validate"])

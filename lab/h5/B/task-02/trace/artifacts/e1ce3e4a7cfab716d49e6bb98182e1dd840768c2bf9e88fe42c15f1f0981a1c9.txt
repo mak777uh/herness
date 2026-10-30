@@ -1,0 +1,2 @@
+P16-RESULTS.md:45: | Q4 | замер **citation recall/precision** (метрики ALCE) на 1/3/5/10 источниках, а не только правильность | ~2 ч |
+P17-RESULTS.md:58: точность. Заменяю на замер citation recall/precision, а не на ограничение.
