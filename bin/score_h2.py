@@ -12,6 +12,14 @@ H2 = ROOT / "lab" / "h2"
 SOURCES = ["P16-RESULTS.md", "P17-RESULTS.md", "P18-RESULTS.md", "SELF-WORK.md", "CYCLE.md"]
 
 CITATION = re.compile(r"\[(" + "|".join(re.escape(name) for name in SOURCES) + r")\]")
+MENTION = re.compile(r"(" + "|".join(re.escape(name[:-3]) for name in SOURCES) + r")")
+
+
+def cited_in(sentence: str) -> list[str]:
+    """Ссылка в любом виде: скобки или упоминание имени файла без расширения."""
+    bracketed = CITATION.findall(sentence)
+    mentioned = [name + ".md" for name in MENTION.findall(sentence)]
+    return list(dict.fromkeys(bracketed + mentioned))
 NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 
 
@@ -37,13 +45,13 @@ def score(record: dict) -> dict:
     text = record.get("text", "")
     parts = sentences(text)
     claims = [sentence for sentence in parts if is_claim(sentence)]
-    cited = [sentence for sentence in claims if CITATION.search(sentence)]
-    citations = CITATION.findall(text)
+    cited = [sentence for sentence in claims if cited_in(sentence)]
+    citations = [name for sentence in parts for name in cited_in(sentence)]
 
     # precision: у каждой ссылки проверяем, есть ли число из того же предложения в файле
     correct, checked = 0, 0
     for sentence in cited:
-        targets = set(CITATION.findall(sentence))
+        targets = set(cited_in(sentence))
         numbers = NUMBER.findall(sentence)
         if not numbers:
             continue

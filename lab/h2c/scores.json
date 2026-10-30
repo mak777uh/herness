@@ -1,0 +1,94 @@
+[
+ {
+  "arm": "A",
+  "run": 1,
+  "status": "budget",
+  "chars": 0,
+  "claims": 0,
+  "cited": 0,
+  "recall": 0.0,
+  "citations": 0,
+  "precision_checked": 0,
+  "precision_ok": 0,
+  "invented_numbers": 0,
+  "invented_sample": []
+ },
+ {
+  "arm": "A",
+  "run": 2,
+  "status": "done",
+  "chars": 3275,
+  "claims": 9,
+  "cited": 9,
+  "recall": 1.0,
+  "citations": 12,
+  "precision_checked": 9,
+  "precision_ok": 9,
+  "invented_numbers": 2,
+  "invented_sample": [
+   "13",
+   "3251"
+  ]
+ },
+ {
+  "arm": "A",
+  "run": 3,
+  "status": "budget",
+  "chars": 0,
+  "claims": 0,
+  "cited": 0,
+  "recall": 0.0,
+  "citations": 0,
+  "precision_checked": 0,
+  "precision_ok": 0,
+  "invented_numbers": 0,
+  "invented_sample": []
+ },
+ {
+  "arm": "B",
+  "run": 1,
+  "status": "done",
+  "chars": 1505,
+  "claims": 5,
+  "cited": 0,
+  "recall": 0.0,
+  "citations": 0,
+  "precision_checked": 0,
+  "precision_ok": 0,
+  "invented_numbers": 0,
+  "invented_sample": []
+ },
+ {
+  "arm": "B",
+  "run": 2,
+  "status": "done",
+  "chars": 1487,
+  "claims": 7,
+  "cited": 0,
+  "recall": 0.0,
+  "citations": 0,
+  "precision_checked": 0,
+  "precision_ok": 0,
+  "invented_numbers": 2,
+  "invented_sample": [
+   "90,3",
+   "90,8"
+  ]
+ },
+ {
+  "arm": "B",
+  "run": 3,
+  "status": "done",
+  "chars": 1573,
+  "claims": 5,
+  "cited": 1,
+  "recall": 0.2,
+  "citations": 2,
+  "precision_checked": 1,
+  "precision_ok": 1,
+  "invented_numbers": 1,
+  "invented_sample": [
+   "83"
+  ]
+ }
+]

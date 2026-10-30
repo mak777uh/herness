@@ -1,0 +1,8 @@
+C:\111\herness\lab\h2c\A\run-1\trace\artifacts
+C:\111\herness\lab\h2c\A\run-1\trace\events.jsonl
+C:\111\herness\lab\h2c\A\run-1\trace\artifacts\164295df74040807d62218c7d0ea58e6e844805df5e65959f68c5e6b8e8a239e.txt
+C:\111\herness\lab\h2c\A\run-1\trace\artifacts\171d703f5eefeb58106189fc37838f2a900b2ac08bf08c1b8de487214140628c.txt
+C:\111\herness\lab\h2c\A\run-1\trace\artifacts\3479bb1494523b1cab5402a42e1828e1c4fa8efb7c6892a7ef70a26a1d1c3521.txt
+C:\111\herness\lab\h2c\A\run-1\trace\artifacts\3d61752ae238794ec18b476ca3be7e400f590b3ba0e2ea7cccc19e1c4ac0b2a0.txt
+C:\111\herness\lab\h2c\A\run-1\trace\artifacts\521c751619ba14f8f36ee9a2e4aace38b98d626059e555668f400e3eefc0a961.json
+C:\111\herness\lab\h2c\A\run-1\trace\artifacts\fe341e4fc720610f2105f90bc17112829ca7142ae140cc8188dff3bd0e40e060.txt
