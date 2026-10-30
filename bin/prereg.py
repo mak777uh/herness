@@ -62,6 +62,8 @@ def main(argv: list[str]) -> int:
         return 0
 
     print(f"пре-регистраций: {len(items)}")
+    with_sensitivity = sum(1 for item in items if item.get("sensitivity"))
+    print(f"чувствительность: есть у {with_sensitivity} из {len(items)}")
     for problem in problems:
         print(f"[FAIL] {problem}")
     unclosed = [item["id"] for item in items if not item.get("closed")]
