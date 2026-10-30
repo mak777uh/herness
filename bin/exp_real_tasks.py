@@ -109,7 +109,7 @@ def run_one(task: dict, arm: str, prompt: str, index: int) -> dict:
     result = None
     last_error = None
     run_dir = None
-    for attempt in range(3):
+    for attempt in range(6):
         stamp_attempt = f"{stamp}-{attempt}"
         run_dir = ROOT / "runs" / f"exp3-{task['id']}-{arm}-{index}-{stamp_attempt}"
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -120,10 +120,11 @@ def run_one(task: dict, arm: str, prompt: str, index: int) -> dict:
         except Exception as exc:  # noqa: BLE001
             last_error = exc
             retryable = any(word in str(exc).lower() for word in
-                            ("ssl", "connection", "disconnected", "сеть", "timed out", "10054"))
+                            ("ssl", "connection", "disconnected", "сеть", "timed out", "10054",
+                             "remotedisconnected", "eof"))
             if not retryable:
                 break
-            time.sleep(5 + attempt * 5)
+            time.sleep(10 + attempt * 10)
         finally:
             handle = getattr(journal, "_fh", None)
             if handle is not None and not handle.closed:
@@ -144,8 +145,10 @@ def run_one(task: dict, arm: str, prompt: str, index: int) -> dict:
 
 
 def main() -> int:
+    only = {arg for arg in sys.argv[1:] if not arg.startswith("-")}
+    tasks = [task for task in TASKS if not only or task["id"] in only]
     rows = []
-    for task in TASKS:
+    for task in tasks:
         for arm, prompt in (("A", PROMPT_A), ("B", PROMPT_B)):
             for index in (1, 2):
                 print(f"{task['id']} {arm}-{index}...", flush=True)
@@ -155,7 +158,8 @@ def main() -> int:
                     rows.append({"task": task["id"], "arm": arm, "run": index,
                                  "status": f"ошибка: {type(exc).__name__}: {exc}"})
 
-    out = ROOT / "lab" / "exp3" / "results.json"
+    suffix = "-".join(sorted(only)) if only else "all"
+    out = ROOT / "lab" / "exp3" / f"results-{suffix}.json"
     out.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
 
     print(f"\n{'задача':<8}{'рука':<5}{'баллы':<9}{'шаги':<6}{'сек':<7}статус")
@@ -164,14 +168,14 @@ def main() -> int:
               f"{str(row.get('points', '—')) + '/' + str(row.get('max', '—')):<9}"
               f"{row.get('steps', '—'):<6}{row.get('seconds', '—'):<7}{row.get('status', '')}")
 
-    for task in TASKS:
+    for task in tasks:
         for arm in ("A", "B"):
             got = [r["points"] for r in rows if r.get("task") == task["id"] and r.get("arm") == arm
                    and "points" in r]
             if got:
                 print(f"{task['id']:<8}{arm}: среднее {sum(got) / len(got):.1f} из {task['rubric'] and sum(p for _, p, _ in task['rubric'])}")
     print("\nизложение (доля прогонов):")
-    for task in TASKS:
+    for task in tasks:
         for arm in ("A", "B"):
             cells = [r["presentation"] for r in rows
                      if r.get("task") == task["id"] and r.get("arm") == arm and "presentation" in r]
