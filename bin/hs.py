@@ -382,7 +382,8 @@ def gate_claims(root: Path) -> list[str]:
         cid, text, ctype, cmd, artifact, _date = cells[:6]
         if not cmd or not artifact:
             problems.append(f"CLAIMS.md:{lineno}: {cid} без команды или артефакта")
-        if ctype not in {"proof", "test", "statistics", "observation", "judgment", "withdrawn", "not established"}:
+        if ctype not in {"proof", "test", "statistics", "observation", "judgment", "withdrawn",
+                         "not established", "measurement"}:
             problems.append(f"CLAIMS.md:{lineno}: {cid} неизвестный тип '{ctype}'")
         if ctype != "proof" and re.search(r"(?i)доказан|гарантир|всегда", text):
             problems.append(f"CLAIMS.md:{lineno}: {cid} формулировка сильнее типа ({ctype})")
@@ -1373,7 +1374,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_assert_bound.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
