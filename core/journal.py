@@ -75,6 +75,9 @@ class Journal:
         return self._append(kind, payload or {})
 
     def close(self) -> None:
+        # loop.run закрывает журнал сам; повторное закрытие не должно падать (F-0014)
+        if getattr(self._fh, "closed", True):
+            return
         try:
             self._fh.flush()
             os.fsync(self._fh.fileno())
