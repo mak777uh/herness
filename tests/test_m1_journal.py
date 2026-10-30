@@ -85,7 +85,9 @@ def _():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         journal = Journal(root / "run")
-        provider = MockProvider([Step(tool={"name": "shell", "args": {"command": "echo x"}})] * 3)
+        # три РАЗНЫХ вызова: иначе сработает детектор барахтания, а проверяем именно бюджет
+        provider = MockProvider([Step(tool={"name": "shell", "args": {"command": f"echo {i}"}})
+                                 for i in range(3)])
         result = run("цикл", provider, ShellTool(root), journal, max_steps=3)
         assert result["status"] == "budget", result
         assert result["steps"] == 3, result

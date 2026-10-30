@@ -38,10 +38,17 @@ class MockProvider:
         return step
 
 
+FAIL_STREAK_LIMIT = 3
+SAME_CALL_LIMIT = 3
+
+
 def run(task: str, provider: MockProvider, tool, journal: Journal, max_steps: int = 16) -> dict:
     journal.run_start(task, model="mock")
     steps = 0
     status = "budget"
+    failed_streak = 0
+    same_call_streak = 0
+    last_call: tuple | None = None
     try:
         while steps < max_steps:
             steps += 1
@@ -58,12 +65,30 @@ def run(task: str, provider: MockProvider, tool, journal: Journal, max_steps: in
                 journal.tool_result(call_id, ref, ok=out.ok, preview=out.text[:400])
                 if hasattr(provider, "observe"):
                     provider.observe(out.text, out.ok)
+
+                # барахтание: подряд идут отказы или один и тот же вызов
+                signature = (step.tool.get("name", "?"), str(step.tool.get("args", {})))
+                same_call_streak = same_call_streak + 1 if signature == last_call else 1
+                last_call = signature
+                failed_streak = failed_streak + 1 if not out.ok else 0
+                if failed_streak >= FAIL_STREAK_LIMIT:
+                    journal.event("run/flail", {"reason": "три отказа подряд", "steps": steps})
+                    status = "flail"
+                    break
+                if same_call_streak >= SAME_CALL_LIMIT:
+                    journal.event("run/flail", {"reason": "три одинаковых вызова", "steps": steps})
+                    status = "flail"
+                    break
                 continue
 
             journal.assistant_message(step.text)
             status = "done"
             break
     finally:
+        if status == "budget":
+            last = getattr(provider, "last", None)
+            tail = (getattr(last, "text", "") or "").strip()
+            journal.event("run/budget", {"steps": steps, "last_text": tail[:400]})
         journal.run_end(status)
         journal.close()
 
