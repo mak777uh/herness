@@ -33,3 +33,4 @@ learning.jsonl
 
  tmp_*
 *.tmp
+tmp_*.py
