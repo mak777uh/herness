@@ -76,6 +76,42 @@ def _():
     assert "S2_OBJECT_MISMATCH" in result.codes
 
 
+@case("периодическое с таймером и проверялкой даёт ANCHORED", False)
+def _():
+    result = field("следи за изменениями и регулярно проверяй файл", [
+        {"id": "p1", "text": "следи за изменениями", "modality": "periodic",
+         "action": "следить", "object": "изменения", "anchor": "schedule"},
+        {"id": "p2", "text": "регулярно проверяй файл", "modality": "periodic",
+         "action": "проверить", "object": "файл", "anchor": "grep"}])
+    assert result.verdict == "ANCHORED", result
+
+
+@case("периодическое без проверялки даёт S4_NO_CHECKER", False)
+def _():
+    result = field("следи за изменениями", [
+        {"id": "p1", "text": "следи за изменениями", "modality": "periodic",
+         "action": "следить", "object": "изменения", "anchor": "schedule"}])
+    assert "S4_NO_CHECKER" in result.codes and result.verdict == "REFUSED", result
+
+
+@case("неопределённое без канала даёт S5_UNCERTAIN_NO_CHANNEL", False)
+def _():
+    result = field("можно ли доверять данным", [
+        {"id": "p1", "text": "можно ли доверять данным", "modality": "asks",
+         "action": "решить", "object": "вариант", "anchor": "WF-DECIDE",
+         "precision": "uncertain", "channel": ""}])
+    assert "S5_UNCERTAIN_NO_CHANNEL" in result.codes, result
+
+
+@case("неопределённое с каналом проходит", False)
+def _():
+    result = field("можно ли доверять данным", [
+        {"id": "p1", "text": "можно ли доверять данным", "modality": "asks",
+         "action": "решить", "object": "вариант", "anchor": "WF-DECIDE",
+         "precision": "uncertain", "channel": "experiment"}])
+    assert result.verdict == "ANCHORED", result
+
+
 def main() -> int:
     failed = 0
     for name, should_raise, fn in CASES:

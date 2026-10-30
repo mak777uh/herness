@@ -34,6 +34,8 @@ class Part:
     action: str = ""
     obj: str = ""
     anchor: str = ""
+    precision: str = "exact"      # exact | uncertain
+    channel: str = ""             # для uncertain: user|experiment|search|peer|refuse
     error: str = ""
     closed: bool = False
 
@@ -66,11 +68,15 @@ def check(request: dict, caps: dict) -> Field:
     for raw in request.get("parts", []):
         part = Part(id=raw.get("id", "?"), text=raw.get("text", ""),
                     modality=raw.get("modality", ""), action=raw.get("action", ""),
-                    obj=raw.get("object", ""), anchor=raw.get("anchor", ""))
+                    obj=raw.get("object", ""), anchor=raw.get("anchor", ""),
+                    precision=raw.get("precision", "exact"), channel=raw.get("channel", ""))
 
         # 1. привязка к тексту запроса: фрагмент должен в нём быть
         if part.text and part.text.lower() not in text.lower():
             part.error = "S1_TEXT_NOT_FOUND"
+        elif part.precision == "uncertain" and part.channel not in ("user", "experiment", "search",
+                                                                    "peer", "refuse"):
+            part.error = "S5_UNCERTAIN_NO_CHANNEL"
         # 2. модальность объявлена
         elif part.modality not in caps["modalities"]:
             part.error = "S1_NO_MODALITY"
@@ -94,6 +100,23 @@ def check(request: dict, caps: dict) -> Field:
             field_obj.codes.append(part.error)
         field_obj.parts.append(part)
 
+    # 3b. периодическая команда: нужен и сторож (таймер), и проверялка
+    periodic = [part for part in field_obj.parts if part.modality == "periodic"]
+    if periodic:
+        has_timer = any(part.anchor in ("schedule", "WF-WATCH") for part in field_obj.parts)
+        has_checker = any(part.anchor in ("fetch", "browser", "grep", "read_file", "shell")
+                          for part in field_obj.parts)
+        if not has_timer:
+            field_obj.codes.append("S4_NO_TIMER")
+            for part in periodic:
+                part.closed = False
+                part.error = part.error or "S4_NO_TIMER"
+        if not has_checker:
+            field_obj.codes.append("S4_NO_CHECKER")
+            for part in periodic:
+                part.closed = False
+                part.error = part.error or "S4_NO_CHECKER"
+
     # 4. согласованность: противоположные модальности на одном действии и объекте
     for i, first in enumerate(field_obj.parts):
         for second in field_obj.parts[i + 1:]:
@@ -111,6 +134,8 @@ def check(request: dict, caps: dict) -> Field:
     if total == 0:
         field_obj.verdict = "REFUSED"
     elif "S3_OPPOSITE" in field_obj.codes:
+        field_obj.verdict = "REFUSED"
+    elif any(code.startswith(("S4_", "S5_")) for code in field_obj.codes):
         field_obj.verdict = "REFUSED"
     elif field_obj.coverage >= 1.0:
         field_obj.verdict = "ANCHORED"

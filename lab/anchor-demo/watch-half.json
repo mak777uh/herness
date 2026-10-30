@@ -1,0 +1,7 @@
+{
+  "request": "Следи за изменениями в lexspec.",
+  "parts": [
+    { "id": "p1", "text": "Следи за изменениями в lexspec",
+      "modality": "periodic", "action": "следить", "object": "изменения", "anchor": "schedule" }
+  ]
+}

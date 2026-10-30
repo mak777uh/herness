@@ -1,0 +1,9 @@
+{
+  "request": "Следи за изменениями в lexspec и регулярно проверяй, не поменялся ли 10-SPEC.",
+  "parts": [
+    { "id": "p1", "text": "Следи за изменениями в lexspec",
+      "modality": "periodic", "action": "следить", "object": "изменения", "anchor": "schedule" },
+    { "id": "p2", "text": "регулярно проверяй, не поменялся ли 10-SPEC",
+      "modality": "periodic", "action": "проверить", "object": "файл", "anchor": "grep" }
+  ]
+}

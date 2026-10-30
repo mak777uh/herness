@@ -107,3 +107,12 @@
 
 Демонстрации: полный запрос → `ANCHORED` (1.00); «не используй сеть, но проверь страницу» →
 `S3_OPPOSITE`, `REFUSED`; «сравни две версии» → две несвязанные части, `REFUSED` (0.33).
+
+### Дополнение: периодическое и неопределённое (30.10.2026)
+
+- модальность `periodic` требует **двух** привязок: сторож (`schedule`/`WF-WATCH`) и проверялка
+  (`fetch`/`grep`/`shell`/`read_file`/`browser`); иначе `S4_NO_TIMER` / `S4_NO_CHECKER`;
+- поле `precision: exact|uncertain`; для `uncertain` обязателен канал `user|experiment|search|peer|refuse`,
+  иначе `S5_UNCERTAIN_NO_CHANNEL`;
+- схема разложения вопроса взята у `flowguard-spec`: известно (с числом) → предполагается → почему важно →
+  вопрос; поля `why`/`question` в JSON пока не заведены.

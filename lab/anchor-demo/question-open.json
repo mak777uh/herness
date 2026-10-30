@@ -1,0 +1,11 @@
+{
+  "request": "Можно ли доверять этим данным? Замеры сделаны 29.10.2026 на одном железе.",
+  "parts": [
+    { "id": "p1", "text": "Замеры сделаны 29.10.2026 на одном железе",
+      "modality": "requires", "action": "проверить", "object": "файл", "anchor": "grep",
+      "precision": "exact" },
+    { "id": "p2", "text": "Можно ли доверять этим данным",
+      "modality": "asks", "action": "решить", "object": "вариант", "anchor": "WF-DECIDE",
+      "precision": "uncertain", "channel": "" }
+  ]
+}
