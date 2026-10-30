@@ -112,6 +112,16 @@
    "note": "незавершённый опыт: b=3, c=0, p=0.25; 8/20 у A в бюджете",
    "conclusion": "lab/h5/RESULT.md",
    "claim": "C-0100"
+  },
+  {
+   "id": "E-0011",
+   "title": "Первый срез Rust-ядра: журнал и печать сверены с Python по байтам",
+   "hypothesis": null,
+   "prereg": null,
+   "status": "case",
+   "note": "core-rs: canonical_json, event_hash, canonical_seal; 3 теста на замороженных векторах",
+   "conclusion": "research/WSL-CORE-2026-10-31.md",
+   "claim": "C-0103"
   }
  ]
 }
