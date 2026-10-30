@@ -124,11 +124,12 @@ SYSTEM_PLAIN = (
 class LiveProvider:
     """Обёртка над сетевым провайдером, совместимая с циклом (метод next)."""
 
-    def __init__(self, client, task: str, max_steps: int = 8, use_tools: bool = True):
+    def __init__(self, client, task: str, max_steps: int = 8, use_tools: bool = True,
+                 system: str | None = None):
         self.client = client
         self.max_steps = max_steps
         self.messages: list[dict] = [
-            {"role": "system", "content": SYSTEM_TOOLS if use_tools else SYSTEM_PLAIN},
+            {"role": "system", "content": system or (SYSTEM_TOOLS if use_tools else SYSTEM_PLAIN)},
             {"role": "user", "content": task},
         ]
         self.last: ModelReply | None = None
