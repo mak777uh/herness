@@ -671,6 +671,52 @@ def cmd_execute(args) -> int:
     return 0
 
 
+def gate_journals(root: Path) -> list[str]:
+    """Цепочка журналов не должна быть нарушена: иначе свидетельствам нельзя верить."""
+    sys.path.insert(0, str(root))
+    try:
+        from bin.verify_journal import verify_run
+    except Exception as exc:  # noqa: BLE001
+        return [f"проверка журналов недоступна: {type(exc).__name__}"]
+    problems = []
+    candidates = [p for p in (root / "runs").glob("*") if p.is_dir()]
+    runs = sorted(candidates, key=lambda p: p.stat().st_mtime)[-60:]
+    checked = 0
+    for run_dir in runs:
+        if not run_dir.is_dir() or not (run_dir / "events.jsonl").exists():
+            continue
+        report = verify_run(run_dir)
+        if report.legacy:
+            continue
+        checked += 1
+        if not report.ok:
+            problems.append(f"{run_dir.name}: событие {report.broken_at} — {report.reason}")
+    if checked == 0:
+        problems.append("ни одного журнала с цепочкой: проверить нечего")
+    return problems
+
+
+def cmd_verify_journal(args) -> int:
+    """Проверка цепочки журналов: подмена и удаление событий видны."""
+    sys.path.insert(0, str(ROOT))
+    from bin.verify_journal import verify_run
+
+    targets = [Path(arg) for arg in args.paths] if args.paths else sorted((RUNS).glob("*"))
+    broken = legacy = 0
+    for run_dir in targets:
+        if not run_dir.is_dir():
+            continue
+        report = verify_run(run_dir)
+        if report.legacy:
+            legacy += 1
+            continue
+        if not report.ok:
+            broken += 1
+            print(f"[FAIL] {run_dir.name}: событие {report.broken_at} — {report.reason}")
+    print(f"проверено: {len(targets)}, legacy: {legacy}, нарушено: {broken}")
+    return 0 if broken == 0 else 1
+
+
 def cmd_browser(args) -> int:
     """Поиск через живой браузер (CDP): обходит капчу, потому что браузер человеческий."""
     sys.path.insert(0, str(ROOT))
@@ -794,7 +840,7 @@ def cmd_live(args) -> int:
     started = time.perf_counter()
     try:
         result = loop_run(args.task, provider, ToolRouter(Path(args.cwd or ROOT)), journal,
-                          max_steps=args.steps)
+                          max_steps=args.steps, snapshot_root=Path(args.cwd or ROOT))
     finally:
         elapsed = round(time.perf_counter() - started, 1)
 
@@ -1284,7 +1330,7 @@ def gate_capabilities(root: Path) -> list[str]:
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -1327,7 +1373,7 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_hohfeld.py"):
+    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_hohfeld.py"):
         path = ROOT / "tests" / suite
         if path.exists():
             proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
@@ -1434,6 +1480,10 @@ def main(argv: list[str]) -> int:
     p.add_argument("--run")
     p.set_defaults(func=cmd_browser)
 
+
+    p = sub.add_parser("verify-journal", help="проверить цепочку журналов")
+    p.add_argument("paths", nargs="*")
+    p.set_defaults(func=cmd_verify_journal)
 
     p = sub.add_parser("fetch", help="забрать URL: лимит байтов, классификация, журнал")
     p.add_argument("url")

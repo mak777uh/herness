@@ -58,7 +58,8 @@ def run_task(task: dict) -> dict:
     error = ""
     result = None
     try:
-        result = loop_run(task["text"], provider, ToolRouter(ROOT), journal, max_steps=MAX_STEPS)
+        result = loop_run(task["text"], provider, ToolRouter(ROOT), journal, max_steps=MAX_STEPS,
+                          snapshot_root=ROOT)
     except Exception as exc:  # noqa: BLE001
         error = f"{type(exc).__name__}: {exc}"
     finally:

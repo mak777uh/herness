@@ -13,9 +13,29 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from .journal import Journal
+
+SKIP_DIRS = {".git", "runs", "node_modules", "__pycache__", ".venv", "home", "refs-cache", ".secrets"}
+
+
+def snapshot(root: Path) -> dict:
+    """Список файлов с размерами: дешёвый снимок, по которому видно, что менялось."""
+    entries = []
+    for path in sorted(Path(root).rglob("*")):
+        if any(part in SKIP_DIRS for part in path.parts):
+            continue
+        if path.is_file():
+            try:
+                entries.append((str(path.relative_to(root)).replace("\\", "/"), path.stat().st_size))
+            except OSError:
+                continue
+    body = json.dumps(entries, ensure_ascii=False).encode("utf-8")
+    return {"files": len(entries), "sha256": hashlib.sha256(body).hexdigest(), "body": body}
 
 
 @dataclass
@@ -42,8 +62,14 @@ FAIL_STREAK_LIMIT = 3
 SAME_CALL_LIMIT = 3
 
 
-def run(task: str, provider: MockProvider, tool, journal: Journal, max_steps: int = 16) -> dict:
+def run(task: str, provider: MockProvider, tool, journal: Journal, max_steps: int = 16,
+        snapshot_root: Path | None = None) -> dict:
     journal.run_start(task, model="mock")
+    if snapshot_root is not None:
+        state = snapshot(Path(snapshot_root))
+        ref = journal.put_artifact(state["body"], ext=".json")
+        journal.event("run/snapshot", {"files": state["files"], "sha256": state["sha256"],
+                                       "artifact": ref.path})
     steps = 0
     status = "budget"
     failed_streak = 0

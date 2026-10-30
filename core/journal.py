@@ -39,6 +39,16 @@ class Journal:
         self.artifacts.mkdir(parents=True, exist_ok=True)
         self.path = self.run_dir / "events.jsonl"
         self._seq = 0
+        self._prev = "genesis"
+        if self.path.exists():
+            # продолжаем цепочку, а не начинаем с нуля
+            for line in self.path.read_text(encoding="utf-8").splitlines():
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                self._seq = max(self._seq, int(event.get("seq", 0)))
+                self._prev = event.get("hash", self._prev)
         self._fh = self.path.open("a", encoding="utf-8", newline="\n")
 
     # ---------------------------------------------------------------- ядро журнала
@@ -51,7 +61,11 @@ class Journal:
 
     def _append(self, kind: str, payload: dict) -> dict:
         self._seq += 1
-        event = {"seq": self._seq, "ts": _now(), "type": kind, "payload": payload}
+        event = {"seq": self._seq, "ts": _now(), "type": kind, "payload": payload,
+                 "prev": self._prev}
+        canonical = json.dumps(event, ensure_ascii=False, sort_keys=True)
+        event["hash"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        self._prev = event["hash"]
         self._fh.write(json.dumps(event, ensure_ascii=False) + "\n")
         self._fh.flush()
         os.fsync(self._fh.fileno())
