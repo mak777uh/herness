@@ -1,0 +1,6 @@
+источник: apt-пакет busybox-static (Ubuntu 24.04), извлечён в WSL
+deb: 1008874 байт
+static busybox: 2124608 байт
+bb/usr/bin/busybox: ELF 64-bit LSB executable
+наше ядро vmlinuz-own-rng: 1496064 байт
+вывод: shell со стандартными утилитами стоит 2,12 МБ — больше самого ядра (1,50 МБ)
