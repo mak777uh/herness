@@ -7,11 +7,15 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from bin.store import write_json  # noqa: E402
+
 CLAIMS = ROOT / "CLAIMS.md"  # переопределяется первым аргументом
 COLUMNS = 7
 
@@ -82,10 +86,9 @@ def main(argv=None) -> int:
             print(f"  {row['id']}: {row['why']}")
 
     out = out_path if out_path else ROOT / "research" / "claims-coverage.json"
-    out.write_text(json.dumps({"total": total, "closed": closed, "malformed": malformed,
-                               "coverage": round(coverage, 3), "verdict": verdict,
-                               "open": open_rows}, ensure_ascii=False, indent=1),
-                   encoding="utf-8")
+    write_json(out, {"total": total, "closed": closed, "malformed": malformed,
+                     "coverage": round(coverage, 3), "verdict": verdict,
+                     "open": open_rows})
     print(f"\nзаписано: {out}")
     # сильный вердикт требует всех закрытых записей; порог 0.8 не решает
     return 0 if coverage >= 1.0 else 1

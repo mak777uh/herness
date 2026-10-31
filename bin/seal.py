@@ -12,6 +12,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from bin.store import write_text  # noqa: E402
+
 DEFAULT_MARKER = "## Seal"
 
 
@@ -34,7 +39,7 @@ def sidecar(path: Path) -> Path:
 
 def seal(path: Path, marker: str = DEFAULT_MARKER) -> str:
     value = digest(path, marker)
-    sidecar(path).write_text(value + "\n", encoding="utf-8")
+    write_text(sidecar(path), value + "\n")
     return value
 
 

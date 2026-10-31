@@ -15,6 +15,12 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from bin.store import write_json, write_text  # noqa: E402
+
+
 QUEUE = ROOT / "lab" / "queue.json"
 RUNS = ROOT / "lab" / "runs"
 
@@ -25,7 +31,7 @@ def load() -> dict:
 
 def save(data: dict) -> None:
     data["updated_at"] = datetime.now().isoformat(timespec="seconds")
-    QUEUE.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    write_json(QUEUE, data)
 
 
 def problems_of(job: dict) -> list[str]:
@@ -85,8 +91,8 @@ def run_job(job: dict) -> dict:
     except subprocess.TimeoutExpired as exc:
         code, out, err = 124, str(exc.stdout or ""), f"превышен бюджет {job['budget_seconds']} c"
     elapsed = round(time.perf_counter() - started, 1)
-    (directory / "stdout.txt").write_text(out or "", encoding="utf-8")
-    (directory / "stderr.txt").write_text(err or "", encoding="utf-8")
+    write_text(directory / "stdout.txt", out or "")
+    write_text(directory / "stderr.txt", err or "")
     scorer_out = ""
     scorer = job.get("scorer") or ""
     if code == 0 and scorer.endswith(".py"):
@@ -97,14 +103,13 @@ def run_job(job: dict) -> dict:
             scorer_out = (scored.stdout or "") + (scored.stderr or "")
         except Exception as exc:  # noqa: BLE001
             scorer_out = f"скоринг не удался: {type(exc).__name__}"
-        (directory / "scorer.txt").write_text(scorer_out, encoding="utf-8")
+        write_text(directory / "scorer.txt", scorer_out)
     record = {"id": job["id"], "started": stamp, "seconds": elapsed, "exit": code,
               "scorer_ran": bool(scorer_out),
               "budget_seconds": job["budget_seconds"], "exploration": job.get("exploration", False),
               "prereg": job.get("prereg"), "command": job["command"],
               "evidence": not job.get("exploration", False)}
-    (directory / "job.json").write_text(json.dumps(record, ensure_ascii=False, indent=1) + "\n",
-                                        encoding="utf-8")
+    write_json(directory / "job.json", record)
     return record
 
 
