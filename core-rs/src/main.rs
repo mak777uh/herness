@@ -293,6 +293,20 @@ fn journal_durability() {
     }
 }
 
+/// Проверка порядка по файлу журнала: то, что осталось после обрыва.
+fn report_order_from_file(path: &str) {
+    match hs_core::loopmod::order_from_journal(std::path::Path::new(path)) {
+        Ok(problems) if problems.is_empty() => println!("порядок из файла: ok"),
+        Ok(problems) => {
+            println!("порядок из файла: НАРУШЕН");
+            for problem in problems {
+                println!("  [!] {problem}");
+            }
+        }
+        Err(error) => println!("порядок из файла: не прочитать ({error})"),
+    }
+}
+
 fn report_loop(outcome: &hs_core::loopmod::Outcome) {
     println!(
         "цикл: шагов {}, вызовов {}, событий {}, журнал {} записей, коммитов {}, статус {}, порядок {}",
@@ -330,14 +344,29 @@ fn init_mode() -> ExitCode {
 
     // Цикл: в режиме loop прогоняем скелет цикла, иначе — синтетическую проверку журнала.
     let mode_text = fs::read_to_string("/mode").unwrap_or_default().trim().to_string();
-    if mode_text == "loop" {
+    if mode_text == "loop" || mode_text == "loop-torn" {
         let mut provider = hs_core::loopmod::Scripted::seal_method("/method.md");
         match hs_core::loopmod::run(
             std::path::Path::new("/journal.bin"),
             std::path::Path::new("/method.md"),
             &mut provider,
         ) {
-            Ok(outcome) => report_loop(&outcome),
+            Ok(outcome) => {
+                report_loop(&outcome);
+                if mode_text == "loop-torn" {
+                    // Контрольный случай: обрываем журнал и убеждаемся, что проверка по файлу
+                    // это видит. Гейт, который не умеет падать, ничего не доказывает.
+                    match fs::OpenOptions::new().write(true).open("/journal.bin") {
+                        Ok(file) => {
+                            let length = file.metadata().map(|m| m.len()).unwrap_or(0);
+                            let _ = file.set_len(length.saturating_sub(4));
+                            println!("журнал: оборван на 4 байта (контрольный случай)");
+                        }
+                        Err(error) => println!("журнал: не открыть для обрыва ({error})"),
+                    }
+                }
+                report_order_from_file("/journal.bin");
+            }
             Err(error) => println!("цикл: не запустился ({error})"),
         }
     } else if let Ok(mut journal) = hs_core::journal::Journal::open("/journal.bin") {
@@ -426,6 +455,7 @@ fn main() -> ExitCode {
             ) {
                 Ok(outcome) => {
                     report_loop(&outcome);
+                    report_order_from_file(journal);
                     if outcome.order_ok() {
                         ExitCode::SUCCESS
                     } else {

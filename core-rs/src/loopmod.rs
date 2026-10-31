@@ -228,6 +228,59 @@ pub fn run(
     })
 }
 
+/// Проверка порядка событий **по файлу** журнала, а не по памяти процесса.
+///
+/// Зачем: после обрыва остаётся только файл. Если порядок проверяется лишь в памяти, то
+/// утверждение «события легли в правильном порядке» верно ровно до падения — а проверять его
+/// нужно как раз после.
+pub fn order_from_journal(journal_path: &Path) -> std::io::Result<Vec<String>> {
+    let bytes = std::fs::read(journal_path)?;
+    let walked = match crate::journal::walk(&bytes) {
+        Ok(walked) => walked,
+        Err(status) => return Ok(vec![format!("журнал не читается: {status}")]),
+    };
+
+    let mut problems = Vec::new();
+    if walked.tail_bytes > 0 {
+        problems.push(format!(
+            "оборванный хвост {} байт: последняя запись не подтверждена",
+            walked.tail_bytes
+        ));
+    }
+
+    let mut events: Vec<Event> = Vec::new();
+    let mut ends_with_commit = false;
+    for entry in &walked.entries {
+        if entry.kind == crate::journal::Kind::Commit {
+            ends_with_commit = true;
+            continue;
+        }
+        ends_with_commit = false;
+        let text = String::from_utf8_lossy(&entry.payload);
+        let mut parts = text.splitn(2, ' ');
+        let raw = parts.next().unwrap_or_default();
+        let detail = parts.next().unwrap_or_default().to_string();
+        let kind: &'static str = match raw {
+            "run/start" => "run/start",
+            "tool/call" => "tool/call",
+            "tool/result" => "tool/result",
+            "step" => "step",
+            "run/end" => "run/end",
+            other => {
+                problems.push(format!("неизвестное событие в журнале: {other}"));
+                "?"
+            }
+        };
+        events.push(Event { kind, detail });
+    }
+
+    problems.extend(verify_order(&events));
+    if !ends_with_commit {
+        problems.push("журнал не заканчивается маркером коммита".to_string());
+    }
+    Ok(problems)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -310,6 +363,47 @@ mod tests {
         let outcome = run(&journal, &method, &mut provider).unwrap();
         assert_eq!(outcome.status, "no-done");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn порядок_читается_из_файла_после_прогона() {
+        let dir = std::env::temp_dir().join(format!("hs-loop-file-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let journal = dir.join("journal.bin");
+        let method = dir.join("method.md");
+        std::fs::write(&method, "тело\n").unwrap();
+
+        let mut provider = Scripted::seal_method(method.to_str().unwrap());
+        run(&journal, &method, &mut provider).unwrap();
+
+        let problems = order_from_journal(&journal).unwrap();
+        assert!(problems.is_empty(), "{problems:?}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn оборванный_хвост_виден_при_чтении_файла() {
+        let dir = std::env::temp_dir().join(format!("hs-loop-torn-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let journal = dir.join("journal.bin");
+        let method = dir.join("method.md");
+        std::fs::write(&method, "тело\n").unwrap();
+
+        let mut provider = Scripted::seal_method(method.to_str().unwrap());
+        run(&journal, &method, &mut provider).unwrap();
+
+        // Обрываем последнюю запись: файл короче на 4 байта, как после падения в момент записи.
+        let length = std::fs::metadata(&journal).unwrap().len();
+        let file = std::fs::OpenOptions::new().write(true).open(&journal).unwrap();
+        file.set_len(length - 4).unwrap();
+        drop(file);
+
+        let problems = order_from_journal(&journal).unwrap();
+        assert!(
+            problems.iter().any(|p| p.contains("оборванный хвост")),
+            "{problems:?}"
+        );
         std::fs::remove_dir_all(&dir).ok();
     }
 }

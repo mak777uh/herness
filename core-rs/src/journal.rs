@@ -20,7 +20,7 @@ pub const VERSION: u32 = 1;
 /// Длина заголовка записи: len(u32) + seq(u64) + crc(u32) + kind(u8).
 pub const RECORD_HEADER: usize = 17;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
     Data,
     Commit,
@@ -134,30 +134,46 @@ impl Journal {
     }
 }
 
-/// Проверка байтов журнала: префикс, коммиты, хвост.
-pub fn inspect(bytes: &[u8]) -> Report {
+/// Разобранная запись журнала: что именно было записано, а не только сколько.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Entry {
+    pub kind: Kind,
+    pub payload: Vec<u8>,
+}
+
+/// Результат разбора: валидный префикс записей и длина непрочитанного хвоста.
+#[derive(Debug, Clone, Default)]
+pub struct Walk {
+    pub entries: Vec<Entry>,
+    pub tail_bytes: usize,
+}
+
+/// Разобрать журнал до первой невалидной записи.
+///
+/// Ошибка возвращается только для заголовка: без magic или с чужой версией читать нечего.
+/// Оборванная или испорченная запись — это не ошибка разбора, а `tail_bytes`: так же, как в
+/// восстановлении, мы не «чиним» и не гадаем.
+pub fn walk(bytes: &[u8]) -> Result<Walk, String> {
     if bytes.len() < 8 || &bytes[..4] != MAGIC {
-        return Report { records: 0, committed: 0, tail_bytes: bytes.len(), torn_tail: false,
-                        status: "нет заголовка HSJ1".to_string() };
+        return Err("нет заголовка HSJ1".to_string());
     }
     let version = u32::from_le_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
     if version != VERSION {
-        return Report { records: 0, committed: 0, tail_bytes: bytes.len(), torn_tail: false,
-                        status: format!("версия {version} не поддерживается") };
+        return Err(format!("версия {version} не поддерживается"));
     }
 
     let mut pos = 8usize;
-    let mut records = 0usize;
-    let mut committed = 0usize;
+    let mut entries: Vec<Entry> = Vec::new();
     let mut expected_seq = 1u64;
     while pos < bytes.len() {
         if bytes.len() - pos < RECORD_HEADER {
             break;
         }
-        let length = u32::from_le_bytes([bytes[pos], bytes[pos + 1], bytes[pos + 2], bytes[pos + 3]]) as usize;
+        let length =
+            u32::from_le_bytes([bytes[pos], bytes[pos + 1], bytes[pos + 2], bytes[pos + 3]]) as usize;
         let seq = u64::from_le_bytes(bytes[pos + 4..pos + 12].try_into().unwrap());
         let crc = u32::from_le_bytes([bytes[pos + 12], bytes[pos + 13], bytes[pos + 14], bytes[pos + 15]]);
-        let kind = bytes[pos + 16];
+        let kind_byte = bytes[pos + 16];
         if length > 64 * 1024 * 1024 {
             break;
         }
@@ -171,24 +187,48 @@ pub fn inspect(bytes: &[u8]) -> Report {
         hasher.update(payload);
         let digest = hasher.finalize();
         let expected = u32::from_le_bytes([digest[0], digest[1], digest[2], digest[3]]);
-        if expected != crc || seq != expected_seq || Kind::from_byte(kind).is_none() {
+        let Some(kind) = Kind::from_byte(kind_byte) else { break };
+        if expected != crc || seq != expected_seq {
             break; // порча: дальше не читаем
         }
-        if Kind::from_byte(kind) == Some(Kind::Commit) {
-            committed += 1;
-        }
-        records += 1;
+        entries.push(Entry { kind, payload: payload.to_vec() });
         expected_seq += 1;
         pos = end;
     }
 
-    let tail = bytes.len() - pos;
-    Report {
-        records,
-        committed,
-        tail_bytes: tail,
-        torn_tail: tail > 0,
-        status: if tail > 0 { "оборванный хвост в карантине".to_string() } else { "ок".to_string() },
+    Ok(Walk { entries, tail_bytes: bytes.len() - pos })
+}
+
+/// Проверка байтов журнала: префикс, коммиты, хвост.
+pub fn inspect(bytes: &[u8]) -> Report {
+    match walk(bytes) {
+        Err(status) => Report {
+            records: 0,
+            committed: 0,
+            tail_bytes: bytes.len(),
+            torn_tail: false,
+            status,
+        },
+        Ok(walked) => {
+            let records = walked.entries.len();
+            let committed = walked
+                .entries
+                .iter()
+                .filter(|entry| entry.kind == Kind::Commit)
+                .count();
+            let tail = walked.tail_bytes;
+            Report {
+                records,
+                committed,
+                tail_bytes: tail,
+                torn_tail: tail > 0,
+                status: if tail > 0 {
+                    "оборванный хвост в карантине".to_string()
+                } else {
+                    "ок".to_string()
+                },
+            }
+        }
     }
 }
 
