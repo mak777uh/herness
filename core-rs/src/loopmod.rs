@@ -19,7 +19,7 @@ use std::process::Command;
 use crate::journal::{Journal, Kind};
 
 /// Больше шагов, чем это, скриптовый провайдер не делает: предохранитель от вечного цикла.
-pub const MAX_STEPS: usize = 8;
+pub const MAX_STEPS: usize = 64;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Step {
@@ -40,6 +40,16 @@ pub struct Scripted {
 impl Scripted {
     pub fn new(steps: Vec<Step>) -> Self {
         Scripted { steps, index: 0 }
+    }
+
+    /// Длинный сценарий: нужен, чтобы убийство ВМ попадало внутрь блока, а не между блоками.
+    pub fn seal_many(method: &str, steps: usize) -> Self {
+        let mut plan = Vec::new();
+        for _ in 0..steps {
+            plan.push(Step::Tool { name: "seal".to_string(), arg: method.to_string() });
+        }
+        plan.push(Step::Done { text: "готово".to_string() });
+        Scripted::new(plan)
     }
 
     /// Стандартный сценарий прогона: запечатать методологию, затем закончить.
@@ -256,22 +266,11 @@ pub fn order_from_journal(journal_path: &Path) -> std::io::Result<Vec<String>> {
             continue;
         }
         ends_with_commit = false;
-        let text = String::from_utf8_lossy(&entry.payload);
-        let mut parts = text.splitn(2, ' ');
-        let raw = parts.next().unwrap_or_default();
-        let detail = parts.next().unwrap_or_default().to_string();
-        let kind: &'static str = match raw {
-            "run/start" => "run/start",
-            "tool/call" => "tool/call",
-            "tool/result" => "tool/result",
-            "step" => "step",
-            "run/end" => "run/end",
-            other => {
-                problems.push(format!("неизвестное событие в журнале: {other}"));
-                "?"
-            }
-        };
-        events.push(Event { kind, detail });
+        let event = decode_event(&entry.payload);
+        if event.kind == "?" {
+            problems.push(format!("неизвестное событие в журнале: {}", event.detail));
+        }
+        events.push(event);
     }
 
     problems.extend(verify_order(&events));
@@ -279,6 +278,62 @@ pub fn order_from_journal(journal_path: &Path) -> std::io::Result<Vec<String>> {
         problems.push("журнал не заканчивается маркером коммита".to_string());
     }
     Ok(problems)
+}
+
+/// Разобрать полезную нагрузку записи в событие. Неизвестный вид — `"?"`, а не догадка.
+fn decode_event(payload: &[u8]) -> Event {
+    let text = String::from_utf8_lossy(payload);
+    let mut parts = text.splitn(2, ' ');
+    let raw = parts.next().unwrap_or_default();
+    let detail = parts.next().unwrap_or_default().to_string();
+    let kind: &'static str = match raw {
+        "run/start" => "run/start",
+        "tool/call" => "tool/call",
+        "tool/result" => "tool/result",
+        "step" => "step",
+        "run/end" => "run/end",
+        _ => "?",
+    };
+    Event { kind, detail }
+}
+
+/// Итог разбора журнала на блоки прогонов (блок заканчивается маркером коммита).
+#[derive(Debug, Clone, Default)]
+pub struct BlocksReport {
+    pub blocks: usize,
+    pub complete: usize,
+    pub broken: usize,
+    pub tail_bytes: usize,
+}
+
+/// Проверить журнал как последовательность прогонов: каждый блок обязан иметь свой `run/start`,
+/// парный `run/end` и правильный порядок. Неполный последний блок считается битым, а не «почти
+/// целым»: после обрыва именно он и вызывает вопросы.
+pub fn verify_blocks(bytes: &[u8]) -> Result<BlocksReport, String> {
+    let walked = crate::journal::walk(bytes)?;
+    let mut events: Vec<Event> = Vec::new();
+    let mut blocks = 0usize;
+    let mut complete = 0usize;
+
+    for entry in &walked.entries {
+        if entry.kind == crate::journal::Kind::Commit {
+            blocks += 1;
+            if verify_order(&events).is_empty() {
+                complete += 1;
+            }
+            events.clear();
+            continue;
+        }
+        events.push(decode_event(&entry.payload));
+    }
+
+    let unclosed = if events.is_empty() { 0 } else { 1 };
+    Ok(BlocksReport {
+        blocks,
+        complete,
+        broken: blocks - complete + unclosed,
+        tail_bytes: walked.tail_bytes,
+    })
 }
 
 #[cfg(test)]

@@ -293,6 +293,79 @@ fn journal_durability() {
     }
 }
 
+/// Бесконечный прогон цикла на диск: убийство ВМ придётся на середину блока, и тогда видно,
+/// что именно осталось. Останавливать по счётчику бессмысленно — тогда обрыва не будет.
+fn loop_repeat(journal: &str, method: &str) -> ExitCode {
+    if !mount_disk() {
+        println!("диск: не смонтировать /dev/vda");
+        return ExitCode::FAILURE;
+    }
+    println!("цикл на диске: пишу без остановки в {journal}");
+    let mut runs = 0usize;
+    let mut good = 0usize;
+    loop {
+        let mut provider = hs_core::loopmod::Scripted::seal_many(method, 20);
+        match hs_core::loopmod::run(
+            std::path::Path::new(journal),
+            std::path::Path::new(method),
+            &mut provider,
+        ) {
+            Ok(outcome) => {
+                runs += 1;
+                if outcome.order_ok() {
+                    good += 1;
+                } else {
+                    println!("цикл: порядок нарушен: {:?}", outcome.problems);
+                }
+            }
+            Err(error) => {
+                println!("цикл: {error}");
+                return ExitCode::FAILURE;
+            }
+        }
+        if runs % 25 == 0 {
+            println!("прогонов: {runs}, целых: {good}");
+        }
+    }
+}
+
+/// Разбор журнала на блоки прогонов после обрыва.
+fn loop_verify(journal: &str) -> ExitCode {
+    if !mount_disk() {
+        println!("диск: не смонтировать /dev/vda");
+        return ExitCode::FAILURE;
+    }
+    let bytes = match fs::read(journal) {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            println!("журнал: не прочитать ({error})");
+            return ExitCode::FAILURE;
+        }
+    };
+    match hs_core::loopmod::verify_blocks(&bytes) {
+        Ok(report) => {
+            println!(
+                "блоков {}, целых {}, битых {}, хвост {} байт, размер {} байт",
+                report.blocks,
+                report.complete,
+                report.broken,
+                report.tail_bytes,
+                bytes.len()
+            );
+            // Допускается ровно один битый блок — тот, что оборван убийством ВМ.
+            if report.blocks > 0 && report.complete > 0 && report.broken <= 1 {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            }
+        }
+        Err(status) => {
+            println!("журнал: {status}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
 /// Проверка порядка по файлу журнала: то, что осталось после обрыва.
 fn report_order_from_file(path: &str) {
     match hs_core::loopmod::order_from_journal(std::path::Path::new(path)) {
@@ -328,6 +401,14 @@ fn init_mode() -> ExitCode {
     println!("ядро: {}", kernel_release());
     println!("landlock ABI: {}", landlock_abi());
     println!("время до init: {:.2} с", hs_core::clock::uptime_seconds());
+    // Режимы с диском: пишем цикл на /mnt и проверяем его после обрыва.
+    let mode_text = fs::read_to_string("/mode").unwrap_or_default().trim().to_string();
+    if mode_text == "loop-repeat" {
+        return loop_repeat("/mnt/journal.bin", "/method.md");
+    }
+    if mode_text == "loop-verify" {
+        return loop_verify("/mnt/journal.bin");
+    }
     let method = fs::read_to_string("/method.md").unwrap_or_default();
     println!("печать /method.md: {}", hs_core::seal_hash(&method));
     capabilities();
@@ -343,7 +424,6 @@ fn init_mode() -> ExitCode {
     );
 
     // Цикл: в режиме loop прогоняем скелет цикла, иначе — синтетическую проверку журнала.
-    let mode_text = fs::read_to_string("/mode").unwrap_or_default().trim().to_string();
     if mode_text == "loop" || mode_text == "loop-torn" {
         let mut provider = hs_core::loopmod::Scripted::seal_method("/method.md");
         match hs_core::loopmod::run(
