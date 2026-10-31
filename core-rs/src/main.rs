@@ -1,18 +1,54 @@
 //! Минимальный CLI ядра: печать файла, проверка цепочки журнала и режим init.
-//! Без аргументов (как PID 1) работает инициализатором: в такой системе больше ничего нет.
+//! Без аргументов (как PID 1) работает инициализатором и сообщает свойства ядра.
 
 use std::env;
+use std::ffi::CStr;
 use std::fs;
 use std::process::ExitCode;
 use std::thread;
 use std::time::Duration;
 
+/// Версия ядра через uname(2): не требует /proc.
+fn kernel_release() -> String {
+    // SAFETY: utsname — обычная структура, инициализируется ядром.
+    unsafe {
+        let mut name: libc::utsname = std::mem::zeroed();
+        if libc::uname(&mut name) != 0 {
+            return "неизвестно".to_string();
+        }
+        CStr::from_ptr(name.release.as_ptr())
+            .to_string_lossy()
+            .into_owned()
+    }
+}
+
+/// Версия Landlock ABI: 0 — недоступен.
+fn landlock_abi() -> i64 {
+    const SYS_LANDLOCK_CREATE_RULESET: libc::c_long = 444;
+    const VERSION_FLAG: libc::c_uint = 1;
+    // SAFETY: запрос версии не создаёт объектов и не требует указателя.
+    unsafe {
+        let result = libc::syscall(
+            SYS_LANDLOCK_CREATE_RULESET,
+            std::ptr::null::<libc::c_void>(),
+            0usize,
+            VERSION_FLAG,
+        );
+        if result < 0 {
+            0
+        } else {
+            result as i64
+        }
+    }
+}
+
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
+    println!("ядро: {}", kernel_release());
+    println!("landlock ABI: {}", landlock_abi());
     println!("архитектура: {}", env::consts::ARCH);
     let method = fs::read_to_string("/method.md").unwrap_or_default();
     println!("печать /method.md: {}", hs_core::seal_hash(&method));
-    println!("в системе нет sh, нет libc-пакетов, нет менеджера пакетов");
     println!("hs-core: система жива, жду");
     loop {
         thread::sleep(Duration::from_secs(3600));
@@ -22,7 +58,6 @@ fn init_mode() -> ExitCode {
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     match args.first().map(String::as_str) {
-        // PID 1 приходит без аргументов — это и есть наш init.
         None => init_mode(),
         Some("init") => init_mode(),
         Some("seal") => {

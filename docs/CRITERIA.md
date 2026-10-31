@@ -303,3 +303,5 @@
 | K273 | init не имеет права выходить: пустые аргументы должны включать режим init | замер | первый запуск дал kernel panic | research/MINIMAL-OS-BOOT-2026-10-31.md |
 | K274 | сборка ядра возможна на Windows без WSL: cargo + mingw + rust-lld, упаковка на Python, загрузка в QEMU | замер | pwsh core-rs/build.ps1: 715272 байта, загрузка, хеш совпал | core-rs/build.ps1 |
 | K275 | mingw из miniconda слишком стар для windows-gnu: нет GetHostNameW; нужен WinLibs 16.2 | замер | ошибка линковки generic-array/serde_core | core-rs/build.ps1 |
+| K276 | ядро выбирается замером: загрузка в QEMU, версия, Landlock ABI, размер | замер | 4 кандидата: ABI 3/6/6/7 | docs/ADR-0036-kernel-6.18.md |
+| K277 | минимум для песочницы: Landlock ABI >= 4 (сеть); выбрано 6.18 LTS с ABI 7 | замер | загрузка печатает ABI 7 | core-rs/src/main.rs |

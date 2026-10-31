@@ -44,3 +44,4 @@ core-rs/target/
 core-rs/boot/*.gz
 core-rs/boot/vmlinuz-lts
 core-rs/boot/qemu-out*
+core-rs/boot/
