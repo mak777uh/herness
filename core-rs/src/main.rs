@@ -563,10 +563,30 @@ fn init_mode() -> ExitCode {
         let task = fs::read_to_string("/task")
             .map(|text| text.trim().to_string())
             .unwrap_or_else(|_| "запечатать /method.md".to_string());
-        let outcome = hs_core::loopmod::run_task(
+        // Бюджет: по умолчанию 8 шагов, 120 с и 5 центов — прогон не должен жечь allowance молча.
+        let mut budget = hs_core::loopmod::Budget {
+            steps: 8,
+            seconds: 120.0,
+            allowance: 0.05,
+        };
+        if let Ok(text) = fs::read_to_string("/budget") {
+            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) {
+                if let Some(steps) = value.get("steps").and_then(|v| v.as_u64()) {
+                    budget.steps = steps as usize;
+                }
+                if let Some(seconds) = value.get("seconds").and_then(|v| v.as_f64()) {
+                    budget.seconds = seconds;
+                }
+                if let Some(allowance) = value.get("allowance").and_then(|v| v.as_f64()) {
+                    budget.allowance = allowance;
+                }
+            }
+        }
+        let outcome = hs_core::loopmod::run_task_with_budget(
             std::path::Path::new("/journal.bin"),
             &task,
             &mut link,
+            budget,
         );
         match outcome {
             Ok(outcome) => {

@@ -1,0 +1,7 @@
+running 3 tests
+test loopmod::tests::бюджет_времени_останавливает_до_первого_шага ... ok
+test loopmod::tests::денежный_бюджет_останавливает_прогон ... ok
+test loopmod::tests::бюджет_шагов_режет_длинный_сценарий ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 34 filtered out; finished in 0.05s
+провалов: 0

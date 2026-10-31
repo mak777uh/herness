@@ -23,6 +23,21 @@ pub const MAX_STEPS: usize = 64;
 
 use crate::model::{ModelLink, Reply};
 
+/// Бюджет прогона: шаги, время и деньги. Три предела, потому что прогон может упереться в любой.
+#[derive(Debug, Clone, Copy)]
+pub struct Budget {
+    pub steps: usize,
+    pub seconds: f64,
+    /// Предел в тех же единицах, что `usage.allowance` провайдера.
+    pub allowance: f64,
+}
+
+impl Default for Budget {
+    fn default() -> Self {
+        Budget { steps: MAX_STEPS, seconds: 300.0, allowance: 0.05 }
+    }
+}
+
 /// Шаг, разобранный из ответа модели.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Step {
@@ -283,6 +298,45 @@ fn tool_read(arg: &str) -> Result<String, String> {
     Ok(out)
 }
 
+/// Корень, внутри которого разрешена запись. Всё остальное — отказ, а не «попробуем».
+///
+/// Почему так: запись — единственный инструмент, который меняет мир. Пока он пишет куда угодно,
+/// песочница бессмысленна: файл можно положить в /init и получить исполнение при следующей загрузке.
+fn workspace_root() -> std::path::PathBuf {
+    std::env::var("HS_WORKSPACE")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| std::path::PathBuf::from("/mnt"))
+}
+
+/// `write <путь> <текст>`: записать файл внутри рабочего каталога.
+pub fn tool_write_in(arg: &str, root: &Path) -> Result<String, String> {
+    let (path, text) = arg
+        .split_once(' ')
+        .ok_or_else(|| "нужно: write <путь> <текст>".to_string())?;
+    let target = Path::new(path.trim());
+    let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    let parent = target
+        .parent()
+        .ok_or_else(|| "у пути нет родителя".to_string())?
+        .canonicalize()
+        .map_err(|error| format!("нет такого каталога: {error}"))?;
+    if !parent.starts_with(&root) {
+        return Err(format!(
+            "запись только внутри {}: {} вне его",
+            root.display(),
+            target.display()
+        ));
+    }
+    let bytes = text.as_bytes().len();
+    std::fs::write(target, text).map_err(|error| format!("не записать: {error}"))?;
+    Ok(format!("записано {bytes} байт в {}", target.display()))
+}
+
+fn tool_write(arg: &str) -> Result<String, String> {
+    let root = workspace_root();
+    tool_write_in(arg, &root)
+}
+
 fn run_tool(name: &str, arg: &str) -> Result<String, String> {
     match name {
         "seal" => tool_seal(arg),
@@ -290,6 +344,7 @@ fn run_tool(name: &str, arg: &str) -> Result<String, String> {
         "search" => tool_search(arg),
         "list" => tool_list(arg),
         "read" => tool_read(arg),
+        "write" => tool_write(arg),
         other => Err(format!("неизвестный инструмент: {other}")),
     }
 }
@@ -356,19 +411,41 @@ pub fn run_task(
     task: &str,
     link: &mut dyn ModelLink,
 ) -> std::io::Result<Outcome> {
+    run_task_with_budget(journal_path, task, link, Budget::default())
+}
+
+/// То же, но с явным бюджетом. Проверка бюджета — часть прогона, а не пожелание снаружи.
+pub fn run_task_with_budget(
+    journal_path: &Path,
+    task: &str,
+    link: &mut dyn ModelLink,
+    budget: Budget,
+) -> std::io::Result<Outcome> {
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
     let mut steps = 0usize;
     let mut calls = 0usize;
     let mut attempts = 0usize;
+    let mut spent: f64 = 0.0;
+    let started = std::time::Instant::now();
     let mut status: &'static str = "no-done";
 
     record(&mut journal, &mut events, "run/start", format!("task: {task}"))?;
     let mut prompt = task.to_string();
 
-    while attempts < MAX_STEPS && steps < MAX_STEPS {
+    while attempts < budget.steps && steps < budget.steps {
+        if started.elapsed().as_secs_f64() > budget.seconds {
+            record(&mut journal, &mut events, "step/error",
+                   format!("бюджет времени исчерпан: {:.0} с", budget.seconds))?;
+            status = "budget-time";
+            break;
+        }
         attempts += 1;
-        let reply = match link.complete(&prompt) {
+        let reply = link.complete(&prompt);
+        if let Some(usage) = link.last_usage() {
+            spent += usage.allowance;
+        }
+        let reply = match reply {
             Reply::Text(text) => text,
             Reply::End => break,
             Reply::Error(error) => {
@@ -429,7 +506,15 @@ pub fn run_task(
                         prompt = format!("{name}: ошибка {error}");
                     }
                 }
-                record(&mut journal, &mut events, "step", format!("{steps}"))?;
+                record(&mut journal, &mut events, "step",
+                       format!("{steps}, потрачено {spent:.8}"))?;
+                if spent > budget.allowance {
+                    record(&mut journal, &mut events, "step/error",
+                           format!("бюджет денег исчерпан: {spent:.8} > {:.8}", budget.allowance))?;
+                    status = "budget-money";
+                    record(&mut journal, &mut events, "run/end", "остановлен бюджетом".to_string())?;
+                    break;
+                }
             }
             Step::Done { text } => {
                 status = "done";
@@ -773,6 +858,89 @@ mod tests {
         let out = tool_list(&format!("{}", dir.display())).unwrap();
         assert!(out.contains("a.md"), "{out}");
         assert!(out.contains("каталог"), "{out}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// Провайдер, который сообщает расход: нужен, чтобы проверить денежный бюджет.
+    struct Metered {
+        replies: Vec<String>,
+        index: usize,
+        usage: crate::model::Usage,
+    }
+
+    impl ModelLink for Metered {
+        fn complete(&mut self, _prompt: &str) -> Reply {
+            match self.replies.get(self.index).cloned() {
+                Some(text) => {
+                    self.index += 1;
+                    Reply::Text(text)
+                }
+                None => Reply::End,
+            }
+        }
+
+        fn last_usage(&self) -> Option<crate::model::Usage> {
+            Some(self.usage)
+        }
+    }
+
+    #[test]
+    fn денежный_бюджет_останавливает_прогон() {
+        let dir = fixture("budget-money");
+        let journal = dir.join("journal.bin");
+        let mut link = Metered {
+            replies: vec![
+                "TOOL list /".to_string(),
+                "TOOL list /".to_string(),
+                "DONE конец".to_string(),
+            ],
+            index: 0,
+            usage: crate::model::Usage { prompt_tokens: 10, completion_tokens: 10, allowance: 0.02 },
+        };
+        let budget = Budget { steps: 10, seconds: 30.0, allowance: 0.01 };
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        assert_eq!(outcome.status, "budget-money", "{:?}", outcome.problems);
+        assert_eq!(outcome.calls, 1, "после первого шага бюджет уже превышен");
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn бюджет_времени_останавливает_до_первого_шага() {
+        let dir = fixture("budget-time");
+        let journal = dir.join("journal.bin");
+        let mut link = crate::model::Stub::seal_method("/method.md");
+        let budget = Budget { steps: 10, seconds: 0.0, allowance: 1.0 };
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        assert_eq!(outcome.status, "budget-time");
+        assert_eq!(outcome.calls, 0);
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn бюджет_шагов_режет_длинный_сценарий() {
+        let dir = fixture("budget-steps");
+        let journal = dir.join("journal.bin");
+        let mut link = crate::model::Stub::seal_many("/method.md", 5);
+        let budget = Budget { steps: 2, seconds: 30.0, allowance: 1.0 };
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        assert_eq!(outcome.calls, 2, "ровно два шага");
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn запись_работает_только_внутри_корня() {
+        let dir = fixture("write");
+        let inside = format!("{} привет", dir.join("новый.md").display());
+        let ok = tool_write_in(&inside, &dir).unwrap();
+        assert!(ok.contains("записано"), "{ok}");
+        assert_eq!(std::fs::read_to_string(dir.join("новый.md")).unwrap(), "привет");
+
+        let outside = if cfg!(windows) { "C:/Windows/Temp/x.md зло" } else { "/etc/x.md зло" };
+        let refused = tool_write_in(outside, &dir);
+        assert!(refused.is_err(), "{refused:?}");
         std::fs::remove_dir_all(&dir).ok();
     }
 

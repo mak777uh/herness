@@ -29,8 +29,22 @@ pub enum Reply {
     Truncated(String),
 }
 
+/// Сколько стоил запрос. Нужно бюджету цикла: «сколько шагов» — не единственный предел.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct Usage {
+    pub prompt_tokens: u64,
+    pub completion_tokens: u64,
+    /// Деньги, зачтённые в лимит подписки (поле allowance у провайдера).
+    pub allowance: f64,
+}
+
 pub trait ModelLink {
     fn complete(&mut self, prompt: &str) -> Reply;
+
+    /// Расход последнего запроса, если провайдер его сообщил. По умолчанию неизвестен.
+    fn last_usage(&self) -> Option<Usage> {
+        None
+    }
 }
 
 /// Детерминированный провайдер: заранее заданные ответы. Нужен тестам и прогонам без сети.
@@ -85,6 +99,7 @@ pub struct HttpBridge {
     pub timeout: Duration,
     /// Что сказать модели про формат ответа. Без этого она отвечает прозой, а цикл ждёт шаг.
     pub system: String,
+    pub usage: Option<Usage>,
 }
 
 impl HttpBridge {
@@ -97,6 +112,7 @@ impl HttpBridge {
             path: "/v1/chat/completions".to_string(),
             timeout: Duration::from_secs(180),
             system: DEFAULT_SYSTEM.to_string(),
+            usage: None,
         }
     }
 
@@ -113,7 +129,7 @@ impl HttpBridge {
     }
 
     /// Один запрос к мосту. Ошибки типизированы текстом: что именно не так — видно в журнале.
-    fn call(&self, prompt: &str) -> Result<String, String> {
+    fn call(&mut self, prompt: &str) -> Result<String, String> {
         let body = self.body(prompt);
         let request = format!(
             "POST {} HTTP/1.1\r\nHost: {}:{}\r\nAuthorization: Bearer {}\r\n\
@@ -143,11 +159,17 @@ impl HttpBridge {
         if response.len() > MAX_REPLY * 16 {
             return Err(format!("ответ слишком большой: {} байт", response.len()));
         }
-        parse_response(&String::from_utf8_lossy(&response))
+        let raw = String::from_utf8_lossy(&response).to_string();
+        self.usage = parse_usage(&raw);
+        parse_response(&raw)
     }
 }
 
 impl ModelLink for HttpBridge {
+    fn last_usage(&self) -> Option<Usage> {
+        self.usage
+    }
+
     fn complete(&mut self, prompt: &str) -> Reply {
         match self.call(prompt) {
             Ok(text) => Reply::Text(text),
@@ -155,6 +177,25 @@ impl ModelLink for HttpBridge {
             Err(error) => Reply::Error(error),
         }
     }
+}
+
+/// Достать расход из тела ответа. Нет полей — расход неизвестен, а не ноль.
+pub fn parse_usage(raw: &str) -> Option<Usage> {
+    let (_, body) = raw.split_once("\r\n\r\n").or_else(|| raw.split_once("\n\n"))?;
+    let value: Value = serde_json::from_str(body).ok()?;
+    let usage = value.get("usage")?;
+    let prompt_tokens = usage.get("prompt_tokens").and_then(|v| v.as_u64()).unwrap_or(0);
+    let completion_tokens = usage
+        .get("completion_tokens")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    let allowance = usage
+        .get("opencode")
+        .and_then(|oc| oc.get("allowance"))
+        .and_then(|v| v.as_f64())
+        .or_else(|| usage.get("cost").and_then(|v| v.as_f64()))
+        .unwrap_or(0.0);
+    Some(Usage { prompt_tokens, completion_tokens, allowance })
 }
 
 /// Разобрать HTTP-ответ моста и достать текст ответа модели.
