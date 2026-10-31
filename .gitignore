@@ -40,3 +40,7 @@ lab/**/P17-RESULTS.md
 lab/**/P18-RESULTS.md
 lab/**/SELF-WORK.md
 lab/**/CYCLE.md
+core-rs/target/
+core-rs/boot/*.gz
+core-rs/boot/vmlinuz-lts
+core-rs/boot/qemu-out*

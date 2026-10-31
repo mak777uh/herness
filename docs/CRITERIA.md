@@ -301,3 +301,5 @@
 | K271 | минимальный контракт ядра: Landlock ABI ≥ 3 для файлов; сеть — ABI ≥ 4 (ядро ≥ 6.7) | замер | WSL: ABI 3 без root; unshare без root запрещён | research/KERNEL-ONLY-2026-10-31.md |
 | K272 | система может быть ядром и одним статическим бинарником: загрузка в QEMU, PID 1 = hs-core | замер | образ 305 КБ, ядро 10,9 МБ, хеш совпал | research/MINIMAL-OS-BOOT-2026-10-31.md |
 | K273 | init не имеет права выходить: пустые аргументы должны включать режим init | замер | первый запуск дал kernel panic | research/MINIMAL-OS-BOOT-2026-10-31.md |
+| K274 | сборка ядра возможна на Windows без WSL: cargo + mingw + rust-lld, упаковка на Python, загрузка в QEMU | замер | pwsh core-rs/build.ps1: 715272 байта, загрузка, хеш совпал | core-rs/build.ps1 |
+| K275 | mingw из miniconda слишком стар для windows-gnu: нет GetHostNameW; нужен WinLibs 16.2 | замер | ошибка линковки generic-array/serde_core | core-rs/build.ps1 |
