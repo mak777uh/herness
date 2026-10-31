@@ -1,30 +1,29 @@
 //! Минимальный CLI ядра: печать файла, проверка цепочки журнала и режим init.
-//! Без аргументов (как PID 1) работает инициализатором и проверяет песочницу делом.
+//! Без аргументов (как PID 1) работает инициализатором: проверяет песочницу и меряет порождение
+//! процессов — чтобы решение «VM или голое железо» опиралось на числа, а не на вкус.
 
 use std::env;
 use std::ffi::CStr;
 use std::fs;
-use std::process::ExitCode;
+use std::process::{Command, ExitCode};
 use std::thread;
 use std::time::Duration;
 
 fn kernel_release() -> String {
-    // SAFETY: utsname — обычная структура, заполняется ядром.
+    // SAFETY: utsname заполняется ядром.
     unsafe {
         let mut name: libc::utsname = std::mem::zeroed();
         if libc::uname(&mut name) != 0 {
             return "неизвестно".to_string();
         }
-        CStr::from_ptr(name.release.as_ptr())
-            .to_string_lossy()
-            .into_owned()
+        CStr::from_ptr(name.release.as_ptr()).to_string_lossy().into_owned()
     }
 }
 
 fn landlock_abi() -> i64 {
     const SYS_LANDLOCK_CREATE_RULESET: libc::c_long = 444;
     const VERSION_FLAG: libc::c_uint = 1;
-    // SAFETY: запрос версии не создаёт объектов и не требует указателя.
+    // SAFETY: запрос версии не создаёт объектов.
     unsafe {
         let result = libc::syscall(
             SYS_LANDLOCK_CREATE_RULESET,
@@ -32,18 +31,32 @@ fn landlock_abi() -> i64 {
             0usize,
             VERSION_FLAG,
         );
-        if result < 0 {
-            0
-        } else {
-            result as i64
-        }
+        if result < 0 { 0 } else { result as i64 }
     }
 }
 
 /// Проверяем не опцию в конфиге, а работу механизма.
 fn unshare_works(flag: libc::c_int) -> bool {
-    // SAFETY: unshare сам сообщает об успехе кодом возврата.
+    // SAFETY: unshare сообщает результат кодом возврата.
     unsafe { libc::unshare(flag) == 0 }
+}
+
+/// Цена порождения процесса: fork+exec себя же с короткой командой.
+fn spawn_cost(iterations: u32) {
+    let started = hs_core::clock::uptime_seconds();
+    let mut ok = 0u32;
+    for _ in 0..iterations {
+        if let Ok(status) = Command::new("/init").arg("seal").arg("/method.md").status() {
+            if status.success() {
+                ok += 1;
+            }
+        }
+    }
+    let elapsed = hs_core::clock::uptime_seconds() - started;
+    println!(
+        "порождение процесса: {ok}/{iterations} за {elapsed:.2} с = {:.1} мс на запуск",
+        elapsed * 1000.0 / iterations as f64
+    );
 }
 
 fn init_mode() -> ExitCode {
@@ -60,6 +73,7 @@ fn init_mode() -> ExitCode {
     );
     let method = fs::read_to_string("/method.md").unwrap_or_default();
     println!("печать /method.md: {}", hs_core::seal_hash(&method));
+    spawn_cost(20);
     println!("hs-core: система жива, жду");
     loop {
         thread::sleep(Duration::from_secs(3600));
