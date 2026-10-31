@@ -44,6 +44,7 @@ fn landlock_abi() -> i64 {
 
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
+    println!("время до init: {:.2} с", hs_core::clock::uptime_seconds());
     println!("ядро: {}", kernel_release());
     println!("landlock ABI: {}", landlock_abi());
     println!("архитектура: {}", env::consts::ARCH);

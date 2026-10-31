@@ -43,13 +43,13 @@ if (-not (Test-Path $qemu)) { Write-Error "не найден qemu-system-x86_64.
 $outFile = Join-Path $boot "qemu-out.txt"
 $errFile = Join-Path $boot "qemu-out.err"
 Remove-Item $outFile, $errFile -ErrorAction SilentlyContinue
-$arguments = @('-m', '256', '-kernel', (Join-Path $boot 'vmlinuz-lts'), '-initrd', (Join-Path $boot 'initramfs.cpio.gz'),
+$arguments = @('-m', '256', '-smp', '1', '-kernel', (Join-Path $boot $(if ($env:HS_KERNEL) { $env:HS_KERNEL } else { 'vmlinuz-own-6.18.60' })), '-initrd', (Join-Path $boot 'initramfs.cpio.gz'),
                '-append', '"console=ttyS0 panic=-1"', '-nographic', '-no-reboot')
 $process = Start-Process -FilePath $qemu -ArgumentList $arguments -RedirectStandardOutput $outFile -RedirectStandardError $errFile -PassThru
 Start-Sleep -Seconds 30
 if (-not $process.HasExited) { $process.Kill() }
 
-$lines = Get-Content $outFile -ErrorAction SilentlyContinue | Select-String -Pattern 'hs-core|печать /method|архитектура'
+$lines = Get-Content $outFile -ErrorAction SilentlyContinue | Select-String -Pattern 'hs-core|печать /method|архитектура|ядро:|landlock|время до init'
 $lines | ForEach-Object { $_.Line }
 if ($lines.Count -lt 2) {
     Write-Host "--- stderr ---"

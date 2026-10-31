@@ -3,6 +3,8 @@
 //! Контракт с эталонной реализацией на Python заморожен в `tests/vectors/*.json`.
 //! Расхождение — дефект одной из реализаций, а не «другая трактовка».
 
+pub mod clock;
+
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
