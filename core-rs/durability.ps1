@@ -11,7 +11,8 @@ $env:HS_KERNEL = "vmlinuz-own"
 $image = Join-Path $boot "journal.img"
 
 Push-Location $core
-cargo build --release --target x86_64-unknown-linux-musl *> $null
+cargo build --release --target x86_64-unknown-linux-musl 2>&1 | Select-Object -Last 2
+if ($LASTEXITCODE -ne 0) { throw 'сборка не прошла — проверь вывод cargo' }
 Pop-Location
 
 function Start-Vm([string]$mode) {

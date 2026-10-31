@@ -101,6 +101,65 @@ fn journal_durability() {
     println!("диск: ext4 смонтирован в /mnt");
     let path = "/mnt/journal.bin";
     let mode_text = mode.trim().to_string();
+
+    // Скорость: ограниченное число записей, печатаем записей/с.
+    if mode_text == "bench-write" || mode_text == "bench-batch" {
+        let Ok(mut journal) = hs_core::journal::Journal::open(path) else {
+            println!("журнал: не открыть");
+            return;
+        };
+        let batch_policy = mode_text == "bench-batch";
+        let limit = 2000u64;
+        let started = hs_core::clock::uptime_seconds();
+        let mut records = 0u64;
+        for index in 0..limit {
+            if journal.append(format!("event-{index}").as_bytes(), hs_core::journal::Kind::Data).is_err() {
+                break;
+            }
+            records += 1;
+            if records % 10 == 0 {
+                let _ = journal.append(b"commit", hs_core::journal::Kind::Commit);
+                if !batch_policy && journal.sync().is_err() {
+                    break;
+                }
+            }
+            if batch_policy && records % 32 == 0 && journal.sync().is_err() {
+                break;
+            }
+        }
+        let _ = journal.sync();
+        let elapsed = hs_core::clock::uptime_seconds() - started;
+        println!(
+            "бенч {mode_text}: записей {records} за {elapsed:.2} с = {:.0} записей/с",
+            records as f64 / elapsed.max(0.001)
+        );
+        return;
+    }
+
+    // Обрыв внутри записи: пишем валидный префикс, затем половину заголовка и ждём убийства.
+    if mode_text == "tear" {
+        let Ok(mut journal) = hs_core::journal::Journal::open(path) else {
+            println!("журнал: не открыть");
+            return;
+        };
+        for index in 0..5 {
+            let _ = journal.append(format!("event-{index}").as_bytes(), hs_core::journal::Kind::Data);
+        }
+        let _ = journal.append(b"commit", hs_core::journal::Kind::Commit);
+        let _ = journal.sync();
+        // Половина заголовка следующей записи: len=30, seq=next — и ни байта тела.
+        let mut partial = Vec::new();
+        partial.extend_from_slice(&30u32.to_le_bytes());
+        partial.extend_from_slice(&7u64.to_le_bytes());
+        if let Ok(mut file) = std::fs::OpenOptions::new().append(true).open(path) {
+            let _ = std::io::Write::write_all(&mut file, &partial[..10]);
+            let _ = file.sync_all();
+        }
+        println!("tear: записано 5 записей + коммит, затем половина заголовка");
+        println!("tear-ready: жду убийства");
+        return;
+    }
+
     if mode_text == "write" || mode_text == "batch" {
         let Ok(mut journal) = hs_core::journal::Journal::open(path) else {
             println!("журнал: не открыть");
@@ -144,10 +203,17 @@ fn journal_durability() {
     } else {
         match hs_core::journal::Journal::open(path) {
             Ok(journal) => match journal.report() {
-                Ok(report) => println!(
-                    "журнал на диске: записей {}, коммитов {}, хвост {} байт, статус {}",
-                    report.records, report.committed, report.tail_bytes, report.status
-                ),
+                Ok(report) => {
+                    println!(
+                        "журнал на диске: записей {}, коммитов {}, хвост {} байт, статус {}",
+                        report.records, report.committed, report.tail_bytes, report.status
+                    );
+                    match hs_core::journal::quarantine(path) {
+                        Ok(Some(target)) => println!("карантин: {}", target.display()),
+                        Ok(None) => println!("карантин: не нужен"),
+                        Err(error) => println!("карантин: ошибка {error}"),
+                    }
+                }
                 Err(error) => println!("журнал: ошибка отчёта {error}"),
             },
             Err(error) => println!("журнал: не открыть {error}"),
