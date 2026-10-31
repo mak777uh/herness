@@ -1,0 +1,11 @@
+вопрос: почему seccomp-фильтр ставится на ядре D (C + сеть) и не ставится на ядре C
+
+arch/Kconfig (kernel 6.18.60):
+config SECCOMP_FILTER
+	def_bool y
+	depends on HAVE_ARCH_SECCOMP_FILTER && SECCOMP && NET
+
+ядро C (vmlinuz-own-rng, NET выключен):
+sandbox: правило не установлено (seccomp: Invalid argument (os error 22))
+ядро D (vmlinuz-own-net, NET включён):
+sandbox: udp4 закрыт: да, udp6 закрыт: да, udp с CLOEXEC закрыт: да, raw закрыт: да, tcp открыт: да

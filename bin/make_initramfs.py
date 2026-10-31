@@ -65,6 +65,10 @@ def main() -> int:
         ("mode", mode.encode(), 0o100644),
         ("dev", b"", 0o040755),
         ("mnt", b"", 0o040755),
+        # proc и sys нужны не «на всякий случай»: без /proc не работает std::env::current_exe(),
+        # то есть инструмент не может запустить сам себя (найдено прогоном, F-0020).
+        ("proc", b"", 0o040755),
+        ("sys", b"", 0o040755),
     ]
     archive = cpio_newc(entries)
     target = BOOT / "initramfs.cpio.gz"

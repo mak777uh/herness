@@ -1,0 +1,5 @@
+cargo test --lib: test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+гость /mode=loop-net (vmlinuz-own-net + virtio-rng, -accel whpx):
+цикл: шагов 1, вызовов 1, событий 7, журнал 8 записей, коммитов 1, статус done, порядок ok
+инструмент: ok sandbox: udp4 закрыт: да, udp6 закрыт: да, udp с CLOEXEC закрыт: да, raw закрыт: да, tcp открыт: да
+порядок из файла: ok

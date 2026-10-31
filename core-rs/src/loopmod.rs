@@ -138,9 +138,11 @@ fn record(
 /// Инструмент `seal`: запечатать файл, переиспользовав себя же (режим `seal`).
 fn tool_seal(arg: &str) -> Result<String, String> {
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
-    let output = Command::new(exe)
-        .arg("seal")
-        .arg(arg)
+    let mut command = Command::new(exe);
+    command.arg("seal").arg(arg);
+    // Правило песочницы ставится до exec и наследуется потомками инструмента.
+    crate::sandbox::harden_command(&mut command);
+    let output = command
         .output()
         .map_err(|error| format!("не запустить инструмент: {error}"))?;
     let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -152,9 +154,38 @@ fn tool_seal(arg: &str) -> Result<String, String> {
     }
 }
 
+/// Диагностический инструмент: проверить, что правило песочницы унаследовано процессом.
+fn tool_netprobe(_arg: &str) -> Result<String, String> {
+    let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
+    let shown = exe.display().to_string();
+    let mut command = Command::new(&exe);
+    command.arg("sandbox-probe");
+    crate::sandbox::harden_command(&mut command);
+    let output = command
+        .output()
+        .map_err(|error| {
+            let meta = std::fs::metadata(&shown)
+                .map(|m| format!("{} байт", m.len()))
+                .unwrap_or_else(|e| format!("метаданных нет: {e}"));
+            format!("не запустить пробу {shown} ({meta}): {error}")
+        })?;
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let line = stdout
+        .lines()
+        .find(|line| line.starts_with("sandbox:"))
+        .unwrap_or("sandbox: (нет строки)")
+        .to_string();
+    if output.status.success() {
+        Ok(line)
+    } else {
+        Err(format!("проба вернула {:?}: {line}", output.status.code()))
+    }
+}
+
 fn run_tool(name: &str, arg: &str) -> Result<String, String> {
     match name {
         "seal" => tool_seal(arg),
+        "netprobe" => tool_netprobe(arg),
         other => Err(format!("неизвестный инструмент: {other}")),
     }
 }

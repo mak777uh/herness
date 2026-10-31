@@ -89,22 +89,12 @@ mod platform {
         }
         Ok(())
     }
-}
-
-#[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
-mod platform {
-    pub fn deny_udp() -> Result<(), String> {
-        Err("seccomp-правило есть только для linux/x86_64".to_string())
-    }
-}
-
-pub use platform::deny_udp;
 
 /// Проба: установить правило и проверить, что UDP (IPv4/IPv6), UDP с флагом `SOCK_CLOEXEC` и
 /// raw-сокеты закрыты, а TCP остаётся рабочим.
-pub fn probe() -> Result<[(&'static str, bool); 5], String> {
+    pub fn probe() -> Result<[(&'static str, bool); 5], String> {
     deny_udp()?;
-    let open = |domain: i32, kind: i32| -> bool {
+        let open = |domain: i32, kind: i32| -> bool {
         // SAFETY: вызов socket без указателей; дескриптор закрывается сразу.
         let fd = unsafe { libc::socket(domain, kind, 0) };
         if fd >= 0 {
@@ -125,3 +115,42 @@ pub fn probe() -> Result<[(&'static str, bool); 5], String> {
         ("tcp открыт", open(libc::AF_INET, libc::SOCK_STREAM)),
     ])
 }
+}
+
+/// Применить правило к дочернему процессу: фильтр ставится в `pre_exec`, то есть до `exec`,
+/// и наследуется всеми потомками инструмента.
+///
+/// На не-Unix платформах это ничего не делает — и говорит об этом вслух, а не притворяется.
+pub fn harden_command(command: &mut std::process::Command) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        // SAFETY: в pre_exec разрешены только вызовы, безопасные после fork: prctl и запись errno.
+        unsafe {
+            command.pre_exec(|| {
+                deny_udp().map_err(|error| {
+                    std::io::Error::new(std::io::ErrorKind::Other, error)
+                })
+            });
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = command;
+    }
+}
+
+#[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
+mod platform {
+    pub fn deny_udp() -> Result<(), String> {
+        Err("seccomp-правило есть только для linux/x86_64".to_string())
+    }
+
+    pub fn probe() -> Result<[(&'static str, bool); 5], String> {
+        Err("проба песочницы есть только для linux/x86_64".to_string())
+    }
+}
+
+pub use platform::{deny_udp, probe};
+
+

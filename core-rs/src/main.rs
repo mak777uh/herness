@@ -149,10 +149,12 @@ fn mount_filesystem(source: &str, target: &str, fstype: &str) -> std::io::Result
 }
 
 fn mount_disk() -> bool {
-    // Сначала devtmpfs: без /dev узел диска не существует.
-    match mount_filesystem("devtmpfs", "/dev", "devtmpfs") {
-        Ok(()) => println!("dev: devtmpfs смонтирован"),
-        Err(error) => println!("dev: devtmpfs не смонтирован ({error})"),
+    // devtmpfs уже смонтирован на старте init; повторный mount вернул бы EBUSY и лишнюю строку.
+    if !std::path::Path::new("/dev/null").exists() {
+        match mount_filesystem("devtmpfs", "/dev", "devtmpfs") {
+            Ok(()) => println!("dev: devtmpfs смонтирован"),
+            Err(error) => println!("dev: devtmpfs не смонтирован ({error})"),
+        }
     }
     match mount_filesystem("/dev/vda", "/mnt", "ext4") {
         Ok(()) => true,
@@ -366,6 +368,26 @@ fn loop_verify(journal: &str) -> ExitCode {
     }
 }
 
+/// Напечатать последний результат инструмента из журнала: в консоли видно, что именно вернул
+/// процесс, запущенный под правилом песочницы.
+fn print_last_tool_result(path: &str) {
+    let Ok(bytes) = fs::read(path) else { return };
+    let Ok(walked) = hs_core::journal::walk(&bytes) else { return };
+    let mut last: Option<String> = None;
+    for entry in &walked.entries {
+        if entry.kind != hs_core::journal::Kind::Data {
+            continue;
+        }
+        let text = String::from_utf8_lossy(&entry.payload);
+        if let Some(rest) = text.strip_prefix("tool/result ") {
+            last = Some(rest.to_string());
+        }
+    }
+    if let Some(result) = last {
+        println!("инструмент: {result}");
+    }
+}
+
 /// Проверка порядка по файлу журнала: то, что осталось после обрыва.
 fn report_order_from_file(path: &str) {
     match hs_core::loopmod::order_from_journal(std::path::Path::new(path)) {
@@ -396,6 +418,41 @@ fn report_loop(outcome: &hs_core::loopmod::Outcome) {
     }
 }
 
+fn spawn_check() -> ExitCode {
+    // Изолирует вопрос: мешает ли pre_exec запуску или дело в чём-то ещё.
+    let exe = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("/init"));
+    let mut plain = Command::new(&exe);
+    plain.arg("sandbox-probe");
+    println!(
+        "без песочницы: {}",
+        match plain.output() {
+            Ok(out) => format!("код {:?}", out.status.code()),
+            Err(error) => format!("ошибка {error}"),
+        }
+    );
+    let mut hardened = Command::new(&exe);
+    hardened.arg("sandbox-probe");
+    hs_core::sandbox::harden_command(&mut hardened);
+    println!(
+        "с песочницей: {}",
+        match hardened.output() {
+            Ok(out) => format!("код {:?}", out.status.code()),
+            Err(error) => format!("ошибка {error}"),
+        }
+    );
+    // Третий вариант: ровно тот вызов, который делает spawn_cost и который в госте работает.
+    let mut literal = Command::new("/init");
+    literal.arg("seal").arg("/method.md");
+    println!(
+        "литеральный /init seal: {}",
+        match literal.output() {
+            Ok(out) => format!("код {:?}", out.status.code()),
+            Err(error) => format!("ошибка {error}"),
+        }
+    );
+    ExitCode::SUCCESS
+}
+
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
     println!("ядро: {}", kernel_release());
@@ -403,11 +460,52 @@ fn init_mode() -> ExitCode {
     println!("время до init: {:.2} с", hs_core::clock::uptime_seconds());
     // Режимы с диском: пишем цикл на /mnt и проверяем его после обрыва.
     let mode_text = fs::read_to_string("/mode").unwrap_or_default().trim().to_string();
+
+    // /dev — раньше всего: Rust при spawn открывает /dev/null для stdin, и без него любой запуск
+    // падает с ENOENT, выглядя как «нет файла» (найдено прогоном, F-0020).
+    match mount_filesystem("devtmpfs", "/dev", "devtmpfs") {
+        Ok(()) => println!("dev: devtmpfs смонтирован"),
+        Err(error) => println!("dev: devtmpfs не смонтирован ({error})"),
+    }
+
+    // /proc и /sys: без них не работает current_exe() и часть проверок. Монтируем до инструментов.
+    match mount_filesystem("proc", "/proc", "proc") {
+        Ok(()) => println!("proc: смонтирован"),
+        Err(error) => println!("proc: не смонтирован ({error})"),
+    }
+    match mount_filesystem("sysfs", "/sys", "sysfs") {
+        Ok(()) => println!("sys: смонтирован"),
+        Err(error) => println!("sys: не смонтирован ({error})"),
+    }
+
+    if mode_text == "spawn-check" {
+        return spawn_check();
+    }
     if mode_text == "loop-repeat" {
         return loop_repeat("/mnt/journal.bin", "/method.md");
     }
     if mode_text == "loop-verify" {
         return loop_verify("/mnt/journal.bin");
+    }
+
+    if mode_text == "loop-net" {
+        // Проверка интеграции: инструмент запускается с правилом песочницы и не может открыть UDP.
+        let mut provider = hs_core::loopmod::Scripted::new(vec![
+            "TOOL netprobe /".to_string(),
+            "DONE проверено".to_string(),
+        ]);
+        match hs_core::loopmod::run(
+            std::path::Path::new("/journal.bin"),
+            std::path::Path::new("/method.md"),
+            &mut provider,
+        ) {
+            Ok(outcome) => {
+                report_loop(&outcome);
+                print_last_tool_result("/journal.bin");
+                report_order_from_file("/journal.bin");
+            }
+            Err(error) => println!("цикл: не запустился ({error})"),
+        }
     }
 
     if mode_text == "sandbox" {
@@ -456,6 +554,7 @@ fn init_mode() -> ExitCode {
         ) {
             Ok(outcome) => {
                 report_loop(&outcome);
+                print_last_tool_result("/journal.bin");
                 if mode_text == "loop-torn" {
                     // Контрольный случай: обрываем журнал и убеждаемся, что проверка по файлу
                     // это видит. Гейт, который не умеет падать, ничего не доказывает.
