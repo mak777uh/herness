@@ -409,6 +409,29 @@ fn init_mode() -> ExitCode {
     if mode_text == "loop-verify" {
         return loop_verify("/mnt/journal.bin");
     }
+
+    if mode_text == "sandbox" {
+        // Проверка правила песочницы в гостевой системе: нужна сеть в ядре, иначе socket(2)
+        // возвращает ошибку по другой причине и проверка ничего не значит.
+        return match hs_core::sandbox::probe() {
+            Ok(checks) => {
+                let mut all_ok = true;
+                let mut parts: Vec<String> = Vec::new();
+                for (name, ok) in checks {
+                    if !ok {
+                        all_ok = false;
+                    }
+                    parts.push(format!("{name}: {}", if ok { "да" } else { "НЕТ" }));
+                }
+                println!("sandbox: {}", parts.join(", "));
+                if all_ok { ExitCode::SUCCESS } else { ExitCode::FAILURE }
+            }
+            Err(error) => {
+                println!("sandbox: правило не установлено ({error})");
+                ExitCode::FAILURE
+            }
+        };
+    }
     let method = fs::read_to_string("/method.md").unwrap_or_default();
     println!("печать /method.md: {}", hs_core::seal_hash(&method));
     capabilities();
@@ -544,6 +567,27 @@ fn main() -> ExitCode {
                 }
                 Err(error) => {
                     eprintln!("цикл: {error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        Some("sandbox-probe") => {
+            // Проба правила: UDP (оба семейства) обязан быть закрыт, TCP — остаться рабочим.
+            match hs_core::sandbox::probe() {
+                Ok(checks) => {
+                    let mut all_ok = true;
+                    let mut parts: Vec<String> = Vec::new();
+                    for (name, ok) in checks {
+                        if !ok {
+                            all_ok = false;
+                        }
+                        parts.push(format!("{name}: {}", if ok { "да" } else { "НЕТ" }));
+                    }
+                    println!("sandbox: {}", parts.join(", "));
+                    if all_ok { ExitCode::SUCCESS } else { ExitCode::FAILURE }
+                }
+                Err(error) => {
+                    println!("sandbox: правило не установлено ({error})");
                     ExitCode::FAILURE
                 }
             }

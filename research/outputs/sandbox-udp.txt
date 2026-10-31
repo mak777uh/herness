@@ -1,0 +1,8 @@
+правило: seccomp-фильтр на socket(2) — запрещает SOCK_DGRAM и SOCK_RAW для AF_INET/AF_INET6,
+тип сравнивается по маске 0xF (SOCK_CLOEXEC и SOCK_NONBLOCK живут в том же аргументе)
+
+ядро гостя: 6.18.60 (вариант D: C + сеть), -accel whpx
+sandbox: udp4 закрыт: да, udp6 закрыт: да, udp с CLOEXEC закрыт: да, raw закрыт: да, tcp открыт: да
+
+тот же бинарник на обычном Linux (WSL, ядро 6.6):
+sandbox: udp4 закрыт: да, udp6 закрыт: да, udp с CLOEXEC закрыт: да, raw закрыт: да, tcp открыт: да
