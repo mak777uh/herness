@@ -74,6 +74,20 @@ fn init_mode() -> ExitCode {
     let method = fs::read_to_string("/method.md").unwrap_or_default();
     println!("печать /method.md: {}", hs_core::seal_hash(&method));
     spawn_cost(20);
+    // Проверка журнала в этой системе: три записи и коммит, затем чтение.
+    if let Ok(mut journal) = hs_core::journal::Journal::open("/journal.bin") {
+        for index in 0..3 {
+            let _ = journal.append(format!("event-{index}").as_bytes(), hs_core::journal::Kind::Data);
+        }
+        let _ = journal.append(b"commit", hs_core::journal::Kind::Commit);
+        let _ = journal.sync();
+        if let Ok(report) = journal.report() {
+            println!(
+                "журнал: записей {}, коммитов {}, хвост {} байт, статус {}",
+                report.records, report.committed, report.tail_bytes, report.status
+            );
+        }
+    }
     println!("hs-core: система жива, жду");
     loop {
         thread::sleep(Duration::from_secs(3600));
@@ -85,6 +99,38 @@ fn main() -> ExitCode {
     match args.first().map(String::as_str) {
         None => init_mode(),
         Some("init") => init_mode(),
+        Some("journal") => {
+            let Some(path) = args.get(1) else {
+                eprintln!("usage: hs-core journal <файл> [payload]");
+                return ExitCode::from(2);
+            };
+            match hs_core::journal::Journal::open(path) {
+                Ok(mut journal) => {
+                    if let Some(payload) = args.get(2) {
+                        let _ = journal.append(payload.as_bytes(), hs_core::journal::Kind::Data);
+                        let _ = journal.append(b"commit", hs_core::journal::Kind::Commit);
+                        let _ = journal.sync();
+                    }
+                    match journal.report() {
+                        Ok(report) => {
+                            println!(
+                                "записей: {}, коммитов: {}, хвост: {} байт, статус: {}",
+                                report.records, report.committed, report.tail_bytes, report.status
+                            );
+                            ExitCode::SUCCESS
+                        }
+                        Err(error) => {
+                            eprintln!("не проверить журнал: {error}");
+                            ExitCode::from(3)
+                        }
+                    }
+                }
+                Err(error) => {
+                    eprintln!("не открыть журнал: {error}");
+                    ExitCode::from(3)
+                }
+            }
+        }
         Some("seal") => {
             let Some(path) = args.get(1) else {
                 eprintln!("usage: hs-core seal <файл>");

@@ -324,3 +324,6 @@
 | K294 | fsync файла не фиксирует запись каталога: после rename нужен fsync каталога | замер | man7 fsync(2), дословно | research/P20-RESULTS-2026-10-31.md |
 | K295 | UDP в Landlock появляется только в ABI 10; на ABI 7 закрывать seccomp или netns | замер | kernel docs: UDP v10; man7 до v9 | research/P20-RESULTS-2026-10-31.md |
 | K296 | журнал: явный маркер коммита обязателен; «запись есть» ≠ «запись подтверждена» | замер | SQLite nTruncate, Kafka CRC, etcd chained CRC | research/P20-RESULTS-2026-10-31.md |
+| K297 | журнал: граница коммита отдельной записью, иначе «есть» не значит «подтверждено» | замер | тест commit_boundary: 3 записи без коммита дают committed=0 | core-rs/src/journal.rs |
+| K298 | оборванный хвост обнаруживается и уходит в карантин без починки журнала | замер | тест torn_tail: размер файла не изменился | core-rs/src/journal.rs |
+| K299 | fsync в initramfs (RAM) ничего не значит: долговечность проверяется только на диске | замер | журнал писался в /journal.bin в памяти | research/JOURNAL-DESIGN-2026-10-31.md |

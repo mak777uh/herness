@@ -4,6 +4,7 @@
 //! Расхождение — дефект одной из реализаций, а не «другая трактовка».
 
 pub mod clock;
+pub mod journal;
 
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
