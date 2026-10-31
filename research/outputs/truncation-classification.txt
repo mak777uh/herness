@@ -1,0 +1,16 @@
+замер: пустой content у рассуждающей модели — это обрезание, а не молчание
+модель: deepseek-v4.1-flash через go-эндпоинт, 31.10.2026
+
+A) max_tokens=24, вопрос «перечисли три причины…»
+   finish_reason = length
+   content       = "" (длина 0)
+   reasoning     = 24, completion = 24
+   allowance     = 1.269e-05
+
+B) max_tokens=800, «ответь одной строкой»
+   finish_reason = stop
+   content       = 13 символов
+   reasoning     = 46, completion = 51
+
+вывод: при исчерпании бюджета ответ приходит с HTTP 200, но пустым content и finish_reason=length.
+Наш цикл до правки называл это «пустой ответ провайдера» — то есть путал обрезание с молчанием.

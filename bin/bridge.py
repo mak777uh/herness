@@ -81,11 +81,15 @@ def upstream_allowed(url: str) -> tuple[bool, str]:
 
 
 class Bridge:
-    def __init__(self, upstream: str, provider_key: str, local_token: str, log_path: Path | None):
+    def __init__(self, upstream: str, provider_key: str, local_token: str,
+                 log_path: Path | None, session: str | None = None):
         self.upstream = upstream
         self.provider_key = provider_key
         self.local_token = local_token
         self.log_path = log_path
+        # Сессия стабильна на весь процесс: при новом UUID на каждый запрос провайдер не отдаёт
+        # prompt-cache (измерено: cache_read 512 против 0, allowance в 4,7 раза меньше).
+        self.session = session or str(uuid.uuid4())
 
     def log(self, record: dict) -> None:
         line = json.dumps(record, ensure_ascii=False)
@@ -102,7 +106,7 @@ class Bridge:
         request.add_header("Authorization", f"Bearer {self.provider_key}")
         # Провайдер требует браузерный UA и идентификатор сессии; иначе 403/400 до модели.
         request.add_header("User-Agent", BROWSER_UA)
-        request.add_header("x-opencode-session", str(uuid.uuid4()))
+        request.add_header("x-opencode-session", self.session)
         request.add_header("Content-Type", headers.get("content-type", "application/json"))
         try:
             with urllib.request.urlopen(request, timeout=180) as response:
@@ -155,6 +159,16 @@ def make_handler(bridge: Bridge):
             body = self.rfile.read(length)
             status, payload, reason = bridge.forward(
                 body, self.path, {"content-type": self.headers.get("Content-Type", "")})
+            usage = {}
+            try:
+                parsed = json.loads(payload.decode("utf-8"))
+                oc = ((parsed.get("usage") or {}).get("opencode") or {})
+                usage = {
+                    "allowance": oc.get("allowance"),
+                    "cache_read": (oc.get("tokens") or {}).get("cache_read"),
+                }
+            except Exception:  # noqa: BLE001 — тело может быть не JSON
+                usage = {}
             bridge.log({
                 "ts": time.time(),
                 "path": self.path,
@@ -164,6 +178,8 @@ def make_handler(bridge: Bridge):
                 "ms": round((time.monotonic() - started) * 1000),
                 "token": token_fingerprint(token),
                 "reason": reason or None,
+                "usage": usage or None,
+                "session": token_fingerprint(bridge.session),
                 # тела и заголовки не пишем: в них запрос пользователя и ключ провайдера
             })
             self.send_response(status)

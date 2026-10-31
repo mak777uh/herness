@@ -25,6 +25,8 @@ pub enum Reply {
     Text(String),
     End,
     Error(String),
+    /// Ответ оборван лимитом токенов: это не «модель промолчала» и не ошибка формата.
+    Truncated(String),
 }
 
 pub trait ModelLink {
@@ -105,7 +107,7 @@ impl HttpBridge {
                 {"role": "system", "content": self.system},
                 {"role": "user", "content": prompt},
             ],
-            "max_tokens": 300,
+            "max_tokens": 2000,
         });
         serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string())
     }
@@ -149,6 +151,7 @@ impl ModelLink for HttpBridge {
     fn complete(&mut self, prompt: &str) -> Reply {
         match self.call(prompt) {
             Ok(text) => Reply::Text(text),
+            Err(error) if error.starts_with("обрезано") => Reply::Truncated(error),
             Err(error) => Reply::Error(error),
         }
     }
@@ -171,6 +174,20 @@ pub fn parse_response(raw: &str) -> Result<String, String> {
         return Err(format!("мост вернул {status}: {short}"));
     }
     let value: Value = serde_json::from_str(body).map_err(|error| format!("не JSON: {error}"))?;
+
+    // Порядок важен: сначала «оборвано ли», потом «есть ли текст». Рассуждающая модель может
+    // истратить весь бюджет на reasoning и вернуть пустой content при finish_reason=length —
+    // это обрезание, а не молчание (измерено: max_tokens=24 → length, content пуст, reasoning 24).
+    let finish = value
+        .get("choices")
+        .and_then(|choices| choices.get(0))
+        .and_then(|choice| choice.get("finish_reason"))
+        .and_then(|reason| reason.as_str())
+        .unwrap_or("");
+    if finish == "length" {
+        return Err("обрезано по лимиту токенов (finish_reason=length)".to_string());
+    }
+
     value
         .get("choices")
         .and_then(|choices| choices.get(0))

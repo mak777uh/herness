@@ -377,6 +377,11 @@ pub fn run_task(
                 prompt = format!("мост вернул ошибку: {error}");
                 break;
             }
+            Reply::Truncated(reason) => {
+                record(&mut journal, &mut events, "step/error", reason.clone())?;
+                status = "truncated";
+                break;
+            }
         };
         // Сырой ответ в журнал не кладём: кладём длину и начало — этого хватает, чтобы отличить
         // пустой ответ от содержательного, и не хватает, чтобы утечь секретом.

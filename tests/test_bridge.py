@@ -29,6 +29,7 @@ def case(name: str):
 
 class FakeUpstream(BaseHTTPRequestHandler):
     received: list[dict] = []
+    sessions: list[str] = []
 
     def log_message(self, *args):
         return
@@ -40,6 +41,7 @@ class FakeUpstream(BaseHTTPRequestHandler):
             "auth": self.headers.get("Authorization", ""),
             "body": body.decode("utf-8", "replace"),
         })
+        FakeUpstream.sessions.append(self.headers.get("x-opencode-session", ""))
         payload = b'{"choices":[{"message":{"content":"ok"}}]}'
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -136,6 +138,20 @@ def _():
     assert bridge_mod.token_fingerprint("abc") == bridge_mod.token_fingerprint("abc")
     assert bridge_mod.token_fingerprint("abc") != bridge_mod.token_fingerprint("abd")
     assert "abc" not in bridge_mod.token_fingerprint("abc")
+
+
+@case("сессия стабильна между запросами (иначе нет prompt-cache)")
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        upstream, up_port = start(FakeUpstream)
+        port, token = with_bridge(f"http://127.0.0.1:{up_port}/v1/x", Path(tmp) / "log.jsonl")
+        FakeUpstream.sessions = []
+        post(port, "/v1/chat/completions", token, b'{"model":"m"}')
+        post(port, "/v1/chat/completions", token, b'{"model":"m"}')
+        assert len(FakeUpstream.sessions) == 2, FakeUpstream.sessions
+        assert FakeUpstream.sessions[0] == FakeUpstream.sessions[1], FakeUpstream.sessions
+        assert FakeUpstream.sessions[0], "сессия пустая"
+        upstream.shutdown()
 
 
 @case("без ключа провайдера мост не стартует")
