@@ -1,13 +1,30 @@
-//! Минимальный CLI ядра: печать файла и проверка цепочки журнала.
-//! Ничего не требует от дистрибутива — только ядро и статическая линковка.
+//! Минимальный CLI ядра: печать файла, проверка цепочки журнала и режим init.
+//! Без аргументов (как PID 1) работает инициализатором: в такой системе больше ничего нет.
 
 use std::env;
 use std::fs;
 use std::process::ExitCode;
+use std::thread;
+use std::time::Duration;
+
+fn init_mode() -> ExitCode {
+    println!("hs-core: я инициализировал систему сам, PID 1");
+    println!("архитектура: {}", env::consts::ARCH);
+    let method = fs::read_to_string("/method.md").unwrap_or_default();
+    println!("печать /method.md: {}", hs_core::seal_hash(&method));
+    println!("в системе нет sh, нет libc-пакетов, нет менеджера пакетов");
+    println!("hs-core: система жива, жду");
+    loop {
+        thread::sleep(Duration::from_secs(3600));
+    }
+}
 
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     match args.first().map(String::as_str) {
+        // PID 1 приходит без аргументов — это и есть наш init.
+        None => init_mode(),
+        Some("init") => init_mode(),
         Some("seal") => {
             let Some(path) = args.get(1) else {
                 eprintln!("usage: hs-core seal <файл>");
@@ -49,11 +66,11 @@ fn main() -> ExitCode {
             let (last_prev, last_hash) = hs_core::chain(&events)
                 .pop()
                 .unwrap_or((String::new(), String::new()));
-            println!("событий: {}\\nprev: {last_prev}\\nhash: {last_hash}", events.len());
+            println!("событий: {}\nprev: {last_prev}\nhash: {last_hash}", events.len());
             ExitCode::SUCCESS
         }
         _ => {
-            eprintln!("hs-core: seal <файл> | chain <events.jsonl>");
+            eprintln!("hs-core: seal <файл> | chain <events.jsonl> | init");
             ExitCode::from(2)
         }
     }
