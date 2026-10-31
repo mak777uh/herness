@@ -41,6 +41,78 @@ fn unshare_works(flag: libc::c_int) -> bool {
     unsafe { libc::unshare(flag) == 0 }
 }
 
+fn yes(value: bool) -> &'static str {
+    if value {
+        "ok"
+    } else {
+        "нет"
+    }
+}
+
+/// Проба способностей: каждая строка — механизм, а не опция конфига.
+///
+/// Зачем: отсутствие опции иначе всплывает через неделю как загадочный `EPERM` внутри цикла.
+/// Здесь оно видно строкой на загрузке. Про случайность отдельно: `GRND_NONBLOCK` не блокирует,
+/// поэтому нехватка энтропии печатается как «нет», а не превращается в зависание.
+fn capabilities() {
+    let exec = Command::new("/init")
+        .arg("seal")
+        .arg("/method.md")
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false);
+
+    let pipe_ok = {
+        let mut fds = [0i32; 2];
+        // SAFETY: массив из двух дескрипторов — валидный буфер для pipe.
+        unsafe { libc::pipe(fds.as_mut_ptr()) == 0 }
+    };
+
+    let fsync_ok = match fs::File::create("/cap.tmp") {
+        Ok(mut file) => {
+            use std::io::Write;
+            file.write_all(b"cap").is_ok() && file.sync_all().is_ok()
+        }
+        Err(_) => false,
+    };
+
+    let clock_ok = hs_core::clock::uptime_seconds() > 0.0;
+
+    let mut buffer = [0u8; 32];
+    // SAFETY: буфер и его длина передаются согласованно; флаг NONBLOCK исключает зависание.
+    let random = unsafe {
+        libc::getrandom(
+            buffer.as_mut_ptr() as *mut libc::c_void,
+            buffer.len(),
+            libc::GRND_NONBLOCK,
+        )
+    };
+    let random_text = if random == buffer.len() as isize {
+        "ok".to_string()
+    } else if random < 0 {
+        format!("нет ({})", std::io::Error::last_os_error())
+    } else {
+        format!("частично {random}")
+    };
+
+    // SAFETY: вызовы создания дескрипторов без аргументов-указателей.
+    let epoll_ok = unsafe { libc::epoll_create1(0) } >= 0;
+    let eventfd_ok = unsafe { libc::eventfd(0, 0) } >= 0;
+    let memfd_ok = unsafe { libc::memfd_create(b"cap\0".as_ptr() as *const libc::c_char, 0) } >= 0;
+
+    println!(
+        "способы: exec {}, pipe {}, fsync {}, часы {}, случайность {}, epoll {}, eventfd {}, memfd {}",
+        yes(exec),
+        yes(pipe_ok),
+        yes(fsync_ok),
+        yes(clock_ok),
+        random_text,
+        yes(epoll_ok),
+        yes(eventfd_ok),
+        yes(memfd_ok)
+    );
+}
+
 /// Цена порождения процесса: fork+exec себя же с короткой командой.
 fn spawn_cost(iterations: u32) {
     let started = hs_core::clock::uptime_seconds();
@@ -228,6 +300,7 @@ fn init_mode() -> ExitCode {
     println!("время до init: {:.2} с", hs_core::clock::uptime_seconds());
     let method = fs::read_to_string("/method.md").unwrap_or_default();
     println!("печать /method.md: {}", hs_core::seal_hash(&method));
+    capabilities();
     spawn_cost(20);
     journal_durability();
     // Проба namespaces идёт последней: unshare(CLONE_NEWUSER) лишает прав на mount.

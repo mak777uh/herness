@@ -1,0 +1,5 @@
+устройство: qemu -device virtio-rng-pci в обоих прогонах, один initramfs, -accel whpx
+C  (без HW_RANDOM): 1487872 байт
+способы: exec ok, pipe ok, fsync ok, часы ok, случайность нет (Resource temporarily unavailable (os error 11)), epoll ok, eventfd ok, memfd ok
+E  (C + HW_RANDOM_VIRTIO): 1496064 байт (+8192)
+способы: exec ok, pipe ok, fsync ok, часы ok, случайность ok, epoll ok, eventfd ok, memfd ok
