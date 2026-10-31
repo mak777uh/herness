@@ -360,9 +360,19 @@ fn run_tool(name: &str, arg: &str) -> Result<String, String> {
 /// инструменты не возвращали. Что это НЕ делает: не проверяет истинность утверждения — только то,
 /// что в нём есть хотя бы один элемент, действительно пришедший из результата инструмента.
 pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
+    // Опора должна быть «именем», а не общим словом: иначе проверку удовлетворяет «реестр»
+    // или «строка», которые есть в любом отчёте. Требуем цифру или разделитель пути/имени.
+    let looks_specific = |token: &str| -> bool {
+        token.chars().count() >= 4
+            && (token.chars().any(|c| c.is_ascii_digit())
+                || token.contains('/')
+                || token.contains('.')
+                || token.contains('_')
+                || token.contains('-'))
+    };
     let tokens = |text: &str| -> Vec<String> {
         text.split(|c: char| !(c.is_alphanumeric() || c == '/' || c == '.' || c == '_' || c == '-'))
-            .filter(|part| part.chars().count() >= 4)
+            .filter(|part| looks_specific(part))
             .map(|part| part.to_string())
             .collect()
     };
@@ -766,6 +776,18 @@ mod tests {
         assert!(parse_step("давай сделаем что-нибудь").is_err());
         assert!(parse_step("").is_err());
         assert!(parse_step("TOOL").is_err());
+    }
+
+    #[test]
+    fn общее_слово_не_считается_опорой() {
+        // «реестр» есть и в журнале, и в ответе, но это не опора — это вода.
+        assert_eq!(claim_anchor("прочитан реестр", &["ok прочитан реестр".to_string()]), None);
+        let anchor = claim_anchor(
+            "строка 150 в CLAIMS.md",
+            &["ok CLAIMS.md:150: | C-0122 |".to_string()],
+        )
+        .unwrap();
+        assert!(anchor == "150" || anchor == "CLAIMS.md", "{anchor}");
     }
 
     #[test]

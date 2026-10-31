@@ -1,0 +1,15 @@
+1) 9p (общий каталог) на Windows-QEMU недоступен:
+   qemu-system-x86_64: -virtfs local,path=...: There is no option group 'virtfs'
+   qemu-system-x86_64: -virtfs ...: virtfs support is disabled
+
+2) рабочий образ вместо 9p: ext4 64 МБ, 135 файлов (CLAIMS.md, README.md, NOT-CLAIMED.md, docs/, lab/failures/)
+   собирается core-rs/workspace.ps1, монтируется как /dev/vda -> /mnt
+
+3) прогон по настоящим файлам (deepseek-v4.1-flash, 85 с):
+цикл: шагов 6, вызовов 6, событий 28, журнал 29 записей, коммитов 1, статус done, порядок ok
+утверждение: опирается на /mnt/CLAIMS.md
+модель: 610 байт, начало: DONE поиск «ok» дал 31 совпадение в 135 
+
+4) важное: опора найдена (/mnt/CLAIMS.md), но ответ не на тот вопрос — модель искала «ok»,
+   а задача была про тип statistics. Проверка опоры этого НЕ ловит: она проверяет связь с
+   журналом, а не выполнение задачи.

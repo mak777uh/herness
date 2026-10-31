@@ -148,6 +148,21 @@ fn mount_filesystem(source: &str, target: &str, fstype: &str) -> std::io::Result
     }
 }
 
+/// Смонтировать общий каталог хоста (9p) в /mnt. Нужен, чтобы комната видела настоящие файлы,
+/// а не копию-фикстуру: правки на хосте видны сразу, без пересборки образа.
+fn mount_share(tag: &str) -> bool {
+    match mount_filesystem(tag, "/mnt", "9p") {
+        Ok(()) => {
+            println!("share: 9p {tag} смонтирован в /mnt");
+            true
+        }
+        Err(error) => {
+            println!("share: 9p {tag} не смонтирован ({error})");
+            false
+        }
+    }
+}
+
 fn mount_disk() -> bool {
     // devtmpfs уже смонтирован на старте init; повторный mount вернул бы EBUSY и лишнюю строку.
     if !std::path::Path::new("/dev/null").exists() {
@@ -569,7 +584,7 @@ fn init_mode() -> ExitCode {
             .to_string();
         let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
         // Если задана задача и есть диск — монтируем его: задаче нужны файлы, а не только /method.md.
-        if fs::read_to_string("/task").is_ok() && !mount_disk() {
+        if fs::read_to_string("/task").is_ok() && !mount_share("hostshare") && !mount_disk() {
             println!("диск: не смонтировать /dev/vda — задача будет работать без файлов");
         }
         let task = fs::read_to_string("/task")
