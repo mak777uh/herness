@@ -556,9 +556,16 @@ fn init_mode() -> ExitCode {
             .trim()
             .to_string();
         let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
-        let outcome = hs_core::loopmod::run(
+        // Если задана задача и есть диск — монтируем его: задаче нужны файлы, а не только /method.md.
+        if fs::read_to_string("/task").is_ok() && !mount_disk() {
+            println!("диск: не смонтировать /dev/vda — задача будет работать без файлов");
+        }
+        let task = fs::read_to_string("/task")
+            .map(|text| text.trim().to_string())
+            .unwrap_or_else(|_| "запечатать /method.md".to_string());
+        let outcome = hs_core::loopmod::run_task(
             std::path::Path::new("/journal.bin"),
-            std::path::Path::new("/method.md"),
+            &task,
             &mut link,
         );
         match outcome {

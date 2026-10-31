@@ -142,10 +142,154 @@ fn tool_netprobe(_arg: &str) -> Result<String, String> {
     }
 }
 
+/// Пределы инструментов: лучше честный обрезанный ответ, чем съеденная память.
+pub const MAX_FILES: usize = 500;
+pub const MAX_DEPTH: usize = 4;
+pub const MAX_FILE: u64 = 1024 * 1024;
+pub const MAX_MATCHES: usize = 40;
+pub const MAX_READ: usize = 8 * 1024;
+
+fn skip_dir(name: &str) -> bool {
+    matches!(name, ".git" | "target" | "node_modules" | "__pycache__" | ".venv")
+}
+
+fn collect_files(dir: &Path, depth: usize, out: &mut Vec<std::path::PathBuf>) {
+    if depth > MAX_DEPTH || out.len() >= MAX_FILES {
+        return;
+    }
+    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    let mut items: Vec<_> = entries.flatten().collect();
+    items.sort_by_key(|entry| entry.file_name());
+    for entry in items {
+        if out.len() >= MAX_FILES {
+            return;
+        }
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+        match entry.file_type() {
+            Ok(kind) if kind.is_dir() => {
+                if !skip_dir(&name) {
+                    collect_files(&path, depth + 1, out);
+                }
+            }
+            Ok(kind) if kind.is_file() => out.push(path),
+            _ => {}
+        }
+    }
+}
+
+/// `search <каталог> <подстрока>`: искать по содержимому, без shell и без внешних программ.
+///
+/// Зачем своей реализацией, а не через `grep`: в комнате нет ни shell, ни coreutils, а тащить
+/// busybox — это +2,12 МБ (C-0140). Поиск — примитив, его дешевле держать внутри цикла.
+fn tool_search(arg: &str) -> Result<String, String> {
+    let (dir, needle) = arg
+        .split_once(' ')
+        .ok_or_else(|| "нужно: search <каталог> <подстрока>".to_string())?;
+    let needle = needle.trim();
+    if needle.chars().count() < 2 {
+        return Err("подстрока короче двух символов: слишком много совпадений".to_string());
+    }
+    let root = Path::new(dir.trim());
+    if !root.is_dir() {
+        return Err(format!("не каталог: {}", root.display()));
+    }
+    let mut files = Vec::new();
+    collect_files(root, 0, &mut files);
+    let scanned = files.len();
+    let mut matches: Vec<String> = Vec::new();
+    let mut truncated = false;
+    for path in files {
+        let Ok(meta) = std::fs::metadata(&path) else { continue };
+        if meta.len() > MAX_FILE {
+            continue;
+        }
+        let Ok(text) = std::fs::read_to_string(&path) else { continue };
+        for (index, line) in text.lines().enumerate() {
+            if line.contains(needle) {
+                matches.push(format!(
+                    "{}:{}: {}",
+                    path.display(),
+                    index + 1,
+                    line.trim().chars().take(160).collect::<String>()
+                ));
+                if matches.len() >= MAX_MATCHES {
+                    truncated = true;
+                    break;
+                }
+            }
+        }
+        if truncated {
+            break;
+        }
+    }
+    if matches.is_empty() {
+        return Ok(format!("найдено 0 в {scanned} файлах"));
+    }
+    let mut out = format!(
+        "найдено {} в {scanned} файлах{}:",
+        matches.len(),
+        if truncated { " (обрезано)" } else { "" }
+    );
+    for line in matches {
+        out.push('\n');
+        out.push_str(&line);
+    }
+    Ok(out)
+}
+
+/// `list <каталог>`: имена и размеры, без рекурсии.
+fn tool_list(arg: &str) -> Result<String, String> {
+    let root = Path::new(arg.trim());
+    let entries = std::fs::read_dir(root).map_err(|error| format!("не прочитать {}: {error}", root.display()))?;
+    let mut items: Vec<String> = Vec::new();
+    for entry in entries.flatten() {
+        let meta = entry.metadata().ok();
+        let kind = match entry.file_type() {
+            Ok(kind) if kind.is_dir() => "каталог",
+            _ => "файл",
+        };
+        items.push(format!(
+            "{}\t{}\t{}",
+            entry.file_name().to_string_lossy(),
+            kind,
+            meta.map(|m| m.len()).unwrap_or(0)
+        ));
+        if items.len() >= 200 {
+            items.push("… (обрезано)".to_string());
+            break;
+        }
+    }
+    items.sort();
+    Ok(items.join("\n"))
+}
+
+/// `read <файл>`: текст до 8 КиБ, с номерами строк — чтобы модель могла ссылаться на место.
+fn tool_read(arg: &str) -> Result<String, String> {
+    let path = Path::new(arg.trim());
+    let meta = std::fs::metadata(path).map_err(|error| format!("нет файла: {error}"))?;
+    if meta.len() > MAX_FILE {
+        return Err(format!("файл больше {MAX_FILE} байт"));
+    }
+    let text = std::fs::read_to_string(path).map_err(|error| format!("не прочитать: {error}"))?;
+    let mut out = String::new();
+    for (index, line) in text.lines().enumerate() {
+        if out.len() >= MAX_READ {
+            out.push_str("… (обрезано)");
+            break;
+        }
+        out.push_str(&format!("{}: {}\n", index + 1, line));
+    }
+    Ok(out)
+}
+
 fn run_tool(name: &str, arg: &str) -> Result<String, String> {
     match name {
         "seal" => tool_seal(arg),
         "netprobe" => tool_netprobe(arg),
+        "search" => tool_search(arg),
+        "list" => tool_list(arg),
+        "read" => tool_read(arg),
         other => Err(format!("неизвестный инструмент: {other}")),
     }
 }
@@ -201,6 +345,17 @@ pub fn run(
     method_path: &Path,
     link: &mut dyn ModelLink,
 ) -> std::io::Result<Outcome> {
+    let task = format!("запечатать {}", method_path.display());
+    run_task(journal_path, &task, link)
+}
+
+/// Прогон с произвольной задачей: нужен, когда задача не «запечатать файл», а, например,
+/// «найти строку в каталоге». Задача — параметр, а не зашитая строка.
+pub fn run_task(
+    journal_path: &Path,
+    task: &str,
+    link: &mut dyn ModelLink,
+) -> std::io::Result<Outcome> {
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
     let mut steps = 0usize;
@@ -208,9 +363,8 @@ pub fn run(
     let mut attempts = 0usize;
     let mut status: &'static str = "no-done";
 
-    let task = format!("запечатать {}", method_path.display());
     record(&mut journal, &mut events, "run/start", format!("task: {task}"))?;
-    let mut prompt = task;
+    let mut prompt = task.to_string();
 
     while attempts < MAX_STEPS && steps < MAX_STEPS {
         attempts += 1;
@@ -558,6 +712,62 @@ mod tests {
         let outcome = run(&journal, &method, &mut provider).unwrap();
         assert_eq!(outcome.status, "no-done");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    fn fixture(tag: &str) -> std::path::PathBuf {
+        // Имя уникально для теста: тесты идут параллельно в одном процессе, общий каталог
+        // приводил к тому, что один тест удалял фикстуру другого.
+        let dir = std::env::temp_dir().join(format!("hs-tools-{}-{}", std::process::id(), tag));
+        std::fs::create_dir_all(dir.join("sub")).unwrap();
+        std::fs::write(dir.join("a.md"), "первая строка\nвторая: МАРКЕР\n").unwrap();
+        std::fs::write(dir.join("sub/b.md"), "тоже МАРКЕР тут\n").unwrap();
+        std::fs::write(dir.join("c.txt"), "без совпадений\n").unwrap();
+        dir
+    }
+
+    #[test]
+    fn поиск_находит_в_файлах_и_подкаталогах() {
+        let dir = fixture("search");
+        let out = tool_search(&format!("{} МАРКЕР", dir.display())).unwrap();
+        assert!(out.contains("найдено 2"), "{out}");
+        assert!(out.contains("a.md:2:"), "{out}");
+        assert!(out.contains("b.md:1:"), "{out}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn поиск_без_совпадений_говорит_об_этом_числом() {
+        let dir = fixture("none");
+        let out = tool_search(&format!("{} нетакого", dir.display())).unwrap();
+        assert!(out.starts_with("найдено 0"), "{out}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn поиск_отбивает_короткую_иголку_и_не_каталог() {
+        let dir = fixture("short");
+        assert!(tool_search(&format!("{} и", dir.display())).is_err());
+        assert!(tool_search("/нет/такого иго").is_err());
+        assert!(tool_search("без_пробела").is_err());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn чтение_даёт_номера_строк() {
+        let dir = fixture("read");
+        let out = tool_read(&format!("{}", dir.join("a.md").display())).unwrap();
+        assert!(out.starts_with("1: первая строка"), "{out}");
+        assert!(out.contains("МАРКЕР"), "{out}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn список_перечисляет_имена_и_типы() {
+        let dir = fixture("list");
+        let out = tool_list(&format!("{}", dir.display())).unwrap();
+        assert!(out.contains("a.md"), "{out}");
+        assert!(out.contains("каталог"), "{out}");
         std::fs::remove_dir_all(&dir).ok();
     }
 
