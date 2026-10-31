@@ -1,0 +1,6 @@
+cargo test --lib: test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+разбор шага: TOOL/DONE, мусор и пустой ответ — ошибка формата; предел попыток ограничен
+гость, /mode=loop (vmlinuz-own-rng, -accel whpx):
+время до init: 0.60 с
+цикл: шагов 1, вызовов 1, событий 7, журнал 8 записей, коммитов 1, статус done, порядок ok
+порядок из файла: ok

@@ -21,6 +21,9 @@ use crate::journal::{Journal, Kind};
 /// Больше шагов, чем это, скриптовый провайдер не делает: предохранитель от вечного цикла.
 pub const MAX_STEPS: usize = 64;
 
+/// Предел на ответ провайдера: длинный ответ — ошибка формата, а не повод съесть память.
+pub const MAX_REPLY: usize = 4096;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Step {
     Tool { name: String, arg: String },
@@ -28,45 +31,75 @@ pub enum Step {
 }
 
 pub trait Provider {
-    fn next_step(&mut self) -> Option<Step>;
+    /// Ответ модели — текст. Провайдер не знает про шаги: разбор шага — работа цикла, иначе
+    /// формат протокола расползётся по провайдерам и перестанет быть проверяемым.
+    fn respond(&mut self, prompt: &str) -> Option<String>;
 }
 
-/// Провайдер-сценарий: последовательность шагов, заданная заранее.
+/// Провайдер-сценарий: последовательность ответов, заданная заранее.
 pub struct Scripted {
-    steps: Vec<Step>,
+    replies: Vec<String>,
     index: usize,
 }
 
 impl Scripted {
-    pub fn new(steps: Vec<Step>) -> Self {
-        Scripted { steps, index: 0 }
+    pub fn new(replies: Vec<String>) -> Self {
+        Scripted { replies, index: 0 }
     }
 
     /// Длинный сценарий: нужен, чтобы убийство ВМ попадало внутрь блока, а не между блоками.
     pub fn seal_many(method: &str, steps: usize) -> Self {
-        let mut plan = Vec::new();
-        for _ in 0..steps {
-            plan.push(Step::Tool { name: "seal".to_string(), arg: method.to_string() });
-        }
-        plan.push(Step::Done { text: "готово".to_string() });
-        Scripted::new(plan)
+        let mut replies: Vec<String> = (0..steps).map(|_| format!("TOOL seal {method}")).collect();
+        replies.push("DONE готово".to_string());
+        Scripted::new(replies)
     }
 
     /// Стандартный сценарий прогона: запечатать методологию, затем закончить.
     pub fn seal_method(method: &str) -> Self {
         Scripted::new(vec![
-            Step::Tool { name: "seal".to_string(), arg: method.to_string() },
-            Step::Done { text: "методология запечатана".to_string() },
+            format!("TOOL seal {method}"),
+            "DONE методология запечатана".to_string(),
         ])
     }
 }
 
 impl Provider for Scripted {
-    fn next_step(&mut self) -> Option<Step> {
-        let step = self.steps.get(self.index).cloned();
+    fn respond(&mut self, _prompt: &str) -> Option<String> {
+        let reply = self.replies.get(self.index).cloned();
         self.index += 1;
-        step
+        reply
     }
+}
+
+/// Разобрать ответ провайдера в шаг. Ошибка — это результат, а не пустая строка.
+pub fn parse_step(reply: &str) -> Result<Step, String> {
+    if reply.len() > MAX_REPLY {
+        return Err(format!("ответ длиннее {MAX_REPLY} байт"));
+    }
+    let line = reply
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .unwrap_or_default();
+    if line.is_empty() {
+        return Err("пустой ответ провайдера".to_string());
+    }
+    if let Some(rest) = line.strip_prefix("TOOL ") {
+        let mut parts = rest.splitn(2, ' ');
+        let name = parts.next().unwrap_or_default().trim().to_string();
+        let arg = parts.next().unwrap_or_default().trim().to_string();
+        if name.is_empty() {
+            return Err("TOOL без имени инструмента".to_string());
+        }
+        return Ok(Step::Tool { name, arg });
+    }
+    if let Some(rest) = line.strip_prefix("DONE") {
+        return Ok(Step::Done { text: rest.trim().to_string() });
+    }
+    Err(format!(
+        "не понял шаг: {}",
+        line.chars().take(60).collect::<String>()
+    ))
 }
 
 #[derive(Debug, Clone)]
@@ -116,6 +149,13 @@ fn tool_seal(arg: &str) -> Result<String, String> {
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
         Err(format!("код {:?}: {stdout}{stderr}", output.status.code()))
+    }
+}
+
+fn run_tool(name: &str, arg: &str) -> Result<String, String> {
+    match name {
+        "seal" => tool_seal(arg),
+        other => Err(format!("неизвестный инструмент: {other}")),
     }
 }
 
@@ -174,35 +214,63 @@ pub fn run(
     let mut events: Vec<Event> = Vec::new();
     let mut steps = 0usize;
     let mut calls = 0usize;
+    let mut attempts = 0usize;
     let mut status: &'static str = "no-done";
 
-    record(
-        &mut journal,
-        &mut events,
-        "run/start",
-        format!("task: запечатать {}", method_path.display()),
-    )?;
+    let task = format!("запечатать {}", method_path.display());
+    record(&mut journal, &mut events, "run/start", format!("task: {task}"))?;
+    let mut prompt = task;
 
-    while steps < MAX_STEPS {
-        let Some(step) = provider.next_step() else { break };
+    while attempts < MAX_STEPS && steps < MAX_STEPS {
+        attempts += 1;
+        let Some(reply) = provider.respond(&prompt) else { break };
+        // Сырой ответ в журнал не кладём: кладём длину и начало — этого хватает, чтобы отличить
+        // пустой ответ от содержательного, и не хватает, чтобы утечь секретом.
+        let preview = reply
+            .lines()
+            .map(str::trim)
+            .find(|line| !line.is_empty())
+            .unwrap_or_default();
+        record(
+            &mut journal,
+            &mut events,
+            "model/reply",
+            format!(
+                "{} байт, начало: {}",
+                reply.len(),
+                preview.chars().take(40).collect::<String>()
+            ),
+        )?;
+
+        let step = match parse_step(&reply) {
+            Ok(step) => step,
+            Err(error) => {
+                record(&mut journal, &mut events, "step/error", error.clone())?;
+                status = "bad-step";
+                prompt = format!(
+                    "{error}. Ответь одной строкой: TOOL <имя> <аргумент> или DONE <итог>."
+                );
+                continue;
+            }
+        };
+
         match step {
             Step::Tool { name, arg } => {
                 steps += 1;
                 record(&mut journal, &mut events, "tool/call", format!("{name} {arg}"))?;
-                let result = match name.as_str() {
-                    "seal" => tool_seal(&arg),
-                    other => Err(format!("неизвестный инструмент: {other}")),
-                };
+                let result = run_tool(&name, &arg);
                 calls += 1;
                 match result {
                     Ok(text) => {
-                        record(&mut journal, &mut events, "tool/result", format!("ok {text}"))?
+                        record(&mut journal, &mut events, "tool/result", format!("ok {text}"))?;
+                        prompt = format!("{name}: ok {text}");
                     }
                     Err(error) => {
-                        record(&mut journal, &mut events, "tool/result", format!("err {error}"))?
+                        record(&mut journal, &mut events, "tool/result", format!("err {error}"))?;
+                        prompt = format!("{name}: ошибка {error}");
                     }
                 }
-                record(&mut journal, &mut events, "step", format!("{steps} ok"))?;
+                record(&mut journal, &mut events, "step", format!("{steps}"))?;
             }
             Step::Done { text } => {
                 status = "done";
@@ -213,12 +281,12 @@ pub fn run(
     }
 
     if status != "done" {
-        record(
-            &mut journal,
-            &mut events,
-            "run/end",
-            "шаги кончились без сигнала завершения".to_string(),
-        )?;
+        let reason = if status == "bad-step" {
+            format!("провайдер не дал разбираемого шага за {attempts} попыток")
+        } else {
+            format!("шаги кончились без сигнала завершения (попыток {attempts})")
+        };
+        record(&mut journal, &mut events, "run/end", reason)?;
     }
 
     // Маркер коммита — граница: всё до него считается завершённым набором событий.
@@ -288,9 +356,11 @@ fn decode_event(payload: &[u8]) -> Event {
     let detail = parts.next().unwrap_or_default().to_string();
     let kind: &'static str = match raw {
         "run/start" => "run/start",
+        "model/reply" => "model/reply",
         "tool/call" => "tool/call",
         "tool/result" => "tool/result",
         "step" => "step",
+        "step/error" => "step/error",
         "run/end" => "run/end",
         _ => "?",
     };
@@ -383,6 +453,77 @@ mod tests {
     }
 
     #[test]
+    fn разбор_шага_инструмент() {
+        assert_eq!(
+            parse_step("TOOL seal /method.md").unwrap(),
+            Step::Tool { name: "seal".to_string(), arg: "/method.md".to_string() }
+        );
+    }
+
+    #[test]
+    fn разбор_шага_завершение() {
+        assert_eq!(
+            parse_step("DONE всё готово").unwrap(),
+            Step::Done { text: "всё готово".to_string() }
+        );
+    }
+
+    #[test]
+    fn разбор_шага_мусор_это_ошибка_а_не_пропуск() {
+        assert!(parse_step("давай сделаем что-нибудь").is_err());
+        assert!(parse_step("").is_err());
+        assert!(parse_step("TOOL").is_err());
+    }
+
+    #[test]
+    fn мусор_от_провайдера_порядок_остаётся_целым() {
+        let dir = std::env::temp_dir().join(format!("hs-loop-bad-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let journal = dir.join("journal.bin");
+        let method = dir.join("method.md");
+        std::fs::write(&method, "тело\n").unwrap();
+
+        let mut provider = Scripted::new(vec!["просто текст".to_string()]);
+        let outcome = run(&journal, &method, &mut provider).unwrap();
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        assert_eq!(outcome.steps, 0);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn пустой_ответ_модели_это_ошибка_формата() {
+        let dir = std::env::temp_dir().join(format!("hs-loop-empty-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let journal = dir.join("journal.bin");
+        let method = dir.join("method.md");
+        std::fs::write(&method, "тело\n").unwrap();
+
+        let mut provider = Scripted::new(vec![String::new()]);
+        let outcome = run(&journal, &method, &mut provider).unwrap();
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn неизвестный_инструмент_даёт_ошибку_в_результате() {
+        let dir = std::env::temp_dir().join(format!("hs-loop-unk-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let journal = dir.join("journal.bin");
+        let method = dir.join("method.md");
+        std::fs::write(&method, "тело\n").unwrap();
+
+        let mut provider = Scripted::new(vec![
+            "TOOL rm -rf /".to_string(),
+            "DONE конец".to_string(),
+        ]);
+        let outcome = run(&journal, &method, &mut provider).unwrap();
+        assert_eq!(outcome.status, "done");
+        assert_eq!(outcome.calls, 1);
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn прогон_пишет_журнал_и_соблюдает_порядок() {
         let dir = std::env::temp_dir().join(format!("hs-loop-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
@@ -397,8 +538,10 @@ mod tests {
         assert_eq!(outcome.calls, 1);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         // 5 событий: start, call, result, step, end; плюс маркер коммита.
-        assert_eq!(outcome.events, 5);
-        assert_eq!(outcome.records, 6);
+        // 7 событий: start, ответ(TOOL), вызов, результат, шаг, ответ(DONE), конец;
+        // плюс маркер коммита.
+        assert_eq!(outcome.events, 7);
+        assert_eq!(outcome.records, 8);
         assert_eq!(outcome.commits, 1);
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -411,10 +554,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело\n").unwrap();
 
-        let mut provider = Scripted::new(vec![Step::Tool {
-            name: "seal".to_string(),
-            arg: method.to_str().unwrap().to_string(),
-        }]);
+        let mut provider = Scripted::new(vec![format!("TOOL seal {}", method.display())]);
         let outcome = run(&journal, &method, &mut provider).unwrap();
         assert_eq!(outcome.status, "no-done");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
