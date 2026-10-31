@@ -20,7 +20,9 @@ def case(name: str, should_raise: bool):
 
 
 def run_coverage(registry: Path) -> tuple[int, str]:
-    completed = subprocess.run([sys.executable, "bin/coverage.py", str(registry)], cwd=ROOT,
+    out = registry.parent / "coverage-out.json"
+    completed = subprocess.run(
+        [sys.executable, "bin/coverage.py", str(registry), "--out", str(out)], cwd=ROOT,
                                capture_output=True, text=True, encoding="utf-8", errors="replace")
     return completed.returncode, completed.stdout
 

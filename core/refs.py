@@ -181,6 +181,13 @@ def _best_snippet(text: str, query_tokens: list[str]) -> str:
     return best[:240]
 
 
+def available() -> bool:
+    """Есть ли справочник на диске: пусто ≠ успех."""
+    if not CACHE.exists():
+        return False
+    return any(CACHE.rglob("*.md"))
+
+
 def search(query: str, k: int = 8) -> list[dict]:
     qs = _tokens(query)
     if not qs or not CACHE.exists():

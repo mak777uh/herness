@@ -85,7 +85,7 @@ def main(argv: list[str]) -> int:
     print("\nследующие гипотезы:")
     for hypothesis in program["next_hypotheses"]:
         print("  -", hypothesis)
-    print("\nдальше: hs lab validate | hs coverage | hs review-debt | hs gates")
+    print("\nдальше: hs lab validate | python bin/coverage.py | python bin/review_debt.py | hs gates")
     return 0
 
 

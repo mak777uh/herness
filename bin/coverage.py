@@ -18,7 +18,12 @@ COLUMNS = 7
 
 def main(argv=None) -> int:
     global CLAIMS
-    argv = argv if argv is not None else sys.argv[1:]
+    argv = list(argv if argv is not None else sys.argv[1:])
+    out_path = None
+    if "--out" in argv:
+        index = argv.index("--out")
+        out_path = Path(argv[index + 1])
+        del argv[index:index + 2]
     if argv:
         CLAIMS = Path(argv[0])
     rows = []
@@ -76,7 +81,7 @@ def main(argv=None) -> int:
         for row in open_rows[:12]:
             print(f"  {row['id']}: {row['why']}")
 
-    out = ROOT / "research" / "claims-coverage.json"
+    out = out_path if out_path else ROOT / "research" / "claims-coverage.json"
     out.write_text(json.dumps({"total": total, "closed": closed, "malformed": malformed,
                                "coverage": round(coverage, 3), "verdict": verdict,
                                "open": open_rows}, ensure_ascii=False, indent=1),

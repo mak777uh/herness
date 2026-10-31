@@ -191,7 +191,10 @@ def cmd_doctor(args) -> int:
 
     if cli:
         rc, text = run_capture(cli_command(cli, ["--version"]), timeout=60)
-        checks.append((rc == 0, f"dsh --version -> {first_line(text) or rc}"))
+        looks_like_error = any(marker in text for marker in
+                              ("ERROR:", "Error:", "Отказано в доступе", "Unable to", "panic"))
+        checks.append((rc == 0 and not looks_like_error,
+                       f"dsh --version -> {first_line(text) or rc}"))
 
     home = Path(args.home).resolve() if args.home else HOME
     home.mkdir(parents=True, exist_ok=True)
@@ -432,6 +435,9 @@ def cmd_refs(args) -> int:
     if args.action == "search":
         if not args.query:
             print("нужен запрос: refs search \"<что ищем>\"", file=sys.stderr)
+            return 2
+        if not refs.available():
+            print("справочника нет: refs sync (пусто ≠ успех)", file=sys.stderr)
             return 2
         print(refs.render_search(args.query, args.k))
         return 0
@@ -680,7 +686,8 @@ def gate_journals(root: Path) -> list[str]:
     except Exception as exc:  # noqa: BLE001
         return [f"проверка журналов недоступна: {type(exc).__name__}"]
     problems = []
-    candidates = [p for p in (root / "runs").glob("*") if p.is_dir()]
+    # мусор негативных тестов (test-*) журналами не считается
+    candidates = [p for p in (root / "runs").glob("*") if p.is_dir() and not p.name.startswith("test-")]
     runs = sorted(candidates, key=lambda p: p.stat().st_mtime)[-60:]
     checked = 0
     for run_dir in runs:
@@ -1481,10 +1488,37 @@ def gate_vectors(root: Path) -> list[str]:
     return problems
 
 
+def gate_coverage(root: Path) -> list[str]:
+    """Артефакт покрытия обязан совпадать с живым пересчётом по CLAIMS.md."""
+    import subprocess
+
+    artifact = root / "research" / "claims-coverage.json"
+    claims = root / "CLAIMS.md"
+    if not claims.exists():
+        return ["нет CLAIMS.md"]
+    if not artifact.exists():
+        return ["нет research/claims-coverage.json"]
+    stored = json.loads(artifact.read_text(encoding="utf-8"))
+    probe = subprocess.run([__import__("sys").executable, str(root / "bin" / "coverage.py"),
+                            str(claims), "--out", str(root / "research" / "claims-coverage.tmp.json")],
+                           cwd=str(root), capture_output=True, text=True, timeout=300,
+                           encoding="utf-8", errors="replace")
+    fresh_path = root / "research" / "claims-coverage.tmp.json"
+    if probe.returncode not in (0, 1) or not fresh_path.exists():
+        return [f"пересчёт покрытия не удался: {probe.stderr.strip()[:80]}"]
+    fresh = json.loads(fresh_path.read_text(encoding="utf-8"))
+    fresh_path.unlink(missing_ok=True)
+    problems = []
+    for field in ("total", "closed", "malformed", "verdict"):
+        if stored.get(field) != fresh.get(field):
+            problems.append(f"покрытие: {field} {stored.get(field)!r} в артефакте против {fresh.get(field)!r} живьём")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors), ("покрытие", gate_coverage)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
