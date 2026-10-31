@@ -435,6 +435,11 @@ fn report_loop(outcome: &hs_core::loopmod::Outcome) {
     for problem in &outcome.problems {
         println!("  [!] порядок: {problem}");
     }
+    match &outcome.anchor {
+        Some(found) => println!("утверждение: опирается на {found}"),
+        None if outcome.status == "done" => println!("утверждение: без опоры (не должно случаться)"),
+        None => println!("утверждение: без опоры в журнале"),
+    }
 }
 
 fn spawn_check() -> ExitCode {
@@ -548,6 +553,13 @@ fn init_mode() -> ExitCode {
     }
 
     if mode_text == "loop-bridge" {
+        if env::var(hs_core::loopmod::LOOP_GUARD).is_ok() {
+            // Рекурсия: цикл запустил сам себя. Это не «ещё один прогон», а утечка памяти.
+            println!("цикл: отказ — уже внутри цикла (защита от рекурсии)");
+            loop {
+                thread::sleep(Duration::from_secs(3600));
+            }
+        }
         // Первый настоящий круг: цикл в комнате зовёт модель через мост на хосте (plain HTTP,
         // без TLS внутри — ADR-0046). Адрес 10.0.2.2 — это хост в сети QEMU user-mode.
         let token = fs::read_to_string("/bridge-token").unwrap_or_default().trim().to_string();

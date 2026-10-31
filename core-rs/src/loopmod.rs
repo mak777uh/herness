@@ -91,6 +91,8 @@ pub struct Outcome {
     pub commits: usize,
     pub status: &'static str,
     pub problems: Vec<String>,
+    /// Чем подтверждено финальное утверждение: элемент, найденный и в ответе, и в журнале.
+    pub anchor: Option<String>,
 }
 
 impl Outcome {
@@ -111,10 +113,13 @@ fn record(
 }
 
 /// Инструмент `seal`: запечатать файл, переиспользовав себя же (режим `seal`).
+/// Признак «мы уже внутри цикла». Ставится дочерним процессам, чтобы они не запускали второй.
+pub const LOOP_GUARD: &str = "HS_LOOP_ACTIVE";
+
 fn tool_seal(arg: &str) -> Result<String, String> {
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
     let mut command = Command::new(exe);
-    command.arg("seal").arg(arg);
+    command.arg("seal").arg(arg).env(LOOP_GUARD, "1");
     // Правило песочницы ставится до exec и наследуется потомками инструмента.
     crate::sandbox::harden_command(&mut command);
     let output = command
@@ -134,7 +139,7 @@ fn tool_netprobe(_arg: &str) -> Result<String, String> {
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
     let shown = exe.display().to_string();
     let mut command = Command::new(&exe);
-    command.arg("sandbox-probe");
+    command.arg("sandbox-probe").env(LOOP_GUARD, "1");
     crate::sandbox::harden_command(&mut command);
     let output = command
         .output()
@@ -349,6 +354,27 @@ fn run_tool(name: &str, arg: &str) -> Result<String, String> {
     }
 }
 
+/// Опора утверждения: минимальная механическая проверка «сказанное взялось из журнала».
+///
+/// Что это ловит: модель закончила работу, ничего не выполнив, или придумала путь/число, которого
+/// инструменты не возвращали. Что это НЕ делает: не проверяет истинность утверждения — только то,
+/// что в нём есть хотя бы один элемент, действительно пришедший из результата инструмента.
+pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
+    let tokens = |text: &str| -> Vec<String> {
+        text.split(|c: char| !(c.is_alphanumeric() || c == '/' || c == '.' || c == '_' || c == '-'))
+            .filter(|part| part.chars().count() >= 4)
+            .map(|part| part.to_string())
+            .collect()
+    };
+    let haystack: Vec<String> = tool_results.iter().flat_map(|r| tokens(r)).collect();
+    for token in tokens(final_text) {
+        if haystack.contains(&token) {
+            return Some(token);
+        }
+    }
+    None
+}
+
 /// Проверка порядка событий — чистая функция, чтобы её можно было проверить тестом.
 pub fn verify_order(events: &[Event]) -> Vec<String> {
     let mut problems = Vec::new();
@@ -427,6 +453,7 @@ pub fn run_task_with_budget(
     let mut calls = 0usize;
     let mut attempts = 0usize;
     let mut spent: f64 = 0.0;
+    let mut anchor: Option<String> = None;
     let started = std::time::Instant::now();
     let mut status: &'static str = "no-done";
 
@@ -517,7 +544,26 @@ pub fn run_task_with_budget(
                 }
             }
             Step::Done { text } => {
-                status = "done";
+                // Опора проверяется до закрытия прогона: утверждение — часть результата, а не
+                // событие после него. Иначе порядок «… → run/end» перестаёт быть последним.
+                let results: Vec<String> = events
+                    .iter()
+                    .filter(|event| event.kind == "tool/result")
+                    .map(|event| event.detail.clone())
+                    .collect();
+                anchor = claim_anchor(&text, &results);
+                match &anchor {
+                    Some(found) => {
+                        record(&mut journal, &mut events, "claim/anchored", found.clone())?
+                    }
+                    None => record(
+                        &mut journal,
+                        &mut events,
+                        "claim/unverified",
+                        "в ответе нет ни одного элемента из результатов инструментов".to_string(),
+                    )?,
+                }
+                status = if anchor.is_some() { "done" } else { "unverified" };
                 record(&mut journal, &mut events, "run/end", text)?;
                 break;
             }
@@ -547,6 +593,7 @@ pub fn run_task_with_budget(
         commits: report.committed,
         status,
         problems,
+        anchor,
     })
 }
 
@@ -605,6 +652,8 @@ fn decode_event(payload: &[u8]) -> Event {
         "tool/result" => "tool/result",
         "step" => "step",
         "step/error" => "step/error",
+        "claim/anchored" => "claim/anchored",
+        "claim/unverified" => "claim/unverified",
         "run/end" => "run/end",
         _ => "?",
     };
@@ -720,6 +769,16 @@ mod tests {
     }
 
     #[test]
+    fn утверждение_с_опорой_считается_подтверждённым() {
+        assert_eq!(
+            claim_anchor("найдено в /mnt/notes/log.md", &["ok /mnt/notes/log.md:3: МАРКЕР".to_string()]),
+            Some("/mnt/notes/log.md".to_string())
+        );
+        assert_eq!(claim_anchor("всё хорошо", &["ok 42".to_string()]), None);
+        assert_eq!(claim_anchor("путь /tmp/x", &[]), None);
+    }
+
+    #[test]
     fn мусор_от_провайдера_порядок_остаётся_целым() {
         let dir = std::env::temp_dir().join(format!("hs-loop-bad-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
@@ -761,7 +820,8 @@ mod tests {
             "DONE конец".to_string(),
         ]);
         let outcome = run(&journal, &method, &mut provider).unwrap();
-        assert_eq!(outcome.status, "done");
+        // Инструмент неизвестен, значит результата нет, значит и опоры в журнале нет.
+        assert_eq!(outcome.status, "unverified");
         assert_eq!(outcome.calls, 1);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         std::fs::remove_dir_all(&dir).ok();
@@ -777,15 +837,16 @@ mod tests {
 
         let mut provider = crate::model::Stub::seal_method(method.to_str().unwrap());
         let outcome = run(&journal, &method, &mut provider).unwrap();
-        assert_eq!(outcome.status, "done");
+        // Хеш печати в ответе не назван, значит опоры нет: это unverified, а не done.
+        assert_eq!(outcome.status, "unverified");
         assert_eq!(outcome.steps, 1);
         assert_eq!(outcome.calls, 1);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         // 5 событий: start, call, result, step, end; плюс маркер коммита.
         // 7 событий: start, ответ(TOOL), вызов, результат, шаг, ответ(DONE), конец;
         // плюс маркер коммита.
-        assert_eq!(outcome.events, 7);
-        assert_eq!(outcome.records, 8);
+        assert_eq!(outcome.events, 9);
+        assert_eq!(outcome.records, 10);
         assert_eq!(outcome.commits, 1);
         std::fs::remove_dir_all(&dir).ok();
     }
