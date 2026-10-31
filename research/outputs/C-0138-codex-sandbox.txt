@@ -1,0 +1,33 @@
+запись: ev-0a867903b68e
+url: https://raw.githubusercontent.com/openai/codex/main/codex-rs/linux-sandbox/README.md
+sha256: 740f4a60ddb37b4e415cc3fa8da5c49d2d16a0b6b737527bf53d074c53bc220f (7 181 байт, HTTP 200)
+выдержки из тела (grep, без правок):
+The helper uses bubblewrap for filesystem and namespace isolation, and seccomp
+for syscall filtering. `src/seccomp.rs` installs `PR_SET_NO_NEW_PRIVS` and the
+seccomp filters; it also retains the legacy Landlock filesystem implementation.
+`--argv0`, the helper keeps using system bubblewrap and switches to a
+path when bubblewrap cannot create user namespaces. WSL2 follows the normal
+Linux bubblewrap path. WSL1 is not supported for bubblewrap sandboxing because
+commands that would enter the bubblewrap path.
+- Bubblewrap is the default filesystem sandbox.
+- If bubblewrap cannot create user namespaces, Codex surfaces a startup warning
+- WSL2 uses the normal Linux bubblewrap path.
+- WSL1 is not supported for bubblewrap sandboxing; Codex rejects sandboxed
+shell commands that would require the bubblewrap path before invoking `bwrap`.
+- Filesystem-restricted execution requires bubblewrap. The legacy Landlock
+Unix sockets. Disable `features.use_legacy_landlock` when upgrading.
+`SandboxPolicy` model stay on bubblewrap so nested read-only or denied
+- When bubblewrap is active, the helper applies `PR_SET_NO_NEW_PRIVS` and a
+seccomp filter in-process after establishing the filesystem view. Restricted
+- When bubblewrap is active, the filesystem is read-only by default via `--ro-bind / /`.
+- When bubblewrap is active, writable roots are layered with `--bind <root> <root>`.
+- When bubblewrap is active, protected subpaths under writable roots (for
+- When bubblewrap is active, overlapping split-policy
+- When bubblewrap is active, unreadable glob entries are expanded before
+launching the sandbox and matching files are masked in bubblewrap:
+- When bubblewrap is active, symlink-in-path and non-existent protected paths inside
+- When bubblewrap is active, the helper explicitly isolates the user namespace via
+- When bubblewrap is active and network is restricted without proxy routing, the helper also
+- In managed proxy mode, after the bridge is live, seccomp allows IP sockets
+- When bubblewrap is active, it mounts a fresh `/proc` via `--proc /proc` by default.
+Filesystem, user, IPC, network, seccomp, and existing container `/proc` masks

@@ -225,6 +225,24 @@ def _cmd_verify(argv: list[str]) -> int:
     return {"FRESH": 0, "CHANGED": 1, "GONE": 2, "UNREACHABLE": 2, "NO_BODY": 2}.get(verdict, 2)
 
 
+def _cmd_show(argv: list[str]) -> int:
+    """Показать запись без сети: что именно мы зафиксировали. Нужно для утверждений, у которых
+    проверка не должна зависеть от доступности источника (гейты не ходят в интернет)."""
+    if not argv:
+        print("нужен id или URL", file=sys.stderr)
+        return 3
+    target = argv[0]
+    entries = load()
+    entry = latest(entries, ev_id=target) if target.startswith("ev-") else latest(entries, url=target)
+    if entry is None:
+        print(f"{target}: нет в индексе — сначала fetch", file=sys.stderr)
+        return 3
+    for field in ("id", "url", "status", "kind", "bytes", "sha256", "body_stored",
+                  "fetched_at", "note"):
+        print(f"{field}: {entry.get(field)}")
+    return 0
+
+
 def _cmd_list(argv: list[str]) -> int:
     limit = 20
     if "--limit" in argv:
@@ -241,13 +259,15 @@ def _cmd_list(argv: list[str]) -> int:
 def main(argv: list[str] | None = None) -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
     if not argv:
-        print("fetch <url> [--note TEXT] | verify <id|url> | list [--limit N]", file=sys.stderr)
+        print("fetch <url> [--note TEXT] | verify <id|url> | show <id|url> | list [--limit N]", file=sys.stderr)
         return 3
     command, rest = argv[0], argv[1:]
     if command == "fetch":
         return _cmd_fetch(rest)
     if command == "verify":
         return _cmd_verify(rest)
+    if command == "show":
+        return _cmd_show(rest)
     if command == "list":
         return _cmd_list(rest)
     print(f"неизвестная команда: {command}", file=sys.stderr)
