@@ -1522,10 +1522,39 @@ def gate_selfref(root: Path) -> list[str]:
     return selfref.problems(root)
 
 
+def gate_bigfiles(root: Path) -> list[str]:
+    """Отслеживаемые файлы больше 1 МБ: данные не должны попадать в репозиторий.
+
+    Зачем: образ диска на 64 МБ попал в коммит и раздул историю (F-0023). Гейт смотрит только
+    то, что реально в индексе, а не всё, что лежит в рабочем каталоге.
+    """
+    import subprocess
+    limit = 1024 * 1024
+    problems: list[str] = []
+    try:
+        listed = subprocess.run(["git", "ls-files", "-z"], cwd=str(root), capture_output=True,
+                                text=True, encoding="utf-8", timeout=120)
+    except Exception as exc:  # noqa: BLE001
+        return [f"git ls-files недоступен: {type(exc).__name__}"]
+    if listed.returncode != 0:
+        return ["git ls-files вернул ошибку"]
+    for name in listed.stdout.split("\0"):
+        if not name:
+            continue
+        path = root / name
+        try:
+            size = path.stat().st_size
+        except OSError:
+            continue
+        if size > limit:
+            problems.append(f"{name}: {size} байт — больше {limit}")
+    return problems
+
+
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("самоссылка", gate_selfref), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors), ("покрытие", gate_coverage)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("самоссылка", gate_selfref), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors), ("покрытие", gate_coverage), ("большие файлы", gate_bigfiles)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
