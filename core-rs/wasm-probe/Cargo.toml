@@ -1,0 +1,8 @@
+[package]
+name = "wasm-probe"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "wasm-probe"
+path = "src/main.rs"

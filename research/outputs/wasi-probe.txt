@@ -1,0 +1,7 @@
+rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)
+targets: wasm32-wasip1, x86_64-pc-windows-gnu, x86_64-unknown-linux-musl
+wasmtime: wasmtime 50.0.1 (c307ec81d 2026-10-29) (лежит вне репозитория: C:\111\env\tools\wasmtime)
+сборка: cargo build --release --target wasm32-wasip1 — Finished
+wasm: 68109 байт
+прогон: wasm-probe: старт / spawn: ошибка: operation not supported on this platform
+код выхода: 0
