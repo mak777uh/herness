@@ -453,6 +453,40 @@ fn spawn_check() -> ExitCode {
     ExitCode::SUCCESS
 }
 
+fn dns_probe(sandboxed: bool) -> ExitCode {
+    // Вопрос: работает ли резолв имён, когда UDP закрыт нашим же правилом (C-0141).
+    if sandboxed {
+        if let Err(error) = hs_core::sandbox::deny_udp() {
+            println!("dns: правило не установлено ({error})");
+            return ExitCode::FAILURE;
+        }
+    }
+    let started = std::time::Instant::now();
+    match std::net::ToSocketAddrs::to_socket_addrs(&("example.com", 443u16)) {
+        Ok(addrs) => {
+            let first = addrs.into_iter().next();
+            println!(
+                "dns ({}): ok, {} за {:.2} с",
+                if sandboxed { "песочница" } else { "без песочницы" },
+                match first {
+                    Some(addr) => addr.to_string(),
+                    None => "пусто".to_string(),
+                },
+                started.elapsed().as_secs_f64()
+            );
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            println!(
+                "dns ({}): ошибка {error} за {:.2} с",
+                if sandboxed { "песочница" } else { "без песочницы" },
+                started.elapsed().as_secs_f64()
+            );
+            ExitCode::FAILURE
+        }
+    }
+}
+
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
     println!("ядро: {}", kernel_release());
@@ -478,6 +512,12 @@ fn init_mode() -> ExitCode {
         Err(error) => println!("sys: не смонтирован ({error})"),
     }
 
+    if mode_text == "dns-plain" {
+        return dns_probe(false);
+    }
+    if mode_text == "dns-sandbox" {
+        return dns_probe(true);
+    }
     if mode_text == "spawn-check" {
         return spawn_check();
     }

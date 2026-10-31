@@ -69,6 +69,9 @@ def main() -> int:
         # то есть инструмент не может запустить сам себя (найдено прогоном, F-0020).
         ("proc", b"", 0o040755),
         ("sys", b"", 0o040755),
+        # resolv.conf нужен, чтобы проверить резолв имён в комнате: без файла musl идёт на loopback.
+        ("etc", b"", 0o040755),
+        ("etc/resolv.conf", b"nameserver 10.0.2.3\n", 0o100644),
     ]
     archive = cpio_newc(entries)
     target = BOOT / "initramfs.cpio.gz"
