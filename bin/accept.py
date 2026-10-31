@@ -88,13 +88,16 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
     return out
 
 
-def check(criteria: dict, records: list[tuple[int, str]]) -> tuple[bool, list[tuple[str, bool, str]]]:
-    """Сверить журнал с критерием. Возвращает (итог, [(условие, выполнено, объяснение)])."""
+KNOWN_KEYS = {
+    "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
+    "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events",
+}
+
+
+def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
+          records: list[tuple[int, str]]) -> list[tuple[str, bool, str]]:
+    """Условия одной части критерия: видимой или скрытой."""
     rows: list[tuple[str, bool, str]] = []
-    if not criteria:
-        return (False, [("критерий не пустой", False, "условий нет — принимать нечего")])
-    evs = events(records)
-    kinds = [kind for kind, _ in evs]
 
     def status() -> str:
         # статус — это последнее событие run/end и следующий за ним claim-вердикт
@@ -153,7 +156,42 @@ def check(criteria: dict, records: list[tuple[int, str]]) -> tuple[bool, list[tu
         rows.append(("журнал закрыт коммитом", closed,
                      f"последняя запись: {'коммит' if closed else 'данные или пусто'}"))
 
-    return (all(ok for _, ok, _ in rows), rows)
+    return rows
+
+
+def check(criteria: dict, records: list[tuple[int, str]],
+          show_hidden: bool = False) -> tuple[bool, list[tuple[str, bool, str]]]:
+    """Сверить журнал с критерием. Возвращает (итог, [(условие, выполнено, объяснение)]).
+
+    Критерий может иметь две части: видимую и `hidden`. Зачем скрытая: видимая часть объявляется
+    в отчёте, и под неё можно подогнаться; скрытая пишется заранее (в том же файле или отдельном
+    коммите) и в отчёте не раскрывается. Провал скрытой части — провал приёмки, но причина не
+    называется: иначе она станет частью видимой. Для разбора автором есть `show_hidden`.
+    """
+    if not criteria:
+        return (False, [("критерий не пустой", False, "условий нет — принимать нечего")])
+    evs = events(records)
+    kinds = [kind for kind, _ in evs]
+    rows = _rows(criteria, evs, kinds, records)
+
+    # Неизвестное условие — это не «пропустим», а провал: опечатка в имени условия иначе тихо
+    # отключала бы проверку.
+    for key in sorted(set(criteria) - KNOWN_KEYS):
+        rows.append((f"условие {key} понятно", False, "неизвестное условие критерия"))
+
+    hidden = criteria.get("hidden")
+    if isinstance(hidden, dict) and hidden:
+        hidden_rows = _rows(hidden, evs, kinds, records)
+        hidden_ok = bool(hidden_rows) and all(ok for _, ok, _ in hidden_rows)
+        if hidden_ok:
+            detail = "выполнена"
+        elif show_hidden:
+            detail = "не выполнена: " + "; ".join(name for name, ok, _ in hidden_rows if not ok)
+        else:
+            detail = "не выполнена (какие условия — на хосте, см. --show-hidden)"
+        rows.append(("скрытая часть критерия", hidden_ok, detail))
+
+    return (bool(rows) and all(ok for _, ok, _ in rows), rows)
 
 
 def _load_criteria(path: Path) -> dict:
@@ -165,8 +203,10 @@ def _load_criteria(path: Path) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
+    show_hidden = "--show-hidden" in argv
+    argv = [arg for arg in argv if arg != "--show-hidden"]
     if len(argv) < 2:
-        print("accept <критерий.json> <журнал.bin>", file=sys.stderr)
+        print("accept <критерий.json> <журнал.bin> [--show-hidden]", file=sys.stderr)
         return 2
     criteria = _load_criteria(Path(argv[0]))
     journal = Path(argv[1])
@@ -175,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     records, _tail, problems = parse_journal(journal.read_bytes())
-    ok, rows = check(criteria, records)
+    ok, rows = check(criteria, records, show_hidden=show_hidden)
 
     print(f"задача: {criteria.get('task', '?')}; записей: {len(records)}")
     for name, passed, detail in rows:

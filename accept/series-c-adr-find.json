@@ -1,0 +1,11 @@
+{
+  "task": "найти в /mnt/docs ADR про приёмку вне комнаты и назвать его номер",
+  "comment": "Задача C серии: навигация без подсказки. В задаче номер ADR не назван — его надо найти в каталоге docs, то есть задача требует list и read, а не поиск по известной строке. Опора — ADR-0049; требование то же: номер должен прийти из результата инструмента.",
+  "require_status": "done",
+  "must_not_call": ["write"],
+  "anchor_regex": "ADR-0049",
+  "max_steps": 14,
+  "max_allowance": 0.05,
+  "require_commit": true,
+  "require_events": ["claim/anchored"]
+}

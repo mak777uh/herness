@@ -190,6 +190,43 @@ def _():
         assert "comment" in data, f"{path.name}: нет пояснения, зачем критерий такой"
 
 
+@case("скрытая часть проходит — приёмка проходит")
+def _():
+    spec = dict(CRITERIA, hidden={"anchor_regex": r"CLAIMS\.md:\d+"})
+    ok, rows = run(spec, OK_RUN)
+    assert ok, rows
+    assert any("скрытая часть" in name for name, _, _ in rows), rows
+
+
+@case("скрытая часть проваливается — приёмка падает, причина не раскрыта")
+def _():
+    spec = dict(CRITERIA, hidden={"anchor_regex": r"ZZZ-нет-такого"})
+    ok, rows = run(spec, OK_RUN)
+    assert not ok, rows
+    detail = next(detail for name, passed, detail in rows
+                  if "скрытая часть" in name and not passed)
+    assert "ZZZ" not in detail, detail
+    assert "--show-hidden" in detail, detail
+
+
+@case("с --show-hidden автор видит, какое условие провалилось")
+def _():
+    spec = dict(CRITERIA, hidden={"anchor_regex": r"ZZZ-нет-такого"})
+    records, _tail, _problems = accept.parse_journal(journal_bytes(OK_RUN))
+    ok, rows = accept.check(spec, records, show_hidden=True)
+    assert not ok, rows
+    detail = next(detail for name, passed, detail in rows
+                  if "скрытая часть" in name and not passed)
+    assert "ZZZ" in detail, detail
+
+
+@case("неизвестное условие критерия — провал, а не пропуск")
+def _():
+    ok, rows = run(dict(CRITERIA, лишнее_условие=True), OK_RUN)
+    assert not ok, rows
+    assert any("понятно" in name and not passed for name, passed, _ in rows), rows
+
+
 def main() -> int:
     failed = 0
     for name, fn in CASES:
