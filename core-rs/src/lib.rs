@@ -5,6 +5,7 @@
 
 pub mod clock;
 pub mod journal;
+pub mod loopmod;
 
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};

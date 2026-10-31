@@ -293,6 +293,22 @@ fn journal_durability() {
     }
 }
 
+fn report_loop(outcome: &hs_core::loopmod::Outcome) {
+    println!(
+        "цикл: шагов {}, вызовов {}, событий {}, журнал {} записей, коммитов {}, статус {}, порядок {}",
+        outcome.steps,
+        outcome.calls,
+        outcome.events,
+        outcome.records,
+        outcome.commits,
+        outcome.status,
+        if outcome.order_ok() { "ok" } else { "НАРУШЕН" }
+    );
+    for problem in &outcome.problems {
+        println!("  [!] порядок: {problem}");
+    }
+}
+
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
     println!("ядро: {}", kernel_release());
@@ -312,8 +328,20 @@ fn init_mode() -> ExitCode {
         if user_ns { "ok" } else { "нет" }
     );
 
-    // Проверка журнала в этой системе: три записи и коммит, затем чтение.
-    if let Ok(mut journal) = hs_core::journal::Journal::open("/journal.bin") {
+    // Цикл: в режиме loop прогоняем скелет цикла, иначе — синтетическую проверку журнала.
+    let mode_text = fs::read_to_string("/mode").unwrap_or_default().trim().to_string();
+    if mode_text == "loop" {
+        let mut provider = hs_core::loopmod::Scripted::seal_method("/method.md");
+        match hs_core::loopmod::run(
+            std::path::Path::new("/journal.bin"),
+            std::path::Path::new("/method.md"),
+            &mut provider,
+        ) {
+            Ok(outcome) => report_loop(&outcome),
+            Err(error) => println!("цикл: не запустился ({error})"),
+        }
+    } else if let Ok(mut journal) = hs_core::journal::Journal::open("/journal.bin") {
+        // Проверка журнала в этой системе: три записи и коммит, затем чтение.
         for index in 0..3 {
             let _ = journal.append(format!("event-{index}").as_bytes(), hs_core::journal::Kind::Data);
         }
@@ -382,6 +410,31 @@ fn main() -> ExitCode {
                 Err(error) => {
                     eprintln!("не прочитать {path}: {error}");
                     ExitCode::from(2)
+                }
+            }
+        }
+        Some("loop") => {
+            // Цикл вне init: нужен, чтобы его можно было прогнать на обычной Linux-машине
+            // (например, в WSL) и увидеть порядок событий без загрузки ядра.
+            let journal = args.get(1).map(String::as_str).unwrap_or("/journal.bin");
+            let method = args.get(2).map(String::as_str).unwrap_or("/method.md");
+            let mut provider = hs_core::loopmod::Scripted::seal_method(method);
+            match hs_core::loopmod::run(
+                std::path::Path::new(journal),
+                std::path::Path::new(method),
+                &mut provider,
+            ) {
+                Ok(outcome) => {
+                    report_loop(&outcome);
+                    if outcome.order_ok() {
+                        ExitCode::SUCCESS
+                    } else {
+                        ExitCode::FAILURE
+                    }
+                }
+                Err(error) => {
+                    eprintln!("цикл: {error}");
+                    ExitCode::FAILURE
                 }
             }
         }

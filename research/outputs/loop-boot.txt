@@ -1,0 +1,5 @@
+cargo test --lib: test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+гость, /mode=loop, ядро vmlinuz-own-rng, -accel whpx:
+ядро: 6.18.60
+время до init: 0.71 с
+цикл: шагов 1, вызовов 1, событий 5, журнал 6 записей, коммитов 1, статус done, порядок ok

@@ -6,6 +6,7 @@
 param(
     [string]$Kernel = "vmlinuz-own-rng",
     [string]$Accel = "whpx",
+    [string]$Mode = "loop",
     [int]$TimeoutSec = 20,
     [switch]$SkipBuild
 )
@@ -14,6 +15,7 @@ $root = "C:\111\herness"
 $core = Join-Path $root "core-rs"
 $boot = Join-Path $core "boot"
 $qemu = "C:\Program Files\qemu\qemu-system-x86_64.exe"
+$env:HS_MODE = $Mode
 
 # Ожидания: что именно должно быть верно после загрузки. Список — не украшение: каждая строка
 # это утверждение о системе, и прогон падает, если её нет.
@@ -22,9 +24,15 @@ $expected = @(
     "ядро: 6.18.60",
     "landlock ABI: 7",
     "namespaces:",
-    "журнал:",
     "случайность ok"
 )
+if ($Mode -eq "loop") {
+    # В режиме цикла проверяется не только загрузка, но и порядок событий: run/start → call →
+    # result → step → run/end, и отдельный коммит.
+    $expected += @("цикл: шагов 1, вызовов 1", "порядок ok", "коммитов 1")
+} else {
+    $expected += @("журнал:")
+}
 
 $watch = [Diagnostics.Stopwatch]::StartNew()
 
