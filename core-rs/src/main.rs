@@ -59,11 +59,112 @@ fn spawn_cost(iterations: u32) {
     );
 }
 
+
+/// Смонтировать /dev/vda как ext4 в /mnt. Возвращает true при успехе.
+fn mount_filesystem(source: &str, target: &str, fstype: &str) -> std::io::Result<()> {
+    let source_c = std::ffi::CString::new(source).unwrap();
+    let target_c = std::ffi::CString::new(target).unwrap();
+    let fstype_c = std::ffi::CString::new(fstype).unwrap();
+    // SAFETY: указатели на валидные C-строки живут до конца вызова.
+    let rc = unsafe {
+        libc::mount(source_c.as_ptr(), target_c.as_ptr(), fstype_c.as_ptr(), 0, std::ptr::null())
+    };
+    if rc == 0 {
+        Ok(())
+    } else {
+        Err(std::io::Error::last_os_error())
+    }
+}
+
+fn mount_disk() -> bool {
+    // Сначала devtmpfs: без /dev узел диска не существует.
+    match mount_filesystem("devtmpfs", "/dev", "devtmpfs") {
+        Ok(()) => println!("dev: devtmpfs смонтирован"),
+        Err(error) => println!("dev: devtmpfs не смонтирован ({error})"),
+    }
+    match mount_filesystem("/dev/vda", "/mnt", "ext4") {
+        Ok(()) => true,
+        Err(error) => {
+            println!("mount /dev/vda -> /mnt: {error}");
+            false
+        }
+    }
+}
+
+/// Режим из /mode: write — писать журнал на диск, check — читать и отчитываться.
+fn journal_durability() {
+    let mode = fs::read_to_string("/mode").unwrap_or_default();
+    if !mount_disk() {
+        println!("диск: не смонтировать /dev/vda");
+        return;
+    }
+    println!("диск: ext4 смонтирован в /mnt");
+    let path = "/mnt/journal.bin";
+    let mode_text = mode.trim().to_string();
+    if mode_text == "write" || mode_text == "batch" {
+        let Ok(mut journal) = hs_core::journal::Journal::open(path) else {
+            println!("журнал: не открыть");
+            return;
+        };
+        let batch_policy = mode_text == "batch";
+        let started = hs_core::clock::uptime_seconds();
+        let mut records = 0u64;
+        let mut commits = 0u64;
+        for index in 0..200_000u64 {
+            if journal.append(format!("event-{index}").as_bytes(), hs_core::journal::Kind::Data).is_err() {
+                break;
+            }
+            records += 1;
+            // коммит каждые 10 записей — граница «подтверждено»
+            if records % 10 == 0 {
+                if journal.append(b"commit", hs_core::journal::Kind::Commit).is_err() {
+                    break;
+                }
+                if !batch_policy && journal.sync().is_err() {
+                    break;
+                }
+                commits += 1;
+                if commits % 5 == 0 {
+                    println!("подтверждено: commit-{commits} при {records} записях");
+                }
+            }
+            // пакетная политика: fsync не чаще, чем раз в 32 записи
+            if batch_policy && records % 32 == 0 && journal.sync().is_err() {
+                break;
+            }
+        }
+        if journal.sync().is_ok() {
+            println!("финал: sync выполнен");
+        }
+        let elapsed = hs_core::clock::uptime_seconds() - started;
+        println!(
+            "записано: записей {records}, коммитов {commits} за {elapsed:.2} с = {:.0} записей/с",
+            records as f64 / elapsed.max(0.001)
+        );
+    } else {
+        match hs_core::journal::Journal::open(path) {
+            Ok(journal) => match journal.report() {
+                Ok(report) => println!(
+                    "журнал на диске: записей {}, коммитов {}, хвост {} байт, статус {}",
+                    report.records, report.committed, report.tail_bytes, report.status
+                ),
+                Err(error) => println!("журнал: ошибка отчёта {error}"),
+            },
+            Err(error) => println!("журнал: не открыть {error}"),
+        }
+    }
+}
+
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
     println!("ядро: {}", kernel_release());
     println!("landlock ABI: {}", landlock_abi());
     println!("время до init: {:.2} с", hs_core::clock::uptime_seconds());
+    let method = fs::read_to_string("/method.md").unwrap_or_default();
+    println!("печать /method.md: {}", hs_core::seal_hash(&method));
+    spawn_cost(20);
+    journal_durability();
+    // Проба namespaces идёт последней: unshare(CLONE_NEWUSER) лишает прав на mount.
     let mount_ns = unshare_works(libc::CLONE_NEWNS);
     let user_ns = unshare_works(libc::CLONE_NEWUSER);
     println!(
@@ -71,9 +172,7 @@ fn init_mode() -> ExitCode {
         if mount_ns { "ok" } else { "нет" },
         if user_ns { "ok" } else { "нет" }
     );
-    let method = fs::read_to_string("/method.md").unwrap_or_default();
-    println!("печать /method.md: {}", hs_core::seal_hash(&method));
-    spawn_cost(20);
+
     // Проверка журнала в этой системе: три записи и коммит, затем чтение.
     if let Ok(mut journal) = hs_core::journal::Journal::open("/journal.bin") {
         for index in 0..3 {

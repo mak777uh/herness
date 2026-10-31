@@ -9,7 +9,7 @@
 //! - подтверждение вызывающему — только после fsync (политика задаётся снаружи).
 
 use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -77,6 +77,9 @@ impl Journal {
         if length == 0 {
             file.write_all(&header())?;
             file.sync_all()?;
+        } else {
+            // Существующий журнал: писать можно только в конец, иначе затрём историю.
+            file.seek(SeekFrom::End(0))?;
         }
         let mut journal = Journal { path, file, seq: 0, pending: 0, dirty: false };
         journal.seq = journal.report()?.records as u64;
@@ -293,5 +296,41 @@ mod tests {
         let report = journal.report().unwrap();
         assert_eq!(report.records, 4);
         assert_eq!(report.committed, 1);
+    }
+
+    #[test]
+    fn file_starts_with_magic() {
+        let path = tmp("hsj_magic.bin");
+        let _ = fs::remove_file(&path);
+        let mut journal = Journal::open(&path).unwrap();
+        journal.append(b"payload", Kind::Data).unwrap();
+        journal.sync().unwrap();
+        let bytes = fs::read(&path).unwrap();
+        assert_eq!(&bytes[..4], MAGIC, "файл должен начинаться с HSJ1");
+        assert_eq!(&bytes[4..8], &VERSION.to_le_bytes(), "после magic идёт версия");
+    }
+
+    #[test]
+    fn append_to_existing_keeps_prefix() {
+        let path = tmp("hsj_reopen.bin");
+        let _ = fs::remove_file(&path);
+        {
+            let mut journal = Journal::open(&path).unwrap();
+            journal.append(b"first", Kind::Data).unwrap();
+            journal.append(b"commit", Kind::Commit).unwrap();
+            journal.sync().unwrap();
+        }
+        // повторное открытие: история не должна пострадать
+        {
+            let mut journal = Journal::open(&path).unwrap();
+            journal.append(b"second", Kind::Data).unwrap();
+            journal.sync().unwrap();
+        }
+        let bytes = fs::read(&path).unwrap();
+        assert_eq!(&bytes[..4], MAGIC, "заголовок должен остаться первым");
+        let report = inspect(&bytes);
+        assert_eq!(report.records, 3, "три записи: first, commit, second");
+        assert_eq!(report.committed, 1);
+        assert!(!report.torn_tail);
     }
 }
