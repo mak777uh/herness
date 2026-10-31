@@ -1,0 +1,12 @@
+вопрос: сколько стоит TLS в комнате (B), если клиент на Rust
+
+сборка: rustls 0.23 + aws-lc-sys 0.47, профиль release + opt-level=z + lto + strip
+база без TLS: 252 416 байт
+с rustls:     1 555 968 байт
+дельта:       1 303 552 байта (1,24 МБ) — для сравнения, наше ядро 1 496 064 байта
+
+кросс-сборка под musl (наш target) заблокирована:
+aws-lc-sys: Compiler family detection failed: failed to find tool x86_64-linux-musl-gcc: program not found
+
+замер сделан на хост-таргете (windows-gnu), потому что musl-сборка не проходит;
+число следует читать как порядок величины, а не как размер нашего бинарника

@@ -46,3 +46,5 @@ core-rs/boot/vmlinuz-lts
 core-rs/boot/qemu-out*
 core-rs/boot/
 core-rs/wasm-probe/target/
+core-rs/tls-cost/target/
+core-rs/tls-base/target/
