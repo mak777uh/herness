@@ -1,0 +1,5 @@
+187:	 * A Landlock rule with port 0 and the ``LANDLOCK_ACCESS_NET_BIND_TCP``
+337: * - %LANDLOCK_ACCESS_NET_BIND_TCP: Bind a TCP socket to a local port.
+338: * - %LANDLOCK_ACCESS_NET_CONNECT_TCP: Connect an active TCP socket to
+342:#define LANDLOCK_ACCESS_NET_BIND_TCP			(1ULL << 0)
+343:#define LANDLOCK_ACCESS_NET_CONNECT_TCP			(1ULL << 1)

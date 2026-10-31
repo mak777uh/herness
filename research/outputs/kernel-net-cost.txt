@@ -1,0 +1,10 @@
+vmlinuz-own: 1487872 байт
+vmlinuz-own-net: 2061312 байт
+разница: 573440 байт (без ускорения: TCG, +0,6 с до init)
+Sending DHCP requests ., OK
+IP-Config: Got DHCP answer from 10.0.2.2, my address is 10.0.2.15
+IP-Config: Complete:
+     device=eth0, hwaddr=52:54:00:12:34:56, ipaddr=10.0.2.15, mask=255.255.255.0, gw=10.0.2.2
+ядро: 6.18.60
+landlock ABI: 7
+время до init: 1.93 с

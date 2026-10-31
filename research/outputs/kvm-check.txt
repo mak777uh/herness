@@ -1,0 +1,3 @@
+crw-rw---- 1 root kvm 10, 232 Oct 31 18:09 /dev/kvm
+32
+6.6.114.1-microsoft-standard-WSL2
