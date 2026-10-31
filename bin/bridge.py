@@ -60,6 +60,23 @@ def read_token(path: Path) -> str:
     return text
 
 
+def upstream_allowed(url: str) -> tuple[bool, str]:
+    """Проверить адрес провайдера до старта.
+
+    https обязателен всегда, кроме одного случая: локальная заглушка на loopback для тестов.
+    Открытый текст наружу — это ключ в открытом виде, а не «удобство разработки».
+    """
+    lowered = url.lower()
+    if lowered.startswith("https://"):
+        return True, ""
+    if lowered.startswith("http://"):
+        host = lowered[7:].split("/")[0].split(":")[0]
+        if host in ("127.0.0.1", "localhost", "::1"):
+            return True, ""
+        return False, "http:// допустим только для loopback-заглушки"
+    return False, "upstream должен начинаться с https://"
+
+
 class Bridge:
     def __init__(self, upstream: str, provider_key: str, local_token: str, log_path: Path | None):
         self.upstream = upstream
@@ -177,8 +194,9 @@ def main(argv: list[str] | None = None) -> int:
     if not args.allow_remote and args.bind not in ("127.0.0.1", "::1", "localhost"):
         print("мост слушает только loopback; для внешнего bind нужен --allow-remote", file=sys.stderr)
         return 2
-    if not args.upstream.startswith("https://"):
-        print("upstream должен быть https:// — иначе ключ пойдёт открытым текстом", file=sys.stderr)
+    allowed, why = upstream_allowed(args.upstream)
+    if not allowed:
+        print(f"upstream отклонён: {why}", file=sys.stderr)
         return 2
 
     provider_key = os.environ.get("HS_BRIDGE_KEY", "").strip()

@@ -306,11 +306,11 @@ fn loop_repeat(journal: &str, method: &str) -> ExitCode {
     let mut runs = 0usize;
     let mut good = 0usize;
     loop {
-        let mut provider = hs_core::loopmod::Scripted::seal_many(method, 20);
+        let mut link = hs_core::model::Stub::seal_many(method, 20);
         match hs_core::loopmod::run(
             std::path::Path::new(journal),
             std::path::Path::new(method),
-            &mut provider,
+            &mut link,
         ) {
             Ok(outcome) => {
                 runs += 1;
@@ -365,6 +365,25 @@ fn loop_verify(journal: &str) -> ExitCode {
             println!("журнал: {status}");
             ExitCode::FAILURE
         }
+    }
+}
+
+/// Напечатать последний ответ модели из журнала: видно, что именно пришло по сети.
+fn print_last_model_reply(path: &str) {
+    let Ok(bytes) = fs::read(path) else { return };
+    let Ok(walked) = hs_core::journal::walk(&bytes) else { return };
+    let mut last: Option<String> = None;
+    for entry in &walked.entries {
+        if entry.kind != hs_core::journal::Kind::Data {
+            continue;
+        }
+        let text = String::from_utf8_lossy(&entry.payload);
+        if let Some(rest) = text.strip_prefix("model/reply ") {
+            last = Some(rest.to_string());
+        }
+    }
+    if let Some(reply) = last {
+        println!("модель: {reply}");
     }
 }
 
@@ -528,16 +547,36 @@ fn init_mode() -> ExitCode {
         return loop_verify("/mnt/journal.bin");
     }
 
+    if mode_text == "loop-bridge" {
+        // Первый настоящий круг: цикл в комнате зовёт модель через мост на хосте (plain HTTP,
+        // без TLS внутри — ADR-0046). Адрес 10.0.2.2 — это хост в сети QEMU user-mode.
+        let token = fs::read_to_string("/bridge-token").unwrap_or_default().trim().to_string();
+        let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, "fake-model");
+        let outcome = hs_core::loopmod::run(
+            std::path::Path::new("/journal.bin"),
+            std::path::Path::new("/method.md"),
+            &mut link,
+        );
+        match outcome {
+            Ok(outcome) => {
+                report_loop(&outcome);
+                print_last_model_reply("/journal.bin");
+                report_order_from_file("/journal.bin");
+            }
+            Err(error) => println!("цикл: не запустился ({error})"),
+        }
+    }
+
     if mode_text == "loop-net" {
         // Проверка интеграции: инструмент запускается с правилом песочницы и не может открыть UDP.
-        let mut provider = hs_core::loopmod::Scripted::new(vec![
+        let mut link = hs_core::model::Stub::new(vec![
             "TOOL netprobe /".to_string(),
             "DONE проверено".to_string(),
         ]);
         match hs_core::loopmod::run(
             std::path::Path::new("/journal.bin"),
             std::path::Path::new("/method.md"),
-            &mut provider,
+            &mut link,
         ) {
             Ok(outcome) => {
                 report_loop(&outcome);
@@ -586,11 +625,11 @@ fn init_mode() -> ExitCode {
 
     // Цикл: в режиме loop прогоняем скелет цикла, иначе — синтетическую проверку журнала.
     if mode_text == "loop" || mode_text == "loop-torn" {
-        let mut provider = hs_core::loopmod::Scripted::seal_method("/method.md");
+        let mut link = hs_core::model::Stub::seal_method("/method.md");
         match hs_core::loopmod::run(
             std::path::Path::new("/journal.bin"),
             std::path::Path::new("/method.md"),
-            &mut provider,
+            &mut link,
         ) {
             Ok(outcome) => {
                 report_loop(&outcome);
@@ -689,11 +728,11 @@ fn main() -> ExitCode {
             // (например, в WSL) и увидеть порядок событий без загрузки ядра.
             let journal = args.get(1).map(String::as_str).unwrap_or("/journal.bin");
             let method = args.get(2).map(String::as_str).unwrap_or("/method.md");
-            let mut provider = hs_core::loopmod::Scripted::seal_method(method);
+            let mut link = hs_core::model::Stub::seal_method(method);
             match hs_core::loopmod::run(
                 std::path::Path::new(journal),
                 std::path::Path::new(method),
-                &mut provider,
+                &mut link,
             ) {
                 Ok(outcome) => {
                     report_loop(&outcome);

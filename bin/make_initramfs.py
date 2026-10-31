@@ -72,6 +72,9 @@ def main() -> int:
         # resolv.conf нужен, чтобы проверить резолв имён в комнате: без файла musl идёт на loopback.
         ("etc", b"", 0o040755),
         ("etc/resolv.conf", b"nameserver 10.0.2.3\n", 0o100644),
+        # токен моста нужен прогону loop-bridge: комната доказывает мосту, что она «своя»
+        *([("bridge-token", os.environ["HS_BRIDGE_TOKEN"].encode(), 0o100644)]
+          if os.environ.get("HS_BRIDGE_TOKEN") else []),
     ]
     archive = cpio_newc(entries)
     target = BOOT / "initramfs.cpio.gz"

@@ -21,60 +21,19 @@ use crate::journal::{Journal, Kind};
 /// Больше шагов, чем это, скриптовый провайдер не делает: предохранитель от вечного цикла.
 pub const MAX_STEPS: usize = 64;
 
-/// Предел на ответ провайдера: длинный ответ — ошибка формата, а не повод съесть память.
-pub const MAX_REPLY: usize = 4096;
+use crate::model::{ModelLink, Reply};
 
+/// Шаг, разобранный из ответа модели.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Step {
     Tool { name: String, arg: String },
     Done { text: String },
 }
 
-pub trait Provider {
-    /// Ответ модели — текст. Провайдер не знает про шаги: разбор шага — работа цикла, иначе
-    /// формат протокола расползётся по провайдерам и перестанет быть проверяемым.
-    fn respond(&mut self, prompt: &str) -> Option<String>;
-}
-
-/// Провайдер-сценарий: последовательность ответов, заданная заранее.
-pub struct Scripted {
-    replies: Vec<String>,
-    index: usize,
-}
-
-impl Scripted {
-    pub fn new(replies: Vec<String>) -> Self {
-        Scripted { replies, index: 0 }
-    }
-
-    /// Длинный сценарий: нужен, чтобы убийство ВМ попадало внутрь блока, а не между блоками.
-    pub fn seal_many(method: &str, steps: usize) -> Self {
-        let mut replies: Vec<String> = (0..steps).map(|_| format!("TOOL seal {method}")).collect();
-        replies.push("DONE готово".to_string());
-        Scripted::new(replies)
-    }
-
-    /// Стандартный сценарий прогона: запечатать методологию, затем закончить.
-    pub fn seal_method(method: &str) -> Self {
-        Scripted::new(vec![
-            format!("TOOL seal {method}"),
-            "DONE методология запечатана".to_string(),
-        ])
-    }
-}
-
-impl Provider for Scripted {
-    fn respond(&mut self, _prompt: &str) -> Option<String> {
-        let reply = self.replies.get(self.index).cloned();
-        self.index += 1;
-        reply
-    }
-}
-
 /// Разобрать ответ провайдера в шаг. Ошибка — это результат, а не пустая строка.
 pub fn parse_step(reply: &str) -> Result<Step, String> {
-    if reply.len() > MAX_REPLY {
-        return Err(format!("ответ длиннее {MAX_REPLY} байт"));
+    if reply.len() > crate::model::MAX_REPLY {
+        return Err(format!("ответ длиннее {} байт", crate::model::MAX_REPLY));
     }
     let line = reply
         .lines()
@@ -101,6 +60,7 @@ pub fn parse_step(reply: &str) -> Result<Step, String> {
         line.chars().take(60).collect::<String>()
     ))
 }
+
 
 #[derive(Debug, Clone)]
 pub struct Event {
@@ -239,7 +199,7 @@ pub fn verify_order(events: &[Event]) -> Vec<String> {
 pub fn run(
     journal_path: &Path,
     method_path: &Path,
-    provider: &mut dyn Provider,
+    link: &mut dyn ModelLink,
 ) -> std::io::Result<Outcome> {
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
@@ -254,7 +214,16 @@ pub fn run(
 
     while attempts < MAX_STEPS && steps < MAX_STEPS {
         attempts += 1;
-        let Some(reply) = provider.respond(&prompt) else { break };
+        let reply = match link.complete(&prompt) {
+            Reply::Text(text) => text,
+            Reply::End => break,
+            Reply::Error(error) => {
+                record(&mut journal, &mut events, "step/error", error.clone())?;
+                status = "model-error";
+                prompt = format!("мост вернул ошибку: {error}");
+                break;
+            }
+        };
         // Сырой ответ в журнал не кладём: кладём длину и начало — этого хватает, чтобы отличить
         // пустой ответ от содержательного, и не хватает, чтобы утечь секретом.
         let preview = reply
@@ -514,7 +483,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело\n").unwrap();
 
-        let mut provider = Scripted::new(vec!["просто текст".to_string()]);
+        let mut provider = crate::model::Stub::new(vec!["просто текст".to_string()]);
         let outcome = run(&journal, &method, &mut provider).unwrap();
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         assert_eq!(outcome.steps, 0);
@@ -529,7 +498,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело\n").unwrap();
 
-        let mut provider = Scripted::new(vec![String::new()]);
+        let mut provider = crate::model::Stub::new(vec![String::new()]);
         let outcome = run(&journal, &method, &mut provider).unwrap();
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         std::fs::remove_dir_all(&dir).ok();
@@ -543,7 +512,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело\n").unwrap();
 
-        let mut provider = Scripted::new(vec![
+        let mut provider = crate::model::Stub::new(vec![
             "TOOL rm -rf /".to_string(),
             "DONE конец".to_string(),
         ]);
@@ -562,7 +531,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело методологии\n").unwrap();
 
-        let mut provider = Scripted::seal_method(method.to_str().unwrap());
+        let mut provider = crate::model::Stub::seal_method(method.to_str().unwrap());
         let outcome = run(&journal, &method, &mut provider).unwrap();
         assert_eq!(outcome.status, "done");
         assert_eq!(outcome.steps, 1);
@@ -585,7 +554,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело\n").unwrap();
 
-        let mut provider = Scripted::new(vec![format!("TOOL seal {}", method.display())]);
+        let mut provider = crate::model::Stub::new(vec![format!("TOOL seal {}", method.display())]);
         let outcome = run(&journal, &method, &mut provider).unwrap();
         assert_eq!(outcome.status, "no-done");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
@@ -600,7 +569,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело\n").unwrap();
 
-        let mut provider = Scripted::seal_method(method.to_str().unwrap());
+        let mut provider = crate::model::Stub::seal_method(method.to_str().unwrap());
         run(&journal, &method, &mut provider).unwrap();
 
         let problems = order_from_journal(&journal).unwrap();
@@ -616,7 +585,7 @@ mod tests {
         let method = dir.join("method.md");
         std::fs::write(&method, "тело\n").unwrap();
 
-        let mut provider = Scripted::seal_method(method.to_str().unwrap());
+        let mut provider = crate::model::Stub::seal_method(method.to_str().unwrap());
         run(&journal, &method, &mut provider).unwrap();
 
         // Обрываем последнюю запись: файл короче на 4 байта, как после падения в момент записи.
