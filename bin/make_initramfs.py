@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 import struct
 import sys
 import urllib.request
@@ -49,7 +50,12 @@ def main() -> int:
     if not kernel.exists():
         print("качаю ядро…")
         urllib.request.urlretrieve(KERNEL_URL, kernel)
-    print("ядро:", kernel.stat().st_size, "байт")
+    chosen = os.environ.get("HS_KERNEL", "vmlinuz-own")
+    chosen_path = BOOT / chosen
+    if chosen_path.exists():
+        print(f"ядро для загрузки: {chosen} ({chosen_path.stat().st_size} байт)")
+    else:
+        print(f"ВНИМАНИЕ: ядра {chosen} нет в boot/")
 
     if not BINARY.exists():
         print(f"нет бинарника: {BINARY} — сначала cargo build --target x86_64-unknown-linux-musl")

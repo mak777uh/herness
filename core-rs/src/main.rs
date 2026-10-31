@@ -1,5 +1,5 @@
 //! Минимальный CLI ядра: печать файла, проверка цепочки журнала и режим init.
-//! Без аргументов (как PID 1) работает инициализатором и сообщает свойства ядра.
+//! Без аргументов (как PID 1) работает инициализатором и проверяет песочницу делом.
 
 use std::env;
 use std::ffi::CStr;
@@ -8,9 +8,8 @@ use std::process::ExitCode;
 use std::thread;
 use std::time::Duration;
 
-/// Версия ядра через uname(2): не требует /proc.
 fn kernel_release() -> String {
-    // SAFETY: utsname — обычная структура, инициализируется ядром.
+    // SAFETY: utsname — обычная структура, заполняется ядром.
     unsafe {
         let mut name: libc::utsname = std::mem::zeroed();
         if libc::uname(&mut name) != 0 {
@@ -22,7 +21,6 @@ fn kernel_release() -> String {
     }
 }
 
-/// Версия Landlock ABI: 0 — недоступен.
 fn landlock_abi() -> i64 {
     const SYS_LANDLOCK_CREATE_RULESET: libc::c_long = 444;
     const VERSION_FLAG: libc::c_uint = 1;
@@ -42,12 +40,24 @@ fn landlock_abi() -> i64 {
     }
 }
 
+/// Проверяем не опцию в конфиге, а работу механизма.
+fn unshare_works(flag: libc::c_int) -> bool {
+    // SAFETY: unshare сам сообщает об успехе кодом возврата.
+    unsafe { libc::unshare(flag) == 0 }
+}
+
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
-    println!("время до init: {:.2} с", hs_core::clock::uptime_seconds());
     println!("ядро: {}", kernel_release());
     println!("landlock ABI: {}", landlock_abi());
-    println!("архитектура: {}", env::consts::ARCH);
+    println!("время до init: {:.2} с", hs_core::clock::uptime_seconds());
+    let mount_ns = unshare_works(libc::CLONE_NEWNS);
+    let user_ns = unshare_works(libc::CLONE_NEWUSER);
+    println!(
+        "namespaces: mount {}, user {}",
+        if mount_ns { "ok" } else { "нет" },
+        if user_ns { "ok" } else { "нет" }
+    );
     let method = fs::read_to_string("/method.md").unwrap_or_default();
     println!("печать /method.md: {}", hs_core::seal_hash(&method));
     println!("hs-core: система жива, жду");
