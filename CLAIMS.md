@@ -16,7 +16,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 Колонка «ожидание» — регулярное выражение, которому обязан соответствовать вывод команды. Пустая ячейка значит «сверяется только код возврата».
 |---|---|---|---|---|---|
-| C-0001 | `dsh --version` на этой машине = `0.2.1-rc.3` | observation | `python bin/hs.py facts` | `runs/` | 29.10.2026 | `0\.2\.1-rc\.3` |
+| C-0001 | `dsh --version` на этой машине = `0.2.1-rc.5` (29.10.2026 было rc.3: среда обновилась, см. артефакт) | observation | `python bin/check_artifacts.py C-0001` | research/outputs/dsh-version.txt | 29.10.2026 | 0.2.1-rc.5 |
 | C-0002 | DSH поднимается из изолированного DSH_HOME с профилем headless; неизменность установки этим не детектируется — нет проверки хешей или mtime | judgment | `python bin/check_artifacts.py C-0002` | docs/STATUS.md | 29.10.2026 | `M1` |
 | C-0003 | Пакеты DSH опубликованы в npm и допускают использование вне Electron-приложения | observation | `python bin/check_artifacts.py C-0003` | docs/DECISION-0001-base-os-language.md | 29.10.2026 | `npm` |
 | C-0004 | Холодный старт headless-профиля (dump-config, без модели) p50 = 0,46 с на этой машине | statistics | `python bin/hs.py bench -n 3` | вывод команды, 29.10.2026 | 29.10.2026 | `p50` |
@@ -138,3 +138,4 @@
 | C-0112 | Конфиг своего ядра выбран замером: A 0,97 МБ (без ФС), B 1,40 (ext4+virtio+namespaces), C 1,44 (+укрепление); выбран C, namespaces проверены делом (mount ok, user ok) | statistics | `python bin/check_artifacts.py C-0112` | research/KERNEL-CONFIG-CHOICE-2026-10-31.md | 31.10.2026 | `mount ok, user ok` |
 | C-0113 | Составлен план исследования следующих шагов: 6 вопросов с гипотезами и критериями (журнал: где, формат, fsync, обрыв; песочница: покрытие; восстановление) и круг поиска P20 по литературе | observation | `python bin/check_artifacts.py C-0113` | docs/RESEARCH-PLAN-NEXT.md | 31.10.2026 | `Q4` |
 | C-0114 | Ядро не выводилось из первых принципов: Linux был предположен. Из примитивов нашего кода следует, что минимальная система без сети не может быть хостом цикла — она песочница; архитектура A/B не выбрана | observation | `python bin/check_artifacts.py C-0114` | docs/KERNEL-FIRST-PRINCIPLES.md | 31.10.2026 | `сети нет` |
+| C-0115 | Среда обновила DSH до 0.2.1-rc.5 (было rc.3): утверждение C-0001 стало ложным и обновлено по факту, версия записана в артефакт | observation | `python bin/check_artifacts.py C-0115` | research/outputs/dsh-version.txt | 31.10.2026 | `0.2.1-rc.5` |
