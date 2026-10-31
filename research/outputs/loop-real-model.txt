@@ -1,0 +1,13 @@
+первый настоящий цикл в комнате с реальной моделью
+провайдер: opencode go (подписка), модель deepseek-v4.1-flash
+ключ: C:\\111\\env\\secrets\\opencode_go_key.txt, отпечаток d76a933a121c (значение не хранится в репозитории)
+
+гость (/mode=loop-bridge, ядро 6.18.60 + сеть):
+цикл: шагов 1, вызовов 1, событий 7, журнал 8 записей, коммитов 1, статус done, порядок ok
+модель: 77 байт, начало: DONE seal ok d105fb5d1c0ce17b09f25aba9e0
+порядок из файла: ok
+
+журнал моста (последние записи; тела и ключ не пишутся):
+{"ts": 1793471567.8129053, "path": "/v1/chat/completions", "status": 200, "bytes_in": 607, "bytes_out": 751, "ms": 1690, "token": "373526ea1ee1", "reason": null}
+{"ts": 1793471592.833215, "path": "/v1/chat/completions", "status": 200, "bytes_in": 627, "bytes_out": 708, "ms": 2463, "token": "373526ea1ee1", "reason": null}
+{"ts": 1793471596.396031, "path": "/v1/chat/completions", "status": 200, "bytes_in": 669, "bytes_out": 1300, "ms": 3560, "token": "373526ea1ee1", "reason": null}

@@ -75,6 +75,8 @@ def main() -> int:
         # токен моста нужен прогону loop-bridge: комната доказывает мосту, что она «своя»
         *([("bridge-token", os.environ["HS_BRIDGE_TOKEN"].encode(), 0o100644)]
           if os.environ.get("HS_BRIDGE_TOKEN") else []),
+        *([("bridge-model", os.environ["HS_BRIDGE_MODEL"].encode(), 0o100644)]
+          if os.environ.get("HS_BRIDGE_MODEL") else []),
     ]
     archive = cpio_newc(entries)
     target = BOOT / "initramfs.cpio.gz"

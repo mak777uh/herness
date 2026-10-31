@@ -14,6 +14,9 @@ use std::time::Duration;
 
 use serde_json::Value;
 
+/// Формат ответа, который цикл умеет разбирать. Одна строка — одно решение.
+pub const DEFAULT_SYSTEM: &str = "Ты — цикл харнесса. Отвечай РОВНО одной строкой в формате:\nTOOL <имя> <аргумент>   — чтобы выполнить инструмент\nDONE <итог>             — чтобы закончить работу\nДоступные инструменты: seal <путь> (запечатать файл), netprobe (проверить сетевую песочницу).\nНичего другого не пиши.";
+
 /// Предел на ответ, чтобы плохой ответ не съел память.
 pub const MAX_REPLY: usize = 64 * 1024;
 
@@ -78,6 +81,8 @@ pub struct HttpBridge {
     pub model: String,
     pub path: String,
     pub timeout: Duration,
+    /// Что сказать модели про формат ответа. Без этого она отвечает прозой, а цикл ждёт шаг.
+    pub system: String,
 }
 
 impl HttpBridge {
@@ -89,13 +94,18 @@ impl HttpBridge {
             model: model.to_string(),
             path: "/v1/chat/completions".to_string(),
             timeout: Duration::from_secs(180),
+            system: DEFAULT_SYSTEM.to_string(),
         }
     }
 
     fn body(&self, prompt: &str) -> String {
         let payload = serde_json::json!({
             "model": self.model,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "system", "content": self.system},
+                {"role": "user", "content": prompt},
+            ],
+            "max_tokens": 300,
         });
         serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string())
     }

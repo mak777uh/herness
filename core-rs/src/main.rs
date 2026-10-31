@@ -551,7 +551,11 @@ fn init_mode() -> ExitCode {
         // Первый настоящий круг: цикл в комнате зовёт модель через мост на хосте (plain HTTP,
         // без TLS внутри — ADR-0046). Адрес 10.0.2.2 — это хост в сети QEMU user-mode.
         let token = fs::read_to_string("/bridge-token").unwrap_or_default().trim().to_string();
-        let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, "fake-model");
+        let model = fs::read_to_string("/bridge-model")
+            .unwrap_or_else(|_| "deepseek-v4.1-flash".to_string())
+            .trim()
+            .to_string();
+        let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
         let outcome = hs_core::loopmod::run(
             std::path::Path::new("/journal.bin"),
             std::path::Path::new("/method.md"),

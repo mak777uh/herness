@@ -41,10 +41,13 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 MAX_BODY = 8 * 1024 * 1024
+BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+              "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36")
 ALLOWED_PREFIX = "/v1/"
 
 
@@ -97,6 +100,9 @@ class Bridge:
         request = urllib.request.Request(self.upstream, data=body, method="POST")
         # Ключ ставим здесь и только здесь: комната его не видит и не может увидеть.
         request.add_header("Authorization", f"Bearer {self.provider_key}")
+        # Провайдер требует браузерный UA и идентификатор сессии; иначе 403/400 до модели.
+        request.add_header("User-Agent", BROWSER_UA)
+        request.add_header("x-opencode-session", str(uuid.uuid4()))
         request.add_header("Content-Type", headers.get("content-type", "application/json"))
         try:
             with urllib.request.urlopen(request, timeout=180) as response:

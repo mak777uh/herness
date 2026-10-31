@@ -1,0 +1,6 @@
+проверка эндпоинтов opencode с ключом подписки go (значение ключа не печатается)
+1) zen /v1/models: 200, 37 моделей; deepseek: deepseek-v4.1-flash-free, deepseek-v4.1-flash, deepseek-v4-pro
+2) zen /v1/chat/completions, deepseek-v4.1-flash: 402 Insufficient account funds
+3) zen /v1/chat/completions, deepseek-v4.1-flash-free: 429 FreeUsageLimitError (бесплатные модели только в клиенте OpenCode)
+4) go /inference/go/openai/v1/chat/completions без сессии: 400 MissingSessionID
+5) то же с x-opencode-session и браузерным UA: 200, ответ «DONE связь есть», usage.billing_source=go, cost 0
