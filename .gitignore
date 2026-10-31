@@ -48,3 +48,9 @@ core-rs/boot/
 core-rs/wasm-probe/target/
 core-rs/tls-cost/target/
 core-rs/tls-base/target/
+
+# рабочий образ и его staging — данные, а не код
+share/
+share.img
+core-rs/boot/
+
