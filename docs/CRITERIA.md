@@ -315,3 +315,5 @@
 | K285 | песочница проверяется делом: unshare(mount) и unshare(user) выполняются в PID 1 | замер | namespaces: mount ok, user ok | research/KERNEL-CONFIG-CHOICE-2026-10-31.md |
 | K286 | следующий шаг берётся в работу только как опыт: гипотеза, метрика, критерий, что опровергнет | замер | 6 вопросов в docs/RESEARCH-PLAN-NEXT.md | docs/RESEARCH-PLAN-NEXT.md |
 | K287 | научное (свойства при отказе, покрытие политики) отделяется от инженерного (формат, скорость проверки) | замер | Q1/Q3/Q4/Q5 против Q2/Q6 | docs/RESEARCH-PLAN-NEXT.md |
+| K288 | выбор носителя отделяется от выбора ядра: Linux выбран по функциям, не по доказанной оптимальности | замер | docs/KERNEL-FIRST-PRINCIPLES.md | docs/KERNEL-FIRST-PRINCIPLES.md |
+| K289 | минимальная система без сети не может быть хостом цикла: она среда исполнения инструментов | замер | в конфиге нет VIRTIO_NET/TCP | docs/KERNEL-FIRST-PRINCIPLES.md |
