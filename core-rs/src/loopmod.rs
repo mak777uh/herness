@@ -13,7 +13,7 @@
 //! коммита. Результат без предшествующего вызова — дефект, а не мелочь: именно так в журналах
 //! появляются события, которых не было.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::journal::{Journal, Kind};
@@ -70,10 +70,67 @@ pub fn parse_step(reply: &str) -> Result<Step, String> {
     if let Some(rest) = line.strip_prefix("DONE") {
         return Ok(Step::Done { text: rest.trim().to_string() });
     }
+    // Ответ без метки TOOL, но начинающийся с имени известного инструмента, — это тот же шаг.
+    // Зачем: в живых прогонах модель несколько раз писала «read /mnt/CLAIMS.md 91» вместо
+    // «TOOL read …». Смысл строки однозначен, а отказ стоил шага и сбивал модель; при этом
+    // сырой ответ всё равно попадает в журнал (model/reply), так что послабление ничего не прячет.
+    let mut words = line.splitn(2, ' ');
+    let first = words.next().unwrap_or_default();
+    if KNOWN_TOOLS.contains(&first) {
+        let arg = words.next().unwrap_or_default().trim().to_string();
+        return Ok(Step::Tool { name: first.to_string(), arg });
+    }
     Err(format!(
         "не понял шаг: {}",
         line.chars().take(60).collect::<String>()
     ))
+}
+
+/// Имена, которые цикл принимает как инструменты. Список нужен и разбору шага, и подсказке.
+pub const KNOWN_TOOLS: [&str; 6] = ["seal", "netprobe", "search", "list", "read", "write"];
+
+/// Сколько знаков из результата попадает в строку истории.
+const HISTORY_BRIEF: usize = 120;
+/// Сколько знаков последнего результата показывается целиком.
+const LAST_RESULT: usize = 4000;
+/// Сколько шагов истории держим в подсказке.
+const HISTORY_MAX: usize = 12;
+
+fn brief(call: &str, text: &str, ok: bool) -> String {
+    let head = text.lines().next().unwrap_or_default().trim();
+    format!(
+        "{call} → {}: {}",
+        if ok { "ok" } else { "ошибка" },
+        head.chars().take(HISTORY_BRIEF).collect::<String>()
+    )
+}
+
+/// Собрать подсказку на шаг: задача + что уже сделано + последний результат.
+///
+/// Почему не только последний результат: модель без истории теряет цель. Это не «щедрость к
+/// модели», а условие выполнимости: задача «найди в файле X» требует помнить, что файл уже
+/// прочитан до конца.
+fn compose_prompt(task: &str, history: &[String], last: Option<&str>) -> String {
+    let mut out = format!("Задача: {task}\n");
+    if !history.is_empty() {
+        out.push_str("\nУже сделано:\n");
+        let from = history.len().saturating_sub(HISTORY_MAX);
+        for (index, line) in history[from..].iter().enumerate() {
+            out.push_str(&format!("{}) {line}\n", from + index + 1));
+        }
+    }
+    if let Some(text) = last {
+        out.push_str("\nПоследний результат:\n");
+        let cut: String = text.chars().take(LAST_RESULT).collect();
+        let truncated = cut.chars().count() < text.chars().count();
+        out.push_str(&cut);
+        if truncated {
+            out.push_str("\n… (обрезано)");
+        }
+        out.push('\n');
+    }
+    out.push_str("\nСледующий шаг — одна строка: TOOL <имя> <аргумент> или DONE <итог>.");
+    out
 }
 
 
@@ -207,24 +264,86 @@ fn collect_files(dir: &Path, depth: usize, out: &mut Vec<std::path::PathBuf>) {
     }
 }
 
-/// `search <каталог> <подстрока>`: искать по содержимому, без shell и без внешних программ.
+/// Привести путь инструмента к рабочему каталогу и запретить выход наружу.
+///
+/// Зачем: первый живой прогон показал, что `list .` в комнате печатает `/` — вместе с
+/// `bridge-token`. Токен моста — не «файл рядом», а удостоверение комнаты перед хостом; если
+/// модель может его прочитать, ограничение «ключ провайдера вне комнаты» остаётся верным, а
+/// «комната не может выдать себя за другую» — уже нет (F-0025).
+fn normalize(path: &Path) -> PathBuf {
+    use std::path::Component;
+    let mut out = PathBuf::new();
+    for part in path.components() {
+        match part {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                out.pop();
+            }
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
+}
+
+/// Убрать Windows-префикс `\\?\`: его добавляет `canonicalize`, и без этого сравнение путей
+/// «внутри корня» ложно срабатывает даже для файла внутри каталога.
+fn plain(path: &Path) -> PathBuf {
+    let text = path.to_string_lossy();
+    match text.strip_prefix(r"\\?\") {
+        Some(rest) => PathBuf::from(rest),
+        None => path.to_path_buf(),
+    }
+}
+
+fn resolve_in(arg: &str, root: &Path) -> Result<PathBuf, String> {
+    let root = normalize(&plain(&root.canonicalize().unwrap_or_else(|_| root.to_path_buf())));
+    let raw = Path::new(arg.trim());
+    let joined = if raw.is_absolute() { raw.to_path_buf() } else { root.join(raw) };
+    // Существующий путь приводим к канонической форме (это же ловит симлинк наружу),
+    // несуществующий — сравниваем по нормализованной записи.
+    let path = match joined.canonicalize() {
+        Ok(real) => normalize(&plain(&real)),
+        Err(_) => normalize(&joined),
+    };
+    if !path.starts_with(&root) {
+        return Err(format!(
+            "путь вне рабочего каталога {}: {}",
+            root.display(),
+            arg.trim()
+        ));
+    }
+    Ok(path)
+}
+
+/// `search <путь> <подстрока>`: искать по содержимому, без shell и без внешних программ.
 ///
 /// Зачем своей реализацией, а не через `grep`: в комнате нет ни shell, ни coreutils, а тащить
 /// busybox — это +2,12 МБ (C-0140). Поиск — примитив, его дешевле держать внутри цикла.
+///
+/// Путь может быть и каталогом, и файлом. Почему и файлом: модель в прогоне 4 написала
+/// `search /mnt/CLAIMS.md statistics` — то есть попросила ровно то, что имела в виду, — и
+/// получила «не каталог». Отказ инструмента на осмысленном запросе стоит шагов и сбивает модель.
 fn tool_search(arg: &str) -> Result<String, String> {
+    tool_search_in(arg, &workspace_root())
+}
+
+fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     let (dir, needle) = arg
         .split_once(' ')
-        .ok_or_else(|| "нужно: search <каталог> <подстрока>".to_string())?;
+        .ok_or_else(|| "нужно: search <путь> <подстрока>".to_string())?;
     let needle = needle.trim();
     if needle.chars().count() < 2 {
         return Err("подстрока короче двух символов: слишком много совпадений".to_string());
     }
-    let root = Path::new(dir.trim());
-    if !root.is_dir() {
-        return Err(format!("не каталог: {}", root.display()));
-    }
+    let root = resolve_in(dir, workspace)?;
     let mut files = Vec::new();
-    collect_files(root, 0, &mut files);
+    if root.is_dir() {
+        collect_files(&root, 0, &mut files);
+    } else if root.is_file() {
+        files.push(root.clone());
+    } else {
+        return Err(format!("нет такого пути: {}", root.display()));
+    }
     let scanned = files.len();
     let mut matches: Vec<String> = Vec::new();
     let mut truncated = false;
@@ -269,8 +388,13 @@ fn tool_search(arg: &str) -> Result<String, String> {
 
 /// `list <каталог>`: имена и размеры, без рекурсии.
 fn tool_list(arg: &str) -> Result<String, String> {
-    let root = Path::new(arg.trim());
-    let entries = std::fs::read_dir(root).map_err(|error| format!("не прочитать {}: {error}", root.display()))?;
+    tool_list_in(arg, &workspace_root())
+}
+
+fn tool_list_in(arg: &str, workspace: &Path) -> Result<String, String> {
+    let root = resolve_in(arg, workspace)?;
+    let entries = std::fs::read_dir(&root)
+        .map_err(|error| format!("не прочитать {}: {error}", root.display()))?;
     let mut items: Vec<String> = Vec::new();
     for entry in entries.flatten() {
         let meta = entry.metadata().ok();
@@ -293,21 +417,50 @@ fn tool_list(arg: &str) -> Result<String, String> {
     Ok(items.join("\n"))
 }
 
-/// `read <файл>`: текст до 8 КиБ, с номерами строк — чтобы модель могла ссылаться на место.
+/// `read <файл> [с_строки]`: текст до 8 КиБ, с номерами строк — чтобы модель могла ссылаться на место.
+///
+/// Почему второй аргумент обязателен по смыслу, хотя формально необязателен: файл CLAIMS.md —
+/// 65 КБ, а окно чтения 8 КБ. Без продолжения модель упирается в «обрезано» и читает файл
+/// сначала, теряя шаги (так и случилось в прогоне 2: 8 шагов, ни одного ответа). Обрезка без
+/// способа продолжить — это ловушка, а не предел.
 fn tool_read(arg: &str) -> Result<String, String> {
-    let path = Path::new(arg.trim());
-    let meta = std::fs::metadata(path).map_err(|error| format!("нет файла: {error}"))?;
+    tool_read_in(arg, &workspace_root())
+}
+
+fn tool_read_in(arg: &str, workspace: &Path) -> Result<String, String> {
+    // Второй аргумент отделяем с конца: путь может содержать пробелы, номер строки — нет.
+    let (name, from) = match arg.rsplit_once(' ') {
+        Some((left, right)) if right.trim().parse::<usize>().is_ok() => {
+            (left.trim(), right.trim().parse::<usize>().unwrap_or(1).max(1))
+        }
+        _ => (arg.trim(), 1usize),
+    };
+    if name.is_empty() {
+        return Err("нужно: read <файл> [с_строки]".to_string());
+    }
+    let path = resolve_in(name, workspace)?;
+    let meta = std::fs::metadata(&path).map_err(|error| format!("нет файла: {error}"))?;
     if meta.len() > MAX_FILE {
         return Err(format!("файл больше {MAX_FILE} байт"));
     }
-    let text = std::fs::read_to_string(path).map_err(|error| format!("не прочитать: {error}"))?;
+    let text = std::fs::read_to_string(&path).map_err(|error| format!("не прочитать: {error}"))?;
+    let total = text.lines().count();
     let mut out = String::new();
-    for (index, line) in text.lines().enumerate() {
+    let mut next = from;
+    for (index, line) in text.lines().enumerate().skip(from.saturating_sub(1)) {
         if out.len() >= MAX_READ {
-            out.push_str("… (обрезано)");
             break;
         }
         out.push_str(&format!("{}: {}\n", index + 1, line));
+        next = index + 2;
+    }
+    if out.is_empty() {
+        return Ok(format!("строк {from} и далее нет: в файле {total} строк"));
+    }
+    if next <= total {
+        out.push_str(&format!(
+            "… (обрезано; всего {total} строк, продолжи: read {name} {next})"
+        ));
     }
     Ok(out)
 }
@@ -477,7 +630,13 @@ pub fn run_task_with_budget(
     let mut status: &'static str = "no-done";
 
     record(&mut journal, &mut events, "run/start", format!("task: {task}"))?;
-    let mut prompt = task.to_string();
+    // История шагов. Зачем: пока в подсказке был только последний результат, модель теряла и
+    // задачу, и то, что уже прочитала: в живом прогоне она дошла до конца файла и вместо ответа
+    // снова начала перечислять каталог (7 прогонов подряд, F-0026). Бюджет подсказки ограничен:
+    // по строке на шаг и один последний результат целиком.
+    let mut history: Vec<String> = Vec::new();
+    let mut last: Option<String> = None;
+    let mut prompt = compose_prompt(task, &history, last.as_deref());
 
     while attempts < budget.steps && steps < budget.steps {
         if started.elapsed().as_secs_f64() > budget.seconds {
@@ -497,7 +656,6 @@ pub fn run_task_with_budget(
             Reply::Error(error) => {
                 record(&mut journal, &mut events, "step/error", error.clone())?;
                 status = "model-error";
-                prompt = format!("мост вернул ошибку: {error}");
                 break;
             }
             Reply::Truncated(reason) => {
@@ -529,9 +687,10 @@ pub fn run_task_with_budget(
             Err(error) => {
                 record(&mut journal, &mut events, "step/error", error.clone())?;
                 status = "bad-step";
-                prompt = format!(
+                last = Some(format!(
                     "{error}. Ответь одной строкой: TOOL <имя> <аргумент> или DONE <итог>."
-                );
+                ));
+                prompt = compose_prompt(task, &history, last.as_deref());
                 continue;
             }
         };
@@ -545,13 +704,16 @@ pub fn run_task_with_budget(
                 match result {
                     Ok(text) => {
                         record(&mut journal, &mut events, "tool/result", format!("ok {text}"))?;
-                        prompt = format!("{name}: ok {text}");
+                        history.push(brief(&format!("{name} {arg}"), &text, true));
+                        last = Some(text);
                     }
                     Err(error) => {
                         record(&mut journal, &mut events, "tool/result", format!("err {error}"))?;
-                        prompt = format!("{name}: ошибка {error}");
+                        history.push(brief(&format!("{name} {arg}"), &error, false));
+                        last = Some(format!("ошибка: {error}"));
                     }
                 }
+                prompt = compose_prompt(task, &history, last.as_deref());
                 record(&mut journal, &mut events, "step",
                        format!("{steps}, потрачено {spent:.8}"))?;
                 if spent > budget.allowance {
@@ -788,6 +950,43 @@ mod tests {
     }
 
     #[test]
+    fn подсказка_несёт_задачу_историю_и_последний_результат() {
+        let history = vec![
+            "read /mnt/CLAIMS.md → ok: 1: # CLAIMS.md".to_string(),
+            "list /mnt → ok: CLAIMS.md файл".to_string(),
+        ];
+        let prompt = compose_prompt("найти statistics", &history, Some("страница 2"));
+        assert!(prompt.starts_with("Задача: найти statistics"), "{prompt}");
+        assert!(prompt.contains("1) read /mnt/CLAIMS.md"), "{prompt}");
+        assert!(prompt.contains("2) list /mnt"), "{prompt}");
+        assert!(prompt.contains("Последний результат:\nстраница 2"), "{prompt}");
+        // Длинный результат обрезается, и это сказано словами, а не молча.
+        let long = "я".repeat(LAST_RESULT + 10);
+        let prompt = compose_prompt("t", &[], Some(&long));
+        assert!(prompt.contains("… (обрезано)"), "обрезка не отмечена");
+        // История не растёт беспредельно: старое выпадает.
+        let many: Vec<String> = (0..40).map(|i| format!("шаг {i}")).collect();
+        let prompt = compose_prompt("t", &many, None);
+        assert!(!prompt.contains("шаг 0 "), "старое не выпало");
+        assert!(prompt.contains("шаг 39"), "новое потерялось");
+    }
+
+    #[test]
+    fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+        // Живые прогоны: модель писала «read /mnt/CLAIMS.md 91» — смысл ясен, отказ стоил шага.
+        assert_eq!(
+            parse_step("read /mnt/CLAIMS.md 91").unwrap(),
+            Step::Tool { name: "read".to_string(), arg: "/mnt/CLAIMS.md 91".to_string() }
+        );
+        assert_eq!(
+            parse_step("list /mnt").unwrap(),
+            Step::Tool { name: "list".to_string(), arg: "/mnt".to_string() }
+        );
+        // Слово вне списка инструментов по-прежнему ошибка: послабление не превращается в догадки.
+        assert!(parse_step("прочитать BRIEF.md").is_err());
+    }
+
+    #[test]
     fn общее_слово_не_считается_опорой() {
         // «реестр» есть и в журнале, и в ответе, но это не опора — это вода.
         assert_eq!(claim_anchor("прочитан реестр", &["ok прочитан реестр".to_string()]), None);
@@ -911,7 +1110,7 @@ mod tests {
     #[test]
     fn поиск_находит_в_файлах_и_подкаталогах() {
         let dir = fixture("search");
-        let out = tool_search(&format!("{} МАРКЕР", dir.display())).unwrap();
+        let out = tool_search_in(" МАРКЕР", &dir).unwrap();
         assert!(out.contains("найдено 2"), "{out}");
         assert!(out.contains("a.md:2:"), "{out}");
         assert!(out.contains("b.md:1:"), "{out}");
@@ -919,9 +1118,20 @@ mod tests {
     }
 
     #[test]
+    fn поиск_идёт_и_по_одному_файлу() {
+        // Прогон 4: модель попросила `search /mnt/CLAIMS.md statistics` и получила «не каталог».
+        let dir = fixture("search-file");
+        let out = tool_search_in("a.md МАРКЕР", &dir).unwrap();
+        assert!(out.contains("найдено 1"), "{out}");
+        assert!(out.contains("a.md:2:"), "{out}");
+        assert!(tool_search_in("неттакого.md МАРКЕР", &dir).is_err());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn поиск_без_совпадений_говорит_об_этом_числом() {
         let dir = fixture("none");
-        let out = tool_search(&format!("{} нетакого", dir.display())).unwrap();
+        let out = tool_search_in(" нетакого", &dir).unwrap();
         assert!(out.starts_with("найдено 0"), "{out}");
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -929,27 +1139,54 @@ mod tests {
     #[test]
     fn поиск_отбивает_короткую_иголку_и_не_каталог() {
         let dir = fixture("short");
-        assert!(tool_search(&format!("{} и", dir.display())).is_err());
-        assert!(tool_search("/нет/такого иго").is_err());
-        assert!(tool_search("без_пробела").is_err());
+        assert!(tool_search_in(" и", &dir).is_err());
+        assert!(tool_search_in("/нет/такого иго", &dir).is_err());
+        assert!(tool_search_in("без_пробела", &dir).is_err());
         std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]
     fn чтение_даёт_номера_строк() {
         let dir = fixture("read");
-        let out = tool_read(&format!("{}", dir.join("a.md").display())).unwrap();
+        let out = tool_read_in("a.md", &dir).unwrap();
         assert!(out.starts_with("1: первая строка"), "{out}");
         assert!(out.contains("МАРКЕР"), "{out}");
         std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]
+    fn чтение_продолжается_с_указанной_строки() {
+        let dir = fixture("read-more");
+        let full = std::fs::read_to_string(dir.join("a.md")).unwrap();
+        let total = full.lines().count();
+        let out = tool_read_in(&format!("a.md {}", total), &dir).unwrap();
+        assert!(out.starts_with(&format!("{total}: ")), "{out}");
+        assert!(!out.contains("обрезано"), "{out}");
+        assert!(tool_read_in(&format!("a.md {}", total + 5), &dir).unwrap().contains("нет"));
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn список_перечисляет_имена_и_типы() {
         let dir = fixture("list");
-        let out = tool_list(&format!("{}", dir.display())).unwrap();
+        let out = tool_list_in(".", &dir).unwrap();
         assert!(out.contains("a.md"), "{out}");
         assert!(out.contains("каталог"), "{out}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn инструменты_не_выходят_из_рабочего_каталога() {
+        // F-0025: в первом живом прогоне `list .` напечатал корень комнаты вместе с bridge-token.
+        let dir = fixture("escape");
+        for bad in ["..", "/etc", "/etc/passwd", "../..", "a.md/../../.."] {
+            assert!(tool_list_in(bad, &dir).is_err(), "list {bad} не отбит");
+            assert!(tool_read_in(bad, &dir).is_err(), "read {bad} не отбит");
+        }
+        assert!(tool_search_in("../.. МАРКЕР", &dir).is_err());
+        // Внутри каталога по-прежнему можно: и относительным путём, и абсолютным.
+        assert!(tool_read_in("a.md", &dir).is_ok());
+        assert!(tool_read_in(&dir.join("a.md").display().to_string(), &dir).is_ok());
         std::fs::remove_dir_all(&dir).ok();
     }
 

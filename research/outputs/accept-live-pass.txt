@@ -1,0 +1,24 @@
+задача: найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id; записей: 13
+  [ok] статус = done — фактически: done
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [ok] опора соответствует /C-\d{4}/ — опоры: ['C-0021']
+  [ok] шагов ≤ 12 — шагов: 2
+  [ok] расход ≤ 0.05 — потрачено: 0.00021763
+  [ok] есть событие claim/anchored — виды: ['claim/anchored', 'model/reply', 'run/end', 'run/start', 'step', 'tool/call', 'tool/result']
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: PASS
+
+--- события живого прогона (журнал 13 записей) ---
+run/start task: Найди в /mnt/CLAIMS.md утверждение типа statistics и назови его id вида C-1234. Ответь одной строкой: id и цитата.
+model/reply 37 байт, начало: TOOL search /mnt/CLAIMS.md statistics
+tool/call search /mnt/CLAIMS.md statistics
+tool/result ok найдено 30 в 1 файлах: /mnt/CLAIMS.md:9: | `statistics` | измерение с бюджетом и разбросом | «p50/p95 такие-то на таком-то железе» | /mnt/CLAIMS.md:22: | C-0004 | Холодный старт headless-профиля (dump-config, без модели) p50 = 0,46 с на этой машине | statistics | `python bin/hs.py ben
+step 1, потрачено 0.00003267
+model/reply 27 байт, начало: TOOL read /mnt/CLAIMS.md 46
+tool/call read /mnt/CLAIMS.md 46
+tool/result ok 46: | C-0021 | В docs/PRINCIPLES.md 25 принципов портфеля | statistics | `python bin/count.py principles` | docs/PRINCIPLES.md | 29.10.2026 | `principles=25` | 47: | C-0022 | В кэше справочника 25 каталогов репозиториев с документами | statistics | `python bin/count.py repos` | refs-c
+step 2, потрачено 0.00021763
+model/reply 119 байт, начало: DONE C-0021 — «В docs/PRINCIPLES.md 25 п
+claim/anchored C-0021
+run/end C-0021 — «В docs/PRINCIPLES.md 25 принципов портфеля» (тип statistics, /mnt/CLAIMS.md:46)
+commit

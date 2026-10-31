@@ -64,6 +64,10 @@ def entries(mode: str, payload: bytes) -> list[tuple[str, bytes, int]]:
           if os.environ.get("HS_BRIDGE_MODEL") else []),
         *([("task", os.environ["HS_TASK"].encode(), 0o100644)]
           if os.environ.get("HS_TASK") else []),
+        # Бюджет прогона: шаги, секунды, деньги. Приходит из критерия приёмки, чтобы «сколько
+        # разрешено работе» и «сколько требует приёмка» не расходились (F-0026).
+        *([("budget", os.environ["HS_BUDGET"].encode(), 0o100644)]
+          if os.environ.get("HS_BUDGET") else []),
     ]
 
 

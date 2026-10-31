@@ -16,7 +16,11 @@ param(
     [string]$Kernel = "vmlinuz-own-rng",
     [string]$Accel = "whpx",
     [int]$Memory = 512,
-    [int]$TimeoutSec = 30
+    [int]$TimeoutSec = 30,
+    # Задача выдаётся комнате файлом; критерий при этом остаётся на хосте.
+    [string]$Task = "",
+    # Сеть нужна, чтобы цикл мог позвать модель через мост на хосте (10.0.2.2:8790).
+    [switch]$Net
 )
 $ErrorActionPreference = "Stop"
 $root = "C:\111\herness"
@@ -27,6 +31,23 @@ $runs = Join-Path $root "runs\accept"
 New-Item -ItemType Directory -Force -Path $runs | Out-Null
 
 $env:HS_MODE = $Mode
+# Бюджет прогона берётся из самого критерия: если критерий разрешает 12 шагов, а комната даёт 8,
+# приёмка невыполнима по построению — не потому, что модель не справилась (F-0026).
+$criteriaPath = if (Test-Path $Criteria) { $Criteria } else { Join-Path $root $Criteria }
+if (Test-Path $criteriaPath) {
+    $spec = Get-Content $criteriaPath -Raw | ConvertFrom-Json
+    $budget = [ordered]@{}
+    if ($null -ne $spec.max_steps) { $budget.steps = [int]$spec.max_steps }
+    if ($null -ne $spec.max_allowance) { $budget.allowance = [double]$spec.max_allowance }
+    $budget.seconds = 240
+    $env:HS_BUDGET = ($budget | ConvertTo-Json -Compress)
+} else { Remove-Item Env:\HS_BUDGET -ErrorAction SilentlyContinue }
+if ($Task) { $env:HS_TASK = $Task } else { Remove-Item Env:\HS_TASK -ErrorAction SilentlyContinue }
+if ($Net) {
+    # Токен моста и имя модели — не секрет провайдера: ключ остаётся на хосте (ADR-0046).
+    $env:HS_BRIDGE_TOKEN = (Get-Content "C:\111\env\bridge-token.txt" -Raw).Trim()
+    $env:HS_BRIDGE_MODEL = "deepseek-v4.1-flash"
+}
 python (Join-Path $root "bin\make_initramfs.py") | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "упаковка initramfs не прошла" }
 
@@ -39,8 +60,9 @@ $args = @('-m', "$Memory", '-smp', '1',
           '-initrd', (Join-Path $boot 'initramfs.cpio.gz'),
           '-device', 'virtio-rng-pci',
           '-drive', "file=$((Resolve-Path (Join-Path $root $Image)).Path),format=raw,if=virtio",
-          '-append', '"console=ttyS0 panic=-1"',
+          '-append', '"console=ttyS0 panic=-1 ip=dhcp"',
           '-nographic', '-no-reboot')
+if ($Net) { $args = @('-netdev', 'user,id=n0', '-device', 'virtio-net-pci,netdev=n0') + $args }
 if ($Accel -ne "none") { $args = @('-accel', $Accel) + $args }
 $process = Start-Process -FilePath $qemu -ArgumentList $args -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
 

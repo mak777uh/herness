@@ -1,0 +1,80 @@
+warning: unused import: `std::io::Write`
+   --> src\model.rs:245:9
+    |
+245 |     use std::io::Write as _;
+    |         ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+   --> src\loopmod.rs:975:8
+    |
+975 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+    |
+    = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+   --> src\model.rs:265:8
+    |
+265 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+   --> src\model.rs:307:8
+    |
+307 |     fn недоступный_мост_это_Error_а_не_End() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 4 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running unittests src\lib.rs (target\debug\deps\hs_core-6d43ae1170ae42f7.exe)
+
+running 44 tests
+test journal::tests::bad_magic_is_reported ... ok
+test loopmod::tests::run_end_не_последним_это_дефект ... ok
+test loopmod::tests::вызов_без_результата_это_дефект ... ok
+test loopmod::tests::общее_слово_не_считается_опорой ... ok
+test loopmod::tests::подсказка_несёт_задачу_историю_и_последний_результат ... ok
+test journal::tests::append_and_recover ... ok
+test loopmod::tests::поиск_идёт_и_по_одному_файлу ... ok
+test journal::tests::commit_boundary_counts ... ok
+test journal::tests::file_starts_with_magic ... ok
+test loopmod::tests::правильный_порядок_проходит ... ok
+test loopmod::tests::инструменты_не_выходят_из_рабочего_каталога ... ok
+test loopmod::tests::мусор_от_провайдера_порядок_остаётся_целым ... ok
+test loopmod::tests::пустой_журнал_событий_это_дефект ... ok
+test loopmod::tests::запись_работает_только_внутри_корня ... ok
+test loopmod::tests::разбор_шага_завершение ... ok
+test loopmod::tests::разбор_шага_инструмент ... ok
+test loopmod::tests::разбор_шага_мусор_это_ошибка_а_не_пропуск ... ok
+test loopmod::tests::бюджет_времени_останавливает_до_первого_шага ... ok
+test loopmod::tests::результат_без_вызова_это_дефект ... ok
+test loopmod::tests::утверждение_с_опорой_считается_подтверждённым ... ok
+test journal::tests::torn_tail_is_detected_not_repaired ... ok
+test journal::tests::corrupted_record_stops_reading ... ok
+test loopmod::tests::шаг_без_метки_TOOL_но_с_именем_инструмента_принимается ... ok
+test loopmod::tests::поиск_без_совпадений_говорит_об_этом_числом ... ok
+test loopmod::tests::денежный_бюджет_останавливает_прогон ... ok
+test journal::tests::append_to_existing_keeps_prefix ... ok
+test loopmod::tests::неизвестный_инструмент_даёт_ошибку_в_результате ... ok
+test model::tests::разбор_ответа_видит_код_ошибки ... ok
+test model::tests::разбор_ответа_без_choices_это_ошибка ... ok
+test model::tests::разбор_ответа_достаёт_текст ... ok
+test loopmod::tests::поиск_отбивает_короткую_иголку_и_не_каталог ... ok
+test model::tests::стаб_заканчивается_как_End_а_не_как_ошибка ... ok
+test model::tests::мост_получает_наш_токен_и_модель_и_возвращает_текст ... ok
+test loopmod::tests::поиск_находит_в_файлах_и_подкаталогах ... ok
+test loopmod::tests::список_перечисляет_имена_и_типы ... ok
+test loopmod::tests::чтение_продолжается_с_указанной_строки ... ok
+test loopmod::tests::чтение_даёт_номера_строк ... ok
+test loopmod::tests::пустой_ответ_модели_это_ошибка_формата ... ok
+test loopmod::tests::оборванный_хвост_виден_при_чтении_файла ... ok
+test loopmod::tests::провайдер_без_завершения_даёт_no_done ... ok
+test loopmod::tests::порядок_читается_из_файла_после_прогона ... ok
+test loopmod::tests::бюджет_шагов_режет_длинный_сценарий ... ok
+test loopmod::tests::прогон_пишет_журнал_и_соблюдает_порядок ... ok
+test model::tests::недоступный_мост_это_Error_а_не_End ... ok
+
+test result: ok. 44 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.10s
+
