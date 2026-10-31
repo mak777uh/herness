@@ -1,0 +1,12 @@
+{
+  "task": "найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id",
+  "comment": "Критерий лежит на хосте и в комнату не копируется: исполнитель видит только задачу. Проверяется факт вызова поиска, отсутствие записи в комнате, вид опоры и закрытие журнала коммитом.",
+  "require_status": "done",
+  "must_call": ["search"],
+  "must_not_call": ["write"],
+  "anchor_regex": "C-\\d{4}",
+  "max_steps": 8,
+  "max_allowance": 0.01,
+  "require_commit": true,
+  "require_events": ["claim/anchored"]
+}

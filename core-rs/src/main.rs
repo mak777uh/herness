@@ -180,6 +180,61 @@ fn mount_disk() -> bool {
     }
 }
 
+/// Смонтирован ли уже рабочий каталог: /mnt может быть занят проверкой долговечности журнала,
+/// и повторный mount вернул бы «resource busy», выглядя как отсутствие диска.
+fn workspace_mounted() -> bool {
+    fs::read_to_string("/proc/mounts")
+        .map(|text| {
+            text.lines()
+                .any(|line| line.split_whitespace().nth(1) == Some("/mnt"))
+        })
+        .unwrap_or(false)
+}
+
+/// Вынести журнал на диск хоста: приёмка читает его снаружи комнаты (ADR-0049).
+///
+/// Подделать копию модель не может: журнал пишет наш код, а копия делается после того, как цикл
+/// закончился и ни одного хода у модели не осталось. Инструмент записи ограничен /mnt и на итог
+/// приёмки не влияет: критерий лежит на хосте.
+fn export_journal(source: &str, target: &str) {
+    let bytes = match fs::read(source) {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            println!("журнал: не вынести — не читается {source} ({error})");
+            return;
+        }
+    };
+    match fs::write(target, &bytes) {
+        Ok(()) => {
+            // sync без размонтирования — это обещание, а не факт: файловая система может
+            // потерять хвост при выключении питания. Поэтому оба шага делаются вместе.
+            unsafe { libc::sync() };
+            println!("журнал: вынесен в {target}, {} байт", bytes.len());
+        }
+        Err(error) => println!("журнал: не вынести в {target} ({error})"),
+    }
+}
+
+fn unmount_workspace() {
+    let code = unsafe { libc::umount(c"/mnt".as_ptr()) };
+    if code == 0 {
+        println!("диск: /mnt размонтирован");
+        return;
+    }
+    let error = std::io::Error::last_os_error();
+    // Отложенное размонтирование: каталог может быть ещё занят (у нас открыт /mnt/hs-journal.bin
+    // в момент sync). MNT_DETACH снимает точку сразу и отпускает её, когда закроются дескрипторы.
+    let detach = unsafe { libc::umount2(c"/mnt".as_ptr(), libc::MNT_DETACH) };
+    if detach == 0 {
+        println!("диск: /mnt размонтирован отложенно ({error})");
+    } else {
+        println!(
+            "диск: /mnt не размонтирован ({error}; отложенно: {})",
+            std::io::Error::last_os_error()
+        );
+    }
+}
+
 /// Режим из /mode: write — писать журнал на диск, check — читать и отчитываться.
 fn journal_durability() {
     let mode = fs::read_to_string("/mode").unwrap_or_default();
@@ -584,8 +639,12 @@ fn init_mode() -> ExitCode {
             .to_string();
         let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
         // Если задана задача и есть диск — монтируем его: задаче нужны файлы, а не только /method.md.
-        if fs::read_to_string("/task").is_ok() && !mount_share("hostshare") && !mount_disk() {
-            println!("диск: не смонтировать /dev/vda — задача будет работать без файлов");
+        let mut mounted = false;
+        if fs::read_to_string("/task").is_ok() {
+            mounted = mount_share("hostshare") || mount_disk();
+            if !mounted {
+                println!("диск: не смонтировать /dev/vda — задача будет работать без файлов");
+            }
         }
         let task = fs::read_to_string("/task")
             .map(|text| text.trim().to_string())
@@ -619,6 +678,10 @@ fn init_mode() -> ExitCode {
             Ok(outcome) => {
                 report_loop(&outcome);
                 print_last_model_reply("/journal.bin");
+                if mounted {
+                    export_journal("/journal.bin", "/mnt/hs-journal.bin");
+                    unmount_workspace();
+                }
                 report_order_from_file("/journal.bin");
             }
             Err(error) => println!("цикл: не запустился ({error})"),
@@ -683,6 +746,9 @@ fn init_mode() -> ExitCode {
 
     // Цикл: в режиме loop прогоняем скелет цикла, иначе — синтетическую проверку журнала.
     if mode_text == "loop" || mode_text == "loop-torn" {
+        // Диск монтируем, только если он есть: иначе журнал некуда вынести на приёмку.
+        let mounted = std::path::Path::new("/dev/vda").exists()
+            && (workspace_mounted() || mount_disk());
         let mut link = hs_core::model::Stub::seal_method("/method.md");
         match hs_core::loopmod::run(
             std::path::Path::new("/journal.bin"),
@@ -703,6 +769,12 @@ fn init_mode() -> ExitCode {
                         }
                         Err(error) => println!("журнал: не открыть для обрыва ({error})"),
                     }
+                }
+                // Вынос — после обрыва в контрольном случае: на хосте должен лежать именно тот
+                // журнал, который видел гость, иначе приёмка проверяла бы не то.
+                if mounted {
+                    export_journal("/journal.bin", "/mnt/hs-journal.bin");
+                    unmount_workspace();
                 }
                 report_order_from_file("/journal.bin");
             }
@@ -770,6 +842,22 @@ fn main() -> ExitCode {
                 eprintln!("usage: hs-core seal <файл>");
                 return ExitCode::from(2);
             };
+            // Первая строка — фильтр на себя: если ядро его не умеет, это сказано, а не забыто.
+            // В stderr, а не в stdout: stdout — это результат инструмента (печать файла), и
+            // подмешивать туда служебную строку значило бы менять то, что видит модель.
+            let as_tool = std::env::var("HS_TOOL").is_ok();
+            match hs_core::sandbox::harden_self() {
+                Ok(()) if as_tool => eprintln!("sandbox: фильтр UDP поставлен"),
+                Ok(()) => {}
+                Err(error) if hs_core::sandbox::unsupported(&error) && as_tool => {
+                    eprintln!("sandbox: фильтр UDP не поставлен (ядро без seccomp: {error})")
+                }
+                Err(error) if hs_core::sandbox::unsupported(&error) => {}
+                Err(error) => {
+                    eprintln!("sandbox: {error}");
+                    return ExitCode::from(3);
+                }
+            }
             match fs::read_to_string(path) {
                 Ok(text) => {
                     println!("{}", hs_core::seal_hash(&text));

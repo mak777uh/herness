@@ -117,10 +117,20 @@ mod platform {
 }
 }
 
-/// Применить правило к дочернему процессу: фильтр ставится в `pre_exec`, то есть до `exec`,
-/// и наследуется всеми потомками инструмента.
+/// Ядро не умеет фильтровать системные вызовы — это не ошибка нашего кода.
+pub fn unsupported(error: &str) -> bool {
+    ["Function not implemented", "Invalid argument", "Operation not supported"]
+        .iter()
+        .any(|marker| error.contains(marker))
+}
+
+/// Применить правило к дочернему процессу ДО exec.
 ///
-/// На не-Unix платформах это ничего не делает — и говорит об этом вслух, а не притворяется.
+/// Внимание: в нашем ядре этот путь не работает (F-0024). `Command::pre_exec` уводит spawn на
+/// путь fork+exec, и spawn возвращает `ENOSYS` ещё до того, как замыкание выполнится (метки,
+/// поставленные изнутри замыкания, не появляются). Причина расхождения с рабочим `fork()` не
+/// установлена, поэтому инструменты переводятся на `harden_self()`: ребёнок ставит фильтр сам
+/// первой строкой. Функция оставлена для проверки на другой системе, но в цикле не используется.
 pub fn harden_command(command: &mut std::process::Command) {
     #[cfg(unix)]
     {
@@ -128,9 +138,7 @@ pub fn harden_command(command: &mut std::process::Command) {
         // SAFETY: в pre_exec разрешены только вызовы, безопасные после fork: prctl и запись errno.
         unsafe {
             command.pre_exec(|| {
-                deny_udp().map_err(|error| {
-                    std::io::Error::new(std::io::ErrorKind::Other, error)
-                })
+                deny_udp().map_err(|error| std::io::Error::new(std::io::ErrorKind::Other, error))
             });
         }
     }
@@ -138,6 +146,15 @@ pub fn harden_command(command: &mut std::process::Command) {
     {
         let _ = command;
     }
+}
+
+/// Поставить правило на самого себя: то, что делает процесс инструмента первой строкой.
+///
+/// Так фильтр гарантированно действует до того, как инструмент прочитает первый файл, и не
+/// зависит от `pre_exec`. Цена: между `exec` и установкой фильтра есть несколько инструкций
+/// кода, который мы сами же и написали (не чужого).
+pub fn harden_self() -> Result<(), String> {
+    deny_udp()
 }
 
 #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]

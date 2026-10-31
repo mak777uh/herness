@@ -120,14 +120,24 @@ fn tool_seal(arg: &str) -> Result<String, String> {
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
     let mut command = Command::new(exe);
     command.arg("seal").arg(arg).env(LOOP_GUARD, "1");
-    // Правило песочницы ставится до exec и наследуется потомками инструмента.
-    crate::sandbox::harden_command(&mut command);
+    // HS_TOOL: только инструмент просит ребёнка сказать вслух про фильтр. Замер стоимости
+    // запуска (20 «seal» подряд) идёт без этой переменной, иначе журнал забивается шумом.
+    command.env("HS_TOOL", "1");
+    // Фильтр ставит сам ребёнок первой строкой (`harden_self`): `pre_exec` в нашем ядре не
+    // работает (F-0024), а без фильтра «инструмент в песочнице» был бы только словом.
     let output = command
         .output()
         .map_err(|error| format!("не запустить инструмент: {error}"))?;
     let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
     if output.status.success() {
-        Ok(stdout)
+        // Граница видна в журнале: если фильтр не встал, это часть результата, а не слух.
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let note = if stderr.contains("фильтр UDP не поставлен") {
+            " [песочница: фильтра нет, ядро без seccomp]"
+        } else {
+            ""
+        };
+        Ok(format!("{stdout}{note}"))
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
         Err(format!("код {:?}: {stdout}{stderr}", output.status.code()))
@@ -140,7 +150,6 @@ fn tool_netprobe(_arg: &str) -> Result<String, String> {
     let shown = exe.display().to_string();
     let mut command = Command::new(&exe);
     command.arg("sandbox-probe").env(LOOP_GUARD, "1");
-    crate::sandbox::harden_command(&mut command);
     let output = command
         .output()
         .map_err(|error| {

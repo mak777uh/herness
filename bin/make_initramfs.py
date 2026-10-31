@@ -37,29 +37,14 @@ def cpio_newc(entries: list[tuple[str, bytes, int]]) -> bytes:
     return bytes(out)
 
 
-def main() -> int:
-    BOOT.mkdir(parents=True, exist_ok=True)
+def entries(mode: str, payload: bytes) -> list[tuple[str, bytes, int]]:
+    """Содержимое образа комнаты. Вынесено из main, чтобы это можно было проверить тестом.
 
-    kernel = BOOT / "vmlinuz-lts"
-    if not kernel.exists():
-        print("качаю ядро…")
-        urllib.request.urlretrieve(KERNEL_URL, kernel)
-
-    chosen = os.environ.get("HS_KERNEL", "vmlinuz-own")
-    chosen_path = BOOT / chosen
-    if chosen_path.exists():
-        print(f"ядро для загрузки: {chosen} ({chosen_path.stat().st_size} байт)")
-    else:
-        print(f"ВНИМАНИЕ: ядра {chosen} нет в boot/")
-
-    if not BINARY.exists():
-        print(f"нет бинарника: {BINARY} — сначала cargo build")
-        return 2
-    payload = BINARY.read_bytes()
-
-    mode = os.environ.get("HS_MODE", "check")
+    Ни задача, ни мост, ни критерии приёмки не «докидываются» сюда по умолчанию: критерий живёт
+    на хосте (ADR-0049), иначе агент сможет подгоняться под его текст.
+    """
     method = "гипотеза: система из ядра и харнесса\n## Seal\nпечать\n".encode()
-    entries = [
+    return [
         ("init", payload, 0o100755),
         ("method.md", method, 0o100644),
         ("mode", mode.encode(), 0o100644),
@@ -80,7 +65,36 @@ def main() -> int:
         *([("task", os.environ["HS_TASK"].encode(), 0o100644)]
           if os.environ.get("HS_TASK") else []),
     ]
-    archive = cpio_newc(entries)
+
+
+def names(mode: str = "check") -> list[str]:
+    """Имена записей образа — то, что вообще может увидеть комната."""
+    return [name for name, _data, _mode in entries(mode, b"")]
+
+
+def main() -> int:
+    BOOT.mkdir(parents=True, exist_ok=True)
+
+
+    kernel = BOOT / "vmlinuz-lts"
+    if not kernel.exists():
+        print("качаю ядро…")
+        urllib.request.urlretrieve(KERNEL_URL, kernel)
+
+    chosen = os.environ.get("HS_KERNEL", "vmlinuz-own")
+    chosen_path = BOOT / chosen
+    if chosen_path.exists():
+        print(f"ядро для загрузки: {chosen} ({chosen_path.stat().st_size} байт)")
+    else:
+        print(f"ВНИМАНИЕ: ядра {chosen} нет в boot/")
+
+    if not BINARY.exists():
+        print(f"нет бинарника: {BINARY} — сначала cargo build")
+        return 2
+    payload = BINARY.read_bytes()
+
+    mode = os.environ.get("HS_MODE", "check")
+    archive = cpio_newc(entries(mode, payload))
     target = BOOT / "initramfs.cpio.gz"
     target.write_bytes(gzip.compress(archive, 9))
     print(f"initramfs: {target.stat().st_size} байт | режим: {mode}")
