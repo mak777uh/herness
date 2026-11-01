@@ -1,0 +1,20 @@
+Co-OmniSpec — карточка источника (для утверждения C-0214)
+
+repo: https://github.com/ZTE-AICloud/Co-OmniSpec
+license: MIT (Copyright (c) 2026 ZTE-AICloud / ZTE)
+language: Python, branch master, 57 stars на 01.11.2026
+что это: набор плагинов Claude Code для Spec-Driven Development (адаптация GitHub Spec Kit)
+
+пайплайн: constitution -> specify -> clarify -> design -> tasks -> implement -> archive
+артефакты: .omni-infra/memory/constitution.md, changes/<branch>/{spec,context,design,tasks}.md
+гейты по этапам: clarify, analyze, checklist, review
+режимы: express | standard | deep (expert — внутренний)
+
+что берём:
+  1) clarify как отдельный шаг (у нас его нет: неоднозначная задача -> молчание или догадка)
+  2) бюджет по сложности задачи (express|standard|deep) вместо фиксированного
+  3) конституция как файл, на который ссылается каждый шаг
+
+что не берём: их пайплайн целиком, reverse-инженерию, привязку к Claude Code
+
+прочитано: README.md полностью (HTTP 200, master)
