@@ -1,0 +1,220 @@
+{
+ "schema": 1,
+ "source": "MuSiQue-Ans dev (CC BY 4.0, github.com/StonyBrookNLP/musique)",
+ "sha256_dev": "15fa63794d18a94ce12411aca6e2327e65b6e83b0b1490efab3f1962e48abf3b",
+ "note": "Ответ проверяется по answer/answer_aliases, поддержка — по is_supporting: support_f1 = 2*|pred∩gold|/(|pred|+|gold|), порог объявлен заранее.",
+ "tasks": [
+  {
+   "id": "T-musique-2hop__460946_294723",
+   "question": "Who is the spouse of the Green performer?",
+   "answer": "Miquette Giraudy",
+   "answer_aliases": [],
+   "support_idx": [
+    5,
+    10
+   ],
+   "support_f1_min": 0.5,
+   "judge": "answer_match_and_support_f1",
+   "task": "В каталоге /mnt лежат 20 файлов p01.md … p20.md. Ответь на вопрос и укажи, какие файлы подтверждают ответ.\nВопрос: Who is the spouse of the Green performer?\nОтветь двумя строками: 1) ответ; 2) номера подтверждающих файлов через запятую.",
+   "criterion": {
+    "task": "ответить на вопрос MuSiQue 2hop__460946_294723 с указанием источников",
+    "comment": "Собрано bin/musique_tasks.py из MuSiQue dev (CC BY 4.0). Ключ ответа и поддержки — человеческая разметка набора. Порог support_f1 объявлен до прогона.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 20,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 20,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "p\\d{2}"
+   }
+  },
+  {
+   "id": "T-musique-2hop__252311_366220",
+   "question": "Who founded the company that distributed the film UHF?",
+   "answer": "Mike Medavoy",
+   "answer_aliases": [],
+   "support_idx": [
+    6,
+    10
+   ],
+   "support_f1_min": 0.5,
+   "judge": "answer_match_and_support_f1",
+   "task": "В каталоге /mnt лежат 20 файлов p01.md … p20.md. Ответь на вопрос и укажи, какие файлы подтверждают ответ.\nВопрос: Who founded the company that distributed the film UHF?\nОтветь двумя строками: 1) ответ; 2) номера подтверждающих файлов через запятую.",
+   "criterion": {
+    "task": "ответить на вопрос MuSiQue 2hop__252311_366220 с указанием источников",
+    "comment": "Собрано bin/musique_tasks.py из MuSiQue dev (CC BY 4.0). Ключ ответа и поддержки — человеческая разметка набора. Порог support_f1 объявлен до прогона.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 20,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 20,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "p\\d{2}"
+   }
+  },
+  {
+   "id": "T-musique-2hop__701895_752697",
+   "question": "What administrative territorial entity is the owner of Ciudad Deportiva located?",
+   "answer": "Tamaulipas",
+   "answer_aliases": [],
+   "support_idx": [
+    3,
+    11
+   ],
+   "support_f1_min": 0.5,
+   "judge": "answer_match_and_support_f1",
+   "task": "В каталоге /mnt лежат 20 файлов p01.md … p20.md. Ответь на вопрос и укажи, какие файлы подтверждают ответ.\nВопрос: What administrative territorial entity is the owner of Ciudad Deportiva located?\nОтветь двумя строками: 1) ответ; 2) номера подтверждающих файлов через запятую.",
+   "criterion": {
+    "task": "ответить на вопрос MuSiQue 2hop__701895_752697 с указанием источников",
+    "comment": "Собрано bin/musique_tasks.py из MuSiQue dev (CC BY 4.0). Ключ ответа и поддержки — человеческая разметка набора. Порог support_f1 объявлен до прогона.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 20,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 20,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "p\\d{2}"
+   }
+  },
+  {
+   "id": "T-musique-2hop__259228_793698",
+   "question": "Where is Ulrich Walter's employer headquartered?",
+   "answer": "Cologne",
+   "answer_aliases": [],
+   "support_idx": [
+    11,
+    14
+   ],
+   "support_f1_min": 0.5,
+   "judge": "answer_match_and_support_f1",
+   "task": "В каталоге /mnt лежат 20 файлов p01.md … p20.md. Ответь на вопрос и укажи, какие файлы подтверждают ответ.\nВопрос: Where is Ulrich Walter's employer headquartered?\nОтветь двумя строками: 1) ответ; 2) номера подтверждающих файлов через запятую.",
+   "criterion": {
+    "task": "ответить на вопрос MuSiQue 2hop__259228_793698 с указанием источников",
+    "comment": "Собрано bin/musique_tasks.py из MuSiQue dev (CC BY 4.0). Ключ ответа и поддержки — человеческая разметка набора. Порог support_f1 объявлен до прогона.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 20,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 20,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "p\\d{2}"
+   }
+  },
+  {
+   "id": "T-musique-2hop__481349_302087",
+   "question": "Which company owns the manufacturer of Learjet 60?",
+   "answer": "Bombardier Inc.",
+   "answer_aliases": [
+    "Bombardier"
+   ],
+   "support_idx": [
+    5,
+    10
+   ],
+   "support_f1_min": 0.5,
+   "judge": "answer_match_and_support_f1",
+   "task": "В каталоге /mnt лежат 20 файлов p01.md … p20.md. Ответь на вопрос и укажи, какие файлы подтверждают ответ.\nВопрос: Which company owns the manufacturer of Learjet 60?\nОтветь двумя строками: 1) ответ; 2) номера подтверждающих файлов через запятую.",
+   "criterion": {
+    "task": "ответить на вопрос MuSiQue 2hop__481349_302087 с указанием источников",
+    "comment": "Собрано bin/musique_tasks.py из MuSiQue dev (CC BY 4.0). Ключ ответа и поддержки — человеческая разметка набора. Порог support_f1 объявлен до прогона.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 20,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 20,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "p\\d{2}"
+   }
+  },
+  {
+   "id": "T-musique-2hop__697790_864352",
+   "question": "Who is the child of Caroline LeRoy's spouse?",
+   "answer": "Fletcher Webster",
+   "answer_aliases": [],
+   "support_idx": [
+    0,
+    10
+   ],
+   "support_f1_min": 0.5,
+   "judge": "answer_match_and_support_f1",
+   "task": "В каталоге /mnt лежат 20 файлов p01.md … p20.md. Ответь на вопрос и укажи, какие файлы подтверждают ответ.\nВопрос: Who is the child of Caroline LeRoy's spouse?\nОтветь двумя строками: 1) ответ; 2) номера подтверждающих файлов через запятую.",
+   "criterion": {
+    "task": "ответить на вопрос MuSiQue 2hop__697790_864352 с указанием источников",
+    "comment": "Собрано bin/musique_tasks.py из MuSiQue dev (CC BY 4.0). Ключ ответа и поддержки — человеческая разметка набора. Порог support_f1 объявлен до прогона.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 20,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 20,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "p\\d{2}"
+   }
+  }
+ ]
+}

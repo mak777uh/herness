@@ -56,3 +56,4 @@ core-rs/boot/
 
 core-rs/acc.img
 core-rs/*.img
+lab/p27/musique/*.jsonl

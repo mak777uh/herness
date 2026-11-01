@@ -1,0 +1,6 @@
+# Загрузка внешнего файла: lab/p27/musique/dev.jsonl
+
+[OK ] https://huggingface.co/datasets/dgslibisey/MuSiQue/resolve/main/musique_ans_v1.0_dev.jsonl — ок, 30439728 байт
+      sha256 15fa63794d18a94ce12411aca6e2327e65b6e83b0b1490efab3f1962e48abf3b
+
+итог: файл сохранён

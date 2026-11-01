@@ -1,0 +1,257 @@
+{
+ "schema": 1,
+ "built_from": "файлы репозитория (SOURCES)",
+ "note": "Ключ атрибуции выведен машинно: множество файлов, в которых встречается номер утверждения. Проверка ответа — сравнение множеств, а не суждение.",
+ "tasks": [
+  {
+   "id": "T-attr-C-0021",
+   "claim": "C-0021",
+   "task": "Утверждение C-0021 упоминается в нескольких файлах рабочего каталога /mnt. Перечисли ВСЕ файлы, где оно встречается, полными путями относительно /mnt. Ответь одной строкой: пути через запятую.",
+   "answer_key": [
+    "CLAIMS.md",
+    "README.md",
+    "docs/ADR-0049-acceptance-outside-room.md",
+    "docs/ADR-0050-loop-prompt-history.md"
+   ],
+   "sources_in_room": [
+    "CLAIMS.md",
+    "NOT-CLAIMED.md",
+    "README.md",
+    "docs/ADR-0049-acceptance-outside-room.md",
+    "docs/ADR-0050-loop-prompt-history.md",
+    "docs/ADR-0051-resume-after-crash.md",
+    "research/P29-TRIAGE-2026-11-01.md",
+    "docs/prompts/P28-series-decisions.md"
+   ],
+   "method": "ключ = grep по тем же файлам, которые лежат в комнате",
+   "criterion": {
+    "task": "перечислить все файлы, где встречается C-0021",
+    "comment": "Собрано bin/attribution_dataset.py. Ключ выведен поиском по файлам комнаты, а не назначен человеком. Опора — номер утверждения.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 14,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0021"
+   }
+  },
+  {
+   "id": "T-attr-C-0112",
+   "claim": "C-0112",
+   "task": "Утверждение C-0112 упоминается в нескольких файлах рабочего каталога /mnt. Перечисли ВСЕ файлы, где оно встречается, полными путями относительно /mnt. Ответь одной строкой: пути через запятую.",
+   "answer_key": [
+    "CLAIMS.md"
+   ],
+   "sources_in_room": [
+    "CLAIMS.md",
+    "NOT-CLAIMED.md",
+    "README.md",
+    "docs/ADR-0049-acceptance-outside-room.md",
+    "docs/ADR-0050-loop-prompt-history.md",
+    "docs/ADR-0051-resume-after-crash.md",
+    "research/P29-TRIAGE-2026-11-01.md",
+    "docs/prompts/P28-series-decisions.md"
+   ],
+   "method": "ключ = grep по тем же файлам, которые лежат в комнате",
+   "criterion": {
+    "task": "перечислить все файлы, где встречается C-0112",
+    "comment": "Собрано bin/attribution_dataset.py. Ключ выведен поиском по файлам комнаты, а не назначен человеком. Опора — номер утверждения.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 14,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0112"
+   }
+  },
+  {
+   "id": "T-attr-C-0162",
+   "claim": "C-0162",
+   "task": "Утверждение C-0162 упоминается в нескольких файлах рабочего каталога /mnt. Перечисли ВСЕ файлы, где оно встречается, полными путями относительно /mnt. Ответь одной строкой: пути через запятую.",
+   "answer_key": [
+    "CLAIMS.md",
+    "docs/ADR-0049-acceptance-outside-room.md"
+   ],
+   "sources_in_room": [
+    "CLAIMS.md",
+    "NOT-CLAIMED.md",
+    "README.md",
+    "docs/ADR-0049-acceptance-outside-room.md",
+    "docs/ADR-0050-loop-prompt-history.md",
+    "docs/ADR-0051-resume-after-crash.md",
+    "research/P29-TRIAGE-2026-11-01.md",
+    "docs/prompts/P28-series-decisions.md"
+   ],
+   "method": "ключ = grep по тем же файлам, которые лежат в комнате",
+   "criterion": {
+    "task": "перечислить все файлы, где встречается C-0162",
+    "comment": "Собрано bin/attribution_dataset.py. Ключ выведен поиском по файлам комнаты, а не назначен человеком. Опора — номер утверждения.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 14,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0162"
+   }
+  },
+  {
+   "id": "T-attr-C-0178",
+   "claim": "C-0178",
+   "task": "Утверждение C-0178 упоминается в нескольких файлах рабочего каталога /mnt. Перечисли ВСЕ файлы, где оно встречается, полными путями относительно /mnt. Ответь одной строкой: пути через запятую.",
+   "answer_key": [
+    "CLAIMS.md"
+   ],
+   "sources_in_room": [
+    "CLAIMS.md",
+    "NOT-CLAIMED.md",
+    "README.md",
+    "docs/ADR-0049-acceptance-outside-room.md",
+    "docs/ADR-0050-loop-prompt-history.md",
+    "docs/ADR-0051-resume-after-crash.md",
+    "research/P29-TRIAGE-2026-11-01.md",
+    "docs/prompts/P28-series-decisions.md"
+   ],
+   "method": "ключ = grep по тем же файлам, которые лежат в комнате",
+   "criterion": {
+    "task": "перечислить все файлы, где встречается C-0178",
+    "comment": "Собрано bin/attribution_dataset.py. Ключ выведен поиском по файлам комнаты, а не назначен человеком. Опора — номер утверждения.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 14,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0178"
+   }
+  },
+  {
+   "id": "T-attr-C-0186",
+   "claim": "C-0186",
+   "task": "Утверждение C-0186 упоминается в нескольких файлах рабочего каталога /mnt. Перечисли ВСЕ файлы, где оно встречается, полными путями относительно /mnt. Ответь одной строкой: пути через запятую.",
+   "answer_key": [
+    "CLAIMS.md"
+   ],
+   "sources_in_room": [
+    "CLAIMS.md",
+    "NOT-CLAIMED.md",
+    "README.md",
+    "docs/ADR-0049-acceptance-outside-room.md",
+    "docs/ADR-0050-loop-prompt-history.md",
+    "docs/ADR-0051-resume-after-crash.md",
+    "research/P29-TRIAGE-2026-11-01.md",
+    "docs/prompts/P28-series-decisions.md"
+   ],
+   "method": "ключ = grep по тем же файлам, которые лежат в комнате",
+   "criterion": {
+    "task": "перечислить все файлы, где встречается C-0186",
+    "comment": "Собрано bin/attribution_dataset.py. Ключ выведен поиском по файлам комнаты, а не назначен человеком. Опора — номер утверждения.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 14,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0186"
+   }
+  },
+  {
+   "id": "T-attr-C-0196",
+   "claim": "C-0196",
+   "task": "Утверждение C-0196 упоминается в нескольких файлах рабочего каталога /mnt. Перечисли ВСЕ файлы, где оно встречается, полными путями относительно /mnt. Ответь одной строкой: пути через запятую.",
+   "answer_key": [
+    "CLAIMS.md"
+   ],
+   "sources_in_room": [
+    "CLAIMS.md",
+    "NOT-CLAIMED.md",
+    "README.md",
+    "docs/ADR-0049-acceptance-outside-room.md",
+    "docs/ADR-0050-loop-prompt-history.md",
+    "docs/ADR-0051-resume-after-crash.md",
+    "research/P29-TRIAGE-2026-11-01.md",
+    "docs/prompts/P28-series-decisions.md"
+   ],
+   "method": "ключ = grep по тем же файлам, которые лежат в комнате",
+   "criterion": {
+    "task": "перечислить все файлы, где встречается C-0196",
+    "comment": "Собрано bin/attribution_dataset.py. Ключ выведен поиском по файлам комнаты, а не назначен человеком. Опора — номер утверждения.",
+    "require_status": "done",
+    "require_commit": true,
+    "require_events": [
+     "claim/anchored"
+    ],
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "max_repeat_ratio": 0.35,
+    "max_calls_without_claim": 14,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0196"
+   }
+  }
+ ]
+}
