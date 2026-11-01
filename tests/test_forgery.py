@@ -58,12 +58,9 @@ def main() -> int:
     }
     with tempfile.TemporaryDirectory() as tmp:
         directory = Path(tmp)
-        # хост видел ЧЕСТНЫЕ события: вызов search и «step 1 …» (пачкой, как их шлёт цикл)
-        host_journal.append(
-            "forge-run",
-            "tool/call search /mnt/CLAIMS.md statistics | tool/result ok | step 1, потрачено 0.00010000",
-            directory,
-        )
+        # хост видел ЧЕСТНЫЕ события целиком: цикл шлёт весь поток, а не только шаги
+        for line in ORIGINAL:
+            host_journal.append("forge-run", line, directory)
         accept.host_journal.DEFAULT_DIR = directory  # приёмка смотрит в этот каталог
 
         honest = accept.parse_journal(journal_bytes(ORIGINAL))[0]

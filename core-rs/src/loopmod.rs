@@ -975,24 +975,7 @@ fn run_task_from(
                 if durable {
                     journal.sync()?;
                 }
-                // Подтверждение хостом (H-0007): если прогон объявлен хостовым и хост не принял
-                // событие, это не «мелкая ошибка сети», а отсутствие свидетельства. Тогда done не
-                // выдаётся вовсе: статус unrecorded, и приёмка такой прогон не примет.
-                if let Some(run) = host_run.as_deref() {
-                    // Шлём ровно те же события, что легли в журнал: иначе «подтверждено хостом»
-                    // означает только «хост что-то записал» (H-0007, вторая половина).
-                    let bundle = format!(
-                        "tool/call {name} {arg} | tool/result {result_tag} | step {steps}, потрачено {spent:.8}"
-                    );
-                    if let Err(error) = post_to_host(run, &bundle) {
-                        record(&mut journal, &mut events, "step/error",
-                               format!("хост не подтвердил шаг: {error}"))?;
-                        status = "unrecorded";
-                        record(&mut journal, &mut events, "run/end",
-                               "нет подтверждения хоста: свидетельство неполное".to_string())?;
-                        break;
-                    }
-                }
+                // Подтверждение хостом шлётся одним потоком в конце прогона: сверяются все события.
                 if spent > budget.allowance {
                     record(&mut journal, &mut events, "step/error",
                            format!("бюджет денег исчерпан: {spent:.8} > {:.8}", budget.allowance))?;
@@ -1059,6 +1042,21 @@ fn run_task_from(
         record(&mut journal, &mut events, "run/end", reason)?;
     }
     status = derive_status(&events);
+    // Подтверждение хостом: отправляем ВЕСЬ поток событий, а не только шаги. Иначе подделка
+    // claim/anchored или run/start не ловится сверкой (асимметрия, отмеченная в отчёте).
+    if let Some(run) = host_run.as_deref() {
+        for event in &events {
+            let line = format!("{} {}", event.kind, event.detail).trim().to_string();
+            if let Err(error) = post_to_host(run, &line) {
+                record(&mut journal, &mut events, "step/error",
+                       format!("хост не подтвердил событие: {error}"))?;
+                status = "unrecorded";
+                record(&mut journal, &mut events, "run/end",
+                       "нет подтверждения хоста: свидетельство неполное".to_string())?;
+                break;
+            }
+        }
+    }
 
     // Маркер коммита — граница: всё до него считается завершённым набором событий.
     journal.append(b"commit", Kind::Commit)?;

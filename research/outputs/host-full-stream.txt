@@ -1,0 +1,28 @@
+# Полный поток событий на хосте: 12 событий, включая run/start и claim/anchored
+
+событий у хоста: 12
+
+run/start task: Найди в /mnt/CLAIMS.md утверждение типа statistics и назови его id вида C-1234. Ответь одной строкой: id
+model/reply 37 байт, начало: TOOL search /mnt/CLAIMS.md statistics
+tool/call search /mnt/CLAIMS.md statistics
+tool/result ok найдено 30 в 1 файлах:
+/mnt/CLAIMS.md:9: | `statistics` | измерение с бюджетом и разбросом | «p50/p95 так
+step 1, потрачено 0.00000973
+model/reply 27 байт, начало: TOOL read /mnt/CLAIMS.md 22
+tool/call read /mnt/CLAIMS.md 22
+tool/result ok 22: | C-0004 | Холодный старт headless-профиля (dump-config, без модели) p50 = 0,46 с на этой машине | st
+step 2, потрачено 0.00005405
+model/reply 317 байт, начало: DONE C-0015 — /mnt/CLAIMS.md:39, тип sta
+claim/anchored C-0015
+run/end C-0015 — /mnt/CLAIMS.md:39, тип statistics: «По всем 266 сессиям: 16,9 % без вызовов инструментов; медиана 40,5 
+
+--- приёмка ---
+задача: найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id; записей: 13
+  [ok] статус = done — фактически: done
+  [ok] опора соответствует /C-\d{4}/ — опоры: ['C-0015']
+  [ok] шагов ≤ 12 — шагов: 2
+  [ok] расход ≤ 0.05 — потрачено: 0.00005405
+  [ok] хост подтвердил прогон accept-match — записей: 12
+  [ok] журнал комнаты совпадает с хостовым — хост видел 12 событий, в комнате 12
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: PASS

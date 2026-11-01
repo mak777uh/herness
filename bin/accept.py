@@ -202,22 +202,11 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
                 good > 0 and not problems,
                 f"записей: {good}" + (f"; проблемы: {problems[:1]}" if problems else ""),
             ))
-            # Сравнение содержимого включается критерием отдельно (host_match). Цикл шлёт по три
-            # события на шаг одной строкой через « | »; здесь они разворачиваются обратно.
+            # Сравнение содержимого (host_match): хост получает ВЕСЬ поток событий, поэтому
+            # сверяем списки целиком, без проекций и догадок о том, что доехало.
             if criteria.get("host_match"):
-                seen = host_journal.events(str(criteria["host_run"]))
-                host_events = [part.strip() for entry in seen if entry for part in entry.split(" | ")]
-                posted = ("tool/call", "tool/result", "step")
-                # Хост получает вызов, ТЕГ результата (ok/err, без текста — он бывает в килобайты)
-                # и строку шага. Сравниваем именно эту проекцию, а не весь текст результата.
-                room_events = []
-                for kind, rest in evs:
-                    if kind == "tool/call":
-                        room_events.append(f"tool/call {rest}".strip())
-                    elif kind == "tool/result":
-                        room_events.append("tool/result " + ("ok" if rest.startswith("ok ") else "err"))
-                    elif kind == "step":
-                        room_events.append(f"step {rest}".strip())
+                host_events = [entry for entry in host_journal.events(str(criteria["host_run"])) if entry]
+                room_events = [f"{kind} {rest}".strip() for kind, rest in evs]
                 prefix_ok = bool(host_events) and room_events == host_events
                 rows.append((
                     "журнал комнаты совпадает с хостовым",
