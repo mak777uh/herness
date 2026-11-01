@@ -1,0 +1,16 @@
+{
+ "task": "назвать самый частый класс отказов и их число",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 20,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "failures|F-0"
+}

@@ -1,0 +1,16 @@
+{
+ "task": "посчитать коммиты между a81ec11 и 5e9daa5",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 20,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "a81ec11"
+}
