@@ -1,28 +1,31 @@
-# Набор живых прогонов: форма против приёмки
+# Набор прогонов после расширения
 
-# Задачи: statistics / C-0004 / ADR по смыслу / measurement, повторы по 2-3 раза;
-# плюс сохранённые прогоны прошлых кругов и контроль заглушкой.
+журнал                       тип          форма  приёмка  вызовов  повт.  режим
+journal-crash.bin            обрыв        ok     PASS     2        0      принят
+journal-default-threshold.bin короткая     ok     PASS     2        0      принят
+journal-hard.bin             трудная      ok     FAIL     14       7      барахтание
+journal-set-1.bin            короткая     ok     PASS     2        0      принят
+journal-set-10.bin           трудная      ok     FAIL     14       0      упорство
+journal-set-11.bin           короткая     ok     PASS     2        0      принят
+journal-set-12.bin           короткая     ok     FAIL     1        0      нет опоры
+journal-set-13.bin           трудная      ok     FAIL     14       7      барахтание
+journal-set-14.bin           короткая     ok     FAIL     2        0      нет опоры
+journal-set-2.bin            короткая     ok     PASS     1        0      принят
+journal-set-3.bin            трудная      ok     FAIL     14       3      упорство
+journal-set-4.bin            короткая     ok     PASS     2        0      принят
+journal-set-5.bin            короткая     ok     PASS     2        0      принят
+journal-set-6.bin            короткая     ok     PASS     1        0      принят
+journal-set-7.bin            трудная      ok     FAIL     14       3      упорство
+journal-set-8.bin            короткая     ok     PASS     2        0      принят
+journal-set-9.bin            короткая     ok     PASS     1        0      принят
+journal-stub.bin             контроль     ok     FAIL     1        0      нет опоры
+journal-tampered.bin         испорченный  нет    FAIL     0        0      нет опоры
+journal.bin                  короткая     ok     FAIL     2        0      нет опоры
 
-журнал                 форма  приёмка  шагов  вызовов  повторов
-journal-crash.bin      ok     PASS     2      2        0
-journal-hard.bin       ok     FAIL     14     14       7
-journal-set-1.bin      ok     PASS     2      2        0
-journal-set-10.bin     ok     FAIL     14     14       0
-journal-set-2.bin      ok     PASS     1      1        0
-journal-set-3.bin      ok     FAIL     14     14       3
-journal-set-4.bin      ok     PASS     2      2        0
-journal-set-5.bin      ok     PASS     2      2        0
-journal-set-6.bin      ok     PASS     1      1        0
-journal-set-7.bin      ok     FAIL     14     14       3
-journal-set-8.bin      ok     PASS     2      2        0
-journal-set-9.bin      ok     PASS     1      1        0
-journal-stub.bin       ok     FAIL     1      1        0
-journal-tampered.bin   нет    FAIL     0      0        0
-journal.bin            ok     FAIL     14     14       0
+журналов: 20; форма ok: 19; принято: 10
+ложных «готово» поймано: 9 из 19 (Вильсон 95 %: 0.27–0.68)
+короткая: n=12, поймано 3, вызовов 20
+трудная: n=5, поймано 5, вызовов 70
+режимы: барахтание — 2, нет опоры — 5, принят — 10, упорство — 3
 
-журналов: 15; форма считает готовыми: 14; приёмка приняла: 8
-ложных «готово» поймано: 6 из 14 (интервал Вильсона 95 %: 0.21–0.67)
-доля принятых приёмкой: 8/15 (95 %: 0.30–0.75)
-
-# Граница: набор не случайный — задачи и их трудность выбраны вручную,
-# поэтому интервал описывает эти прогоны, а не «все задачи вообще».
+# Граница: задачи и их трудность выбраны вручную, интервал описывает этот набор.
