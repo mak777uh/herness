@@ -1,0 +1,17 @@
+{
+ "task": "назвать классы трёх отказов по порядку",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 20,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "F-003",
+ "min_objects": 3
+}

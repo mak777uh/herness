@@ -1,0 +1,17 @@
+{
+ "task": "назвать два самых частых класса отказов",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 24,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "instrument\\-error",
+ "min_objects": 3
+}
