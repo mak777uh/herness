@@ -597,6 +597,21 @@ fn run_tool(name: &str, arg: &str) -> Result<String, String> {
     run_tool_g(name, arg, None)
 }
 
+/// Отправить событие в хостовый журнал, если прогон объявлен хостовым (HS_HOST_RUN).
+///
+/// Хост берётся из окружения, а не из аргументов: это не «настройка задачи», а адрес
+/// свидетельства, и он должен задаваться снаружи комнаты.
+fn post_to_host(run: &str, event: &str) -> Result<(), String> {
+    let host = std::env::var("HS_BRIDGE_HOST").unwrap_or_else(|_| "10.0.2.2".to_string());
+    let port: u16 = std::env::var("HS_BRIDGE_PORT")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(8790);
+    let token = std::env::var("HS_BRIDGE_TOKEN").unwrap_or_default();
+    let mut link = crate::model::HttpBridge::new(&host, port, &token, "journal");
+    link.post_event(run, event).map(|_| ())
+}
+
 /// Инструмент с проверкой выдачи: что не выдано в этом прогоне, то отказ, а не тихий вызов.
 ///
 /// Зачем: набор инструментов — это полномочие, а не удобство. Прогону, который должен только
@@ -816,6 +831,7 @@ fn run_task_from(
         .map(|state| state.results.clone())
         .unwrap_or_default();
     let mut prompt = compose_prompt(task, &history, last.as_deref());
+    let host_run = std::env::var("HS_HOST_RUN").ok();
 
     while attempts < budget.steps && steps < budget.steps {
         if started.elapsed().as_secs_f64() > budget.seconds {
@@ -900,6 +916,19 @@ fn run_task_from(
                 // продолжать будет нечего (F-0027).
                 if durable {
                     journal.sync()?;
+                }
+                // Подтверждение хостом (H-0007): если прогон объявлен хостовым и хост не принял
+                // событие, это не «мелкая ошибка сети», а отсутствие свидетельства. Тогда done не
+                // выдаётся вовсе: статус unrecorded, и приёмка такой прогон не примет.
+                if let Some(run) = host_run.as_deref() {
+                    if let Err(error) = post_to_host(run, &format!("step {steps}")) {
+                        record(&mut journal, &mut events, "step/error",
+                               format!("хост не подтвердил шаг: {error}"))?;
+                        status = "unrecorded";
+                        record(&mut journal, &mut events, "run/end",
+                               "нет подтверждения хоста: свидетельство неполное".to_string())?;
+                        break;
+                    }
                 }
                 if spent > budget.allowance {
                     record(&mut journal, &mut events, "step/error",
@@ -1137,6 +1166,18 @@ mod tests {
         assert!(parse_step("давай сделаем что-нибудь").is_err());
         assert!(parse_step("").is_err());
         assert!(parse_step("TOOL").is_err());
+    }
+
+    #[test]
+    fn событие_хосту_без_моста_это_ошибка_а_не_тишина() {
+        // H-0007: если хост недоступен, событие не считается доставленным. Без этого «done,
+        // подтверждённое хостом» было бы словом, а не состоянием.
+        std::env::set_var("HS_BRIDGE_HOST", "127.0.0.1");
+        std::env::set_var("HS_BRIDGE_PORT", "9");
+        let result = post_to_host("run-test", "step 1");
+        std::env::remove_var("HS_BRIDGE_HOST");
+        std::env::remove_var("HS_BRIDGE_PORT");
+        assert!(result.is_err(), "без моста событие не должно считаться отправленным");
     }
 
     #[test]
