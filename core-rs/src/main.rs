@@ -689,6 +689,10 @@ fn init_mode() -> ExitCode {
         return loop_verify("/mnt/journal.bin");
     }
 
+    // Рамки задачи: если хост положил /scope, он идёт в задачу как объявленная граница. Модель
+    // не может его переписать: файл вне рабочего каталога, а write ограничен /mnt (H-0010).
+    let scope = fs::read_to_string("/scope").ok().map(|text| text.trim().to_string());
+
     if mode_text == "loop-bridge" {
         if env::var(hs_core::loopmod::LOOP_GUARD).is_ok() {
             // Рекурсия: цикл запустил сам себя. Это не «ещё один прогон», а утечка памяти.
@@ -705,6 +709,8 @@ fn init_mode() -> ExitCode {
             .trim()
             .to_string();
         let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
+        // Токен нужен и отправке событий: без него хост отвечает 401 и прогон получает unrecorded.
+        std::env::set_var("HS_BRIDGE_TOKEN", &token);
         // Если задана задача и есть диск — монтируем его: задаче нужны файлы, а не только /method.md.
         let mut mounted = false;
         if fs::read_to_string("/task").is_ok() {
@@ -716,6 +722,10 @@ fn init_mode() -> ExitCode {
         let task = fs::read_to_string("/task")
             .map(|text| text.trim().to_string())
             .unwrap_or_else(|_| "запечатать /method.md".to_string());
+        let task = match &scope {
+            Some(text) if !text.is_empty() => format!("{task}\n\nРамки задачи (не менять): {text}"),
+            _ => task,
+        };
         // Бюджет: по умолчанию 8 шагов, 120 с и 5 центов — прогон не должен жечь allowance молча.
         let mut budget = hs_core::loopmod::Budget {
             steps: 8,
@@ -768,6 +778,10 @@ fn init_mode() -> ExitCode {
         let task = fs::read_to_string("/task")
             .map(|text| text.trim().to_string())
             .unwrap_or_else(|_| "запечатать /method.md".to_string());
+        let task = match &scope {
+            Some(text) if !text.is_empty() => format!("{task}\n\nРамки задачи (не менять): {text}"),
+            _ => task,
+        };
         let mut budget = hs_core::loopmod::Budget { steps: 8, seconds: 120.0, allowance: 0.05 };
         if let Ok(text) = fs::read_to_string("/budget") {
             if let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) {
@@ -783,6 +797,8 @@ fn init_mode() -> ExitCode {
             }
         }
         let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
+        // Токен нужен и отправке событий: без него хост отвечает 401 и прогон получает unrecorded.
+        std::env::set_var("HS_BRIDGE_TOKEN", &token);
         // Выдача инструментов на прогон: файл `/tools` пишет хост (из критерия), а не модель.
         let granted = grants();
         if let Some(list) = &granted {
@@ -1151,4 +1167,6 @@ fn main() -> ExitCode {
         }
     }
 }
+
+
 

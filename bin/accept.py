@@ -101,7 +101,7 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
     "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events",
-    "tools", "host_run",
+    "tools", "host_run", "scope",
 }
 
 
@@ -284,6 +284,7 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
 
 

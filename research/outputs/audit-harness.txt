@@ -1,0 +1,8 @@
+аудит харнесса: C:\111\harness
+  [ok ] инструкции       AGENTS.md
+  [ok ] состояние        CLAIMS.md
+  [ok ] проверка         C:/111/harness/tests/test_accept.py
+  [ok ] рамки            C:/111/harness/accept/room-claims-hosted.json
+  [ok ] жизненный цикл   C:/111/harness/core-rs/accept-run.ps1
+
+подсистем: 5; критичных нет: 0

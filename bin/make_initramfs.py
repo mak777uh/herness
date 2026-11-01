@@ -75,6 +75,9 @@ def entries(mode: str, payload: bytes) -> list[tuple[str, bytes, int]]:
         # Имя хостового прогона: события должны подтверждаться хостом (H-0007).
         *([("host-run", os.environ["HS_HOST_RUN"].encode(), 0o100644)]
           if os.environ.get("HS_HOST_RUN") else []),
+        # Рамки задачи: read-only файл, модель читает, но не может переписать (H-0010).
+        *([("scope", os.environ["HS_SCOPE"].encode(), 0o100644)]
+          if os.environ.get("HS_SCOPE") else []),
     ]
 
 
@@ -114,4 +117,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 

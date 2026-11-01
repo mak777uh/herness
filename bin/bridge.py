@@ -161,10 +161,13 @@ def make_handler(bridge: Bridge):
             # Отдельный путь, чтобы «событие» нельзя было спутать с запросом к модели.
             if self.path.rstrip("/") == "/v1/journal":
                 try:
-                    from bin import host_journal
-                except Exception as exc:  # noqa: BLE001
-                    self._reject(500, f"журнал хоста недоступен: {type(exc).__name__}")
-                    return
+                    from bin import host_journal  # запуск как модуль
+                except Exception:  # noqa: BLE001 — запуск как `python bin/bridge.py`
+                    try:
+                        import host_journal  # type: ignore[no-redef]
+                    except Exception as exc:  # noqa: BLE001
+                        self._reject(500, f"журнал хоста недоступен: {type(exc).__name__}")
+                        return
                 try:
                     request = json.loads(body.decode("utf-8"))
                     run = str(request["run"])
@@ -273,3 +276,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

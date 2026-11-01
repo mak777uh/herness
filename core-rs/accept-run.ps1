@@ -49,6 +49,8 @@ if (Test-Path $criteriaPath) {
     $budget.seconds = 240
     $env:HS_BUDGET = ($budget | ConvertTo-Json -Compress)
     if ($spec.host_run) { $env:HS_HOST_RUN = [string]$spec.host_run }
+    # Рамки задачи: read-only файл в комнате, объявлен критерием (H-0010).
+    if ($null -ne $spec.scope) { $env:HS_SCOPE = ($spec.scope | ConvertTo-Json -Compress) } else { Remove-Item Env:\HS_SCOPE -ErrorAction SilentlyContinue }
     # Выдача инструментов: объявлена в критерии, значит комната получает ровно её, а не весь набор.
     if ($null -ne $spec.tools) {
         $env:HS_TOOLS = ($spec.tools | ConvertTo-Json -Compress)
@@ -114,5 +116,6 @@ Write-Host ("журнал на хосте: {0} байт" -f (Get-Item $journal).
 
 python (Join-Path $root "bin\accept.py") (Join-Path $root $Criteria) $journal
 exit $LASTEXITCODE
+
 
 
