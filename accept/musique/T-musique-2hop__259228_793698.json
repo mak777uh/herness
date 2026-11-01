@@ -1,0 +1,22 @@
+{
+ "task": "ответить на вопрос MuSiQue 2hop__259228_793698 с указанием источников",
+ "comment": "Собрано bin/musique_tasks.py из MuSiQue dev (CC BY 4.0). Ключ ответа и поддержки — человеческая разметка набора. Порог support_f1 объявлен до прогона.",
+ "require_status": "done",
+ "require_commit": true,
+ "require_events": [
+  "claim/anchored"
+ ],
+ "max_steps": 20,
+ "max_allowance": 0.05,
+ "max_repeat_ratio": 0.35,
+ "max_calls_without_claim": 20,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "p\\d{2}"
+}
