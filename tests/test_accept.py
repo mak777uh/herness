@@ -281,6 +281,24 @@ def _():
 
 
 
+@case("много вызовов без опоры — отдельный отказ")
+def _():
+    many = [
+        "run/start task: t",
+    ]
+    for index in range(12):
+        many += [f"tool/call search /mnt шаг{index}", "tool/result ok ничего",
+                 f"step {index + 1}, потрачено 0.00010000"]
+    many += ["claim/unverified нет опоры", "run/end готово"]
+    spec = dict(CRITERIA, max_calls_without_claim=10)
+    ok, rows = run(spec, many)
+    assert not ok, rows
+    assert any("вызовах есть опора" in name and not passed for name, passed, _ in rows), rows
+    # короткий прогон с опорой условие проходит
+    ok_ok, rows_ok = run(spec, OK_RUN)
+    assert any("вызовах есть опора" in name and passed for name, passed, _ in rows_ok), rows_ok
+
+
 def main() -> int:
     failed = 0
     for name, fn in CASES:

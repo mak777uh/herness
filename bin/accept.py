@@ -103,7 +103,7 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
     "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events",
-    "tools", "host_run", "scope", "host_match", "max_repeat_ratio",
+    "tools", "host_run", "scope", "host_match", "max_repeat_ratio", "max_calls_without_claim",
 }
 
 
@@ -216,6 +216,17 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
                     f"хост видел {len(host_events)} событий, в комнате {len(room_events)}"
                     + ("" if prefix_ok else "; события расходятся"),
                 ))
+
+    if "max_calls_without_claim" in criteria:
+        # Второй режим провала (C-0189): прогон идёт вперёд без повторов, тратит много вызовов
+        # и не выдаёт опоры. Опора есть — условие не применяется; опоры нет и вызовов больше
+        # порога — отказ с прямым названием причины.
+        limit = int(criteria["max_calls_without_claim"])
+        total = len([1 for kind, _ in evs if kind == "tool/call"])
+        has_claim = "claim/anchored" in kinds
+        passed = has_claim or total <= limit
+        rows.append((f"при {limit}+ вызовах есть опора", passed,
+                     f"вызовов {total}, опора " + ("есть" if has_claim else "нет")))
 
     if "max_repeat_ratio" in criteria:
         # Детектор барахтания: доля повторных одинаковых вызовов. Измерено (C-0183): на трудной
