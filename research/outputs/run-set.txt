@@ -1,0 +1,17 @@
+# Набор живых прогонов: форма против приёмки
+
+# Задачи: (1) statistics, (2) C-0004, (3) ADR по смыслу, (4) measurement;
+# плюс сохранённые прогоны прошлых кругов и контроль заглушкой.
+
+журнал                   форма  приёмка  шагов  вызовов  повторов
+journal-set-1.bin        ok     PASS     2      2        0
+journal-set-2.bin        ok     PASS     1      1        0
+journal-set-3.bin        ok     FAIL     14     14       3
+journal-set-4.bin        ok     PASS     2      2        0
+journal.bin              ok     PASS     2      2        0
+journal-hard.bin         ok     FAIL     14     14       7
+journal-crash.bin        ok     PASS     2      2        0
+journal-stub.bin         ok     FAIL     1      1        0
+
+журналов: 8; форма считает готовыми: 8; приёмка приняла: 5
+ложных «готово» поймано: 3 из 8
