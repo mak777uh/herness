@@ -157,6 +157,39 @@ def make_handler(bridge: Bridge):
                 return
 
             body = self.rfile.read(length)
+            # Приём событий журнала: авторитетную копию ведёт хост, комнате остаётся кэш.
+            # Отдельный путь, чтобы «событие» нельзя было спутать с запросом к модели.
+            if self.path.rstrip("/") == "/v1/journal":
+                try:
+                    from bin import host_journal
+                except Exception as exc:  # noqa: BLE001
+                    self._reject(500, f"журнал хоста недоступен: {type(exc).__name__}")
+                    return
+                try:
+                    request = json.loads(body.decode("utf-8"))
+                    run = str(request["run"])
+                    event = str(request["event"])
+                except (ValueError, KeyError, TypeError) as exc:
+                    bridge.log({"ts": time.time(), "path": self.path, "status": 400,
+                                "reason": f"плохое событие: {type(exc).__name__}"})
+                    self._reject(400, "нужно {run, event}")
+                    return
+                try:
+                    entry = host_journal.append(run, event)
+                except OSError as exc:
+                    bridge.log({"ts": time.time(), "path": self.path, "status": 500,
+                                "reason": f"запись: {type(exc).__name__}"})
+                    self._reject(500, "не записать событие")
+                    return
+                bridge.log({"ts": time.time(), "path": self.path, "status": 200,
+                            "run": run, "seq": entry["seq"]})
+                answer = json.dumps({"seq": entry["seq"], "sha256": entry["sha256"]}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(answer)))
+                self.end_headers()
+                self.wfile.write(answer)
+                return
             status, payload, reason = bridge.forward(
                 body, self.path, {"content-type": self.headers.get("Content-Type", "")})
             usage = {}

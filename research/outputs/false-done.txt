@@ -1,0 +1,8 @@
+# Ложное «готово»: что видит наивный рантайм и что видит приёмка
+# Команда: python bin/false_done.py accept/room-claims-statistics-v3.json runs/accept/journal-stub.bin
+# Журнал получен прогоном заглушки с диском: pwsh core-rs/accept-run.ps1 -Mode loop
+
+журнал                           форма  приёмка  причина отказа приёмки
+journal-stub.bin                 ok     FAIL     статус = done: FAIL; опора соответствует /C-\d{4}/: FAIL; есть событие claim/anchored: FAIL
+
+всего: 1; ложных «готово» поймано: 1
