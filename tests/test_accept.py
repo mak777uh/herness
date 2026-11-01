@@ -274,7 +274,7 @@ def _():
         "claim/anchored C-0001",
         "run/end C-0001",
     ]
-    spec = dict(CRITERIA, max_repeat_ratio=0.35, require_commit=False)
+    spec = dict(CRITERIA, max_repeat_ratio=0.35, require_commit=False, anchor_regex=r"C-\d{4}")
     ok, rows = run(spec, repeated)
     assert ok, rows
     assert any("справочно" in name for name, _, _ in rows), rows
