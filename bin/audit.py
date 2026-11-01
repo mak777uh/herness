@@ -34,6 +34,14 @@ def read(path: Path) -> str:
         return ""
 
 
+def core_count() -> int:
+    """Сколько утверждений в ядре (lab/core-claims.txt); учёт не считается знанием."""
+    path = ROOT / "lab" / "core-claims.txt"
+    if not path.exists():
+        return 0
+    return len([line for line in read(path).splitlines() if line.strip() and not line.startswith("#")])
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     strict = "--strict" in args
@@ -103,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
     lines = [
         "# Аудит (вычислен, не написан)",
         "",
-        f"утверждений: {len(claims)} (дублей {len(duplicates)})",
+        f"утверждений: {len(claims)} (дублей {len(duplicates)}) · ядро: {core_count()}",
         f"покрытие: {coverage.get('coverage')} · вердикт: {coverage.get('verdict')}",
         f"отказов: {len(failures)} · гейтов: {len(gates)} · гейтов с контролем: {len(probes)}",
         f"артефактов: {len(outputs)} · без ссылок: {len(uncited)}",
