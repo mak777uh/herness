@@ -1,0 +1,12 @@
+# Порог барахтания 0.35 не мешает короткой задаче
+# Команда: pwsh core-rs/accept-run.ps1 -Mode loop-bridge -Kernel vmlinuz-own-net -Net
+#          -Criteria accept/room-claims-default-threshold.json -Task "..."
+
+задача: найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id; записей: 13
+  [ok] статус = done — фактически: done
+  [ok] опора соответствует /C-\d{4}/ — опоры: ['C-0021']
+  [ok] шагов ≤ 12 — шагов: 2
+  [ok] расход ≤ 0.05 — потрачено: 0.00008465
+  [ok] доля повторов ≤ 0.35 — повторов 0 из 2 (0%)
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: PASS
