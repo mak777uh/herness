@@ -36,6 +36,13 @@
    "how": "bin/check_adoptions.py (гейт «решения»)",
    "check": "auto: гейт падает без content/use_now/use_later/negative_control",
    "status": "active"
+  },
+  {
+   "id": "P-0006",
+   "rule": "задачи берутся из собственной истории харнесса (журналы, отказы, утверждения, git), а не придумываются",
+   "how": "bin/history_tasks.py извлекает задачи и ключи из тех же источников; 364 задачи на 01.11.2026",
+   "check": "auto: python bin/history_tasks.py печатает счётчики по источникам",
+   "status": "active"
   }
  ]
 }

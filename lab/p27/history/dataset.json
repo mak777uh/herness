@@ -1,0 +1,8020 @@
+{
+ "schema": 1,
+ "note": "Задачи из собственной истории. Ключ извлечён из того же источника, что и задача, поэтому его нельзя «подогнать»: тип утверждения берётся из CLAIMS.md, класс отказа из файла отказа, исход прогона из журнала, описание коммита из git.",
+ "counts": {
+  "claims": 224,
+  "failures": 33,
+  "journals": 77,
+  "commits": 30
+ },
+ "tasks": [
+  {
+   "id": "T-claim-C-0001",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0001? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0001",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0001"
+   }
+  },
+  {
+   "id": "T-claim-C-0002",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0002? Ответь одним словом.",
+   "answer": "judgment",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0002",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0002"
+   }
+  },
+  {
+   "id": "T-claim-C-0003",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0003? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0003",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0003"
+   }
+  },
+  {
+   "id": "T-claim-C-0004",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0004? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0004",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0004"
+   }
+  },
+  {
+   "id": "T-claim-C-0005",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0005? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0005",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0005"
+   }
+  },
+  {
+   "id": "T-claim-C-0006",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0006? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0006",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0006"
+   }
+  },
+  {
+   "id": "T-claim-C-0007",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0007? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0007",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0007"
+   }
+  },
+  {
+   "id": "T-claim-C-0008",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0008? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0008",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0008"
+   }
+  },
+  {
+   "id": "T-claim-C-0009",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0009? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0009",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0009"
+   }
+  },
+  {
+   "id": "T-claim-C-0010",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0010? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0010",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0010"
+   }
+  },
+  {
+   "id": "T-claim-C-0011",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0011? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0011",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0011"
+   }
+  },
+  {
+   "id": "T-claim-C-0012",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0012? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0012",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0012"
+   }
+  },
+  {
+   "id": "T-claim-C-0013",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0013? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0013",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0013"
+   }
+  },
+  {
+   "id": "T-claim-C-0014",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0014? Ответь одним словом.",
+   "answer": "withdrawn",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0014",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0014"
+   }
+  },
+  {
+   "id": "T-claim-C-0015",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0015? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0015",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0015"
+   }
+  },
+  {
+   "id": "T-claim-C-0016",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0016? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0016",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0016"
+   }
+  },
+  {
+   "id": "T-claim-C-0017",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0017? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0017",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0017"
+   }
+  },
+  {
+   "id": "T-claim-C-0018",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0018? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0018",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0018"
+   }
+  },
+  {
+   "id": "T-claim-C-0019",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0019? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0019",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0019"
+   }
+  },
+  {
+   "id": "T-claim-C-0020",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0020? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0020",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0020"
+   }
+  },
+  {
+   "id": "T-claim-C-0021",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0021? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0021",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0021"
+   }
+  },
+  {
+   "id": "T-claim-C-0022",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0022? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0022",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0022"
+   }
+  },
+  {
+   "id": "T-claim-C-0023",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0023? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0023",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0023"
+   }
+  },
+  {
+   "id": "T-claim-C-0024",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0024? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0024",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0024"
+   }
+  },
+  {
+   "id": "T-claim-C-0025",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0025? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0025",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0025"
+   }
+  },
+  {
+   "id": "T-claim-C-0026",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0026? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0026",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0026"
+   }
+  },
+  {
+   "id": "T-claim-C-0027",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0027? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0027",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0027"
+   }
+  },
+  {
+   "id": "T-claim-C-0028",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0028? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0028",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0028"
+   }
+  },
+  {
+   "id": "T-claim-C-0029",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0029? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0029",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0029"
+   }
+  },
+  {
+   "id": "T-claim-C-0030",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0030? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0030",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0030"
+   }
+  },
+  {
+   "id": "T-claim-C-0031",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0031? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0031",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0031"
+   }
+  },
+  {
+   "id": "T-claim-C-0032",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0032? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0032",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0032"
+   }
+  },
+  {
+   "id": "T-claim-C-0033",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0033? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0033",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0033"
+   }
+  },
+  {
+   "id": "T-claim-C-0034",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0034? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0034",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0034"
+   }
+  },
+  {
+   "id": "T-claim-C-0035",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0035? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0035",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0035"
+   }
+  },
+  {
+   "id": "T-claim-C-0036",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0036? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0036",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0036"
+   }
+  },
+  {
+   "id": "T-claim-C-0037",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0037? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0037",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0037"
+   }
+  },
+  {
+   "id": "T-claim-C-0038",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0038? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0038",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0038"
+   }
+  },
+  {
+   "id": "T-claim-C-0039",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0039? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0039",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0039"
+   }
+  },
+  {
+   "id": "T-claim-C-0040",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0040? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0040",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0040"
+   }
+  },
+  {
+   "id": "T-claim-C-0041",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0041? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0041",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0041"
+   }
+  },
+  {
+   "id": "T-claim-C-0042",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0042? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0042",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0042"
+   }
+  },
+  {
+   "id": "T-claim-C-0043",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0043? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0043",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0043"
+   }
+  },
+  {
+   "id": "T-claim-C-0044",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0044? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0044",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0044"
+   }
+  },
+  {
+   "id": "T-claim-C-0045",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0045? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0045",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0045"
+   }
+  },
+  {
+   "id": "T-claim-C-0046",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0046? Ответь одним словом.",
+   "answer": "withdrawn",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0046",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0046"
+   }
+  },
+  {
+   "id": "T-claim-C-0047",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0047? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0047",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0047"
+   }
+  },
+  {
+   "id": "T-claim-C-0048",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0048? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0048",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0048"
+   }
+  },
+  {
+   "id": "T-claim-C-0049",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0049? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0049",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0049"
+   }
+  },
+  {
+   "id": "T-claim-C-0050",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0050? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0050",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0050"
+   }
+  },
+  {
+   "id": "T-claim-C-0051",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0051? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0051",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0051"
+   }
+  },
+  {
+   "id": "T-claim-C-0052",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0052? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0052",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0052"
+   }
+  },
+  {
+   "id": "T-claim-C-0053",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0053? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0053",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0053"
+   }
+  },
+  {
+   "id": "T-claim-C-0054",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0054? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0054",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0054"
+   }
+  },
+  {
+   "id": "T-claim-C-0055",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0055? Ответь одним словом.",
+   "answer": "withdrawn",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0055",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0055"
+   }
+  },
+  {
+   "id": "T-claim-C-0056",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0056? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0056",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0056"
+   }
+  },
+  {
+   "id": "T-claim-C-0057",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0057? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0057",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0057"
+   }
+  },
+  {
+   "id": "T-claim-C-0058",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0058? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0058",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0058"
+   }
+  },
+  {
+   "id": "T-claim-C-0059",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0059? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0059",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0059"
+   }
+  },
+  {
+   "id": "T-claim-C-0060",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0060? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0060",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0060"
+   }
+  },
+  {
+   "id": "T-claim-C-0061",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0061? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0061",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0061"
+   }
+  },
+  {
+   "id": "T-claim-C-0062",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0062? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0062",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0062"
+   }
+  },
+  {
+   "id": "T-claim-C-0063",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0063? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0063",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0063"
+   }
+  },
+  {
+   "id": "T-claim-C-0064",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0064? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0064",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0064"
+   }
+  },
+  {
+   "id": "T-claim-C-0065",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0065? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0065",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0065"
+   }
+  },
+  {
+   "id": "T-claim-C-0066",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0066? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0066",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0066"
+   }
+  },
+  {
+   "id": "T-claim-C-0067",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0067? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0067",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0067"
+   }
+  },
+  {
+   "id": "T-claim-C-0068",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0068? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0068",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0068"
+   }
+  },
+  {
+   "id": "T-claim-C-0069",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0069? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0069",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0069"
+   }
+  },
+  {
+   "id": "T-claim-C-0070",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0070? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0070",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0070"
+   }
+  },
+  {
+   "id": "T-claim-C-0071",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0071? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0071",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0071"
+   }
+  },
+  {
+   "id": "T-claim-C-0072",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0072? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0072",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0072"
+   }
+  },
+  {
+   "id": "T-claim-C-0073",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0073? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0073",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0073"
+   }
+  },
+  {
+   "id": "T-claim-C-0074",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0074? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0074",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0074"
+   }
+  },
+  {
+   "id": "T-claim-C-0075",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0075? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0075",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0075"
+   }
+  },
+  {
+   "id": "T-claim-C-0076",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0076? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0076",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0076"
+   }
+  },
+  {
+   "id": "T-claim-C-0077",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0077? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0077",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0077"
+   }
+  },
+  {
+   "id": "T-claim-C-0078",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0078? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0078",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0078"
+   }
+  },
+  {
+   "id": "T-claim-C-0079",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0079? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0079",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0079"
+   }
+  },
+  {
+   "id": "T-claim-C-0080",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0080? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0080",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0080"
+   }
+  },
+  {
+   "id": "T-claim-C-0081",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0081? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0081",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0081"
+   }
+  },
+  {
+   "id": "T-claim-C-0082",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0082? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0082",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0082"
+   }
+  },
+  {
+   "id": "T-claim-C-0083",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0083? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0083",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0083"
+   }
+  },
+  {
+   "id": "T-claim-C-0084",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0084? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0084",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0084"
+   }
+  },
+  {
+   "id": "T-claim-C-0085",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0085? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0085",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0085"
+   }
+  },
+  {
+   "id": "T-claim-C-0086",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0086? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0086",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0086"
+   }
+  },
+  {
+   "id": "T-claim-C-0087",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0087? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0087",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0087"
+   }
+  },
+  {
+   "id": "T-claim-C-0088",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0088? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0088",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0088"
+   }
+  },
+  {
+   "id": "T-claim-C-0089",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0089? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0089",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0089"
+   }
+  },
+  {
+   "id": "T-claim-C-0090",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0090? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0090",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0090"
+   }
+  },
+  {
+   "id": "T-claim-C-0091",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0091? Ответь одним словом.",
+   "answer": "absence",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0091",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0091"
+   }
+  },
+  {
+   "id": "T-claim-C-0092",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0092? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0092",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0092"
+   }
+  },
+  {
+   "id": "T-claim-C-0093",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0093? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0093",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0093"
+   }
+  },
+  {
+   "id": "T-claim-C-0094",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0094? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0094",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0094"
+   }
+  },
+  {
+   "id": "T-claim-C-0095",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0095? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0095",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0095"
+   }
+  },
+  {
+   "id": "T-claim-C-0096",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0096? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0096",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0096"
+   }
+  },
+  {
+   "id": "T-claim-C-0097",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0097? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0097",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0097"
+   }
+  },
+  {
+   "id": "T-claim-C-0098",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0098? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0098",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0098"
+   }
+  },
+  {
+   "id": "T-claim-C-0099",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0099? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0099",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0099"
+   }
+  },
+  {
+   "id": "T-claim-C-0100",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0100? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0100",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0100"
+   }
+  },
+  {
+   "id": "T-claim-C-0101",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0101? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0101",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0101"
+   }
+  },
+  {
+   "id": "T-claim-C-0102",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0102? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0102",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0102"
+   }
+  },
+  {
+   "id": "T-claim-C-0103",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0103? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0103",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0103"
+   }
+  },
+  {
+   "id": "T-claim-C-0104",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0104? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0104",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0104"
+   }
+  },
+  {
+   "id": "T-claim-C-0105",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0105? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0105",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0105"
+   }
+  },
+  {
+   "id": "T-claim-C-0106",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0106? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0106",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0106"
+   }
+  },
+  {
+   "id": "T-claim-C-0107",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0107? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0107",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0107"
+   }
+  },
+  {
+   "id": "T-claim-C-0108",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0108? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0108",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0108"
+   }
+  },
+  {
+   "id": "T-claim-C-0109",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0109? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0109",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0109"
+   }
+  },
+  {
+   "id": "T-claim-C-0110",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0110? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0110",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0110"
+   }
+  },
+  {
+   "id": "T-claim-C-0111",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0111? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0111",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0111"
+   }
+  },
+  {
+   "id": "T-claim-C-0112",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0112? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0112",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0112"
+   }
+  },
+  {
+   "id": "T-claim-C-0113",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0113? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0113",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0113"
+   }
+  },
+  {
+   "id": "T-claim-C-0114",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0114? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0114",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0114"
+   }
+  },
+  {
+   "id": "T-claim-C-0115",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0115? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0115",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0115"
+   }
+  },
+  {
+   "id": "T-claim-C-0116",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0116? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0116",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0116"
+   }
+  },
+  {
+   "id": "T-claim-C-0117",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0117? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0117",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0117"
+   }
+  },
+  {
+   "id": "T-claim-C-0118",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0118? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0118",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0118"
+   }
+  },
+  {
+   "id": "T-claim-C-0119",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0119? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0119",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0119"
+   }
+  },
+  {
+   "id": "T-claim-C-0120",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0120? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0120",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0120"
+   }
+  },
+  {
+   "id": "T-claim-C-0121",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0121? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0121",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0121"
+   }
+  },
+  {
+   "id": "T-claim-C-0122",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0122? Ответь одним словом.",
+   "answer": "statistics",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0122",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0122"
+   }
+  },
+  {
+   "id": "T-claim-C-0123",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0123? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0123",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0123"
+   }
+  },
+  {
+   "id": "T-claim-C-0124",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0124? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0124",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0124"
+   }
+  },
+  {
+   "id": "T-claim-C-0125",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0125? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0125",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0125"
+   }
+  },
+  {
+   "id": "T-claim-C-0126",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0126? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0126",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0126"
+   }
+  },
+  {
+   "id": "T-claim-C-0127",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0127? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0127",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0127"
+   }
+  },
+  {
+   "id": "T-claim-C-0128",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0128? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0128",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0128"
+   }
+  },
+  {
+   "id": "T-claim-C-0129",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0129? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0129",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0129"
+   }
+  },
+  {
+   "id": "T-claim-C-0130",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0130? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0130",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0130"
+   }
+  },
+  {
+   "id": "T-claim-C-0131",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0131? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0131",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0131"
+   }
+  },
+  {
+   "id": "T-claim-C-0132",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0132? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0132",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0132"
+   }
+  },
+  {
+   "id": "T-claim-C-0133",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0133? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0133",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0133"
+   }
+  },
+  {
+   "id": "T-claim-C-0134",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0134? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0134",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0134"
+   }
+  },
+  {
+   "id": "T-claim-C-0135",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0135? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0135",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0135"
+   }
+  },
+  {
+   "id": "T-claim-C-0136",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0136? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0136",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0136"
+   }
+  },
+  {
+   "id": "T-claim-C-0137",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0137? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0137",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0137"
+   }
+  },
+  {
+   "id": "T-claim-C-0138",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0138? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0138",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0138"
+   }
+  },
+  {
+   "id": "T-claim-C-0139",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0139? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0139",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0139"
+   }
+  },
+  {
+   "id": "T-claim-C-0140",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0140? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0140",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0140"
+   }
+  },
+  {
+   "id": "T-claim-C-0141",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0141? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0141",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0141"
+   }
+  },
+  {
+   "id": "T-claim-C-0142",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0142? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0142",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0142"
+   }
+  },
+  {
+   "id": "T-claim-C-0143",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0143? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0143",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0143"
+   }
+  },
+  {
+   "id": "T-claim-C-0144",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0144? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0144",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0144"
+   }
+  },
+  {
+   "id": "T-claim-C-0145",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0145? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0145",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0145"
+   }
+  },
+  {
+   "id": "T-claim-C-0146",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0146? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0146",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0146"
+   }
+  },
+  {
+   "id": "T-claim-C-0147",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0147? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0147",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0147"
+   }
+  },
+  {
+   "id": "T-claim-C-0148",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0148? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0148",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0148"
+   }
+  },
+  {
+   "id": "T-claim-C-0149",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0149? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0149",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0149"
+   }
+  },
+  {
+   "id": "T-claim-C-0150",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0150? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0150",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0150"
+   }
+  },
+  {
+   "id": "T-claim-C-0151",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0151? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0151",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0151"
+   }
+  },
+  {
+   "id": "T-claim-C-0152",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0152? Ответь одним словом.",
+   "answer": "measurement",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0152",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0152"
+   }
+  },
+  {
+   "id": "T-claim-C-0153",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0153? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0153",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0153"
+   }
+  },
+  {
+   "id": "T-claim-C-0154",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0154? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0154",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0154"
+   }
+  },
+  {
+   "id": "T-claim-C-0155",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0155? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0155",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0155"
+   }
+  },
+  {
+   "id": "T-claim-C-0156",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0156? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0156",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0156"
+   }
+  },
+  {
+   "id": "T-claim-C-0157",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0157? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0157",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0157"
+   }
+  },
+  {
+   "id": "T-claim-C-0158",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0158? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0158",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0158"
+   }
+  },
+  {
+   "id": "T-claim-C-0159",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0159? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0159",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0159"
+   }
+  },
+  {
+   "id": "T-claim-C-0160",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0160? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0160",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0160"
+   }
+  },
+  {
+   "id": "T-claim-C-0161",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0161? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0161",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0161"
+   }
+  },
+  {
+   "id": "T-claim-C-0162",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0162? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0162",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0162"
+   }
+  },
+  {
+   "id": "T-claim-C-0163",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0163? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0163",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0163"
+   }
+  },
+  {
+   "id": "T-claim-C-0164",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0164? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0164",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0164"
+   }
+  },
+  {
+   "id": "T-claim-C-0165",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0165? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0165",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0165"
+   }
+  },
+  {
+   "id": "T-claim-C-0166",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0166? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0166",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0166"
+   }
+  },
+  {
+   "id": "T-claim-C-0167",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0167? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0167",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0167"
+   }
+  },
+  {
+   "id": "T-claim-C-0168",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0168? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0168",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0168"
+   }
+  },
+  {
+   "id": "T-claim-C-0169",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0169? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0169",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0169"
+   }
+  },
+  {
+   "id": "T-claim-C-0170",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0170? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0170",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0170"
+   }
+  },
+  {
+   "id": "T-claim-C-0171",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0171? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0171",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0171"
+   }
+  },
+  {
+   "id": "T-claim-C-0172",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0172? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0172",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0172"
+   }
+  },
+  {
+   "id": "T-claim-C-0173",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0173? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0173",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0173"
+   }
+  },
+  {
+   "id": "T-claim-C-0174",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0174? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0174",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0174"
+   }
+  },
+  {
+   "id": "T-claim-C-0175",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0175? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0175",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0175"
+   }
+  },
+  {
+   "id": "T-claim-C-0176",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0176? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0176",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0176"
+   }
+  },
+  {
+   "id": "T-claim-C-0177",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0177? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0177",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0177"
+   }
+  },
+  {
+   "id": "T-claim-C-0178",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0178? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0178",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0178"
+   }
+  },
+  {
+   "id": "T-claim-C-0179",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0179? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0179",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0179"
+   }
+  },
+  {
+   "id": "T-claim-C-0180",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0180? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0180",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0180"
+   }
+  },
+  {
+   "id": "T-claim-C-0181",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0181? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0181",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0181"
+   }
+  },
+  {
+   "id": "T-claim-C-0182",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0182? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0182",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0182"
+   }
+  },
+  {
+   "id": "T-claim-C-0183",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0183? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0183",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0183"
+   }
+  },
+  {
+   "id": "T-claim-C-0184",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0184? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0184",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0184"
+   }
+  },
+  {
+   "id": "T-claim-C-0185",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0185? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0185",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0185"
+   }
+  },
+  {
+   "id": "T-claim-C-0186",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0186? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0186",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0186"
+   }
+  },
+  {
+   "id": "T-claim-C-0187",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0187? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0187",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0187"
+   }
+  },
+  {
+   "id": "T-claim-C-0188",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0188? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0188",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0188"
+   }
+  },
+  {
+   "id": "T-claim-C-0189",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0189? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0189",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0189"
+   }
+  },
+  {
+   "id": "T-claim-C-0190",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0190? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0190",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0190"
+   }
+  },
+  {
+   "id": "T-claim-C-0191",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0191? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0191",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0191"
+   }
+  },
+  {
+   "id": "T-claim-C-0192",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0192? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0192",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0192"
+   }
+  },
+  {
+   "id": "T-claim-C-0193",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0193? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0193",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0193"
+   }
+  },
+  {
+   "id": "T-claim-C-0194",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0194? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0194",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0194"
+   }
+  },
+  {
+   "id": "T-claim-C-0195",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0195? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0195",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0195"
+   }
+  },
+  {
+   "id": "T-claim-C-0196",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0196? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0196",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0196"
+   }
+  },
+  {
+   "id": "T-claim-C-0197",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0197? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0197",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0197"
+   }
+  },
+  {
+   "id": "T-claim-C-0198",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0198? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0198",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0198"
+   }
+  },
+  {
+   "id": "T-claim-C-0199",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0199? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0199",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0199"
+   }
+  },
+  {
+   "id": "T-claim-C-0200",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0200? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0200",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0200"
+   }
+  },
+  {
+   "id": "T-claim-C-0201",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0201? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0201",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0201"
+   }
+  },
+  {
+   "id": "T-claim-C-0202",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0202? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0202",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0202"
+   }
+  },
+  {
+   "id": "T-claim-C-0203",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0203? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0203",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0203"
+   }
+  },
+  {
+   "id": "T-claim-C-0204",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0204? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0204",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0204"
+   }
+  },
+  {
+   "id": "T-claim-C-0205",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0205? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0205",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0205"
+   }
+  },
+  {
+   "id": "T-claim-C-0206",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0206? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0206",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0206"
+   }
+  },
+  {
+   "id": "T-claim-C-0207",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0207? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0207",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0207"
+   }
+  },
+  {
+   "id": "T-claim-C-0208",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0208? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0208",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0208"
+   }
+  },
+  {
+   "id": "T-claim-C-0209",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0209? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0209",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0209"
+   }
+  },
+  {
+   "id": "T-claim-C-0210",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0210? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0210",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0210"
+   }
+  },
+  {
+   "id": "T-claim-C-0211",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0211? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0211",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0211"
+   }
+  },
+  {
+   "id": "T-claim-C-0212",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0212? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0212",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0212"
+   }
+  },
+  {
+   "id": "T-claim-C-0213",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0213? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0213",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0213"
+   }
+  },
+  {
+   "id": "T-claim-C-0214",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0214? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0214",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0214"
+   }
+  },
+  {
+   "id": "T-claim-C-0215",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0215? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0215",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0215"
+   }
+  },
+  {
+   "id": "T-claim-C-0216",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0216? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0216",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0216"
+   }
+  },
+  {
+   "id": "T-claim-C-0217",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0217? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0217",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0217"
+   }
+  },
+  {
+   "id": "T-claim-C-0218",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0218? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0218",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0218"
+   }
+  },
+  {
+   "id": "T-claim-C-0219",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0219? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0219",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0219"
+   }
+  },
+  {
+   "id": "T-claim-C-0220",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0220? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0220",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0220"
+   }
+  },
+  {
+   "id": "T-claim-C-0221",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0221? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0221",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0221"
+   }
+  },
+  {
+   "id": "T-claim-C-0222",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0222? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0222",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0222"
+   }
+  },
+  {
+   "id": "T-claim-C-0223",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0223? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0223",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0223"
+   }
+  },
+  {
+   "id": "T-claim-C-0224",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0224? Ответь одним словом.",
+   "answer": "observation",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0224",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0224"
+   }
+  },
+  {
+   "id": "T-fail-F-0001",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0001? Ответь одним словом из файла.",
+   "answer": "invented-premise",
+   "criterion": {
+    "task": "назвать класс отказа F-0001",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0001"
+   }
+  },
+  {
+   "id": "T-fail-F-0002",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0002? Ответь одним словом из файла.",
+   "answer": "invented-number",
+   "criterion": {
+    "task": "назвать класс отказа F-0002",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0002"
+   }
+  },
+  {
+   "id": "T-fail-F-0003",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0003? Ответь одним словом из файла.",
+   "answer": "broken-by-change",
+   "criterion": {
+    "task": "назвать класс отказа F-0003",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0003"
+   }
+  },
+  {
+   "id": "T-fail-F-0004",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0004? Ответь одним словом из файла.",
+   "answer": "publication-leak",
+   "criterion": {
+    "task": "назвать класс отказа F-0004",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0004"
+   }
+  },
+  {
+   "id": "T-fail-F-0005",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0005? Ответь одним словом из файла.",
+   "answer": "unit-error",
+   "criterion": {
+    "task": "назвать класс отказа F-0005",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0005"
+   }
+  },
+  {
+   "id": "T-fail-F-0006",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0006? Ответь одним словом из файла.",
+   "answer": "tool-misuse",
+   "criterion": {
+    "task": "назвать класс отказа F-0006",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0006"
+   }
+  },
+  {
+   "id": "T-fail-F-0007",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0007? Ответь одним словом из файла.",
+   "answer": "unclosed-undefined",
+   "criterion": {
+    "task": "назвать класс отказа F-0007",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0007"
+   }
+  },
+  {
+   "id": "T-fail-F-0008",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0008? Ответь одним словом из файла.",
+   "answer": "tooling-gap",
+   "criterion": {
+    "task": "назвать класс отказа F-0008",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0008"
+   }
+  },
+  {
+   "id": "T-fail-F-0009",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0009? Ответь одним словом из файла.",
+   "answer": "interface-friction",
+   "criterion": {
+    "task": "назвать класс отказа F-0009",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0009"
+   }
+  },
+  {
+   "id": "T-fail-F-0010",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0010? Ответь одним словом из файла.",
+   "answer": "mutable-baseline",
+   "criterion": {
+    "task": "назвать класс отказа F-0010",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0010"
+   }
+  },
+  {
+   "id": "T-fail-F-0011",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0011? Ответь одним словом из файла.",
+   "answer": "false-reference",
+   "criterion": {
+    "task": "назвать класс отказа F-0011",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0011"
+   }
+  },
+  {
+   "id": "T-fail-F-0012",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0012? Ответь одним словом из файла.",
+   "answer": "weak-verification",
+   "criterion": {
+    "task": "назвать класс отказа F-0012",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0012"
+   }
+  },
+  {
+   "id": "T-fail-F-0013",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0013? Ответь одним словом из файла.",
+   "answer": "incomplete-enumeration",
+   "criterion": {
+    "task": "назвать класс отказа F-0013",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0013"
+   }
+  },
+  {
+   "id": "T-fail-F-0014",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0014? Ответь одним словом из файла.",
+   "answer": "harness-bug",
+   "criterion": {
+    "task": "назвать класс отказа F-0014",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0014"
+   }
+  },
+  {
+   "id": "T-fail-F-0015",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0015? Ответь одним словом из файла.",
+   "answer": "verification-as-absence",
+   "criterion": {
+    "task": "назвать класс отказа F-0015",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0015"
+   }
+  },
+  {
+   "id": "T-fail-F-0016",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0016? Ответь одним словом из файла.",
+   "answer": "unstable-measurement",
+   "criterion": {
+    "task": "назвать класс отказа F-0016",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0016"
+   }
+  },
+  {
+   "id": "T-fail-F-0017",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0017? Ответь одним словом из файла.",
+   "answer": "silent-broken-tool",
+   "criterion": {
+    "task": "назвать класс отказа F-0017",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0017"
+   }
+  },
+  {
+   "id": "T-fail-F-0018",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0018? Ответь одним словом из файла.",
+   "answer": "process-violation",
+   "criterion": {
+    "task": "назвать класс отказа F-0018",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0018"
+   }
+  },
+  {
+   "id": "T-fail-F-0019",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0019? Ответь одним словом из файла.",
+   "answer": "durability-defect",
+   "criterion": {
+    "task": "назвать класс отказа F-0019",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0019"
+   }
+  },
+  {
+   "id": "T-fail-F-0020",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0020? Ответь одним словом из файла.",
+   "answer": "false-green",
+   "criterion": {
+    "task": "назвать класс отказа F-0020",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0020"
+   }
+  },
+  {
+   "id": "T-fail-F-0021",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0021? Ответь одним словом из файла.",
+   "answer": "recursion-by-design",
+   "criterion": {
+    "task": "назвать класс отказа F-0021",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0021"
+   }
+  },
+  {
+   "id": "T-fail-F-0022",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0022? Ответь одним словом из файла.",
+   "answer": "check-too-weak",
+   "criterion": {
+    "task": "назвать класс отказа F-0022",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0022"
+   }
+  },
+  {
+   "id": "T-fail-F-0023",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0023? Ответь одним словом из файла.",
+   "answer": "repo-hygiene",
+   "criterion": {
+    "task": "назвать класс отказа F-0023",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0023"
+   }
+  },
+  {
+   "id": "T-fail-F-0024",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0024? Ответь одним словом из файла.",
+   "answer": "kernel-boundary",
+   "criterion": {
+    "task": "назвать класс отказа F-0024",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0024"
+   }
+  },
+  {
+   "id": "T-fail-F-0025",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0025? Ответь одним словом из файла.",
+   "answer": "confinement",
+   "criterion": {
+    "task": "назвать класс отказа F-0025",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0025"
+   }
+  },
+  {
+   "id": "T-fail-F-0026",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0026? Ответь одним словом из файла.",
+   "answer": "loop-design",
+   "criterion": {
+    "task": "назвать класс отказа F-0026",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0026"
+   }
+  },
+  {
+   "id": "T-fail-F-0027",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0027? Ответь одним словом из файла.",
+   "answer": "durability",
+   "criterion": {
+    "task": "назвать класс отказа F-0027",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0027"
+   }
+  },
+  {
+   "id": "T-fail-F-0028",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0028? Ответь одним словом из файла.",
+   "answer": "instrument-error",
+   "criterion": {
+    "task": "назвать класс отказа F-0028",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0028"
+   }
+  },
+  {
+   "id": "T-fail-F-0029",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0029? Ответь одним словом из файла.",
+   "answer": "task-spec",
+   "criterion": {
+    "task": "назвать класс отказа F-0029",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0029"
+   }
+  },
+  {
+   "id": "T-fail-F-0030",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0030? Ответь одним словом из файла.",
+   "answer": "instrument-error",
+   "criterion": {
+    "task": "назвать класс отказа F-0030",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0030"
+   }
+  },
+  {
+   "id": "T-fail-F-0032",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0032? Ответь одним словом из файла.",
+   "answer": "criterion-design",
+   "criterion": {
+    "task": "назвать класс отказа F-0032",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0032"
+   }
+  },
+  {
+   "id": "T-fail-F-0033",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0033? Ответь одним словом из файла.",
+   "answer": "task-spec",
+   "criterion": {
+    "task": "назвать класс отказа F-0033",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0033"
+   }
+  },
+  {
+   "id": "T-fail-F-0034",
+   "source": "lab/failures",
+   "task": "К какому классу относится отказ F-0034? Ответь одним словом из файла.",
+   "answer": "instrument-error",
+   "criterion": {
+    "task": "назвать класс отказа F-0034",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 12,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "F-0034"
+   }
+  },
+  {
+   "id": "T-journal-deadlock-1",
+   "source": "runs/accept",
+   "task": "Прогон deadlock-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона deadlock-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-crash",
+   "source": "runs/accept",
+   "task": "Прогон journal-crash записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-crash",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-default-threshold",
+   "source": "runs/accept",
+   "task": "Прогон journal-default-threshold записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-default-threshold",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-hard",
+   "source": "runs/accept",
+   "task": "Прогон journal-hard записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal-hard",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-1",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-10",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-10 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal-set-10",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-11",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-11 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-11",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-12",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-12 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-12",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-13",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-13 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal-set-13",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-14",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-14 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-14",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-2",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-3",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-3 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal-set-3",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-4",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-4 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-4",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-5",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-5 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-6",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-6 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-6",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-7",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-7 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal-set-7",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-8",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-8 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-8",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-set-9",
+   "source": "runs/accept",
+   "task": "Прогон journal-set-9 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона journal-set-9",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-stub",
+   "source": "runs/accept",
+   "task": "Прогон journal-stub записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal-stub",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal-tampered",
+   "source": "runs/accept",
+   "task": "Прогон journal-tampered записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal-tampered",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-journal",
+   "source": "runs/accept",
+   "task": "Прогон journal записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона journal",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique-0",
+   "source": "runs/accept",
+   "task": "Прогон musique-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique-1",
+   "source": "runs/accept",
+   "task": "Прогон musique-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique-2",
+   "source": "runs/accept",
+   "task": "Прогон musique-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique-3",
+   "source": "runs/accept",
+   "task": "Прогон musique-3 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique-3",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique-4",
+   "source": "runs/accept",
+   "task": "Прогон musique-4 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона musique-4",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique-5",
+   "source": "runs/accept",
+   "task": "Прогон musique-5 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique-5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique2-0",
+   "source": "runs/accept",
+   "task": "Прогон musique2-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique2-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique2-1",
+   "source": "runs/accept",
+   "task": "Прогон musique2-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique2-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique3-0",
+   "source": "runs/accept",
+   "task": "Прогон musique3-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона musique3-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique3-1",
+   "source": "runs/accept",
+   "task": "Прогон musique3-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique3-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique4-0",
+   "source": "runs/accept",
+   "task": "Прогон musique4-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique4-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique4-1",
+   "source": "runs/accept",
+   "task": "Прогон musique4-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique4-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique4-2",
+   "source": "runs/accept",
+   "task": "Прогон musique4-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique4-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique4-3",
+   "source": "runs/accept",
+   "task": "Прогон musique4-3 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique4-3",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique4-4",
+   "source": "runs/accept",
+   "task": "Прогон musique4-4 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона musique4-4",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique4-5",
+   "source": "runs/accept",
+   "task": "Прогон musique4-5 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique4-5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique5-0",
+   "source": "runs/accept",
+   "task": "Прогон musique5-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique5-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique5-1",
+   "source": "runs/accept",
+   "task": "Прогон musique5-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique5-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique5-2",
+   "source": "runs/accept",
+   "task": "Прогон musique5-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique5-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique5-3",
+   "source": "runs/accept",
+   "task": "Прогон musique5-3 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique5-3",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique5-4",
+   "source": "runs/accept",
+   "task": "Прогон musique5-4 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона musique5-4",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique5-5",
+   "source": "runs/accept",
+   "task": "Прогон musique5-5 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique5-5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique6-5",
+   "source": "runs/accept",
+   "task": "Прогон musique6-5 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона musique6-5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique7-0",
+   "source": "runs/accept",
+   "task": "Прогон musique7-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique7-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique7-1",
+   "source": "runs/accept",
+   "task": "Прогон musique7-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique7-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique7-2",
+   "source": "runs/accept",
+   "task": "Прогон musique7-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique7-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique7-3",
+   "source": "runs/accept",
+   "task": "Прогон musique7-3 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона musique7-3",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique7-4",
+   "source": "runs/accept",
+   "task": "Прогон musique7-4 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона musique7-4",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-musique7-5",
+   "source": "runs/accept",
+   "task": "Прогон musique7-5 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона musique7-5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-exact-C-0004",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-exact-C-0004 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-exact-C-0004",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-exact-C-0021",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-exact-C-0021 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-exact-C-0021",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-exact-C-0112",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-exact-C-0112 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-exact-C-0112",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-exact-C-0122",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-exact-C-0122 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-exact-C-0122",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-exact-C-0179",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-exact-C-0179 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона p27-T-exact-C-0179",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-type-judgment",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-type-judgment записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-type-judgment",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-type-observation",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-type-observation записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-type-observation",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-type-statistics",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-type-statistics записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-type-statistics",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27-T-type-test",
+   "source": "runs/accept",
+   "task": "Прогон p27-T-type-test записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27-T-type-test",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-exact-C-0004",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-exact-C-0004 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-exact-C-0004",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-exact-C-0021",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-exact-C-0021 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-exact-C-0021",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-exact-C-0112",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-exact-C-0112 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-exact-C-0112",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-exact-C-0122",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-exact-C-0122 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-exact-C-0122",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-exact-C-0179",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-exact-C-0179 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-exact-C-0179",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-type-judgment",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-type-judgment записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-type-judgment",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-type-observation",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-type-observation записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-type-observation",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-type-statistics",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-type-statistics записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-type-statistics",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-p27r2-T-type-test",
+   "source": "runs/accept",
+   "task": "Прогон p27r2-T-type-test записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона p27r2-T-type-test",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal-0",
+   "source": "runs/accept",
+   "task": "Прогон refusal-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal-1",
+   "source": "runs/accept",
+   "task": "Прогон refusal-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal-2",
+   "source": "runs/accept",
+   "task": "Прогон refusal-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal2-0",
+   "source": "runs/accept",
+   "task": "Прогон refusal2-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal2-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal2-1",
+   "source": "runs/accept",
+   "task": "Прогон refusal2-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal2-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal2-2",
+   "source": "runs/accept",
+   "task": "Прогон refusal2-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal2-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal3-0",
+   "source": "runs/accept",
+   "task": "Прогон refusal3-0 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal3-0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal3-1",
+   "source": "runs/accept",
+   "task": "Прогон refusal3-1 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "blocked",
+   "criterion": {
+    "task": "определить исход прогона refusal3-1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-refusal3-2",
+   "source": "runs/accept",
+   "task": "Прогон refusal3-2 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона refusal3-2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-commit-2ac92b2",
+   "source": "git log",
+   "task": "В репозитории есть коммит 2ac92b2. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: где мы и следующие шаги простым языком (docs/WHERE-WE-ARE.md)",
+   "criterion": {
+    "task": "назвать описание коммита 2ac92b2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "2ac92b2"
+   }
+  },
+  {
+   "id": "T-commit-785cd52",
+   "source": "git log",
+   "task": "В репозитории есть коммит 785cd52. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: 21 источник из P30 добавлен в склад литературы со статусом [А]",
+   "criterion": {
+    "task": "назвать описание коммита 785cd52",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "785cd52"
+   }
+  },
+  {
+   "id": "T-commit-b5e3cd2",
+   "source": "git log",
+   "task": "В репозитории есть коммит b5e3cd2. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: разбор P30 и петли по DeLoop — 84% прогонов с петлёй без исхода против 15% (C-0223, C-0224)",
+   "criterion": {
+    "task": "назвать описание коммита b5e3cd2",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "b5e3cd2"
+   }
+  },
+  {
+   "id": "T-commit-7a83f2e",
+   "source": "git log",
+   "task": "В репозитории есть коммит 7a83f2e. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: ADR-0053 админ харнесса + очередь находок lab/admin-inbox с проверкой формата (C-0222)",
+   "criterion": {
+    "task": "назвать описание коммита 7a83f2e",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "7a83f2e"
+   }
+  },
+  {
+   "id": "T-commit-41c53ab",
+   "source": "git log",
+   "task": "В репозитории есть коммит 41c53ab. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: формат отдачи и встраивание комментариев владельца — правила с how/check и проверка брифов (C-0221)",
+   "criterion": {
+    "task": "назвать описание коммита 41c53ab",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "41c53ab"
+   }
+  },
+  {
+   "id": "T-commit-5e9daa5",
+   "source": "git log",
+   "task": "В репозитории есть коммит 5e9daa5. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: P30 — вопросы на поиск (аллокация усилий, dev-режим, self-hosting, бюджеты, метрики, отказ)",
+   "criterion": {
+    "task": "назвать описание коммита 5e9daa5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "5e9daa5"
+   }
+  },
+  {
+   "id": "T-commit-491ff70",
+   "source": "git log",
+   "task": "В репозитории есть коммит 491ff70. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: уточнения владельца — импакт на шаг, бюджет по типу задачи, north star self-hosting",
+   "criterion": {
+    "task": "назвать описание коммита 491ff70",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "491ff70"
+   }
+  },
+  {
+   "id": "T-commit-e6a1086",
+   "source": "git log",
+   "task": "В репозитории есть коммит e6a1086. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: ядро утверждений отделено от учёта — гейт, аудит и README называют ядро (C-0220)",
+   "criterion": {
+    "task": "назвать описание коммита e6a1086",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "e6a1086"
+   }
+  },
+  {
+   "id": "T-commit-ac8478d",
+   "source": "git log",
+   "task": "В репозитории есть коммит ac8478d. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: аудит встроен в харнесс — hs.py selfaudit считается из репозитория (C-0219)",
+   "criterion": {
+    "task": "назвать описание коммита ac8478d",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "ac8478d"
+   }
+  },
+  {
+   "id": "T-commit-e04b4e9",
+   "source": "git log",
+   "task": "В репозитории есть коммит e04b4e9. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: аудит репозитория и работы — факты, оценка по принципам, план P0/P1/P2",
+   "criterion": {
+    "task": "назвать описание коммита e04b4e9",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "e04b4e9"
+   }
+  },
+  {
+   "id": "T-commit-277fcc4",
+   "source": "git log",
+   "task": "В репозитории есть коммит 277fcc4. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: источник разбирается при поступлении — content + use_now/use_later обязательны, гейт ужесточён (C-0218)",
+   "criterion": {
+    "task": "назвать описание коммита 277fcc4",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "277fcc4"
+   }
+  },
+  {
+   "id": "T-commit-e3e39b0",
+   "source": "git log",
+   "task": "В репозитории есть коммит e3e39b0. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: bin/shelf.py — поиск по складу источников и решений (C-0217)",
+   "criterion": {
+    "task": "назвать описание коммита e3e39b0",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "e3e39b0"
+   }
+  },
+  {
+   "id": "T-commit-38a3137",
+   "source": "git log",
+   "task": "В репозитории есть коммит 38a3137. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: README переписан под цель автономной работы — числа, метрики, цикл встраивания исследований с гейтом",
+   "criterion": {
+    "task": "назвать описание коммита 38a3137",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "38a3137"
+   }
+  },
+  {
+   "id": "T-commit-1766f04",
+   "source": "git log",
+   "task": "В репозитории есть коммит 1766f04. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: гейт решений — механизм без источника и контроля не внедряется (C-0216)",
+   "criterion": {
+    "task": "назвать описание коммита 1766f04",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "1766f04"
+   }
+  },
+  {
+   "id": "T-commit-6b80052",
+   "source": "git log",
+   "task": "В репозитории есть коммит 6b80052. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: обзор перестроен под цель «эффективная автономная работа»; границы правды — метод, не цель",
+   "criterion": {
+    "task": "назвать описание коммита 6b80052",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "6b80052"
+   }
+  },
+  {
+   "id": "T-commit-b89e085",
+   "source": "git log",
+   "task": "В репозитории есть коммит b89e085. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: обзор сверху — слои, измеримое состояние, рациональные шаги, цикл встраивания исследований",
+   "criterion": {
+    "task": "назвать описание коммита b89e085",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "b89e085"
+   }
+  },
+  {
+   "id": "T-commit-c80a56e",
+   "source": "git log",
+   "task": "В репозитории есть коммит c80a56e. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "chore: снимок для аудита (docs/AUDIT-STATE.md); тупик подсказкой не лечится (C-0215)",
+   "criterion": {
+    "task": "назвать описание коммита c80a56e",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "c80a56e"
+   }
+  },
+  {
+   "id": "T-commit-6bbe076",
+   "source": "git log",
+   "task": "В репозитории есть коммит 6bbe076. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: Co-OmniSpec разобран (README целиком), карточка источника; разбор 26 молчаний (C-0213, C-0214)",
+   "criterion": {
+    "task": "назвать описание коммита 6bbe076",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "6bbe076"
+   }
+  },
+  {
+   "id": "T-commit-8915dc8",
+   "source": "git log",
+   "task": "В репозитории есть коммит 8915dc8. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: judge_metrics по всем сериям — pass@1 0.56, pass^2 0.61, ложных «готово» 0 (C-0212)",
+   "criterion": {
+    "task": "назвать описание коммита 8915dc8",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "8915dc8"
+   }
+  },
+  {
+   "id": "T-commit-b112bbd",
+   "source": "git log",
+   "task": "В репозитории есть коммит b112bbd. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: гейт автономии bin/check_autonomy.py с отрицательным контролем, врезан в gates (C-0211)",
+   "criterion": {
+    "task": "назвать описание коммита b112bbd",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "b112bbd"
+   }
+  },
+  {
+   "id": "T-commit-04a28cd",
+   "source": "git log",
+   "task": "В репозитории есть коммит 04a28cd. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: склад чужих харнессов (8/8 ссылок отвечают) — что берём и что нет (C-0210)",
+   "criterion": {
+    "task": "назвать описание коммита 04a28cd",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "04a28cd"
+   }
+  },
+  {
+   "id": "T-commit-1ab334e",
+   "source": "git log",
+   "task": "В репозитории есть коммит 1ab334e. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "fix: C-0208 переписана по факту — причина была в подсказке (F-0034)",
+   "criterion": {
+    "task": "назвать описание коммита 1ab334e",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "1ab334e"
+   }
+  },
+  {
+   "id": "T-commit-8d23221",
+   "source": "git log",
+   "task": "В репозитории есть коммит 8d23221. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "lab: серия на отказ — 0/6 отказов на задачах без ответа (C-0208, F-0033)",
+   "criterion": {
+    "task": "назвать описание коммита 8d23221",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "8d23221"
+   }
+  },
+  {
+   "id": "T-commit-e3e9443",
+   "source": "git log",
+   "task": "В репозитории есть коммит e3e9443. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: склад ссылок на данные (research/DATA-LINKS.md) + bin/link_check.py; 36 из 38 отвечают (C-0207)",
+   "criterion": {
+    "task": "назвать описание коммита e3e9443",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "e3e9443"
+   }
+  },
+  {
+   "id": "T-commit-e2051d1",
+   "source": "git log",
+   "task": "В репозитории есть коммит e2051d1. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: bin/judge_metrics.py — ложные «готово», precision, цена принятого (C-0206: 0 ложных, отказ в молчании)",
+   "criterion": {
+    "task": "назвать описание коммита e2051d1",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "e2051d1"
+   }
+  },
+  {
+   "id": "T-commit-284e089",
+   "source": "git log",
+   "task": "В репозитории есть коммит 284e089. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: склад литературы и данных (REFS-INDEX) — 40+ источников со статусами чтения, формулы метрик, приоритет чтения",
+   "criterion": {
+    "task": "назвать описание коммита 284e089",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "284e089"
+   }
+  },
+  {
+   "id": "T-commit-8e33172",
+   "source": "git log",
+   "task": "В репозитории есть коммит 8e33172. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: метрики приёмки из внешних обзоров — pass^k, false completion rate, валидность; что берём и что нет",
+   "criterion": {
+    "task": "назвать описание коммита 8e33172",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "8e33172"
+   }
+  },
+  {
+   "id": "T-commit-a4d159f",
+   "source": "git log",
+   "task": "В репозитории есть коммит a4d159f. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: что берём из dsh-superagent (сила распоряжения, observe/auto, версия политики, переподтверждение); правила автономии как данные",
+   "criterion": {
+    "task": "назвать описание коммита a4d159f",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "a4d159f"
+   }
+  },
+  {
+   "id": "T-commit-c98b017",
+   "source": "git log",
+   "task": "В репозитории есть коммит c98b017. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "research: разбор кода dsh-superagent-prototype — описаных файлов автономии в main нет; гипотезы H-0006..H-0008",
+   "criterion": {
+    "task": "назвать описание коммита c98b017",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "c98b017"
+   }
+  },
+  {
+   "id": "T-commit-66fa6c5",
+   "source": "git log",
+   "task": "В репозитории есть коммит 66fa6c5. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "docs: приоритет длинных задач (часы/сутки) — что есть, чего нет, чем мерить; тесты приёмки 24/24",
+   "criterion": {
+    "task": "назвать описание коммита 66fa6c5",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "66fa6c5"
+   }
+  }
+ ]
+}
