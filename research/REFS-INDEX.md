@@ -109,3 +109,37 @@ unknown_share         = |{unverified}| / |{все прогоны}|
 - Каждая строка имеет статус; «[А]» нельзя цитировать как «[П]».
 - Числа из «[А]» попадают в `CLAIMS.md` только после сверки и только как `observation`.
 - Ссылки не переписываются вручную: скачивание через `bin/fetch_url.py`, sha256 в артефакте.
+
+## 9. Добавлено после разбора P30 (01.11.2026)
+
+Статус **[А]** у всех: числа взяты из ответов моделей (фрагменты статей), полные тексты не читались.
+Ссылки — arXiv; перед использованием в плане читать целиком.
+
+| работа | что измеряет | ссылка |
+|---|---|---|
+| DeLoop: Repeated Actions as Self-Supervision | петля = тот же вызов + тот же результат; loop rate 57,3 %→6,1 %, шаги 15,00→4,67, токены −47 %; полезные повторы 29,9 %→69,8 % | arxiv.org/html/2610.19376 |
+| When Agents Do Not Stop | статический поиск бесконечных циклов, 6 549 репозиториев, precision 91,9 % | arxiv.org/abs/2607.01641 |
+| AgentQuest | progress rate и repetition rate; Mastermind SR 47 %→60 % после памяти о догадках; в LTP повторы полезны (RR 81 %) | aclanthology.org/2024.naacl-demo.19.pdf |
+| More with Less (turn control) | лимит 75-го перцентиля: стоимость −23…−68 %, solve −5…−8 п.п.; без напоминания обвал; Dynamic X→Y лучше | arxiv.org/html/2510.16786v2 |
+| Budget-Aware Tool Use (BATS) | Budget Tracker: 55,4 % против 36,8 % при равной цене, 500 задач SWE-bench Verified | arxiv.org/pdf/2511.17006 |
+| SWE-agent | ACI против shell-only: 18 % против 11 % на SWE-bench Lite; абляции интерфейса | arxiv.org/pdf/2405.15793 |
+| Is Bash All You Need? | Bash против typed tools: +24,6 п.п. (TheAgentCompany, n=348), +6,2 п.п. (APEX, n=960); reward hacking в shell-режимах | arxiv.org/html/2609.11999v1 |
+| Darwin Gödel Machine | SWE-bench 20 %→50 %, Polyglot 14,2 %→30,7 %; без открытого поиска 23 %; objective hacking (узел 114) | arxiv.org/pdf/2505.22954 |
+| A Self-Improving Coding Agent (SICA) | правки собственного кода: 17 %→51–53 % на 50 задачах; $7k за 15 итераций | arxiv.org/html/2504.15228v2 |
+| SpecBench | reward hacking как gap validation/held-out; 97 %/0 % на C-compiler; +27 п.п. на 10× LOC | arxiv.org/pdf/2605.21384v1 |
+| AgentAbstain | paired act/abstain, 263 пары, лучший 59,5 %; implicit abstention 17,8 %, post-hoc 2,6 % | arxiv.org/pdf/2607.10059 |
+| Agentic Abstention | Abstention Recall@K, 89 solvable / 188 unsolvable; over-abstention 0–8 % | arxiv.org/html/2606.28733 |
+| Failure-Transparent Agents | ложный успех 22,8 %→9,3 %→0,8 %; контракт STATUS/EVIDENCE/LIMITATION/NEXT ACTION | arxiv.org/html/2609.35732v1 |
+| EvoAgentBench | перенос между доменами; Memento −36,3 п.п. в одной ячейке; 528 train / 267 test | arxiv.org/html/2607.05202v1 |
+| WebRollback | явный откат: full success 38,5 %→43,5 % на 100 задачах | aclanthology.org/2026.eacl-short.12.pdf |
+| Semantic Early-Stopping | судья-независимый стопор: −38 % токенов при том же качестве; полный каскад дороже baseline на 129 % | arxiv.org/pdf/2606.27009 |
+| Same Task, Different Work | «сравни несколько подходов»: reasoning ×2,4–7,4 без выигрыша в success | arxiv.org/html/2608.01347v3 |
+| SandboxEscapeBench | побеги из контейнеров: 803 прогона, 9 моделей, 18 уязвимых конфигураций; Opus 0,49 | arxiv.org/html/2603.02277v2 |
+| Sandlock | Landlock+seccomp: ~5 мс на запуск против Docker (≈44× медленнее) | arxiv.org/html/2605.26298 |
+| Firecracker / gVisor study | boot <125 мс, ≤5 МБ на микро-VM; число разрешённых syscall 36 / 53–68 / все кроме 44 | usenix.org/system/files/nsdi20-paper-agache.pdf |
+| METR Time Horizons | нормировка сложности через человеческое время; >16 ч ненадёжно | metr.org/time-horizons |
+
+### Что с этим делать
+
+- в план идут только те, у кого есть **наше** подтверждение или измеренный риск (A-0010…A-0014);
+- остальные лежат как ориентир: при следующей проблеме — `python bin/shelf.py search "<проблема>"`.
