@@ -140,7 +140,7 @@ fn compose_prompt(task: &str, history: &[String], last: Option<&str>) -> String 
         out.push('\n');
     }
     out.push_str(
-        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли в результатах уже есть ответ — сразу DONE, не ищи синонимы и другие формулировки.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.\nВ DONE укажи, откуда взят ответ: путь к файлу и строку, например «docs/X.md:3».",
+        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли в результатах уже есть ответ — сразу DONE, не ищи синонимы и другие формулировки.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.\nВ DONE укажи, откуда взят ответ: путь к файлу и строку, например «docs/X.md:3».\nЕсли нужно посчитать что-то по многим файлам — ищи по каталогу, а не читай файлы по одному.\nsearch показывает не больше 40 совпадений: если нужно больше или нужны разные значения — сужай запрос или проверяй по одному значению отдельным поиском.",
     );
     out
 }
@@ -432,7 +432,9 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     let (dir, needle) = arg
         .split_once(' ')
         .ok_or_else(|| "нужно: search <путь> <подстрока>".to_string())?;
-    let needle = needle.trim();
+    // Кавычки модель ставит вокруг подстроки, и они уходили в поиск как символы: запрос
+    // «"tool/call"» давал 0 совпадений на тексте, где эта строка есть (F-0044).
+    let needle = needle.trim().trim_matches('"').trim_matches('\'').trim();
     if needle.chars().count() < 2 {
         return Err("подстрока короче двух символов: слишком много совпадений".to_string());
     }
@@ -503,6 +505,21 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     if !summary.is_empty() {
         out.push_str(&format!("\nфайлы: {}", summary.join(", ")));
     }
+    // Разные варианты того, что нашлось: для задач «сколько разных значений» это единственный
+    // способ увидеть перечень, когда совпадений больше сорока (F-0044/F-0046).
+    let mut tails: Vec<String> = Vec::new();
+    for line in &matches {
+        if let Some(position) = line.find(needle) {
+            let tail: String = line[position..].chars().take(48).collect();
+            if !tails.iter().any(|existing| existing == &tail) {
+                tails.push(tail);
+            }
+        }
+    }
+    if tails.len() > 1 {
+        tails.truncate(8);
+        out.push_str(&format!("\nразные: {}", tails.join(" | ")));
+    }
     for line in matches {
         out.push('\n');
         out.push_str(&line);
@@ -519,26 +536,27 @@ fn tool_list_in(arg: &str, workspace: &Path) -> Result<String, String> {
     let root = resolve_in(arg, workspace)?;
     let entries = std::fs::read_dir(&root)
         .map_err(|error| format!("не прочитать {}: {error}", root.display()))?;
-    let mut items: Vec<String> = Vec::new();
+    // Каталоги идут первыми и с косой чертой: раньше список сортировался по алфавиту вместе с
+    // размерами, и при длинном перечне подкаталог «runs» оказался за пределами видимого куска
+    // (задача о подсчёте инструментов: модель его не нашла).
+    let mut dirs: Vec<String> = Vec::new();
+    let mut files: Vec<String> = Vec::new();
     for entry in entries.flatten() {
         let meta = entry.metadata().ok();
-        let kind = match entry.file_type() {
-            Ok(kind) if kind.is_dir() => "каталог",
-            _ => "файл",
-        };
-        items.push(format!(
-            "{}\t{}\t{}",
-            entry.file_name().to_string_lossy(),
-            kind,
-            meta.map(|m| m.len()).unwrap_or(0)
-        ));
-        if items.len() >= 200 {
-            items.push("… (обрезано)".to_string());
+        let name = entry.file_name().to_string_lossy().to_string();
+        match entry.file_type() {
+            Ok(kind) if kind.is_dir() => dirs.push(format!("{name}/\tкаталог")),
+            _ => files.push(format!("{name}\t{}", meta.map(|m| m.len()).unwrap_or(0))),
+        }
+        if dirs.len() + files.len() >= 200 {
+            files.push("… (обрезано)".to_string());
             break;
         }
     }
-    items.sort();
-    Ok(items.join("\n"))
+    dirs.sort();
+    files.sort();
+    dirs.extend(files);
+    Ok(dirs.join("\n"))
 }
 
 /// `read <файл> [с_строки]`: текст до 8 КиБ, с номерами строк — чтобы модель могла ссылаться на место.

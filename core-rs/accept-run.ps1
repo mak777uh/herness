@@ -61,7 +61,9 @@ if (Test-Path $criteriaPath) {
     $budget = [ordered]@{}
     if ($null -ne $spec.max_steps) { $budget.steps = [int]$spec.max_steps }
     if ($null -ne $spec.max_allowance) { $budget.allowance = [double]$spec.max_allowance }
-    $budget.seconds = 240
+    # Секунды берутся из параметра прогона: жёсткие 240 с обрывали длинные задачи и выглядели
+# как «шаги кончились» (F-0045).
+$budget.seconds = [int]$TimeoutSec
     $env:HS_BUDGET = ($budget | ConvertTo-Json -Compress)
     if ($spec.host_run) { $env:HS_HOST_RUN = [string]$spec.host_run }
     # Рамки задачи: read-only файл в комнате, объявлен критерием (H-0010).
