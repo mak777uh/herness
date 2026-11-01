@@ -1,0 +1,42 @@
+# Проверка ссылок: DATA-LINKS.md
+
+[200] https://huggingface.co/datasets/dgslibisey/MuSiQue/resolve/main/musique_ans_v1.0_dev.jsonl
+[200] https://github.com/StonyBrookNLP/musique
+[200] https://hotpotqa.github.io
+[200] https://github.com/Alab-NII/2wikimultihop
+[200] https://rajpurkar.github.io/SQuAD-explorer
+[200] https://github.com/openai/simple-evals
+[200] https://arxiv.org/abs/2504.13859
+[ERR] https://swebench.com — URLError
+[200] https://github.com/scaleapi/SWE-bench_Pro-os
+[200] https://github.com/laude-institute/terminal-bench
+[200] https://github.com/web-arena-x/webarena
+[200] https://webarena.dev
+[200] https://github.com/ServiceNow/WorkArena
+[200] https://github.com/xlang-ai/OSWorld
+[200] https://os-world.github.io
+[200] https://github.com/THUDM/AgentBench
+[200] https://github.com/sierra-research/tau2-bench
+[200] https://github.com/StonyBrookNLP/appworld
+[200] https://github.com/TheAgentCompany/TheAgentCompany
+[200] https://github.com/siegelz/core-bench
+[200] https://github.com/openai/mle-bench
+[200] https://github.com/OSU-NLP-Group/ScienceAgentBench
+[200] https://github.com/openai/preparedness
+[200] https://github.com/metauto-ai/agent-as-a-judge
+[200] https://github.com/openai/miniF2F
+[200] https://github.com/ethz-spylab/agentdojo
+[200] https://github.com/apple/ToolSandbox
+[200] https://gorilla.cs.berkeley.edu/leaderboard.html
+[200] https://github.com/hkust-nlp/AgentBoard
+[200] https://arxiv.org/pdf/2507.02825v5
+[200] https://arxiv.org/pdf/2407.01502
+[200] https://arxiv.org/pdf/2406.12045
+[200] https://arxiv.org/html/2602.16666v3
+[200] https://arxiv.org/pdf/2503.16416
+[200] https://arxiv.org/abs/2507.21504
+[200] https://arxiv.org/abs/2411.00640
+[200] https://github.com/vnageshwaran-de/Awesome-LLM-Agent-Evaluation
+[ERR] https://aims.stanford.edu/measurement-db — URLError
+
+отвечают: 36; не отвечают: 2; всего: 38
