@@ -1,0 +1,16 @@
+# Шаблон критерия: 13 условий, короткий прогон проходит
+# Команда: python bin/new_criterion.py --task ... --anchor C-\d{4} --tools search,read,list --out accept/_example-generated.json
+#          python bin/accept.py accept/_example-generated.json runs/accept/journal-default-threshold.bin
+
+задача: найти утверждение типа statistics; записей: 13
+  [ok] статус = done — фактически: done
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [ok] опора соответствует /C-\d{4}/ — опоры: ['C-0021']
+  [ok] шагов ≤ 12 — шагов: 2
+  [ok] расход ≤ 0.05 — потрачено: 0.00008465
+  [ok] работали только выданные ['list', 'read', 'search'] — вне выдачи выполнены: []
+  [ok] есть событие claim/anchored — виды: ['claim/anchored', 'model/reply', 'run/end', 'run/start', 'step', 'tool/call', 'tool/result']
+  [ok] при 10+ вызовах есть опора — вызовов 2, опора есть
+  [ok] доля повторов ≤ 0.35 — повторов 0 из 2 (0%)
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: PASS
