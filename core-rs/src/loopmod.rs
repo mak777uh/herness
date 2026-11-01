@@ -140,6 +140,7 @@ pub struct Event {
     pub detail: String,
 }
 
+#[derive(Debug)]
 pub struct Outcome {
     pub steps: usize,
     pub calls: usize,
@@ -150,6 +151,90 @@ pub struct Outcome {
     pub problems: Vec<String>,
     /// Чем подтверждено финальное утверждение: элемент, найденный и в ответе, и в журнале.
     pub anchor: Option<String>,
+}
+
+/// Состояние, восстановленное из журнала после обрыва: с него продолжается работа.
+///
+/// Зачем отдельная структура: продолжение — это не «ещё один прогон», а тот же прогон с уже
+/// потраченными шагами и уже прочитанной историей. Если начать с нуля, бюджет удвоится, а модель
+/// заново прочитает то, что уже читала.
+#[derive(Debug)]
+pub struct Resumed {
+    pub task: String,
+    pub steps: usize,
+    pub calls: usize,
+    pub spent: f64,
+    pub history: Vec<String>,
+    pub last: Option<String>,
+    /// Хвост, который не читается (оборванная запись). Его нельзя оставлять: новые записи после
+    /// него перестанут читаться вообще.
+    pub torn: usize,
+    /// Прогон уже закрыт коммитом — продолжать нечего.
+    pub closed: bool,
+}
+
+/// Прочитать из журнала, что успело произойти до обрыва.
+///
+/// Правила те же, что у чтения: разбор идёт до первой невалидной записи, хвост не «чинится»,
+/// а помечается числом байт. Продолжение разрешено только для незакрытого прогона.
+pub fn resume_state(path: &Path) -> Result<Resumed, String> {
+    let bytes = std::fs::read(path).map_err(|error| format!("журнал не прочитать: {error}"))?;
+    let walked = crate::journal::walk(&bytes)?;
+    let mut state = Resumed {
+        task: String::new(),
+        steps: 0,
+        calls: 0,
+        spent: 0.0,
+        history: Vec::new(),
+        last: None,
+        torn: walked.tail_bytes,
+        closed: false,
+    };
+    let mut pending: Option<String> = None;
+    for entry in &walked.entries {
+        if entry.kind == crate::journal::Kind::Commit {
+            state.closed = true;
+            continue;
+        }
+        let event = decode_event(&entry.payload);
+        match event.kind {
+            "run/start" => {
+                state.task = event
+                    .detail
+                    .strip_prefix("task: ")
+                    .unwrap_or(&event.detail)
+                    .to_string();
+                // Продолжение уже начатого прогона начинается с начала: предыдущие шаги живут
+                // в прежних записях, и повторный run/start не должен их обнулять.
+                state.closed = false;
+            }
+            "tool/call" => pending = Some(event.detail.clone()),
+            "tool/result" => {
+                let ok = event.detail.starts_with("ok ");
+                let text = event
+                    .detail
+                    .strip_prefix("ok ")
+                    .or_else(|| event.detail.strip_prefix("err "))
+                    .unwrap_or(&event.detail)
+                    .to_string();
+                let call = pending.take().unwrap_or_else(|| "?".to_string());
+                state.history.push(brief(&call, &text, ok));
+                state.last = Some(text);
+            }
+            "step" => {
+                state.steps += 1;
+                if let Some(value) = event.detail.split("потрачено ").nth(1) {
+                    if let Ok(spent) = value.trim().parse::<f64>() {
+                        state.spent = spent;
+                    }
+                }
+            }
+            "claim/anchored" | "claim/unverified" => {}
+            _ => {}
+        }
+    }
+    state.calls = state.history.len();
+    Ok(state)
 }
 
 impl Outcome {
@@ -619,23 +704,71 @@ pub fn run_task_with_budget(
     link: &mut dyn ModelLink,
     budget: Budget,
 ) -> std::io::Result<Outcome> {
+    run_task_from(journal_path, task, link, budget, None)
+}
+
+/// Продолжить прогон, оборванный падением, с того места, где он остановился.
+///
+/// Что берётся из журнала: задача, число шагов и вызовов, расход, история для подсказки.
+/// Оборванный хвост отрезается: новые записи после него не читались бы вообще, а валидных байт в
+/// нём нет по определению. Факт отрезания записывается в журнал, чтобы это не было тихой правкой.
+pub fn run_task_resume(
+    journal_path: &Path,
+    link: &mut dyn ModelLink,
+    budget: Budget,
+) -> std::io::Result<Outcome> {
+    let state = resume_state(journal_path).map_err(|error| std::io::Error::other(error))?;
+    if state.closed {
+        return Err(std::io::Error::other("прогон уже закрыт коммитом: продолжать нечего"));
+    }
+    if state.torn > 0 {
+        let length = std::fs::metadata(journal_path)?.len() - state.torn as u64;
+        let file = std::fs::OpenOptions::new().write(true).open(journal_path)?;
+        file.set_len(length)?;
+        file.sync_all()?;
+    }
+    let task = if state.task.is_empty() {
+        "продолжение без задачи: в журнале нет run/start".to_string()
+    } else {
+        state.task.clone()
+    };
+    run_task_from(journal_path, &task, link, budget, Some(state))
+}
+
+fn run_task_from(
+    journal_path: &Path,
+    task: &str,
+    link: &mut dyn ModelLink,
+    budget: Budget,
+    start: Option<Resumed>,
+) -> std::io::Result<Outcome> {
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
-    let mut steps = 0usize;
-    let mut calls = 0usize;
+    let mut steps = start.as_ref().map(|state| state.steps).unwrap_or(0);
+    let mut calls = start.as_ref().map(|state| state.calls).unwrap_or(0);
     let mut attempts = 0usize;
-    let mut spent: f64 = 0.0;
+    let mut spent: f64 = start.as_ref().map(|state| state.spent).unwrap_or(0.0);
     let mut anchor: Option<String> = None;
     let started = std::time::Instant::now();
     let mut status: &'static str = "no-done";
 
-    record(&mut journal, &mut events, "run/start", format!("task: {task}"))?;
+    let opening = match &start {
+        Some(state) => format!(
+            "task: {task} (продолжение: шагов {}, вызовов {}, потрачено {:.8}, отрезано хвоста {} байт)",
+            state.steps, state.calls, state.spent, state.torn
+        ),
+        None => format!("task: {task}"),
+    };
+    record(&mut journal, &mut events, "run/start", opening)?;
     // История шагов. Зачем: пока в подсказке был только последний результат, модель теряла и
     // задачу, и то, что уже прочитала: в живом прогоне она дошла до конца файла и вместо ответа
     // снова начала перечислять каталог (7 прогонов подряд, F-0026). Бюджет подсказки ограничен:
     // по строке на шаг и один последний результат целиком.
-    let mut history: Vec<String> = Vec::new();
-    let mut last: Option<String> = None;
+    let mut history: Vec<String> = start
+        .as_ref()
+        .map(|state| state.history.clone())
+        .unwrap_or_default();
+    let mut last: Option<String> = start.as_ref().and_then(|state| state.last.clone());
     let mut prompt = compose_prompt(task, &history, last.as_deref());
 
     while attempts < budget.steps && steps < budget.steps {
@@ -947,6 +1080,74 @@ mod tests {
         assert!(parse_step("давай сделаем что-нибудь").is_err());
         assert!(parse_step("").is_err());
         assert!(parse_step("TOOL").is_err());
+    }
+
+    #[test]
+    fn продолжение_читает_шаги_задачу_и_расход() {
+        let path = torn_fixture("resume-read");
+        let state = resume_state(&path).unwrap();
+        assert_eq!(state.steps, 1, "шагов {}", state.steps);
+        assert_eq!(state.calls, 1);
+        assert!(state.task.contains("найти X"), "{}", state.task);
+        assert_eq!(state.history.len(), 1);
+        assert_eq!(state.torn, 4, "хвост {}", state.torn);
+        assert!(!state.closed);
+        std::fs::remove_dir_all(path.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn закрытый_прогон_не_продолжается() {
+        let dir = fixture("resume-closed");
+        let path = dir.join("journal.bin");
+        {
+            let mut journal = Journal::open(&path).unwrap();
+            journal.append("run/start task: t".as_bytes(), Kind::Data).unwrap();
+            journal.append("run/end всё".as_bytes(), Kind::Data).unwrap();
+            journal.append(b"commit", Kind::Commit).unwrap();
+            journal.sync().unwrap();
+        }
+        assert!(resume_state(&path).unwrap().closed);
+        let mut stub = crate::model::Stub::new(vec!["DONE готово".to_string()]);
+        let err = run_task_resume(&path, &mut stub, Budget::default()).unwrap_err();
+        assert!(err.to_string().contains("закрыт коммитом"), "{err}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn продолжение_учитывает_прежние_шаги_и_не_ломает_порядок() {
+        let path = torn_fixture("resume-go");
+        let mut stub = crate::model::Stub::new(vec![
+            "TOOL read a.md".to_string(),
+            "DONE первая строка прочитана".to_string(),
+        ]);
+        let budget = Budget { steps: 4, seconds: 10.0, allowance: 0.01 };
+        let outcome = run_task_resume(&path, &mut stub, budget).unwrap();
+        assert_eq!(outcome.steps, 2, "шагов {}", outcome.steps);
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        let state = resume_state(&path).unwrap();
+        assert!(state.closed, "прогон должен быть закрыт коммитом");
+        assert_eq!(state.torn, 0, "оборванный хвост должен быть отрезан");
+        std::fs::remove_dir_all(path.parent().unwrap()).ok();
+    }
+
+    /// Журнал, который оборвался посреди записи: шаг сделан, коммита нет, хвост нечитаем.
+    fn torn_fixture(tag: &str) -> std::path::PathBuf {
+        let dir = fixture(tag);
+        let path = dir.join("journal.bin");
+        {
+            let mut journal = Journal::open(&path).unwrap();
+            journal.append("run/start task: найти X".as_bytes(), Kind::Data).unwrap();
+            journal.append(b"tool/call read a.md", Kind::Data).unwrap();
+            journal.append(b"tool/result ok 1: first line", Kind::Data).unwrap();
+            journal.append("step 1, потрачено 0.00010000".as_bytes(), Kind::Data).unwrap();
+            journal.sync().unwrap();
+        }
+        {
+            let mut file = std::fs::OpenOptions::new().append(true).open(&path).unwrap();
+            use std::io::Write;
+            file.write_all(b"\x10\x00\x00\x00").unwrap();
+        }
+        path
     }
 
     #[test]

@@ -688,6 +688,62 @@ fn init_mode() -> ExitCode {
         }
     }
 
+    if mode_text == "loop-resume" {
+        // Контроль обрыва: прогон без коммита и с нечитаемым хвостом обязан продолжиться с того
+        // места, где остановился, а не начинаться заново (ADR-0051).
+        let mut first = hs_core::model::Stub::seal_many("/method.md", 2);
+        let budget_first = hs_core::loopmod::Budget { steps: 2, seconds: 20.0, allowance: 0.05 };
+        match hs_core::loopmod::run_task_with_budget(
+            std::path::Path::new("/journal.bin"),
+            "запечатать /method.md",
+            &mut first,
+            budget_first,
+        ) {
+            Ok(outcome) => println!("первый заход: шагов {}, коммитов {}", outcome.steps, outcome.commits),
+            Err(error) => println!("первый заход: не запустился ({error})"),
+        }
+        // Обрыв: отрезаем хвост записи коммита, как будто питание пропало посреди записи.
+        match fs::OpenOptions::new().write(true).open("/journal.bin") {
+            Ok(file) => {
+                let length = file.metadata().map(|m| m.len()).unwrap_or(0);
+                let _ = file.set_len(length.saturating_sub(4));
+                println!("обрыв: журнал оборван на 4 байта");
+            }
+            Err(error) => println!("обрыв: не открыть журнал ({error})"),
+        }
+        match hs_core::loopmod::resume_state(std::path::Path::new("/journal.bin")) {
+            Ok(state) => {
+                println!(
+                    "продолжение: шагов {}, вызовов {}, хвост {} байт, закрыт: {}",
+                    state.steps, state.calls, state.torn,
+                    if state.closed { "да" } else { "нет" }
+                );
+                println!("продолжение: история {}", state.history.len());
+            }
+            Err(error) => println!("продолжение: состояние не прочитано ({error})"),
+        }
+        let mut second = hs_core::model::Stub::new(vec!["DONE продолжение завершено".to_string()]);
+        let budget = hs_core::loopmod::Budget { steps: 6, seconds: 30.0, allowance: 0.05 };
+        match hs_core::loopmod::run_task_resume(
+            std::path::Path::new("/journal.bin"),
+            &mut second,
+            budget,
+        ) {
+            Ok(outcome) => {
+                report_loop(&outcome);
+                if let Ok(state) = hs_core::loopmod::resume_state(std::path::Path::new("/journal.bin")) {
+                    println!(
+                        "после продолжения: шагов {}, хвост {} байт, закрыт: {}",
+                        state.steps, state.torn,
+                        if state.closed { "да" } else { "нет" }
+                    );
+                }
+                report_order_from_file("/journal.bin");
+            }
+            Err(error) => println!("продолжение: не запустилось ({error})"),
+        }
+    }
+
     if mode_text == "loop-net" {
         // Проверка интеграции: инструмент запускается с правилом песочницы и не может открыть UDP.
         let mut link = hs_core::model::Stub::new(vec![

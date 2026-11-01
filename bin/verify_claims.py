@@ -36,21 +36,36 @@ def parse(path: Path = CLAIMS) -> list[dict]:
     return rows
 
 
-def run_command(cmd: str, timeout: int = 120) -> tuple[str, str, str]:
-    """Возвращает (статус, полный вывод, краткая строка)."""
+def run_command(cmd: str, timeout: int = 120, retries: int = 0) -> tuple[str, str, str]:
+    """Возвращает (статус, полный вывод, краткая строка).
+
+    `retries` нужны живым проверкам: у сетевой команды «нет ответа» — это не свидетельство против
+    утверждения, а состояние сети. Повтор делается только для провала; успех не перепроверяется,
+    иначе проверка начнёт стоить вдвое дороже там, где всё в порядке.
+    """
     if not cmd or not re.search(r"\b(python|pytest|git|bash|pwsh|node)\b", cmd):
         return "not-runnable", "", "команда не исполняемая (описание)"
     if "hs.py gates" in cmd or "verify_claims" in cmd:
         # самовызов: утверждение не может проверяться той же проверкой, которая его читает
         return "fail", "", "команда вызывает саму проверку (рекурсия)"
-    try:
-        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout,
-                              encoding="utf-8", errors="replace", cwd=ROOT)
-    except subprocess.TimeoutExpired:
-        return "fail", "", "таймаут " + str(timeout) + "s"
-    full = (proc.stdout or "") + (proc.stderr or "")
-    tail = " ".join(full.strip().splitlines()[-1:])[:160]
-    return ("ok" if proc.returncode == 0 else "fail"), full, tail or ("rc=" + str(proc.returncode))
+    attempt = 0
+    while True:
+        try:
+            proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout,
+                                  encoding="utf-8", errors="replace", cwd=ROOT)
+        except subprocess.TimeoutExpired:
+            proc = None
+        if proc is not None and proc.returncode == 0:
+            full = (proc.stdout or "") + (proc.stderr or "")
+            tail = " ".join(full.strip().splitlines()[-1:])[:160]
+            return "ok", full, tail or "rc=0"
+        if attempt >= retries:
+            if proc is None:
+                return "fail", "", "таймаут " + str(timeout) + "s"
+            full = (proc.stdout or "") + (proc.stderr or "")
+            tail = " ".join(full.strip().splitlines()[-1:])[:160]
+            return "fail", full, tail or ("rc=" + str(proc.returncode))
+        attempt += 1
 
 
 SLOW = ("live", "ping", "probe_api", "live_cases", "replay_archive", "measure_steps",
@@ -68,7 +83,10 @@ def main(argv: list[str]) -> int:
     for row in rows:
         if only and row["id"] != only:
             continue
-        status, full, tail = run_command(row["cmd"])
+        # Живые проверки ходят в сеть: один повтор на провал — чтобы «сеть моргнула» не выглядело
+        # как «утверждение неверно». Успех не перепроверяется.
+        tries = 1 if any(word in row["cmd"] for word in SLOW) else 0
+        status, full, tail = run_command(row["cmd"], retries=tries)
         if status == "not-runnable" and row["expect"]:
             # реестр не должен допускать «измерено, но сверить нечем»
             status = "fail"
