@@ -91,6 +91,8 @@ python bin/hs.py gates          # гейты: секреты, утвержден
 python bin/hs.py selftest       # негативные тесты самого инструмента
 python bin/hs.py lab            # где мы сейчас и что дальше
 python bin/accept.py accept/room-claims-statistics-v3.json <журнал.bin>   # приёмка прогона
+python bin/new_criterion.py --task "найти C-0004" --anchor "C-0004" --out accept/x.json   # критерий из шаблона
+python bin/run_metrics.py accept/x.json runs/accept/*.bin   # режимы провала и барахтание
 ```
 
 Прогон в своём ядре (Windows + QEMU):
