@@ -1,15 +1,15 @@
-"""judge_metrics — метрики приёмки по уже лежащим журналам.
+"""judge_metrics — метрики приёмки по журналам: ложные «готово», precision, pass@1, pass^k, цена.
 
-Считает то, чего у нас не было: долю ложных «готово», точность и полноту заявлений, pass^k и цену
-принятого решения. Данные не новые — берутся журналы `runs/accept/*.bin` и критерии из `accept/`.
+Отличие от первой версии: журналы находятся по имени задачи, а не по номеру серии, поэтому в счёт
+попадают и P27, и MuSiQue, и серия на отказ.
 
-    python bin/judge_metrics.py            # записать research/outputs/acceptance-metrics.txt
+    python bin/judge_metrics.py     # research/outputs/acceptance-metrics.txt
 
-Правила:
-  заявление  «готово»  — в журнале есть run/end и статус выведен как done;
-  вердикт              — accept.check по критерию задачи;
-  pass@1 / pass^k      — по повторам одной и той же задачи (k = число прогонов);
-  цена                 — сумма allowance из событий step (если их нет, прогон не учитывается).
+Формулы (tau-bench, arxiv.org/pdf/2406.12045):
+  pass@1 = доля принятых прогонов;
+  pass^k  = среднее по задачам от C(c,k)/C(n,k) — успех ВСЕХ k прогонов (k = 2);
+  false_completion_rate = |{claim=done ∧ не принято}| / |{claim=done}|;
+  цена принятого = сумма allowance / число принятых.
 """
 
 from __future__ import annotations
@@ -25,22 +25,36 @@ sys.path.insert(0, ".")
 from bin import accept  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-SERIES = [
-    ("p27", "accept/p27", "runs/accept/p27-{i}.bin"),
-    ("p27r2", "accept/p27", "runs/accept/p27r2-{i}.bin"),
-    ("musique3", "accept/musique", "runs/accept/musique3-{i}.bin"),
-    ("musique4", "accept/musique", "runs/accept/musique4-{i}.bin"),
-    ("musique5", "accept/musique", "runs/accept/musique5-{i}.bin"),
-    ("musique7", "accept/musique", "runs/accept/musique7-{i}.bin"),
-]
+JOURNALS = ROOT / "runs" / "accept"
+SERIES = ["p27-", "p27r2-", "refusal-", "refusal2-", "refusal3-", "musique3-", "musique4-",
+          "musique5-", "musique6-", "musique7-"]
 
 
-def criteria_for(folder: str) -> dict[str, dict]:
-    result = {}
-    base = ROOT / folder
-    for path in sorted(base.glob("*.json")):
-        result[path.stem] = json.loads(path.read_text(encoding="utf-8"))
+def all_criteria() -> dict[str, dict]:
+    result: dict[str, dict] = {}
+    for folder in ("accept/p27", "accept/musique", "accept/refusal"):
+        for path in sorted((ROOT / folder).glob("*.json")):
+            result[path.stem] = json.loads(path.read_text(encoding="utf-8"))
     return result
+
+
+def musique_order() -> list[str]:
+    data = json.loads((ROOT / "lab/p27/musique/tasks.json").read_text(encoding="utf-8"))
+    return [task["id"] for task in data["tasks"]]
+
+
+def resolve(name: str, criteria: dict[str, dict], order: list[str]) -> str | None:
+    stem = name[:-4] if name.endswith(".bin") else name
+    for prefix in SERIES:
+        if stem.startswith(prefix):
+            rest = stem[len(prefix):]
+            if rest in criteria:
+                return rest
+            if rest.isdigit():
+                index = int(rest)
+                if prefix.startswith("musique") and index < len(order):
+                    return order[index]
+    return stem if stem in criteria else None
 
 
 def spend(records) -> float:
@@ -53,71 +67,60 @@ def spend(records) -> float:
     return total
 
 
-def main() -> int:
-    by_task: dict[str, dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
-    for series, folder, pattern in SERIES:
-        criteria = criteria_for(folder)
-        index = 0
-        while True:
-            path = ROOT / pattern.format(i=index)
-            if not path.exists():
-                break
-            index += 1
-            names = list(criteria)
-            if index - 1 >= len(names):
-                break
-            name = names[index - 1]
-            records, _tail, _problems = accept.parse_journal(path.read_bytes())
-            ok, _rows = accept.check(criteria[name], records)
-            kinds = [kind for kind, _ in accept.events(records)]
-            claimed = "run/end" in kinds and "claim/anchored" in kinds
-            status = accept.derive_status(records) if hasattr(accept, "derive_status") else None
-            by_task[name][series].append(
-                {"ok": ok, "claimed": claimed, "spend": spend(records), "status": status,
-                 "anchored": "claim/anchored" in kinds}
-            )
+def choose(count: int, k: int) -> int:
+    return math.comb(count, k) if count >= k else 0
 
-    lines = ["# Метрики приёмки по существующим журналам", ""]
-    lines.append(f"{'задача':34} прогонов  принято  заявлено  pass@1   pass^k")
-    claims = confirmed = 0
-    accepts = 0
-    total_spend = 0.0
-    unknown = 0
-    for name, runs in sorted(by_task.items()):
-        flat = [run for series in runs.values() for run in series]
-        if not flat:
+
+def main() -> int:
+    criteria = all_criteria()
+    order = musique_order()
+    runs: dict[str, list[dict]] = defaultdict(list)
+    for path in sorted(JOURNALS.glob("*.bin")):
+        task = resolve(path.name, criteria, order)
+        if task is None:
             continue
-        n = len(flat)
-        a = sum(1 for run in flat if run["ok"])
-        c = sum(1 for run in flat if run["claimed"])
+        try:
+            records, _tail, _problems = accept.parse_journal(path.read_bytes())
+        except Exception:  # noqa: BLE001
+            continue
+        ok, _rows = accept.check(criteria[task], records)
+        kinds = [kind for kind, _ in accept.events(records)]
+        runs[task].append({"ok": ok, "claimed": "claim/anchored" in kinds, "spend": spend(records)})
+
+    lines = ["# Метрики приёмки по журналам", "",
+             f"{'задача':34} {'прогонов':>9} {'принято':>8} {'pass@1':>7} {'pass^2':>7}"]
+    claims = confirmed = accepts = unknown = 0
+    total_spend = 0.0
+    pass2_values = []
+    for task in sorted(runs):
+        items = runs[task]
+        n = len(items)
+        a = sum(1 for item in items if item["ok"])
+        c = sum(1 for item in items if item["claimed"])
         claims += c
-        confirmed += sum(1 for run in flat if run["ok"] and run["claimed"])
         accepts += a
-        total_spend += sum(run["spend"] for run in flat)
-        unknown += sum(1 for run in flat if not run["ok"] and not run["claimed"])
-        pass1 = a / n
-        # pass^k при равном числе прогонов: доля задач, где ВСЕ прогоны приняты
-        best = max((len(series) for series in runs.values()), default=0)
-        full = 0
-        for series in runs.values():
-            if len(series) == best and best > 1 and all(run["ok"] for run in series):
-                full += 1
-        passk = f"{full}/{len([s for s in runs.values() if len(s) == best])}" if best > 1 else "—"
-        lines.append(f"{name[:34]:34} {n:<8} {a:<8} {c:<9} {pass1:<8.2f} {passk}")
+        confirmed += sum(1 for item in items if item["ok"] and item["claimed"])
+        unknown += sum(1 for item in items if not item["ok"] and not item["claimed"])
+        total_spend += sum(item["spend"] for item in items)
+        if n >= 2:
+            pass2_values.append(choose(a, 2) / choose(n, 2))
+        pass2 = f"{choose(a,2)/choose(n,2):.2f}" if n >= 2 else "—"
+        lines.append(f"{task[:34]:34} {n:>9} {a:>8} {a/n:>7.2f} {pass2:>7}")
 
     lines += [
         "",
-        f"заявлений «готово»: {claims}; подтверждено приёмкой: {confirmed}",
-        f"принято: {accepts}; ложных заявлений: {claims - confirmed}",
+        f"заявлений «готово»: {claims}; подтверждено: {confirmed}; ложных: {claims - confirmed}",
         f"false_completion_rate: {(claims - confirmed) / claims:.2f}" if claims else "false_completion_rate: —",
         f"completion_precision: {confirmed / claims:.2f}" if claims else "completion_precision: —",
-        f"цена всех прогонов (allowance): {total_spend:.4f}",
-        f"цена одного принятого: {total_spend / accepts:.4f}" if accepts else "цена одного принятого: —",
+        f"pass@1 (по всем прогонам): {accepts / sum(len(v) for v in runs.values()):.2f}",
+        f"pass^2 (среднее C(c,2)/C(n,2) по задачам с n≥2): {sum(pass2_values)/len(pass2_values):.2f}"
+        if pass2_values else "pass^2: —",
+        f"цена всех прогонов: {total_spend:.4f}; цена принятого: {total_spend/accepts:.4f}" if accepts
+        else f"цена всех прогонов: {total_spend:.4f}",
         f"прогонов без заявления и без вердикта: {unknown}",
         "",
-        "# Оговорки: «заявлено» = есть claim/anchored и run/end; часть журналов могла не иметь",
-        "# заявления, поэтому precision считается только по заявившим. pass^k показан как доля",
-        "# задач, где ВСЕ прогоны серии приняты, и только для серий равной длины.",
+        "# Оговорки: journal с неизвестным именем задачи пропущен; «заявлено» = claim/anchored;",
+        "# pass^2 = вероятность, что ОБА прогона задачи приняты (надёжность, а не удача).",
     ]
     text = "\n".join(lines) + "\n"
     out = ROOT / "research" / "outputs" / "acceptance-metrics.txt"
