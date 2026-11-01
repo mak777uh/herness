@@ -731,10 +731,21 @@ pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String>
                 || token.contains('-'))
     };
     let tokens = |text: &str| -> Vec<String> {
-        text.split(|c: char| !(c.is_alphanumeric() || c == '/' || c == '.' || c == '_' || c == '-'))
-            .filter(|part| looks_specific(part))
-            .map(|part| part.to_string())
-            .collect()
+        let mut out = Vec::new();
+        for part in text.split(|c: char| !(c.is_alphanumeric() || c == '/' || c == '.' || c == '_' || c == '-')) {
+            if !looks_specific(part) {
+                continue;
+            }
+            out.push(part.to_string());
+            // «p01.md» и «p01» — одно и то же имя файла: иначе ответ «p01» не находит
+            // опору в результате чтения, где имя записано с расширением (замер: задача 5).
+            if let Some((stem, _)) = part.split_once('.') {
+                if looks_specific(stem) {
+                    out.push(stem.to_string());
+                }
+            }
+        }
+        out
     };
     let haystack: Vec<String> = tool_results.iter().flat_map(|r| tokens(r)).collect();
     for token in tokens(final_text) {
