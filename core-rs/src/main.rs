@@ -581,6 +581,63 @@ fn dns_probe(sandboxed: bool) -> ExitCode {
     }
 }
 
+/// Выдача инструментов из файла `/tools` (JSON-массив имён). Нет файла — выданы все.
+///
+/// Решает хост, а не модель: набор инструментов — это полномочие. Прогону «найди и назови»
+/// незачем `write` и `seal`, и объявить это надо до начала работы, а не после.
+fn grants() -> Option<Vec<String>> {
+    let text = fs::read_to_string("/tools").ok()?;
+    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    let list: Vec<String> = value
+        .as_array()?
+        .iter()
+        .filter_map(|item| item.as_str().map(str::to_string))
+        .collect();
+    if list.is_empty() {
+        return None;
+    }
+    let known = hs_core::loopmod::KNOWN_TOOLS;
+    let unknown: Vec<&String> = list
+        .iter()
+        .filter(|name| !known.contains(&name.as_str()))
+        .collect();
+    if !unknown.is_empty() {
+        println!("инструменты: неизвестные имена {:?} — отказ по всему списку", unknown);
+        return None;
+    }
+    Some(list)
+}
+
+/// Системная подсказка под выданный набор: модель не должна выбирать из того, чего у неё нет.
+fn system_for(granted: &[String]) -> String {
+    let usage = |name: &str| -> &'static str {
+        match name {
+            "list" => "list <каталог>",
+            "read" => "read <файл> [с_строки]",
+            "search" => "search <путь> <подстрока>",
+            "seal" => "seal <файл>",
+            "netprobe" => "netprobe",
+            "write" => "write <путь> <текст>",
+            _ => "",
+        }
+    };
+    let list = granted
+        .iter()
+        .map(|name| usage(name))
+        .filter(|text| !text.is_empty())
+        .collect::<Vec<_>>()
+        .join("; ");
+    format!(
+        "Ты — цикл харнесса в изолированной системе. Рабочий каталог: /mnt, файлы задачи лежат там; пути можно писать относительно него.\n\
+         Отвечай РОВНО одной строкой:\n\
+         TOOL <имя> <аргумент>   — выполнить инструмент\n\
+         DONE <итог>             — закончить\n\
+         В этом прогоне выданы только: {list}. Остального нет, и просить его бессмысленно.\n\
+         В DONE приводи конкретное: путь с номером строки или идентификатор вида C-0123. Общие слова опорой не считаются, и прогон получит статус unverified.\n\
+         Ничего другого не пиши."
+    )
+}
+
 fn init_mode() -> ExitCode {
     println!("hs-core: я инициализировал систему сам, PID 1");
     println!("ядро: {}", kernel_release());
@@ -716,6 +773,12 @@ fn init_mode() -> ExitCode {
             }
         }
         let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
+        // Выдача инструментов на прогон: файл `/tools` пишет хост (из критерия), а не модель.
+        let granted = grants();
+        if let Some(list) = &granted {
+            println!("инструменты: выданы {}", list.join(", "));
+            link.system = system_for(list);
+        }
         let journal = std::path::Path::new("/mnt/journal.bin");
         let resumed = matches!(hs_core::loopmod::resume_state(journal), Ok(state) if !state.closed);
         let outcome = if resumed {
@@ -726,12 +789,12 @@ fn init_mode() -> ExitCode {
                 ),
                 Err(error) => println!("продолжение: состояние не читается ({error})"),
             }
-            hs_core::loopmod::run_task_resume(journal, &mut link, budget)
+            hs_core::loopmod::run_task_resume(journal, &mut link, budget, granted.clone())
         } else {
             println!("прогон: свежий журнал на диске");
             // Первый заход пишет долговечно: иначе обрыв питания унесёт журнал целиком и
             // продолжать будет нечего (F-0027).
-            hs_core::loopmod::run_task_durable(journal, &task, &mut link, budget)
+            hs_core::loopmod::run_task_durable(journal, &task, &mut link, budget, granted)
         };
         match outcome {
             Ok(outcome) => {
@@ -799,6 +862,7 @@ fn init_mode() -> ExitCode {
             std::path::Path::new("/journal.bin"),
             &mut second,
             budget,
+            None,
         ) {
             Ok(outcome) => {
                 report_loop(&outcome);

@@ -594,6 +594,20 @@ fn tool_write(arg: &str) -> Result<String, String> {
 }
 
 fn run_tool(name: &str, arg: &str) -> Result<String, String> {
+    run_tool_g(name, arg, None)
+}
+
+/// Инструмент с проверкой выдачи: что не выдано в этом прогоне, то отказ, а не тихий вызов.
+///
+/// Зачем: набор инструментов — это полномочие, а не удобство. Прогону, который должен только
+/// читать, незачем держать `write` и `seal` включёнными «на всякий случай»: модель может ими
+/// воспользоваться, и тогда граница прогона определяется её настроением, а не объявлением.
+fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<String, String> {
+    if let Some(list) = granted {
+        if !list.iter().any(|tool| tool == name) {
+            return Err(format!("инструмент {name} не выдан в этом прогоне"));
+        }
+    }
     match name {
         "seal" => tool_seal(arg),
         "netprobe" => tool_netprobe(arg),
@@ -708,7 +722,7 @@ pub fn run_task_with_budget(
     link: &mut dyn ModelLink,
     budget: Budget,
 ) -> std::io::Result<Outcome> {
-    run_task_from(journal_path, task, link, budget, None, false)
+    run_task_from(journal_path, task, link, budget, None, false, None)
 }
 
 /// Прогон с долговечным журналом: каждый шаг сбрасывается на диск.
@@ -720,8 +734,9 @@ pub fn run_task_durable(
     task: &str,
     link: &mut dyn ModelLink,
     budget: Budget,
+    granted: Option<Vec<String>>,
 ) -> std::io::Result<Outcome> {
-    run_task_from(journal_path, task, link, budget, None, true)
+    run_task_from(journal_path, task, link, budget, None, true, granted)
 }
 
 /// Продолжить прогон, оборванный падением, с того места, где он остановился.
@@ -733,6 +748,7 @@ pub fn run_task_resume(
     journal_path: &Path,
     link: &mut dyn ModelLink,
     budget: Budget,
+    granted: Option<Vec<String>>,
 ) -> std::io::Result<Outcome> {
     let state = resume_state(journal_path).map_err(|error| std::io::Error::other(error))?;
     if state.closed {
@@ -749,7 +765,7 @@ pub fn run_task_resume(
     } else {
         state.task.clone()
     };
-    run_task_from(journal_path, &task, link, budget, Some(state), true)
+    run_task_from(journal_path, &task, link, budget, Some(state), true, granted)
 }
 
 fn run_task_from(
@@ -759,6 +775,7 @@ fn run_task_from(
     budget: Budget,
     start: Option<Resumed>,
     durable: bool,
+    granted: Option<Vec<String>>,
 ) -> std::io::Result<Outcome> {
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
@@ -854,7 +871,7 @@ fn run_task_from(
             Step::Tool { name, arg } => {
                 steps += 1;
                 record(&mut journal, &mut events, "tool/call", format!("{name} {arg}"))?;
-                let result = run_tool(&name, &arg);
+                let result = run_tool_g(&name, &arg, granted.as_deref());
                 calls += 1;
                 match result {
                     Ok(text) => {
@@ -1141,7 +1158,7 @@ mod tests {
         }
         assert!(resume_state(&path).unwrap().closed);
         let mut stub = crate::model::Stub::new(vec!["DONE готово".to_string()]);
-        let err = run_task_resume(&path, &mut stub, Budget::default()).unwrap_err();
+        let err = run_task_resume(&path, &mut stub, Budget::default(), None).unwrap_err();
         assert!(err.to_string().contains("закрыт коммитом"), "{err}");
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -1154,7 +1171,7 @@ mod tests {
             "DONE первая строка прочитана".to_string(),
         ]);
         let budget = Budget { steps: 4, seconds: 10.0, allowance: 0.01 };
-        let outcome = run_task_resume(&path, &mut stub, budget).unwrap();
+        let outcome = run_task_resume(&path, &mut stub, budget, None).unwrap();
         assert_eq!(outcome.steps, 2, "шагов {}", outcome.steps);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         let state = resume_state(&path).unwrap();

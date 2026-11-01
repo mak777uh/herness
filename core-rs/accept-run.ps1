@@ -41,7 +41,13 @@ if (Test-Path $criteriaPath) {
     if ($null -ne $spec.max_allowance) { $budget.allowance = [double]$spec.max_allowance }
     $budget.seconds = 240
     $env:HS_BUDGET = ($budget | ConvertTo-Json -Compress)
-} else { Remove-Item Env:\HS_BUDGET -ErrorAction SilentlyContinue }
+    # Выдача инструментов: объявлена в критерии, значит комната получает ровно её, а не весь набор.
+    if ($null -ne $spec.tools) {
+        $env:HS_TOOLS = ($spec.tools | ConvertTo-Json -Compress)
+    } else {
+        Remove-Item Env:\HS_TOOLS -ErrorAction SilentlyContinue
+    }
+} else { Remove-Item Env:\HS_BUDGET -ErrorAction SilentlyContinue; Remove-Item Env:\HS_TOOLS -ErrorAction SilentlyContinue }
 if ($Task) { $env:HS_TASK = $Task } else { Remove-Item Env:\HS_TASK -ErrorAction SilentlyContinue }
 if ($Net) {
     # Токен моста и имя модели — не секрет провайдера: ключ остаётся на хосте (ADR-0046).

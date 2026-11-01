@@ -227,6 +227,25 @@ def _():
     assert any("понятно" in name and not passed for name, passed, _ in rows), rows
 
 
+@case("вызов вне объявленной выдачи валит приёмку")
+def _():
+    events = list(OK_RUN)
+    events.insert(-1, "tool/call write /mnt/x текст")
+    events.insert(-1, "tool/result ok записано")
+    ok, rows = run(dict(CRITERIA, tools=["search", "read"]), events)
+    assert not ok, rows
+    assert any("вне выдачи" in detail for _, passed, detail in rows if not passed), rows
+
+
+@case("отказ по невыданному инструменту нарушением не считается")
+def _():
+    events = list(OK_RUN)
+    events.insert(-1, "tool/call write /mnt/x текст")
+    events.insert(-1, "tool/result err инструмент write не выдан в этом прогоне")
+    ok, rows = run(dict(CRITERIA, tools=["search", "read"], must_not_call=[]), events)
+    assert ok, rows
+
+
 def main() -> int:
     failed = 0
     for name, fn in CASES:

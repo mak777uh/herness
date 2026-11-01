@@ -68,6 +68,10 @@ def entries(mode: str, payload: bytes) -> list[tuple[str, bytes, int]]:
         # разрешено работе» и «сколько требует приёмка» не расходились (F-0026).
         *([("budget", os.environ["HS_BUDGET"].encode(), 0o100644)]
           if os.environ.get("HS_BUDGET") else []),
+        # Выдача инструментов: JSON-массив имён. Решает хост из критерия, а не модель: набор
+        # инструментов — полномочие, и оно объявляется до начала работы.
+        *([("tools", os.environ["HS_TOOLS"].encode(), 0o100644)]
+          if os.environ.get("HS_TOOLS") else []),
     ]
 
 

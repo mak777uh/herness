@@ -1,0 +1,17 @@
+задача: найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id; записей: 13
+  [ok] статус = done — фактически: done
+  [ok] опора соответствует /C-\d{4}/ — опоры: ['C-0004']
+  [ok] шагов ≤ 12 — шагов: 2
+  [ok] расход ≤ 0.05 — потрачено: 0.00007061
+  [ok] работали только выданные ['list', 'read', 'search'] — вне выдачи выполнены: []
+  [ok] есть событие claim/anchored — виды: ['claim/anchored', 'model/reply', 'run/end', 'run/start', 'step', 'tool/call', 'tool/result']
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: PASS
+
+--- события ---
+tool/call search /mnt/CLAIMS.md statistics
+tool/call read /mnt/CLAIMS.md 22
+claim/anchored C-0004
+run/end C-0004 — «Холодный старт headless-профиля (dump-config, без модели) p50 = 0,46 с на этой машине» (/mnt/CLAIMS.md:22, тип statistics)
+
+# выдача объявлена критерием: tools = [search, read, list]; комната получила ровно её
