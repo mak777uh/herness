@@ -43,6 +43,10 @@ impl Default for Budget {
 pub enum Step {
     Tool { name: String, arg: String },
     Done { text: String },
+    /// Нужен человек: прогон останавливается и `done` не выдаёт.
+    Blocked { text: String },
+    /// Делать нечего: задача не воспроизводится или устарела.
+    NoWork { text: String },
 }
 
 /// Разобрать ответ провайдера в шаг. Ошибка — это результат, а не пустая строка.
@@ -66,6 +70,12 @@ pub fn parse_step(reply: &str) -> Result<Step, String> {
             return Err("TOOL без имени инструмента".to_string());
         }
         return Ok(Step::Tool { name, arg });
+    }
+    if let Some(rest) = line.strip_prefix("BLOCKED") {
+        return Ok(Step::Blocked { text: rest.trim().to_string() });
+    }
+    if let Some(rest) = line.strip_prefix("NO-WORK") {
+        return Ok(Step::NoWork { text: rest.trim().to_string() });
     }
     if let Some(rest) = line.strip_prefix("DONE") {
         return Ok(Step::Done { text: rest.trim().to_string() });
@@ -938,6 +948,21 @@ fn run_task_from(
                     break;
                 }
             }
+            // «Нужен человек» и «делать нечего» — такие же исходы, как done, и так же попадают в
+            // журнал отдельным событием: приёмка должна отличать «не смог» от «нечего делать»
+            // и от «готово» (H-0006). Опора тут не проверяется: это не утверждение о результате.
+            Step::Blocked { text } => {
+                record(&mut journal, &mut events, "run/blocked", text)?;
+                status = "blocked";
+                record(&mut journal, &mut events, "run/end", "ждёт человека".to_string())?;
+                break;
+            }
+            Step::NoWork { text } => {
+                record(&mut journal, &mut events, "run/no-work", text)?;
+                status = "no-work";
+                record(&mut journal, &mut events, "run/end", "делать нечего".to_string())?;
+                break;
+            }
             Step::Done { text } => {
                 // Опора проверяется до закрытия прогона: утверждение — часть результата, а не
                 // событие после него. Иначе порядок «… → run/end» перестаёт быть последним.
@@ -970,7 +995,7 @@ fn run_task_from(
         }
     }
 
-    if status != "done" {
+    if status != "done" && status != "blocked" && status != "no-work" {
         let reason = if status == "bad-step" {
             format!("провайдер не дал разбираемого шага за {attempts} попыток")
         } else {
@@ -1055,6 +1080,8 @@ fn decode_event(payload: &[u8]) -> Event {
         "claim/anchored" => "claim/anchored",
         "claim/unverified" => "claim/unverified",
         "run/end" => "run/end",
+        "run/blocked" => "run/blocked",
+        "run/no-work" => "run/no-work",
         _ => "?",
     };
     Event { kind, detail }
@@ -1158,6 +1185,20 @@ mod tests {
         assert_eq!(
             parse_step("DONE всё готово").unwrap(),
             Step::Done { text: "всё готово".to_string() }
+        );
+    }
+
+    #[test]
+    fn разбор_шага_нужен_человек_и_делать_нечего() {
+        // H-0006: исходов больше одного. «Не смог» и «нечего делать» — разные состояния,
+        // и оба не должны выглядеть как done.
+        assert_eq!(
+            parse_step("BLOCKED нужен доступ к репозиторию").unwrap(),
+            Step::Blocked { text: "нужен доступ к репозиторию".to_string() }
+        );
+        assert_eq!(
+            parse_step("NO-WORK задача не воспроизводится").unwrap(),
+            Step::NoWork { text: "задача не воспроизводится".to_string() }
         );
     }
 
@@ -1613,6 +1654,7 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 }
+
 
 
 

@@ -91,7 +91,7 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
     "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events",
-    "tools",
+    "tools", "host_run",
 }
 
 
@@ -101,10 +101,15 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
     rows: list[tuple[str, bool, str]] = []
 
     def status() -> str:
-        # статус — это последнее событие run/end и следующий за ним claim-вердикт
-        anchored = "claim/anchored" in kinds
+        # Стадия выводится одним правилом «чего прогон ждёт», а не собирается в трёх местах
+        # (H-0008): сначала терминальные исходы, потом наличие опоры, потом всё остальное.
+        if "run/blocked" in kinds:
+            return "blocked"
+        if "run/no-work" in kinds:
+            return "no-work"
         if "run/end" not in kinds:
             return "нет run/end"
+        anchored = "claim/anchored" in kinds
         if "claim/unverified" in kinds and not anchored:
             return "unverified"
         return "done" if anchored else "done-без-опоры"
@@ -167,6 +172,21 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
 
     for wanted in criteria.get("require_events", []):
         rows.append((f"есть событие {wanted}", wanted in kinds, f"виды: {sorted(set(kinds))}"))
+
+    if "host_run" in criteria:
+        # Подтверждение хостом: авторитетную копию ведёт хост, и без неё прогон не принимается.
+        # Проверяется не наличие файла, а сходимость цепочки — файл можно переписать.
+        try:
+            from bin import host_journal
+        except Exception as exc:  # noqa: BLE001
+            rows.append(("журнал хоста проверен", False, f"модуль недоступен: {type(exc).__name__}"))
+        else:
+            good, problems = host_journal.verify(str(criteria["host_run"]))
+            rows.append((
+                f"хост подтвердил прогон {criteria['host_run']}",
+                good > 0 and not problems,
+                f"записей: {good}" + (f"; проблемы: {problems[:1]}" if problems else ""),
+            ))
 
     if criteria.get("require_commit"):
         closed = bool(records) and records[-1][0] == 2
@@ -249,3 +269,5 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
