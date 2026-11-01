@@ -763,7 +763,14 @@ pub fn run_task_resume(
     let task = if state.task.is_empty() {
         "продолжение без задачи: в журнале нет run/start".to_string()
     } else {
-        state.task.clone()
+        // Recovery note — приём из разбора dsh-superagent (docs/003): после обрыва нельзя
+        // повторять внешние действия вслепую. Модель видит это в подсказке, а не только на хосте.
+        format!(
+            "{}\n\nПродолжение после обрыва. Сначала проверь, что уже сделано (файлы каталога, \
+             история работы, результаты выше), и не повторяй действий, которые уже выполнены \
+             или выполнены частично.",
+            state.task
+        )
     };
     run_task_from(journal_path, &task, link, budget, Some(state), true, granted)
 }
