@@ -1,0 +1,16 @@
+{
+ "task": "К какому классу относится отказ F-0033 в каталоге failures? Ответь одним словом.",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 12,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "F-0033"
+}
