@@ -1656,6 +1656,17 @@ def cmd_selftest(args) -> int:
 
 # ---------------------------------------------------------------- main
 
+def cmd_selfaudit(args) -> int:
+    """Повторяемый аудит: факты + долги, вычисляемые каждый запуск (bin/audit.py)."""
+    import subprocess
+
+    root = Path(__file__).resolve().parents[1]
+    command = [sys.executable, str(root / "bin" / "audit.py")]
+    if getattr(args, "strict", False):
+        command.append("--strict")
+    return subprocess.run(command, cwd=root).returncode
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="hs", description="прибор харнесса")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1681,6 +1692,10 @@ def main(argv: list[str]) -> int:
     p.set_defaults(func=cmd_bench)
 
     sub.add_parser("audit", help="заметки аудита: находки и мнения").set_defaults(func=cmd_audit)
+
+    p = sub.add_parser("selfaudit", help="повторяемый аудит: факты и долги")
+    p.add_argument("--strict", action="store_true", help="exit 1 при FAIL")
+    p.set_defaults(func=cmd_selfaudit)
     sub.add_parser("failures", help="корпус отказов процесса").set_defaults(func=cmd_failures)
 
     p = sub.add_parser("request", help="проверить разбор запроса")

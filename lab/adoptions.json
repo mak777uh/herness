@@ -94,5 +94,17 @@
   "decision": "взято",
   "negative_control": "запрос «выход из тупика» находит 166 строк, наверху собственный разбор (C-0217)",
   "claim": "C-0217"
+ },
+ {
+  "id": "A-0009",
+  "mechanism": "повторяемый аудит репозитория по принципам (не разовое эссе)",
+  "source": "собственный аудит 01.11.2026 (docs/AUDIT-PLAN.md) + принципы AGENTS.md",
+  "content": "bin/audit.py считает инварианты (дубли утверждений, покрытие, зелёные гейты) как FAIL и долги (артефакты без ссылок, гейты без контроля, отсутствие runs/index.json, отказы без caught_by, маркеры незавершённости) как WARN; пишет research/outputs/audit-report.txt",
+  "use_now": "встроено: python bin/hs.py selfaudit (и --strict для CI)",
+  "use_later": "добавить в pre-publication чеклист и связать с gate_probe",
+  "status": "adopted",
+  "decision": "взято",
+  "negative_control": "selfaudit на текущем репозитории: FAIL нет, WARN 6; --strict даёт exit 0, значит инварианты выполнены",
+  "claim": "C-0219"
  }
 ]
