@@ -166,6 +166,8 @@ pub struct Resumed {
     pub spent: f64,
     pub history: Vec<String>,
     pub last: Option<String>,
+    /// Результаты инструментов до обрыва: продолжение наследует их как свидетельства.
+    pub results: Vec<String>,
     /// Хвост, который не читается (оборванная запись). Его нельзя оставлять: новые записи после
     /// него перестанут читаться вообще.
     pub torn: usize,
@@ -187,6 +189,7 @@ pub fn resume_state(path: &Path) -> Result<Resumed, String> {
         spent: 0.0,
         history: Vec::new(),
         last: None,
+        results: Vec::new(),
         torn: walked.tail_bytes,
         closed: false,
     };
@@ -219,6 +222,7 @@ pub fn resume_state(path: &Path) -> Result<Resumed, String> {
                     .to_string();
                 let call = pending.take().unwrap_or_else(|| "?".to_string());
                 state.history.push(brief(&call, &text, ok));
+                state.results.push(text.clone());
                 state.last = Some(text);
             }
             "step" => {
@@ -704,7 +708,20 @@ pub fn run_task_with_budget(
     link: &mut dyn ModelLink,
     budget: Budget,
 ) -> std::io::Result<Outcome> {
-    run_task_from(journal_path, task, link, budget, None)
+    run_task_from(journal_path, task, link, budget, None, false)
+}
+
+/// Прогон с долговечным журналом: каждый шаг сбрасывается на диск.
+///
+/// Зачем отдельная функция: только так прогон на диске переживает обрыв питания, и только тогда
+/// продолжение имеет что читать. Плата — sync на каждый шаг.
+pub fn run_task_durable(
+    journal_path: &Path,
+    task: &str,
+    link: &mut dyn ModelLink,
+    budget: Budget,
+) -> std::io::Result<Outcome> {
+    run_task_from(journal_path, task, link, budget, None, true)
 }
 
 /// Продолжить прогон, оборванный падением, с того места, где он остановился.
@@ -732,7 +749,7 @@ pub fn run_task_resume(
     } else {
         state.task.clone()
     };
-    run_task_from(journal_path, &task, link, budget, Some(state))
+    run_task_from(journal_path, &task, link, budget, Some(state), true)
 }
 
 fn run_task_from(
@@ -741,6 +758,7 @@ fn run_task_from(
     link: &mut dyn ModelLink,
     budget: Budget,
     start: Option<Resumed>,
+    durable: bool,
 ) -> std::io::Result<Outcome> {
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
@@ -769,6 +787,10 @@ fn run_task_from(
         .map(|state| state.history.clone())
         .unwrap_or_default();
     let mut last: Option<String> = start.as_ref().and_then(|state| state.last.clone());
+    let prior_results: Vec<String> = start
+        .as_ref()
+        .map(|state| state.results.clone())
+        .unwrap_or_default();
     let mut prompt = compose_prompt(task, &history, last.as_deref());
 
     while attempts < budget.steps && steps < budget.steps {
@@ -849,6 +871,12 @@ fn run_task_from(
                 prompt = compose_prompt(task, &history, last.as_deref());
                 record(&mut journal, &mut events, "step",
                        format!("{steps}, потрачено {spent:.8}"))?;
+                // Долговечность на каждом шаге: журнал на диске нужен для продолжения после
+                // обрыва питания. Без sync файл остаётся в кэше, и обрыв уносит прогон целиком —
+                // продолжать будет нечего (F-0027).
+                if durable {
+                    journal.sync()?;
+                }
                 if spent > budget.allowance {
                     record(&mut journal, &mut events, "step/error",
                            format!("бюджет денег исчерпан: {spent:.8} > {:.8}", budget.allowance))?;
@@ -860,11 +888,16 @@ fn run_task_from(
             Step::Done { text } => {
                 // Опора проверяется до закрытия прогона: утверждение — часть результата, а не
                 // событие после него. Иначе порядок «… → run/end» перестаёт быть последним.
-                let results: Vec<String> = events
-                    .iter()
-                    .filter(|event| event.kind == "tool/result")
-                    .map(|event| event.detail.clone())
-                    .collect();
+                // Свидетельства продолжаются через обрыв: результаты, полученные до падения,
+                // принадлежат тому же прогону, и отбрасывать их значило бы требовать от модели
+                // заново прочитать уже прочитанное (иначе верный ответ получал unverified).
+                let mut results: Vec<String> = prior_results.clone();
+                results.extend(
+                    events
+                        .iter()
+                        .filter(|event| event.kind == "tool/result")
+                        .map(|event| event.detail.clone()),
+                );
                 anchor = claim_anchor(&text, &results);
                 match &anchor {
                     Some(found) => {
@@ -1515,3 +1548,8 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 }
+
+
+
+
+

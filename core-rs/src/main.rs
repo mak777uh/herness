@@ -688,6 +688,77 @@ fn init_mode() -> ExitCode {
         }
     }
 
+    if mode_text == "loop-bridge-resume" {
+        // Живой обрыв: журнал лежит на диске, поэтому переживает выключение питания. Второй
+        // запуск видит незакрытый журнал и продолжает тот же прогон, а не начинает новый.
+        let token = fs::read_to_string("/bridge-token").unwrap_or_default().trim().to_string();
+        let model = fs::read_to_string("/bridge-model").unwrap_or_default().trim().to_string();
+        let model = if model.is_empty() { "deepseek-v4.1-flash".to_string() } else { model };
+        if !mount_disk() {
+            println!("диск: не смонтировать /dev/vda — продолжать нечего");
+            return ExitCode::FAILURE;
+        }
+        let task = fs::read_to_string("/task")
+            .map(|text| text.trim().to_string())
+            .unwrap_or_else(|_| "запечатать /method.md".to_string());
+        let mut budget = hs_core::loopmod::Budget { steps: 8, seconds: 120.0, allowance: 0.05 };
+        if let Ok(text) = fs::read_to_string("/budget") {
+            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) {
+                if let Some(steps) = value.get("steps").and_then(|v| v.as_u64()) {
+                    budget.steps = steps as usize;
+                }
+                if let Some(seconds) = value.get("seconds").and_then(|v| v.as_f64()) {
+                    budget.seconds = seconds;
+                }
+                if let Some(allowance) = value.get("allowance").and_then(|v| v.as_f64()) {
+                    budget.allowance = allowance;
+                }
+            }
+        }
+        let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
+        let journal = std::path::Path::new("/mnt/journal.bin");
+        let resumed = matches!(hs_core::loopmod::resume_state(journal), Ok(state) if !state.closed);
+        let outcome = if resumed {
+            match hs_core::loopmod::resume_state(journal) {
+                Ok(state) => println!(
+                    "продолжение: шагов {}, вызовов {}, хвост {} байт",
+                    state.steps, state.calls, state.torn
+                ),
+                Err(error) => println!("продолжение: состояние не читается ({error})"),
+            }
+            hs_core::loopmod::run_task_resume(journal, &mut link, budget)
+        } else {
+            println!("прогон: свежий журнал на диске");
+            // Первый заход пишет долговечно: иначе обрыв питания унесёт журнал целиком и
+            // продолжать будет нечего (F-0027).
+            hs_core::loopmod::run_task_durable(journal, &task, &mut link, budget)
+        };
+        match outcome {
+            Ok(outcome) => {
+                report_loop(&outcome);
+                print_last_model_reply("/mnt/journal.bin");
+            }
+            Err(error) => println!("цикл: не запустился ({error})"),
+        }
+        report_order_from_file("/mnt/journal.bin");
+        match hs_core::loopmod::resume_state(journal) {
+            Ok(state) => println!(
+                "итог журнала: шагов {}, хвост {} байт, закрыт: {}",
+                state.steps, state.torn, if state.closed { "да" } else { "нет" }
+            ),
+            Err(error) => println!("итог журнала: не читается ({error})"),
+        }
+        // Копия для приёмки: приёмка читает неподвижный файл, а не тот, что ещё пишется.
+        export_journal("/mnt/journal.bin", "/mnt/hs-journal.bin");
+        unmount_workspace();
+        // Важно: без этого вызова init пошёл бы дальше в проверку долговечности и перезаписал
+        // журнал своими тестовыми записями.
+        println!("hs-core: система жива, жду");
+        loop {
+            thread::sleep(Duration::from_secs(3600));
+        }
+    }
+
     if mode_text == "loop-resume" {
         // Контроль обрыва: прогон без коммита и с нечитаемым хвостом обязан продолжиться с того
         // места, где остановился, а не начинаться заново (ADR-0051).
@@ -1006,3 +1077,4 @@ fn main() -> ExitCode {
         }
     }
 }
+
