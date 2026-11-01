@@ -124,10 +124,78 @@ def journal_tasks(limit: int) -> list[dict]:
     return tasks
 
 
+def adr_tasks(limit: int) -> list[dict]:
+    """Задачи по ADR: что решено в конкретном решении. Ключ — поле «Состояние» из шапки."""
+    tasks = []
+    for path in sorted((ROOT / "docs").glob("ADR-*.md")):
+        text = path.read_text(encoding="utf-8")
+        match = re.search(r"\*\*Состояние:\*\*\s*([^\n.]+)", text)
+        if not match:
+            continue
+        state = match.group(1).strip().rstrip(".")
+        tasks.append(
+            {
+                "id": f"T-adr-{path.stem}",
+                "source": "docs/ADR",
+                "task": (
+                    f"В docs лежит решение {path.stem}. Определи по его шапке, в каком оно состоянии "
+                    "(например: принято, предложено). Ответь одним-двумя словами."
+                ),
+                "answer": state,
+                "criterion": {
+                    "task": f"назвать состояние решения {path.stem}",
+                    "require_status": "done",
+                    "require_commit": True,
+                    "max_steps": 14,
+                    "max_allowance": 0.05,
+                    "must_not_call": ["write"],
+                    "tools": ["search", "read", "list"],
+                    "anchor_regex": path.stem,
+                },
+            }
+        )
+    return tasks[:limit] if limit else tasks
+
+
+def artifact_tasks(limit: int) -> list[dict]:
+    """Задачи по артефактам измерений: первая содержательная строка отчёта."""
+    tasks = []
+    for path in sorted((ROOT / "research" / "outputs").glob("*.txt")):
+        lines = [line.strip() for line in path.read_text(encoding="utf-8", errors="replace").splitlines()]
+        body = [line for line in lines if line and not line.startswith("#")]
+        if not body:
+            continue
+        first = body[0]
+        if len(first) < 12 or len(first) > 160:
+            continue
+        tasks.append(
+            {
+                "id": f"T-art-{path.stem}",
+                "source": "research/outputs",
+                "task": (
+                    f"В research/outputs лежит отчёт {path.name}. Найди его первую содержательную "
+                    "строку (не заголовок) и ответь ею."
+                ),
+                "answer": first,
+                "criterion": {
+                    "task": f"назвать первую содержательную строку {path.name}",
+                    "require_status": "done",
+                    "require_commit": True,
+                    "max_steps": 14,
+                    "max_allowance": 0.05,
+                    "must_not_call": ["write"],
+                    "tools": ["search", "read", "list"],
+                    "anchor_regex": path.stem[:16],
+                },
+            }
+        )
+    return tasks[:limit] if limit else tasks
+
+
 def commit_tasks(limit: int) -> list[dict]:
     try:
         log = subprocess.run(
-            ["git", "log", "--pretty=%h %s", "-n", str(limit or 30)],
+            ["git", "log", "--pretty=%h %s"] + (["-n", str(limit)] if limit else []),
             capture_output=True, text=True, encoding="utf-8", cwd=ROOT,
         )
     except Exception:  # noqa: BLE001
@@ -175,6 +243,8 @@ def main(argv: list[str] | None = None) -> int:
         "failures": failure_tasks(args.limit),
         "journals": journal_tasks(args.limit),
         "commits": commit_tasks(args.limit),
+        "adr": adr_tasks(args.limit),
+        "artifacts": artifact_tasks(args.limit),
     }
     tasks = [task for group in groups.values() for task in group]
     if not tasks:
