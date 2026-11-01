@@ -47,6 +47,9 @@ def append(run: str, event: str, directory: Path | None = None) -> dict:
             seq = int(tail["seq"]) + 1
             prev = str(tail["sha256"])
     entry = {
+        # Версия формата записи: сравнение с комнатой менялось (пачки → полный поток), и без
+        # метки старый журнал не отличить от испорченного.
+        "v": 1,
         "seq": seq,
         "prev": prev,
         "sha256": record_hash(prev, event),

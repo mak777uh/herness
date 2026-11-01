@@ -1,0 +1,10 @@
+# Доля ложных «готово» на сохранённых журналах
+# Команда: python bin/false_done.py accept/room-claims-statistics-v3.json runs/accept/journal*.bin
+# n=3 (два честных прогона и один контроль заглушкой); это не выборка, а факт по имеющимся журналам
+
+журнал                           форма  приёмка  причина отказа приёмки
+journal.bin                      ok     PASS     run/end без ошибок исполнения
+journal-crash.bin                ok     PASS     run/end без ошибок исполнения
+journal-stub.bin                 ok     FAIL     статус = done: FAIL; опора соответствует /C-\d{4}/: FAIL; есть событие claim/anchored: FAIL
+
+всего: 3; ложных «готово» поймано: 1
