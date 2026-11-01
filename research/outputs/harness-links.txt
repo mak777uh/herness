@@ -1,0 +1,12 @@
+# Доступность ссылок на чужие харнессы
+
+[200] https://github.com/anthropics/claude-code
+[200] https://github.com/Factory-AI
+[200] https://github.com/earendil-works/pi
+[200] https://github.com/Twigpine/openclaude
+[200] https://github.com/cline/cline
+[200] https://github.com/ajhcs/SEAL
+[200] https://github.com/augmentcode/auggie
+[200] https://cursor.com/docs
+
+отвечают: 8 из 8
