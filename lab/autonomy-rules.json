@@ -1,0 +1,40 @@
+{
+ "schema": 1,
+ "note": "Правила автономии как данные: что агент делает без спроса, что только с владельцем, что запрещено. Гейт bin/check_autonomy.py проверяет структуру и режим --staged. Источник идеи — описание механики у dsh-superagent-prototype (файла в их main нет, поэтому спроектировано под наши гейты).",
+ "allowed_without_asking": [
+  "прогоны и серии в рамках бюджета прогона (шаги, деньги, время)",
+  "отчёты, разборы, агрегаты, артефакты в research/ и runs/",
+  "планы и гипотезы в lab/ (без объявления их результатом)",
+  "правки кода и тестов, если гейты зелёные",
+  "закрытие пунктов, у которых есть артефакт и утверждение",
+  "обновление README и документов, кроме защищённых путей"
+ ],
+ "needs_owner": [
+  "публикация наружу: .github/, CITATION.cff, docs/PUBLICATION-POLICY.md, любой push в чужой репозиторий",
+  "физика мира: core-rs/configs/**, core-rs/kernel/**, bin/make_initramfs.py (состав комнаты)",
+  "удаление канонических образов и весов: share.img, core-rs/*.img, core-rs/vmlinuz-*",
+  "смена зарегистрированной гипотезы после регистрации (lab/registry.json, поле hypotheses)",
+  "расширение поверхности моста: bin/bridge.py",
+  "изменение этих правил: lab/autonomy-rules.json"
+ ],
+ "forbidden": [
+  "секреты в репозиторий и в контекст (ключи, токены, пароли)",
+  "трогать установленный DeepSeek Harness (app.asar, ~/.dsh)",
+  "объявлять результат без артефакта и воспроизводимой команды",
+  "ослаблять гейт, чтобы он стал зелёным",
+  "переписывать журнал прогона или чинить оборванный хвост"
+ ],
+ "protected_paths": [
+  ".github/",
+  "CITATION.cff",
+  "docs/PUBLICATION-POLICY.md",
+  "docs/decision-log.md",
+  "core-rs/configs/",
+  "core-rs/kernel/",
+  "bin/make_initramfs.py",
+  "bin/bridge.py",
+  "lab/autonomy-rules.json"
+ ],
+ "decision_log": "docs/decision-log.md",
+ "decision_log_format": "2026-11-01 | путь | причина | кто решил"
+}
