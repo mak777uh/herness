@@ -165,6 +165,51 @@ impl HttpBridge {
     }
 }
 
+impl HttpBridge {
+    /// Отправить событие журнала на хост и получить номер записи в хостовом журнале.
+    ///
+    /// Зачем: авторитетную копию ведёт хост, комнате остаётся кэш. Если хост не подтвердил —
+    /// это не «мелкая ошибка сети», а отсутствие свидетельства, и цикл обязан об этом сказать
+    /// (см. статус `unrecorded` в loopmod).
+    pub fn post_event(&mut self, run: &str, event: &str) -> Result<u64, String> {
+        let body = serde_json::json!({ "run": run, "event": event }).to_string();
+        let request = format!(
+            "POST /v1/journal HTTP/1.1\r\nHost: {}:{}\r\nAuthorization: Bearer {}\r\n\
+             Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            self.host,
+            self.port,
+            self.token,
+            body.len(),
+            body
+        );
+        let address = format!("{}:{}", self.host, self.port);
+        let mut stream = TcpStream::connect(&address)
+            .map_err(|error| format!("мост недоступен ({address}): {error}"))?;
+        stream
+            .set_read_timeout(Some(self.timeout))
+            .map_err(|error| format!("таймаут не ставится: {error}"))?;
+        stream
+            .write_all(request.as_bytes())
+            .map_err(|error| format!("событие не отправлено: {error}"))?;
+        let mut response = Vec::new();
+        let _ = stream.read_to_end(&mut response);
+        let raw = String::from_utf8_lossy(&response).to_string();
+        if !raw.starts_with("HTTP/1.1 200") && !raw.starts_with("HTTP/1.0 200") {
+            let status = raw.lines().next().unwrap_or("нет ответа").to_string();
+            return Err(format!("хост не принял событие: {status}"));
+        }
+        let (_, body) = raw
+            .split_once("\r\n\r\n")
+            .ok_or_else(|| "ответ без тела".to_string())?;
+        let value: serde_json::Value = serde_json::from_str(body.trim())
+            .map_err(|error| format!("ответ не JSON: {error}"))?;
+        value
+            .get("seq")
+            .and_then(|seq| seq.as_u64())
+            .ok_or_else(|| "в ответе нет seq".to_string())
+    }
+}
+
 impl ModelLink for HttpBridge {
     fn last_usage(&self) -> Option<Usage> {
         self.usage
