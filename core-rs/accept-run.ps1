@@ -32,6 +32,21 @@ $qemu = "C:\Program Files\qemu\qemu-system-x86_64.exe"
 $runs = Join-Path $root "runs\accept"
 New-Item -ItemType Directory -Force -Path $runs | Out-Null
 
+# Комната — часть прибора: если образ отстал от репозитория, задача становится невыполнимой,
+# а выглядит это как провал модели (F-0035). Поэтому прогон начинается с проверки образа.
+$room = Join-Path $root "lab\room.json"
+if ((Test-Path $room) -and $Mode -ne "none") {
+    Push-Location $root
+    python bin\build_room.py --check | Out-Null
+    $roomCode = $LASTEXITCODE
+    Pop-Location
+    if ($roomCode -ne 0) {
+        Write-Host "итог: FAIL (комната не совпадает с манифестом — прогон не начат)"
+        python bin\build_room.py --check | Select-Object -Last 6
+        exit 3
+    }
+}
+
 $env:HS_MODE = $Mode
 # Хостовый прогон: события должны подтверждаться хостом, иначе done не выдаётся (H-0007).
 if ($HostRun) { $env:HS_HOST_RUN = "accept-" + (Get-Date -Format "yyyyMMdd-HHmmss") } else { Remove-Item Env:\HS_HOST_RUN -ErrorAction SilentlyContinue }

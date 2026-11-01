@@ -1,0 +1,27 @@
+{
+ "note": "Манифест комнаты: что лежит внутри образа. Собирать только через bin/build_room.py, чтобы образ не отставал от репозитория (F-0035).",
+ "image": "share.img",
+ "size_mb": 160,
+ "copy": {
+  "CLAIMS.md": "CLAIMS.md",
+  "NOT-CLAIMED.md": "NOT-CLAIMED.md",
+  "README.md": "README.md",
+  "docs": "docs",
+  "lab/failures": "failures",
+  "runs/dump": "runs/dump",
+  "history/gitlog.txt": "history/gitlog.txt"
+ },
+ "verify": [
+  "CLAIMS.md",
+  "docs",
+  "failures",
+  "runs/dump",
+  "history/gitlog.txt"
+ ],
+ "forbidden": [
+  "research",
+  "lab/adoptions.json",
+  "runs/accept",
+  "accept"
+ ]
+}
