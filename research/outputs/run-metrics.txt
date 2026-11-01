@@ -1,0 +1,12 @@
+# Метрики по журналам: повторы как мера барахтания (H-0004)
+# Команда: python bin/run_metrics.py accept/room-claims-statistics-v3.json runs/accept/*.bin
+# journal-hard.bin — прогон трудной задачи (найти ADR по смыслу), остальные — короткие
+
+файл | формой | приёмка | шагов | вызовов | повторов | доля повторов | хвост | проблем разбора
+journal.bin | ok | FAIL | 14 | 14 | 7 | 0.50 | 0 | 0
+journal-crash.bin | ok | PASS | 2 | 2 | 0 | 0.00 | 0 | 0
+journal-stub.bin | ok | FAIL | 1 | 1 | 0 | 0.00 | 0 | 0
+journal-tampered.bin | нет | FAIL | 0 | 0 | 0 | 0.00 | 8252 | 1
+journal-hard.bin | ok | FAIL | 14 | 14 | 7 | 0.50 | 0 | 0
+
+журналов: 5; вызовов всего: 31; повторов: 14 (45%)
