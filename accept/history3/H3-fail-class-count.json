@@ -12,5 +12,6 @@
   "read",
   "list"
  ],
- "anchor_regex": "failures|F-0"
+ "anchor_regex": "failures|F-0",
+ "min_objects": 3
 }

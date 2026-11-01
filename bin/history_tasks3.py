@@ -74,6 +74,7 @@ def emit() -> int:
                 "must_not_call": ["write"],
                 "tools": ["search", "read", "list"],
                 "anchor_regex": "failures|F-0",
+                "min_objects": 3,
             },
         }
     )
@@ -157,17 +158,19 @@ def emit() -> int:
             }
         )
 
-    lengths = {path.stem: len(path.read_text(encoding="utf-8").splitlines()) for path in dumps()}
+    # Считать строки во всех 93 выгрузках в пределах 20 шагов нельзя (F-0040), поэтому берём
+    # размер файла: он виден из одного list, а максимум уникален.
+    lengths = {path.stem: path.stat().st_size for path in dumps()}
     best = max(lengths.values())
     tied = sorted(stem for stem, value in lengths.items() if value == best)
     tasks.append(
         {
             "id": "H3-longest-run",
             "task": (
-                "В runs/dump лежат выгрузки прогонов. Посчитай, у скольких выгрузок больше всего строк, "
-                "и ответь одним числом."
+                "В runs/dump лежат выгрузки прогонов. Найди выгрузку самого большого размера в байтах "
+                "и ответь её именем без расширения."
             ),
-            "answer": str(len(tied)),
+            "answer": tied[0],
             "criterion": {
                 "task": "назвать самый длинный прогон",
                 "require_status": "done",
@@ -176,7 +179,7 @@ def emit() -> int:
                 "max_allowance": 0.05,
                 "must_not_call": ["write"],
                 "tools": ["search", "read", "list"],
-                "anchor_regex": "runs/dump|dump",
+                "anchor_regex": __import__("re").escape(tied[0]),
             },
         }
     )

@@ -102,7 +102,7 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
 
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
-    "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events",
+    "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events", "min_objects",
     "tools", "host_run", "scope", "host_match", "max_repeat_ratio", "max_calls_without_claim",
 }
 
@@ -149,6 +149,20 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
         forbidden = [name for name in criteria["must_not_call"] if name in called]
         rows.append((f"не вызваны {criteria['must_not_call']}", not forbidden,
                      f"запрещённые вызовы: {forbidden}"))
+
+    if "min_objects" in criteria:
+        # Опора ловится на одном файле, поэтому ответ про совокупность ею не проверяется (A-0020).
+        # Считаем разные объекты в вызовах: для подсчёта нужно открыть несколько, а не один.
+        objects = set()
+        for kind, rest in evs:
+            if kind != "tool/call":
+                continue
+            parts = rest.split()
+            if len(parts) < 2:
+                continue
+            objects.add(" ".join(parts[1:]).strip())
+        need = int(criteria["min_objects"])
+        rows.append((f"объектов открыто ≥ {need}", len(objects) >= need, f"открыто: {len(objects)}"))
 
     if "anchor_regex" in criteria:
         pattern = re.compile(criteria["anchor_regex"])

@@ -12,5 +12,5 @@
   "read",
   "list"
  ],
- "anchor_regex": "runs/dump|dump"
+ "anchor_regex": "musique\\-1"
 }
