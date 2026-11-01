@@ -1,0 +1,8 @@
+# Проба внешнего набора MuSiQue (разметка поддержки, CC BY 4.0)
+
+[ERR] HF datasets-server: dgslibisey/MuSiQue: URLError <urlopen error [Errno 11002] getaddrinfo failed>
+[ERR] HF datasets-server: allenai/musique: URLError <urlopen error [Errno 11001] getaddrinfo failed>
+[ERR] HF datasets-server: musique: URLError <urlopen error [Errno 11001] getaddrinfo failed>
+[ERR] GitHub raw: данные в репозитории: HTTPError HTTP Error 404: Not Found
+
+итог: ни одна точка не отдала данные
