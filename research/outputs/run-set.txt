@@ -1,31 +1,27 @@
-# Набор прогонов после расширения
+# Набор после поправки на ложные отказы (F-0028)
 
-журнал                       тип          форма  приёмка  вызовов  повт.  режим
-journal-crash.bin            обрыв        ok     PASS     2        0      принят
-journal-default-threshold.bin короткая     ok     PASS     2        0      принят
-journal-hard.bin             трудная      ok     FAIL     14       7      барахтание
-journal-set-1.bin            короткая     ok     PASS     2        0      принят
-journal-set-10.bin           трудная      ok     FAIL     14       0      упорство
-journal-set-11.bin           короткая     ok     PASS     2        0      принят
-journal-set-12.bin           короткая     ok     FAIL     1        0      нет опоры
-journal-set-13.bin           трудная      ok     FAIL     14       7      барахтание
-journal-set-14.bin           короткая     ok     FAIL     2        0      нет опоры
-journal-set-2.bin            короткая     ok     PASS     1        0      принят
-journal-set-3.bin            трудная      ok     FAIL     14       3      упорство
-journal-set-4.bin            короткая     ok     PASS     2        0      принят
-journal-set-5.bin            короткая     ok     PASS     2        0      принят
-journal-set-6.bin            короткая     ok     PASS     1        0      принят
-journal-set-7.bin            трудная      ok     FAIL     14       3      упорство
-journal-set-8.bin            короткая     ok     PASS     2        0      принят
-journal-set-9.bin            короткая     ok     PASS     1        0      принят
-journal-stub.bin             контроль     ok     FAIL     1        0      нет опоры
-journal-tampered.bin         испорченный  нет    FAIL     0        0      нет опоры
-journal.bin                  короткая     ok     FAIL     2        0      нет опоры
+журнал                     форма  приёмка
+journal-crash.bin          ok     PASS
+journal-default-threshold.bin ok     PASS
+journal-hard.bin           ok     FAIL
+journal-set-1.bin          ok     PASS
+journal-set-10.bin         ok     FAIL
+journal-set-11.bin         ok     PASS
+journal-set-12.bin         ok     PASS
+journal-set-13.bin         ok     FAIL
+journal-set-14.bin         ok     PASS
+journal-set-2.bin          ok     PASS
+journal-set-3.bin          ok     FAIL
+journal-set-4.bin          ok     PASS
+journal-set-5.bin          ok     PASS
+journal-set-6.bin          ok     PASS
+journal-set-7.bin          ok     FAIL
+journal-set-8.bin          ok     PASS
+journal-set-9.bin          ok     PASS
+journal-stub.bin           ok     FAIL
+journal-tampered.bin       нет    FAIL
+journal.bin                ok     PASS
 
-журналов: 20; форма ok: 19; принято: 10
-ложных «готово» поймано: 9 из 19 (Вильсон 95 %: 0.27–0.68)
-короткая: n=12, поймано 3, вызовов 20
-трудная: n=5, поймано 5, вызовов 70
-режимы: барахтание — 2, нет опоры — 5, принят — 10, упорство — 3
-
-# Граница: задачи и их трудность выбраны вручную, интервал описывает этот набор.
+журналов: 20; форма ok: 19; принято: 13; поймано: 6
+# Ложные отказы до правки: 3 (set-12, set-14 и ещё один с тем же механизмом).
+# Прежняя цифра 9 из 19 включала их; после правки — 6 из 19.

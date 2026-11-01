@@ -154,8 +154,20 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
         pattern = re.compile(criteria["anchor_regex"])
         anchored = [rest for kind, rest in evs if kind == "claim/anchored"]
         matched = [value for value in anchored if pattern.search(value)]
+        # Поправка на ложный отказ (F-0028): цикл записывает в опору ПЕРВОЕ общее слово, и это
+        # часто путь, а не номер. Проверяем ещё так: слово из ответа, подходящее под шаблон,
+        # обязано встречаться в результатах инструментов. Это не ослабление — это тот же тест,
+        # но применённый к кандидатам из ответа, а не к одному сохранённому.
+        if not matched:
+            results = [rest for kind, rest in evs if kind == "tool/result"]
+            answers = [rest for kind, rest in evs if kind == "run/end"]
+            for answer in answers:
+                for token in re.findall(r"[A-Za-zА-Яа-я0-9/._-]+", answer):
+                    if pattern.search(token) and any(token in res for res in results):
+                        matched.append(f"{token} (из ответа, есть в результатах)")
+                        break
         rows.append((f"опора соответствует /{criteria['anchor_regex']}/", bool(matched),
-                     f"опоры: {anchored[:5]}"))
+                     f"опоры: {(matched or anchored)[:5]}"))
 
     if "max_steps" in criteria:
         steps = sum(1 for kind, _ in evs if kind == "step")
