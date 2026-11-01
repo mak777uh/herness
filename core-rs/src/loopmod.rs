@@ -139,7 +139,9 @@ fn compose_prompt(task: &str, history: &[String], last: Option<&str>) -> String 
         }
         out.push('\n');
     }
-    out.push_str("\nСледующий шаг — одна строка: TOOL <имя> <аргумент> или DONE <итог>.");
+    out.push_str(
+        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.",
+    );
     out
 }
 
@@ -974,7 +976,7 @@ fn run_task_from(
                 record(&mut journal, &mut events, "step/error", error.clone())?;
                 status = "bad-step";
                 last = Some(format!(
-                    "{error}. Ответь одной строкой: TOOL <имя> <аргумент> или DONE <итог>."
+                    "{error}. Ответь одной строкой: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>."
                 ));
                 prompt = compose_prompt(task, &history, last.as_deref());
                 continue;
