@@ -261,6 +261,26 @@ def _():
     assert ok, rows
 
 
+@case("порог барахтания отсекает повторные вызовы")
+def _():
+    repeated = [
+        "run/start task: t",
+        "tool/call search /mnt a",
+        "tool/result ok ничего",
+        "step 1, потрачено 0.00010000",
+        "tool/call search /mnt a",
+        "tool/result ok ничего",
+        "step 2, потрачено 0.00020000",
+        "claim/anchored C-0001",
+        "run/end C-0001",
+    ]
+    spec = dict(CRITERIA, max_repeat_ratio=0.35)
+    ok, rows = run(spec, repeated)
+    assert not ok, rows
+    assert any("повторов" in detail for _, passed, detail in rows if not passed), rows
+
+
+
 def main() -> int:
     failed = 0
     for name, fn in CASES:

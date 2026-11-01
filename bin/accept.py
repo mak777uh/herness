@@ -4,6 +4,7 @@
   * критерий пишется до прогона (pre-registration) — иначе его подгонят под результат;
   * проверка исполняется ВНЕ комнаты: агент работает в гостевой системе, а приёмка читает журнал
     на хосте. Внутри комнаты он мог бы изменить проверялку (reward hacking: RHB 2026 — эксплуатация
+from collections import Counter
     в 0–13,9 % эпизодов, а «укрепление среды» снижает её на 5,7 п.п. без потери успешности);
   * критерий не показывается модели: она видит только задачу;
   * провал — это провал: нет файла, нет записи, нет опоры — FAIL, а не «наверное, всё хорошо».
@@ -40,6 +41,7 @@ import hashlib
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 MAGIC = b"HSJ1"
@@ -101,7 +103,7 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
     "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events",
-    "tools", "host_run", "scope", "host_match",
+    "tools", "host_run", "scope", "host_match", "max_repeat_ratio",
 }
 
 
@@ -214,6 +216,16 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
                     f"хост видел {len(host_events)} событий, в комнате {len(room_events)}"
                     + ("" if prefix_ok else "; события расходятся"),
                 ))
+
+    if "max_repeat_ratio" in criteria:
+        # Детектор барахтания: доля повторных одинаковых вызовов. Измерено (C-0183): на трудной
+        # задаче 7 повторов из 14, на коротких — 0. Порог объявляется критерием, а не угадывается.
+        calls = [rest for kind, rest in evs if kind == "tool/call"]
+        repeats = sum(count - 1 for count in Counter(calls).values() if count > 1)
+        ratio = (repeats / len(calls)) if calls else 0.0
+        limit = float(criteria["max_repeat_ratio"])
+        rows.append((f"доля повторов ≤ {limit:.2f}", ratio <= limit,
+                     f"повторов {repeats} из {len(calls)} ({ratio:.0%})"))
 
     if criteria.get("require_commit"):
         closed = bool(records) and records[-1][0] == 2
