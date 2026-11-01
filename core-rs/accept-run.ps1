@@ -95,7 +95,7 @@ $args = @('-m', "$Memory", '-smp', '1',
           '-nographic', '-no-reboot')
 if ($Net) { $args = @('-netdev', 'user,id=n0', '-device', 'virtio-net-pci,netdev=n0') + $args }
 if ($Accel -ne "none") { $args = @('-accel', $Accel) + $args }
-$process = Start-Process -FilePath $qemu -ArgumentList $args -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+$process = Start-Process -FilePath $qemu -ArgumentList $args -RedirectStandardOutput $out -RedirectStandardError $err -WindowStyle Hidden -PassThru
 
 $deadline = (Get-Date).AddSeconds($TimeoutSec)
 $text = ""

@@ -1131,7 +1131,16 @@ fn run_task_from(
     // Одно правило вместо переменной-счётчика (H-0008): если run/end ещё не записан, пишем его
     // с причиной, а стадию выводим из журнала — так ядро и приёмка считают одно и то же.
     if !events.iter().any(|event| event.kind == "run/end") {
-        let reason = if status == "bad-step" {
+        // Если прогон уже остановлен причиной (петля, застой, отказ), run/end обязан её повторить:
+        // иначе журнал противоречит сам себе — «застой» и «шаги кончились» одновременно (F-0042).
+        let blocked_reason = events
+            .iter()
+            .rev()
+            .find(|event| event.kind == "run/blocked")
+            .map(|event| event.detail.clone());
+        let reason = if let Some(detail) = blocked_reason {
+            format!("остановлен: {detail}")
+        } else if status == "bad-step" {
             format!("провайдер не дал разбираемого шага за {attempts} попыток")
         } else {
             format!("шаги кончились без сигнала завершения (попыток {attempts})")

@@ -1,0 +1,17 @@
+{
+ "task": "посчитать разные инструменты в выгрузках",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 24,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "tool/call",
+ "min_objects": 3
+}
