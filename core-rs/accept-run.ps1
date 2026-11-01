@@ -35,6 +35,9 @@ New-Item -ItemType Directory -Force -Path $runs | Out-Null
 $env:HS_MODE = $Mode
 # Хостовый прогон: события должны подтверждаться хостом, иначе done не выдаётся (H-0007).
 if ($HostRun) { $env:HS_HOST_RUN = "accept-" + (Get-Date -Format "yyyyMMdd-HHmmss") } else { Remove-Item Env:\HS_HOST_RUN -ErrorAction SilentlyContinue }
+# Связка: если критерий требует хостовый журнал, комната обязана слать события. Иначе граница
+# держалась бы на том, что запускающий не забыл флаг — то есть на дисциплине, а не на контракте.
+$hostRunFromCriteria = $null
 # Бюджет прогона берётся из самого критерия: если критерий разрешает 12 шагов, а комната даёт 8,
 # приёмка невыполнима по построению — не потому, что модель не справилась (F-0026).
 $criteriaPath = if (Test-Path $Criteria) { $Criteria } else { Join-Path $root $Criteria }
@@ -45,6 +48,7 @@ if (Test-Path $criteriaPath) {
     if ($null -ne $spec.max_allowance) { $budget.allowance = [double]$spec.max_allowance }
     $budget.seconds = 240
     $env:HS_BUDGET = ($budget | ConvertTo-Json -Compress)
+    if ($spec.host_run) { $env:HS_HOST_RUN = [string]$spec.host_run }
     # Выдача инструментов: объявлена в критерии, значит комната получает ровно её, а не весь набор.
     if ($null -ne $spec.tools) {
         $env:HS_TOOLS = ($spec.tools | ConvertTo-Json -Compress)
@@ -110,4 +114,5 @@ Write-Host ("журнал на хосте: {0} байт" -f (Get-Item $journal).
 
 python (Join-Path $root "bin\accept.py") (Join-Path $root $Criteria) $journal
 exit $LASTEXITCODE
+
 

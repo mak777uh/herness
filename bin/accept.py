@@ -26,6 +26,16 @@
 
 from __future__ import annotations
 
+# Журнал хоста нужен приёмке для проверки подтверждения. Два пути импорта: как пакет (`bin.accept`)
+# и как скрипт (`python bin/accept.py`), где пакета `bin` на пути нет.
+try:
+    from bin import host_journal  # type: ignore[import-not-found]
+except Exception:  # noqa: BLE001
+    try:
+        import host_journal  # type: ignore[import-not-found,no-redef]
+    except Exception:  # noqa: BLE001
+        host_journal = None  # type: ignore[assignment]
+
 import hashlib
 import json
 import re
@@ -183,10 +193,8 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
     if "host_run" in criteria:
         # Подтверждение хостом: авторитетную копию ведёт хост, и без неё прогон не принимается.
         # Проверяется не наличие файла, а сходимость цепочки — файл можно переписать.
-        try:
-            from bin import host_journal
-        except Exception as exc:  # noqa: BLE001
-            rows.append(("журнал хоста проверен", False, f"модуль недоступен: {type(exc).__name__}"))
+        if host_journal is None:
+            rows.append(("журнал хоста проверен", False, "модуль host_journal недоступен"))
         else:
             good, problems = host_journal.verify(str(criteria["host_run"]))
             rows.append((
@@ -276,6 +284,8 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
 
 
 
