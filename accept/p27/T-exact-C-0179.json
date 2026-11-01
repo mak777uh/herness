@@ -1,0 +1,22 @@
+{
+ "task": "найти утверждение C-0179, назвать тип и команду",
+ "comment": "Собрано bin/p27_dataset.py из реестра CLAIMS.md. Условия: статус done, опора, закрытый журнал, потолки шагов и денег, порог барахтания 0.35, опора при 10+ вызовах, запись запрещена.",
+ "require_status": "done",
+ "require_commit": true,
+ "require_events": [
+  "claim/anchored"
+ ],
+ "max_steps": 12,
+ "max_allowance": 0.05,
+ "max_repeat_ratio": 0.35,
+ "max_calls_without_claim": 10,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "C-0179"
+}
