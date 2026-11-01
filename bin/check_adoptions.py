@@ -45,6 +45,11 @@ def problems_for(entries: list[dict], known: set[str]) -> list[str]:
             problems.append(f"{ident}: нет источника (правило по памяти)")
         if not str(entry.get("negative_control", "")).strip():
             problems.append(f"{ident}: нет отрицательного контроля")
+        # Источник считается разобранным, только если записано СОДЕРЖАНИЕ и польза: сейчас или позже.
+        if not str(entry.get("content", "")).strip():
+            problems.append(f"{ident}: источник не разобран (нет поля content)")
+        if not str(entry.get("use_now", "")).strip() and not str(entry.get("use_later", "")).strip():
+            problems.append(f"{ident}: не указана польза (use_now или use_later)")
         claim = entry.get("claim")
         if entry.get("status") == "adopted":
             if not claim:
@@ -68,10 +73,13 @@ def self_test() -> int:
         {"id": "X-4", "mechanism": "m", "status": "adopted", "decision": "взято",
          "source": "repo", "negative_control": "ctrl"},
         {"id": "X-5", "mechanism": "m", "status": "wat", "decision": "взято",
-         "source": "repo", "negative_control": "ctrl", "claim": "C-0001"},
+         "source": "repo", "negative_control": "ctrl", "claim": "C-0001",
+         "content": "c", "use_now": "u"},
+        {"id": "X-6", "mechanism": "m", "status": "planned", "decision": "отложено",
+         "source": "repo", "negative_control": "ctrl", "use_later": "later", "claim": "C-0001"},
     ]
     found = problems_for(bad, known)
-    expected = 5
+    expected = 6
     if len(found) < expected:
         print(f"[FAIL] self-test: ожидали не меньше {expected} отказов, получили {len(found)}")
         for line in found:
