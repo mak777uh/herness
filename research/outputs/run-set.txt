@@ -1,17 +1,28 @@
 # Набор живых прогонов: форма против приёмки
 
-# Задачи: (1) statistics, (2) C-0004, (3) ADR по смыслу, (4) measurement;
+# Задачи: statistics / C-0004 / ADR по смыслу / measurement, повторы по 2-3 раза;
 # плюс сохранённые прогоны прошлых кругов и контроль заглушкой.
 
-журнал                   форма  приёмка  шагов  вызовов  повторов
-journal-set-1.bin        ok     PASS     2      2        0
-journal-set-2.bin        ok     PASS     1      1        0
-journal-set-3.bin        ok     FAIL     14     14       3
-journal-set-4.bin        ok     PASS     2      2        0
-journal.bin              ok     PASS     2      2        0
-journal-hard.bin         ok     FAIL     14     14       7
-journal-crash.bin        ok     PASS     2      2        0
-journal-stub.bin         ok     FAIL     1      1        0
+журнал                 форма  приёмка  шагов  вызовов  повторов
+journal-crash.bin      ok     PASS     2      2        0
+journal-hard.bin       ok     FAIL     14     14       7
+journal-set-1.bin      ok     PASS     2      2        0
+journal-set-10.bin     ok     FAIL     14     14       0
+journal-set-2.bin      ok     PASS     1      1        0
+journal-set-3.bin      ok     FAIL     14     14       3
+journal-set-4.bin      ok     PASS     2      2        0
+journal-set-5.bin      ok     PASS     2      2        0
+journal-set-6.bin      ok     PASS     1      1        0
+journal-set-7.bin      ok     FAIL     14     14       3
+journal-set-8.bin      ok     PASS     2      2        0
+journal-set-9.bin      ok     PASS     1      1        0
+journal-stub.bin       ok     FAIL     1      1        0
+journal-tampered.bin   нет    FAIL     0      0        0
+journal.bin            ok     FAIL     14     14       0
 
-журналов: 8; форма считает готовыми: 8; приёмка приняла: 5
-ложных «готово» поймано: 3 из 8
+журналов: 15; форма считает готовыми: 14; приёмка приняла: 8
+ложных «готово» поймано: 6 из 14 (интервал Вильсона 95 %: 0.21–0.67)
+доля принятых приёмкой: 8/15 (95 %: 0.30–0.75)
+
+# Граница: набор не случайный — задачи и их трудность выбраны вручную,
+# поэтому интервал описывает эти прогоны, а не «все задачи вообще».
