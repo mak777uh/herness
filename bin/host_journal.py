@@ -88,6 +88,23 @@ def verify(run: str, directory: Path | None = None) -> tuple[int, list[str]]:
     return (good, problems)
 
 
+def events(run: str, directory: Path | None = None) -> list[str]:
+    """События хостового журнала в порядке записи: то, что хост действительно видел."""
+    directory = directory or DEFAULT_DIR
+    path = directory / f"{run}.jsonl"
+    if not path.exists():
+        return []
+    out: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            out.append(str(json.loads(line).get("event", "")))
+        except json.JSONDecodeError:
+            break
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
     if not argv:

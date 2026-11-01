@@ -101,7 +101,7 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
     "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events",
-    "tools", "host_run", "scope",
+    "tools", "host_run", "scope", "host_match",
 }
 
 
@@ -202,6 +202,19 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
                 good > 0 and not problems,
                 f"записей: {good}" + (f"; проблемы: {problems[:1]}" if problems else ""),
             ))
+            # Сравнение содержимого включается критерием отдельно (host_match): пока цикл шлёт
+            # только номера шагов, строгое сравнение было бы ложным. Это честная граница, а не
+            # «проверка, которая всегда падает».
+            if criteria.get("host_match"):
+                host_events = [t for t in host_journal.events(str(criteria["host_run"])) if t]
+                room_events = [f"{kind} {rest}".strip() for kind, rest in evs]
+                prefix_ok = bool(host_events) and room_events[: len(host_events)] == host_events
+                rows.append((
+                    "журнал комнаты совпадает с хостовым",
+                    prefix_ok,
+                    f"хост видел {len(host_events)} событий, в комнате {len(room_events)}"
+                    + ("" if prefix_ok else "; первые записи расходятся"),
+                ))
 
     if criteria.get("require_commit"):
         closed = bool(records) and records[-1][0] == 2
