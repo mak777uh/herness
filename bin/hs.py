@@ -1296,6 +1296,26 @@ def gate_harnesses(root: Path) -> list[str]:
     return problems
 
 
+def gate_adoptions(root: Path) -> list[str]:
+    """Механизм нельзя внедрить без источника и отрицательного контроля (docs/TOP-REVIEW.md §5)."""
+    import subprocess
+
+    script = root / "bin" / "check_adoptions.py"
+    if not script.exists():
+        return ["нет bin/check_adoptions.py"]
+    checks = []
+    for extra in ([], ["--self-test"]):
+        result = subprocess.run(
+            [sys.executable, str(script), *extra],
+            capture_output=True, text=True, encoding="utf-8", cwd=root,
+        )
+        if result.returncode != 0:
+            label = "self-test" if extra else "склад решений"
+            lines = [line for line in (result.stdout or "").splitlines() if line.startswith("[FAIL]")]
+            checks.extend(f"{label}: {line}" for line in lines) or [f"{label}: ошибка запуска"]
+    return checks
+
+
 def gate_autonomy(root: Path) -> list[str]:
     """Правила автономии: структура и защищённые пути в индексе без записи в журнале решений."""
     import subprocess
@@ -1571,7 +1591,7 @@ def gate_bigfiles(root: Path) -> list[str]:
 def cmd_gates(args) -> int:
     root = Path(args.root).resolve()
     checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("самоссылка", gate_selfref), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("автономия", gate_autonomy), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors), ("покрытие", gate_coverage), ("большие файлы", gate_bigfiles)]
+              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("самоссылка", gate_selfref), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("автономия", gate_autonomy), ("решения", gate_adoptions), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors), ("покрытие", gate_coverage), ("большие файлы", gate_bigfiles)]
     total = 0
     for name, fn in checks:
         problems = fn(root)
