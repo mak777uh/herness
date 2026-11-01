@@ -473,11 +473,34 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     if matches.is_empty() {
         return Ok(format!("найдено 0 в {scanned} файлах"));
     }
+    // Сводка по файлам: при 20 файлах модели нужно сначала понять, какие читать, иначе она
+    // листает подряд и тратит шаги (замер: 5 из 6 задач MuSiQue не дошли до ответа).
+    let mut by_file: Vec<(String, usize)> = Vec::new();
+    for line in &matches {
+        if let Some((path, _)) = line.split_once(':') {
+            match by_file.iter_mut().find(|(name, _)| name == path) {
+                Some((_, count)) => *count += 1,
+                None => by_file.push((path.to_string(), 1)),
+            }
+        }
+    }
+    by_file.sort_by(|left, right| right.1.cmp(&left.1));
+    let summary: Vec<String> = by_file
+        .iter()
+        .take(8)
+        .map(|(name, count)| format!("{name} ({count})"))
+        .collect();
+    if matches.is_empty() {
+        return Ok(format!("найдено 0 в {scanned} файлах"));
+    }
     let mut out = format!(
         "найдено {} в {scanned} файлах{}:",
         matches.len(),
         if truncated { " (обрезано)" } else { "" }
     );
+    if !summary.is_empty() {
+        out.push_str(&format!("\nфайлы: {}", summary.join(", ")));
+    }
     for line in matches {
         out.push('\n');
         out.push_str(&line);
@@ -1738,6 +1761,7 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 }
+
 
 
 
