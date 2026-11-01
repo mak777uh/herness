@@ -105,6 +105,12 @@ def main(argv: list[str] | None = None) -> int:
         warns.append(f"отказов без caught_by: {len(without_guard)} из {len(failures)} (план P1.1)")
     if sum(marker_counts.values()) > 0:
         warns.append("следы незавершённости: " + ", ".join(f"{word} {count}" for word, count in marker_counts.most_common()))
+    briefs = subprocess.run(
+        [sys.executable, "bin/check_briefs.py"],
+        capture_output=True, text=True, encoding="utf-8", cwd=ROOT,
+    )
+    if briefs.returncode != 0:
+        warns.append("брифы или правила владельца не проходят проверку (bin/check_briefs.py)")
     if ledger and not any(entry.get("prior_art") for entry in ledger):
         warns.append("в складе решений нет поля prior_art (план P2)")
 

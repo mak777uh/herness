@@ -7,7 +7,7 @@
 решений в складе: 9
 
 ## FAIL (инварианты)
-- гейты не зелёные
+- нет
 
 ## WARN (долги, вычисляются каждый запуск)
 - артефактов без ссылок в утверждениях: 4 (fetch-url.txt, host-match-tamper.txt, minimal-os-method.md, verify-log.txt)
