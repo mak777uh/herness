@@ -261,7 +261,7 @@ def _():
     assert ok, rows
 
 
-@case("порог барахтания отсекает повторные вызовы")
+@case("порог барахтания не отсекает ответ с опорой (ADR-0052)")
 def _():
     repeated = [
         "run/start task: t",
@@ -274,10 +274,29 @@ def _():
         "claim/anchored C-0001",
         "run/end C-0001",
     ]
-    spec = dict(CRITERIA, max_repeat_ratio=0.35)
+    spec = dict(CRITERIA, max_repeat_ratio=0.35, require_commit=False)
     ok, rows = run(spec, repeated)
+    assert ok, rows
+    assert any("справочно" in name for name, _, _ in rows), rows
+
+
+@case("барахтание без опоры по-прежнему отказ")
+def _():
+    flailing = [
+        "run/start task: t",
+        "tool/call search /mnt a",
+        "tool/result ok ничего",
+        "step 1, потрачено 0.00010000",
+        "tool/call search /mnt a",
+        "tool/result ok ничего",
+        "step 2, потрачено 0.00020000",
+        "claim/unverified нет опоры",
+        "run/end не нашёл",
+    ]
+    spec = dict(CRITERIA, max_repeat_ratio=0.35, max_calls_without_claim=99)
+    ok, rows = run(spec, flailing)
     assert not ok, rows
-    assert any("повторов" in detail for _, passed, detail in rows if not passed), rows
+    assert any("повторов" in name and not passed for name, passed, _ in rows), rows
 
 
 

@@ -247,8 +247,14 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
         repeats = sum(count - 1 for count in Counter(calls).values() if count > 1)
         ratio = (repeats / len(calls)) if calls else 0.0
         limit = float(criteria["max_repeat_ratio"])
-        rows.append((f"доля повторов ≤ {limit:.2f}", ratio <= limit,
-                     f"повторов {repeats} из {len(calls)} ({ratio:.0%})"))
+        # ADR-0052: если ответ получен и опора есть, доля повторов — справочная величина, а не
+        # вето. Отказ по ней означал бы «верный ответ не принимается за то, как он добыт».
+        if "claim/anchored" in kinds:
+            rows.append((f"доля повторов ≤ {limit:.2f} (справочно)", True,
+                         f"повторов {repeats} из {len(calls)} ({ratio:.0%}), ответ с опорой — не вето"))
+        else:
+            rows.append((f"доля повторов ≤ {limit:.2f}", ratio <= limit,
+                         f"повторов {repeats} из {len(calls)} ({ratio:.0%})"))
 
     if criteria.get("require_commit"):
         closed = bool(records) and records[-1][0] == 2
