@@ -722,7 +722,8 @@ pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String>
     // Опора должна быть «именем», а не общим словом: иначе проверку удовлетворяет «реестр»
     // или «строка», которые есть в любом отчёте. Требуем цифру или разделитель пути/имени.
     let looks_specific = |token: &str| -> bool {
-        token.chars().count() >= 4
+        // Порог 3, а не 4: имена файлов вида p01/p11 — три знака, и правильный ответ с ними
+        token.chars().count() >= 3
             && (token.chars().any(|c| c.is_ascii_digit())
                 || token.contains('/')
                 || token.contains('.')
@@ -1761,6 +1762,7 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 }
+
 
 
 
