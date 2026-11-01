@@ -103,6 +103,13 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
     def status() -> str:
         # Стадия выводится одним правилом «чего прогон ждёт», а не собирается в трёх местах
         # (H-0008): сначала терминальные исходы, потом наличие опоры, потом всё остальное.
+        errors = [rest for kind, rest in evs if kind == "step/error"]
+        if any("хост не подтвердил" in text for text in errors):
+            return "unrecorded"
+        if any("бюджет денег" in text for text in errors):
+            return "budget-money"
+        if any("бюджет времени" in text for text in errors):
+            return "budget-time"
         if "run/blocked" in kinds:
             return "blocked"
         if "run/no-work" in kinds:
@@ -269,5 +276,6 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
 

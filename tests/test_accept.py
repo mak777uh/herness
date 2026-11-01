@@ -246,6 +246,21 @@ def _():
     assert ok, rows
 
 
+@case("стадия берётся из журнала: unrecorded и blocked")
+def _():
+    host_fail = list(OK_RUN)
+    host_fail.insert(4, "step/error хост не подтвердил шаг: недоступен")
+    records, _tail, _p = accept.parse_journal(journal_bytes(host_fail))
+    ok, rows = accept.check({"task": "x", "require_status": "done"}, records)
+    assert not ok, rows
+    assert any("unrecorded" in detail for _, passed, detail in rows if not passed), rows
+
+    blocked = ["run/start task: x", "run/blocked нужен доступ", "run/end ждёт человека"]
+    records, _tail, _p = accept.parse_journal(journal_bytes(blocked))
+    ok, rows = accept.check({"task": "x", "require_status": "blocked"}, records)
+    assert ok, rows
+
+
 def main() -> int:
     failed = 0
     for name, fn in CASES:
@@ -263,3 +278,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

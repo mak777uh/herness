@@ -1,0 +1,13 @@
+# Контроль H-0007: прогон объявлен хостовым, моста нет
+# Команда: pwsh core-rs/accept-run.ps1 -Mode loop -HostRun -Criteria accept/room-claims-statistics-v3.json
+# Ожидание: шаг не подтверждён хостом -> статус unrecorded -> приёмка не принимает
+
+задача: найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id; записей: 8
+  [FAIL] статус = done — фактически: unrecorded
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [FAIL] опора соответствует /C-\d{4}/ — опоры: []
+  [ok] шагов ≤ 12 — шагов: 1
+  [ok] расход ≤ 0.05 — потрачено: 0.00000000
+  [FAIL] есть событие claim/anchored — виды: ['model/reply', 'run/end', 'run/start', 'step', 'step/error', 'tool/call', 'tool/result']
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: FAIL

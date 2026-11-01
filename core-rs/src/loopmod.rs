@@ -622,6 +622,52 @@ fn post_to_host(run: &str, event: &str) -> Result<(), String> {
     link.post_event(run, event).map(|_| ())
 }
 
+/// Стадия прогона, выведенная из журнала одним правилом: «чего он ждёт».
+///
+/// Зачем функция: пока стадия собиралась переменной в трёх местах (ядро, приёмка, отчёт), они
+/// могли разойтись. Здесь порядок один: терминальные исходы → подтверждение хостом → опора.
+pub fn derive_status(events: &[Event]) -> &'static str {
+    let has = |kind: &str| events.iter().any(|event| event.kind == kind);
+    if has("run/blocked") {
+        return "blocked";
+    }
+    if has("run/no-work") {
+        return "no-work";
+    }
+    let error_with = |needle: &str| {
+        events
+            .iter()
+            .any(|event| event.kind == "step/error" && event.detail.contains(needle))
+    };
+    if error_with("хост не подтвердил") {
+        return "unrecorded";
+    }
+    if error_with("бюджет денег") {
+        return "budget-money";
+    }
+    if error_with("бюджет времени") {
+        return "budget-time";
+    }
+    if !has("run/end") {
+        return "no-done";
+    }
+    // «Шаги кончились» — это не «готово без опоры», а «не дошёл»: причина записана в run/end.
+    if events
+        .iter()
+        .any(|event| event.kind == "run/end" && event.detail.starts_with("шаги кончились"))
+    {
+        return "no-done";
+    }
+    let anchored = has("claim/anchored");
+    if anchored {
+        return "done";
+    }
+    if has("claim/unverified") {
+        return "unverified";
+    }
+    "done-без-опоры"
+}
+
 /// Инструмент с проверкой выдачи: что не выдано в этом прогоне, то отказ, а не тихий вызов.
 ///
 /// Зачем: набор инструментов — это полномочие, а не удобство. Прогону, который должен только
@@ -995,7 +1041,9 @@ fn run_task_from(
         }
     }
 
-    if status != "done" && status != "blocked" && status != "no-work" {
+    // Одно правило вместо переменной-счётчика (H-0008): если run/end ещё не записан, пишем его
+    // с причиной, а стадию выводим из журнала — так ядро и приёмка считают одно и то же.
+    if !events.iter().any(|event| event.kind == "run/end") {
         let reason = if status == "bad-step" {
             format!("провайдер не дал разбираемого шага за {attempts} попыток")
         } else {
@@ -1003,6 +1051,7 @@ fn run_task_from(
         };
         record(&mut journal, &mut events, "run/end", reason)?;
     }
+    status = derive_status(&events);
 
     // Маркер коммита — граница: всё до него считается завершённым набором событий.
     journal.append(b"commit", Kind::Commit)?;
@@ -1185,6 +1234,36 @@ mod tests {
         assert_eq!(
             parse_step("DONE всё готово").unwrap(),
             Step::Done { text: "всё готово".to_string() }
+        );
+    }
+
+    #[test]
+    fn стадия_выводится_из_журнала_одним_правилом() {
+        let event = |kind: &'static str, detail: &str| Event { kind, detail: detail.to_string() };
+        assert_eq!(derive_status(&[event("run/start", "task: x")]), "no-done");
+        assert_eq!(
+            derive_status(&[event("run/blocked", "нужен доступ"), event("run/end", "ждёт человека")]),
+            "blocked"
+        );
+        assert_eq!(
+            derive_status(&[event("run/no-work", "не воспроизводится"), event("run/end", "делать нечего")]),
+            "no-work"
+        );
+        assert_eq!(
+            derive_status(&[event("run/end", "готово"), event("claim/anchored", "C-0021")]),
+            "done"
+        );
+        assert_eq!(
+            derive_status(&[event("run/end", "готово"), event("claim/unverified", "нет опоры")]),
+            "unverified"
+        );
+        assert_eq!(derive_status(&[event("run/end", "готово")]), "done-без-опоры");
+        assert_eq!(
+            derive_status(&[
+                event("step/error", "хост не подтвердил шаг: недоступен"),
+                event("run/end", "нет подтверждения хоста"),
+            ]),
+            "unrecorded"
         );
     }
 
@@ -1413,10 +1492,10 @@ mod tests {
         assert_eq!(outcome.calls, 1);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         // 5 событий: start, call, result, step, end; плюс маркер коммита.
-        // 7 событий: start, ответ(TOOL), вызов, результат, шаг, ответ(DONE), конец;
-        // плюс маркер коммита.
-        assert_eq!(outcome.events, 9);
-        assert_eq!(outcome.records, 10);
+        // 8 событий: start, ответ(TOOL), вызов, результат, шаг, ответ(DONE), claim/unverified,
+        // run/end; плюс маркер коммита. Раньше здесь было 9 — лишний run/end, который
+        // писался вторым проходом; после H-0008 стадия выводится, а не дописывается.
+        assert_eq!(outcome.events, 8);
         assert_eq!(outcome.commits, 1);
         std::fs::remove_dir_all(&dir).ok();
     }

@@ -20,7 +20,9 @@ param(
     # Задача выдаётся комнате файлом; критерий при этом остаётся на хосте.
     [string]$Task = "",
     # Сеть нужна, чтобы цикл мог позвать модель через мост на хосте (10.0.2.2:8790).
-    [switch]$Net
+    [switch]$Net,
+    # Объявить прогон хостовым: события должны подтверждаться хостом (H-0007).
+    [switch]$HostRun
 )
 $ErrorActionPreference = "Stop"
 $root = "C:\111\herness"
@@ -31,6 +33,8 @@ $runs = Join-Path $root "runs\accept"
 New-Item -ItemType Directory -Force -Path $runs | Out-Null
 
 $env:HS_MODE = $Mode
+# Хостовый прогон: события должны подтверждаться хостом, иначе done не выдаётся (H-0007).
+if ($HostRun) { $env:HS_HOST_RUN = "accept-" + (Get-Date -Format "yyyyMMdd-HHmmss") } else { Remove-Item Env:\HS_HOST_RUN -ErrorAction SilentlyContinue }
 # Бюджет прогона берётся из самого критерия: если критерий разрешает 12 шагов, а комната даёт 8,
 # приёмка невыполнима по построению — не потому, что модель не справилась (F-0026).
 $criteriaPath = if (Test-Path $Criteria) { $Criteria } else { Join-Path $root $Criteria }
@@ -106,3 +110,4 @@ Write-Host ("журнал на хосте: {0} байт" -f (Get-Item $journal).
 
 python (Join-Path $root "bin\accept.py") (Join-Path $root $Criteria) $journal
 exit $LASTEXITCODE
+

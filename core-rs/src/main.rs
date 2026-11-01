@@ -646,6 +646,16 @@ fn init_mode() -> ExitCode {
     // Режимы с диском: пишем цикл на /mnt и проверяем его после обрыва.
     let mode_text = fs::read_to_string("/mode").unwrap_or_default().trim().to_string();
 
+    // Хостовый прогон: окружение хоста в комнату не переносится, поэтому имя прогона приходит
+    // файлом. Если файла нет — прогон локальный, и это не ошибка, а другой уровень свидетельства.
+    if let Ok(run) = fs::read_to_string("/host-run") {
+        let run = run.trim().to_string();
+        if !run.is_empty() {
+            std::env::set_var("HS_HOST_RUN", &run);
+            println!("хост: прогон объявлен хостовым ({run})");
+        }
+    }
+
     // /dev — раньше всего: Rust при spawn открывает /dev/null для stdin, и без него любой запуск
     // падает с ENOENT, выглядя как «нет файла» (найдено прогоном, F-0020).
     match mount_filesystem("devtmpfs", "/dev", "devtmpfs") {

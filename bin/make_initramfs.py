@@ -72,6 +72,9 @@ def entries(mode: str, payload: bytes) -> list[tuple[str, bytes, int]]:
         # инструментов — полномочие, и оно объявляется до начала работы.
         *([("tools", os.environ["HS_TOOLS"].encode(), 0o100644)]
           if os.environ.get("HS_TOOLS") else []),
+        # Имя хостового прогона: события должны подтверждаться хостом (H-0007).
+        *([("host-run", os.environ["HS_HOST_RUN"].encode(), 0o100644)]
+          if os.environ.get("HS_HOST_RUN") else []),
     ]
 
 
@@ -111,3 +114,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
