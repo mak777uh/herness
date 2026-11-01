@@ -1,0 +1,11 @@
+{
+  "task": "найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id",
+  "comment": "Полное подтверждение: хост обязан увидеть те же события, что легли в журнал комнаты (host_match). Цикл шлёт по три события на шаг: вызов, результат, шаг. Если содержимое расходится — приёмка отказывает, даже когда цепочка хоста сходится.",
+  "host_run": "accept-match",
+  "host_match": true,
+  "require_status": "done",
+  "anchor_regex": "C-\\d{4}",
+  "max_steps": 12,
+  "max_allowance": 0.05,
+  "require_commit": true
+}

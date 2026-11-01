@@ -950,10 +950,12 @@ fn run_task_from(
             Step::Tool { name, arg } => {
                 steps += 1;
                 record(&mut journal, &mut events, "tool/call", format!("{name} {arg}"))?;
+                let mut result_tag = "err";
                 let result = run_tool_g(&name, &arg, granted.as_deref());
                 calls += 1;
                 match result {
                     Ok(text) => {
+                        result_tag = "ok";
                         record(&mut journal, &mut events, "tool/result", format!("ok {text}"))?;
                         history.push(brief(&format!("{name} {arg}"), &text, true));
                         last = Some(text);
@@ -977,7 +979,12 @@ fn run_task_from(
                 // событие, это не «мелкая ошибка сети», а отсутствие свидетельства. Тогда done не
                 // выдаётся вовсе: статус unrecorded, и приёмка такой прогон не примет.
                 if let Some(run) = host_run.as_deref() {
-                    if let Err(error) = post_to_host(run, &format!("step {steps}")) {
+                    // Шлём ровно те же события, что легли в журнал: иначе «подтверждено хостом»
+                    // означает только «хост что-то записал» (H-0007, вторая половина).
+                    let bundle = format!(
+                        "tool/call {name} {arg} | tool/result {result_tag} | step {steps}, потрачено {spent:.8}"
+                    );
+                    if let Err(error) = post_to_host(run, &bundle) {
                         record(&mut journal, &mut events, "step/error",
                                format!("хост не подтвердил шаг: {error}"))?;
                         status = "unrecorded";
