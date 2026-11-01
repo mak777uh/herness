@@ -140,7 +140,7 @@ fn compose_prompt(task: &str, history: &[String], last: Option<&str>) -> String 
         out.push('\n');
     }
     out.push_str(
-        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли в результатах уже есть ответ — сразу DONE, не ищи синонимы и другие формулировки.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.",
+        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли в результатах уже есть ответ — сразу DONE, не ищи синонимы и другие формулировки.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.\nВ DONE укажи, откуда взят ответ: путь к файлу и строку, например «docs/X.md:3».",
     );
     out
 }
@@ -755,6 +755,18 @@ pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String>
             return Some(token);
         }
     }
+    // Ответ часто уточняет имя: «docs/ADR-0052-flail-is-diagnostic.md», тогда как в результате
+    // было «ADR-0052». Требуем, чтобы имя из результата целиком входило в имя из ответа и было
+    // не короче четырёх знаков, — это не ослабляет опору, а сверяет её по вхождению (F-0037).
+    for token in tokens(final_text) {
+        if let Some(found) = haystack
+            .iter()
+            .filter(|candidate| candidate.chars().count() >= 4 && token.contains(candidate.as_str()))
+            .max_by_key(|candidate| candidate.chars().count())
+        {
+            return Some(found.clone());
+        }
+    }
     None
 }
 
@@ -898,6 +910,11 @@ fn run_task_from(
     // Петля по информации: тот же вызов + тот же результат (C-0223: 84% против 15%).
     let mut loop_seen: std::collections::HashMap<String, String> = std::collections::HashMap::new();
     let mut loop_hits: usize = 0;
+    // Застой: результат не принёс ни одного нового слова. Точный детектор повтора молчит там,
+    // где модель перебирает формулировки, а шаги тратятся (A-0017).
+    let mut seen_words: std::collections::HashSet<u64> = std::collections::HashSet::new();
+    let mut stall_hits: usize = 0;
+    const STALL_STOP: usize = 3;
     const LOOP_STOP: usize = 3;
     let mut calls = start.as_ref().map(|state| state.calls).unwrap_or(0);
     let mut attempts = 0usize;
@@ -1003,6 +1020,29 @@ fn run_task_from(
                         let repeated = loop_seen.get(&key).map(|prev| prev == &text).unwrap_or(false);
                         if repeated { loop_hits += 1; } else { loop_hits = 0; }
                         loop_seen.insert(key, text.clone());
+                        // Новизна: считаем слова длиной от 4 символов; если их не было — застой.
+                        let mut fresh = 0usize;
+                        for word in text.split(|c: char| !c.is_alphanumeric()) {
+                            if word.chars().count() < 4 {
+                                continue;
+                            }
+                            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+                            std::hash::Hash::hash(word, &mut hasher);
+                            if seen_words.insert(std::hash::Hasher::finish(&hasher)) {
+                                fresh += 1;
+                            }
+                        }
+                        if fresh == 0 {
+                            stall_hits += 1;
+                        } else {
+                            stall_hits = 0;
+                        }
+                        if stall_hits >= STALL_STOP {
+                            record(&mut journal, &mut events, "run/blocked",
+                                   format!("застой: {stall_hits} результата подряд без новых данных"))?;
+                            status = "blocked";
+                            break;
+                        }
                         if repeated {
                             last = Some(format!(
                                 "{text}\n\n[петля #{loop_hits}: этот вызов уже давал тот же ответ. Ответь DONE, если ответ уже есть, иначе смени запрос или скажи BLOCKED.]"

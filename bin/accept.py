@@ -163,8 +163,14 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
             answers = [rest for kind, rest in evs if kind == "run/end"]
             for answer in answers:
                 for token in re.findall(r"[A-Za-zА-Яа-я0-9/._-]+", answer):
-                    if pattern.search(token) and any(token in res for res in results):
-                        matched.append(f"{token} (из ответа, есть в результатах)")
+                    found = pattern.search(token)
+                    if not found:
+                        continue
+                    # Сверяем СОВПАДЕНИЕ, а не весь токен: «…/F-0029.md:4» содержит номер, но
+                    # целиком в результатах не встречается (F-0037).
+                    hit = found.group(0)
+                    if any(hit in res for res in results):
+                        matched.append(f"{hit} (из ответа, есть в результатах)")
                         break
         rows.append((f"опора соответствует /{criteria['anchor_regex']}/", bool(matched),
                      f"опоры: {(matched or anchored)[:5]}"))
