@@ -1772,6 +1772,17 @@ mod tests {
         );
         std::fs::remove_dir_all(&dir).ok();
     }
+    #[test]
+    fn опора_находит_имя_файла_без_расширения() {
+        // Имя в результате записано с расширением (p01.md), а в ответе — без (p01).
+        // Такой ответ получал unverified до правки токенизации (F-0031, задача 5 MuSiQue).
+        let results = vec!["p01.md:3 Daniel Webster".to_string()];
+        assert_eq!(
+            claim_anchor("Fletcher Webster; файлы: p01", &results).as_deref(),
+            Some("p01")
+        );
+    }
+
 }
 
 

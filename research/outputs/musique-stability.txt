@@ -1,0 +1,20 @@
+# MuSiQue: три прогона одной серии — устойчивость вердикта
+
+задача                          прогон5  прогон6  прогон7   верных ответов
+                                 (до)     (после)  (после)
+T-musique-2hop__460946_294723   FAIL/н   —        FAIL/н  
+T-musique-2hop__252311_366220   FAIL/н   —        FAIL/н  
+T-musique-2hop__701895_752697   FAIL/н   —        FAIL/н  
+T-musique-2hop__259228_793698   FAIL/н   —        FAIL/н  
+T-musique-2hop__481349_302087   PASS/в   —        FAIL/в  
+T-musique-2hop__697790_864352   FAIL/в   PASS/в   PASS/в  
+
+T-musique-2hop__460946_294723 -> FAIL/н → — → FAIL/н
+T-musique-2hop__252311_366220 -> FAIL/н → — → FAIL/н
+T-musique-2hop__701895_752697 -> FAIL/н → — → FAIL/н
+T-musique-2hop__259228_793698 -> FAIL/н → — → FAIL/н
+T-musique-2hop__481349_302087 -> PASS/в → — → FAIL/в
+T-musique-2hop__697790_864352 -> FAIL/в → PASS/в → PASS/в
+
+# «в» = ответ совпал с эталоном, «н» = нет. Столбец 5 — серия до правок формата и опоры,
+# 6 и 7 — после. Один и тот же набор, один и тот же критерий.
