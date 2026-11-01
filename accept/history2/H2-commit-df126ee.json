@@ -1,0 +1,16 @@
+{
+ "task": "назвать описание коммита df126ee",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 14,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "df126ee"
+}
