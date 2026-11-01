@@ -12,5 +12,5 @@
   "read",
   "list"
  ],
- "anchor_regex": "ADR-0052-flail-is-diagnostic"
+ "anchor_regex": "ADR-0052"
 }

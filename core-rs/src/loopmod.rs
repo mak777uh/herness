@@ -140,7 +140,7 @@ fn compose_prompt(task: &str, history: &[String], last: Option<&str>) -> String 
         out.push('\n');
     }
     out.push_str(
-        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.",
+        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли в результатах уже есть ответ — сразу DONE, не ищи синонимы и другие формулировки.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.",
     );
     out
 }
@@ -895,6 +895,10 @@ fn run_task_from(
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
     let mut steps = start.as_ref().map(|state| state.steps).unwrap_or(0);
+    // Петля по информации: тот же вызов + тот же результат (C-0223: 84% против 15%).
+    let mut loop_seen: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    let mut loop_hits: usize = 0;
+    const LOOP_STOP: usize = 3;
     let mut calls = start.as_ref().map(|state| state.calls).unwrap_or(0);
     let mut attempts = 0usize;
     let mut spent: f64 = start.as_ref().map(|state| state.spent).unwrap_or(0.0);
@@ -995,7 +999,23 @@ fn run_task_from(
                         result_tag = "ok";
                         record(&mut journal, &mut events, "tool/result", format!("ok {text}"))?;
                         history.push(brief(&format!("{name} {arg}"), &text, true));
-                        last = Some(text);
+                        let key = format!("{name} {arg}");
+                        let repeated = loop_seen.get(&key).map(|prev| prev == &text).unwrap_or(false);
+                        if repeated { loop_hits += 1; } else { loop_hits = 0; }
+                        loop_seen.insert(key, text.clone());
+                        if repeated {
+                            last = Some(format!(
+                                "{text}\n\n[петля #{loop_hits}: этот вызов уже давал тот же ответ. Ответь DONE, если ответ уже есть, иначе смени запрос или скажи BLOCKED.]"
+                            ));
+                        } else {
+                            last = Some(text);
+                        }
+                        if loop_hits >= LOOP_STOP {
+                            record(&mut journal, &mut events, "run/blocked",
+                                   format!("петля: {loop_hits} повтора без нового результата"))?;
+                            status = "blocked";
+                            break;
+                        }
                     }
                     Err(error) => {
                         record(&mut journal, &mut events, "tool/result", format!("err {error}"))?;

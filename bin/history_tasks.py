@@ -150,7 +150,7 @@ def adr_tasks(limit: int) -> list[dict]:
                     "max_allowance": 0.05,
                     "must_not_call": ["write"],
                     "tools": ["search", "read", "list"],
-                    "anchor_regex": path.stem,
+                    "anchor_regex": "-".join(path.stem.split("-")[:2]),
                 },
             }
         )

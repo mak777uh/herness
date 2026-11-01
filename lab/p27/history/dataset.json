@@ -2,12 +2,12 @@
  "schema": 1,
  "note": "Задачи из собственной истории. Ключ извлечён из того же источника, что и задача, поэтому его нельзя «подогнать»: тип утверждения берётся из CLAIMS.md, класс отказа из файла отказа, исход прогона из журнала, описание коммита из git.",
  "counts": {
-  "claims": 225,
+  "claims": 227,
   "failures": 33,
-  "journals": 77,
-  "commits": 348,
+  "journals": 93,
+  "commits": 350,
   "adr": 2,
-  "artifacts": 94
+  "artifacts": 95
  },
  "tasks": [
   {
@@ -4961,6 +4961,50 @@
    }
   },
   {
+   "id": "T-claim-C-0226",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0226? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0226",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0226"
+   }
+  },
+  {
+   "id": "T-claim-C-0227",
+   "source": "CLAIMS.md",
+   "task": "Какой тип свидетельства у утверждения C-0227? Ответь одним словом.",
+   "answer": "test",
+   "criterion": {
+    "task": "назвать тип свидетельства C-0227",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "C-0227"
+   }
+  },
+  {
    "id": "T-fail-F-0001",
    "source": "lab/failures",
    "task": "К какому классу относится отказ F-0001? Ответь одним словом из файла.",
@@ -5709,6 +5753,358 @@
    }
   },
   {
+   "id": "T-journal-fix-T-adr-ADR-0052-flail-is-diagnostic",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-adr-ADR-0052-flail-is-diagnostic записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-adr-ADR-0052-flail-is-diagnostic",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-fix-T-adr-ADR-0053-harness-admin",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-adr-ADR-0053-harness-admin записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-adr-ADR-0053-harness-admin",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-fix-T-claim-C-0196",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-claim-C-0196 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-claim-C-0196",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-fix-T-claim-C-0205",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-claim-C-0205 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-claim-C-0205",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-fix-T-claim-C-0211",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-claim-C-0211 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-claim-C-0211",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-fix-T-fail-F-0029",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-fail-F-0029 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-fail-F-0029",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-fix-T-fail-F-0033",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-fail-F-0033 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-fail-F-0033",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-fix-T-fail-F-0034",
+   "source": "runs/accept",
+   "task": "Прогон fix-T-fail-F-0034 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "done",
+   "criterion": {
+    "task": "определить исход прогона fix-T-fail-F-0034",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-adr-ADR-0052-flail-is-diagnostic",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-adr-ADR-0052-flail-is-diagnostic записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-adr-ADR-0052-flail-is-diagnostic",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-adr-ADR-0053-harness-admin",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-adr-ADR-0053-harness-admin записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-adr-ADR-0053-harness-admin",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-claim-C-0196",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-claim-C-0196 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-claim-C-0196",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-claim-C-0205",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-claim-C-0205 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-claim-C-0205",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-claim-C-0211",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-claim-C-0211 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-claim-C-0211",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-fail-F-0029",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-fail-F-0029 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-fail-F-0029",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-fail-F-0033",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-fail-F-0033 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-fail-F-0033",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-journal-hist-T-fail-F-0034",
+   "source": "runs/accept",
+   "task": "Прогон hist-T-fail-F-0034 записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
+   "answer": "unverified",
+   "criterion": {
+    "task": "определить исход прогона hist-T-fail-F-0034",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "run/"
+   }
+  },
+  {
    "id": "T-journal-journal-crash",
    "source": "runs/accept",
    "task": "Прогон journal-crash записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
@@ -6130,7 +6526,7 @@
    "id": "T-journal-journal",
    "source": "runs/accept",
    "task": "Прогон journal записан в журнал. Определи по журналу, чем он закончился: done, blocked или unverified. Ответь одним словом.",
-   "answer": "unverified",
+   "answer": "done",
    "criterion": {
     "task": "определить исход прогона journal",
     "require_status": "done",
@@ -7378,6 +7774,50 @@
      "list"
     ],
     "anchor_regex": "run/"
+   }
+  },
+  {
+   "id": "T-commit-4391e44",
+   "source": "git log",
+   "task": "В репозитории есть коммит 4391e44. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "lab: baseline на 8 задачах из истории — 0 из 8, провал в остановке, не в знании (C-0227)",
+   "criterion": {
+    "task": "назвать описание коммита 4391e44",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "4391e44"
+   }
+  },
+  {
+   "id": "T-commit-a81ec11",
+   "source": "git log",
+   "task": "В репозитории есть коммит a81ec11. Найди его описание (первую строку сообщения) и ответь ровно этой строкой.",
+   "answer": "feat: 779 задач из истории (все коммиты, артефакты, ADR); внешняя история — план комнаты (C-0226)",
+   "criterion": {
+    "task": "назвать описание коммита a81ec11",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "a81ec11"
    }
   },
   {
@@ -15055,7 +15495,7 @@
      "read",
      "list"
     ],
-    "anchor_regex": "ADR-0052-flail-is-diagnostic"
+    "anchor_regex": "ADR-0052"
    }
   },
   {
@@ -15077,7 +15517,7 @@
      "read",
      "list"
     ],
-    "anchor_regex": "ADR-0053-harness-admin"
+    "anchor_regex": "ADR-0053"
    }
   },
   {
@@ -15914,6 +16354,28 @@
      "list"
     ],
     "anchor_regex": "harness-links"
+   }
+  },
+  {
+   "id": "T-art-history-baseline",
+   "source": "research/outputs",
+   "task": "В research/outputs лежит отчёт history-baseline.txt. Найди его первую содержательную строку (не заголовок) и ответь ею.",
+   "answer": "T-claim-C-0196                             FAIL  НЕВЕРНО  шагов 14 петля-стоп нет",
+   "criterion": {
+    "task": "назвать первую содержательную строку history-baseline.txt",
+    "require_status": "done",
+    "require_commit": true,
+    "max_steps": 14,
+    "max_allowance": 0.05,
+    "must_not_call": [
+     "write"
+    ],
+    "tools": [
+     "search",
+     "read",
+     "list"
+    ],
+    "anchor_regex": "history-baseline"
    }
   },
   {
