@@ -65,6 +65,22 @@ def answer_check(journal: Path, want: str | None, known: dict[str, str]) -> tupl
     return (ok, f"{stamp}: в реестре {actual}, просили {want}")
 
 
+COMMAND_HINTS = ("python ", "pwsh ", "bin/", "pytest", "bash ")
+
+
+def completeness(task: str, answer: str) -> tuple[bool | None, str]:
+    """Полнота ответа там, где задача требует больше одного элемента.
+
+    Сейчас проверяется одно: если в задаче просили «команду», она обязана быть в ответе.
+    Это машинно, без человека — и ровно то, чего не хватало: ответ может быть верным по типу
+    и при этом неполным.
+    """
+    if "команд" not in task.lower():
+        return (None, "не проверяется: команду не просили")
+    found = any(hint in answer.lower() for hint in COMMAND_HINTS)
+    return (found, "команда названа" if found else "команду просили, но в ответе её нет")
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
     if len(argv) < 2:
@@ -88,11 +104,20 @@ def main(argv: list[str] | None = None) -> int:
             continue  # отказы разбираются отдельно; здесь только проверка принятых
         ok, detail = answer_check(path, want_for(records), known)
         verdict = "верно" if ok else ("н/п" if ok is None else "НЕВЕРНО")
+        answers = [rest for kind, rest in accept.events(records) if kind == "run/end"]
+        starts = [rest for kind, rest in accept.events(records) if kind == "run/start"]
+        full, full_detail = completeness(starts[-1] if starts else "",
+                                         answers[-1] if answers else "")
+        if full is False:
+            verdict = "НЕПОЛНО"
+            detail = detail + "; " + full_detail
+        elif full is None:
+            detail = detail + "; " + full_detail
         rows.append((path.name, verdict, detail))
     if not rows:
         print("принятых прогонов нет — проверять нечего")
         return 0
-    wrong = sum(1 for _n, verdict, _d in rows if verdict == "НЕВЕРНО")
+    wrong = sum(1 for _n, verdict, _d in rows if verdict in ("НЕВЕРНО", "НЕПОЛНО"))
     for name, verdict, detail in rows:
         print(f"{name:28} {verdict:8} {detail}")
     print(f"\nпринятых: {len(rows)}; неверных ответов: {wrong}")

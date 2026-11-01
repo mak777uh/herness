@@ -1,20 +1,21 @@
-# Проверка смысла принятых ответов (обратная ошибка к F-0028)
+# Проверка смысла и полноты принятых ответов
 # Команда: python bin/verify_answers.py accept/room-claims-statistics-v3.json <журналы>
-# Для задач «найди утверждение типа X» тип проверяется по CLAIMS.md машинно; для задач,
-# где тип не назван (C-0004: назвать тип и команду), проверка помечена «н/п».
+# Смысл: номер из ответа сверяется с типом в CLAIMS.md (для задач «найди утверждение типа X»).
+# Полнота: если в задаче просили «команду», она обязана быть в ответе (проверка машинная).
+# «н/п» — задача просила назвать тип, а не искать по типу: сверять по типу нечем.
 
-journal-crash.bin            верно    C-0015: в реестре statistics, просили statistics
-journal-default-threshold.bin верно    C-0021: в реестре statistics, просили statistics
-journal-set-1.bin            верно    C-0004: в реестре statistics, просили statistics
-journal-set-11.bin           верно    C-0015: в реестре statistics, просили statistics
+journal-crash.bin            верно    C-0015: в реестре statistics, просили statistics; не проверяется: команду не просили
+journal-default-threshold.bin верно    C-0021: в реестре statistics, просили statistics; не проверяется: команду не просили
+journal-set-1.bin            верно    C-0004: в реестре statistics, просили statistics; не проверяется: команду не просили
+journal-set-11.bin           верно    C-0015: в реестре statistics, просили statistics; не проверяется: команду не просили
 journal-set-12.bin           н/п      не проверяется: в задаче не назван тип
-journal-set-14.bin           верно    C-0078: в реестре measurement, просили measurement
+journal-set-14.bin           верно    C-0078: в реестре measurement, просили measurement; не проверяется: команду не просили
 journal-set-2.bin            н/п      не проверяется: в задаче не назван тип
-journal-set-4.bin            верно    C-0078: в реестре measurement, просили measurement
-journal-set-5.bin            верно    C-0021: в реестре statistics, просили statistics
+journal-set-4.bin            верно    C-0078: в реестре measurement, просили measurement; не проверяется: команду не просили
+journal-set-5.bin            верно    C-0021: в реестре statistics, просили statistics; не проверяется: команду не просили
 journal-set-6.bin            н/п      не проверяется: в задаче не назван тип
-journal-set-8.bin            верно    C-0078: в реестре measurement, просили measurement
-journal-set-9.bin            верно    C-0004: в реестре statistics, просили statistics
-journal.bin                  верно    C-0078: в реестре measurement, просили measurement
+journal-set-8.bin            верно    C-0078: в реестре measurement, просили measurement; не проверяется: команду не просили
+journal-set-9.bin            верно    C-0004: в реестре statistics, просили statistics; не проверяется: команду не просили
+journal.bin                  верно    C-0078: в реестре measurement, просили measurement; не проверяется: команду не просили
 
 принятых: 13; неверных ответов: 0
