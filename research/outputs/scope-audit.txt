@@ -1,0 +1,32 @@
+# Уход из названного каталога (отвлечение)
+
+прогонов с названным каталогом: 65
+вызовов всего: 274; вне названного каталога: 47 (17%)
+из них поиск вне каталога: 24 в 8 прогонах
+прогонов хотя бы с одним выходом за пределы: 16
+
+# Большая часть выходов — один list /mnt в начале прогона (осмотреться). Отдельный счёт
+# поиска вне каталога показывает уже уход от задачи, а не ориентировку.
+
+прогон                               каталог    вызовов вне поиска-вне
+hist-T-adr-ADR-0052-flail-is-diagnos docs        14    8     6  search /mnt flail-is-diagnostic, search /mnt flail
+hist-T-fail-F-0034                   failures    12    8     4  list /mnt, search /mnt 0034
+hist-T-fail-F-0033                   failures    12    7     3  list /mnt, search /mnt F-0033
+hist-T-fail-F-0029                   failures    11    6     4  list /mnt, search /mnt F-0029
+hist-T-adr-ADR-0053-harness-admin    docs        14    5     4  list /mnt, search /mnt 0053
+p27-T-exact-C-0179                   CLAIMS.md    8    2     1  list /mnt, search /mnt 0179
+p27r2-T-exact-C-0179                 CLAIMS.md   12    2     1  list /mnt, search /mnt 0179
+fix-T-fail-F-0033                    failures     3    1     0  list /mnt
+fix-T-fail-F-0034                    failures     3    1     0  list /mnt
+h4-H4-adr-union                      failures     5    1     0  list /mnt
+h4-H4-commit-word                    history      4    1     0  list /mnt
+h4-H4-three-classes                  failures     5    1     0  list /mnt
+h4-H4-two-top                        failures     4    1     0  list /mnt
+h6-H6-blocked                        runs/dump    2    1     0  list /mnt
+journal-crash                        CLAIMS.md    2    1     1  search /mnt statistics
+p27r2-T-type-judgment                CLAIMS.md    3    1     0  list /mnt
+
+# Сравнение по времени правила «ищи в названном каталоге»:
+#   новые серии (после правила): 23 прогона, 64 вызова, поиск вне каталога — 0;
+#   старые серии (до правила): 42 прогона, 210 вызовов, поиск вне каталога — 24 в 8 прогонах.
+# То есть уход из каталога почти весь приходится на прогоны до появления правила.
