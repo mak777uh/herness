@@ -140,7 +140,7 @@ fn compose_prompt(task: &str, history: &[String], last: Option<&str>) -> String 
         out.push('\n');
     }
     out.push_str(
-        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли в результатах уже есть ответ — сразу DONE, не ищи синонимы и другие формулировки.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.\nВ DONE укажи, откуда взят ответ: путь к файлу и строку, например «docs/X.md:3».\nЕсли нужно посчитать что-то по многим файлам — ищи по каталогу, а не читай файлы по одному.\nsearch показывает не больше 40 совпадений: если нужно больше или нужны разные значения — сужай запрос или проверяй по одному значению отдельным поиском.",
+        "\nСледующий шаг — одна строка: TOOL <имя> <аргумент>, DONE <итог> или BLOCKED <почему>.\nЕсли в результатах уже есть ответ — сразу DONE, не ищи синонимы и другие формулировки.\nЕсли ответа нет и найти его в комнате нельзя — ответь BLOCKED и не выдумывай ответ.\nЕсли файл уже прочитан и ответа в нём нет — переходи к другому файлу, а не перечитывай его.\nВ DONE укажи, откуда взят ответ: путь к файлу и строку, например «docs/X.md:3».\nЕсли нужно посчитать что-то по многим файлам — ищи по каталогу, а не читай файлы по одному.\nsearch показывает не больше 40 совпадений и печатает строку «разные (N): …». Если спрашивают, сколько разных значений, — ответ берётся из N, перебирать по одному не нужно.\nЕсли в задаче назван каталог (например runs/dump) — ищи в нём, а не по всему /mnt.",
     );
     out
 }
@@ -450,6 +450,10 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     let scanned = files.len();
     let mut matches: Vec<String> = Vec::new();
     let mut truncated = false;
+    // Считаем ВСЕ совпадения и все разные варианты, даже когда показываем только сорок:
+    // иначе ответ «сколько разных» получается заниженным (замер: 3 вместо 4).
+    let mut total = 0usize;
+    let mut tails: Vec<String> = Vec::new();
     for path in files {
         let Ok(meta) = std::fs::metadata(&path) else { continue };
         if meta.len() > MAX_FILE {
@@ -457,21 +461,30 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
         }
         let Ok(text) = std::fs::read_to_string(&path) else { continue };
         for (index, line) in text.lines().enumerate() {
-            if line.contains(needle) {
+            if !line.contains(needle) {
+                continue;
+            }
+            total += 1;
+            if let Some(position) = line.find(needle) {
+                let tail: String = line[position..]
+                    .split_whitespace()
+                    .take(2)
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                if !tails.iter().any(|existing| existing == &tail) {
+                    tails.push(tail);
+                }
+            }
+            if matches.len() < MAX_MATCHES {
                 matches.push(format!(
                     "{}:{}: {}",
                     path.display(),
                     index + 1,
                     line.trim().chars().take(160).collect::<String>()
                 ));
-                if matches.len() >= MAX_MATCHES {
-                    truncated = true;
-                    break;
-                }
+            } else {
+                truncated = true;
             }
-        }
-        if truncated {
-            break;
         }
     }
     if matches.is_empty() {
@@ -499,26 +512,18 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     }
     let mut out = format!(
         "найдено {} в {scanned} файлах{}:",
-        matches.len(),
+        total,
         if truncated { " (обрезано)" } else { "" }
     );
     if !summary.is_empty() {
         out.push_str(&format!("\nфайлы: {}", summary.join(", ")));
     }
-    // Разные варианты того, что нашлось: для задач «сколько разных значений» это единственный
-    // способ увидеть перечень, когда совпадений больше сорока (F-0044/F-0046).
-    let mut tails: Vec<String> = Vec::new();
-    for line in &matches {
-        if let Some(position) = line.find(needle) {
-            let tail: String = line[position..].chars().take(48).collect();
-            if !tails.iter().any(|existing| existing == &tail) {
-                tails.push(tail);
-            }
-        }
-    }
     if tails.len() > 1 {
+        // Число разных вариантов печатается сразу: это и есть ответ на «сколько разных»,
+        // без перебора по одному (A-0024). Список обрезается, счёт — нет.
+        let total = tails.len();
         tails.truncate(8);
-        out.push_str(&format!("\nразные: {}", tails.join(" | ")));
+        out.push_str(&format!("\nразные ({total}): {}", tails.join(" | ")));
     }
     for line in matches {
         out.push('\n');
