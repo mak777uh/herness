@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portfolio.local/portfolio-0.1.json",
+  "title": "Portfolio record contract 0.1",
+  "description": "The shapes six repositories already keep, in slightly different words. Shared here so one validator can read all of them; subjects and gates stay with each repository.",
+  "$defs": {
+    "evidence_type": {
+      "enum": [
+        "proof",
+        "test",
+        "statistics",
+        "observation",
+        "judgment"
+      ],
+      "description": "The five words the family already uses. Wording ceilings attach to them, not to prose."
+    },
+    "refusal_code": {
+      "type": "object",
+      "required": [
+        "code",
+        "means",
+        "remedy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{2,31}$"
+        },
+        "means": {
+          "type": "string",
+          "minLength": 12
+        },
+        "remedy": {
+          "type": "string",
+          "minLength": 12
+        },
+        "level": {
+          "type": "string"
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "required": [
+        "id",
+        "sentence",
+        "verdict",
+        "sections"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]{3}-[a-z0-9-]+$"
+        },
+        "sentence": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 220
+        },
+        "verdict": {
+          "enum": [
+            "confirmed",
+            "not confirmed",
+            "could not tell"
+          ]
+        },
+        "sections": {
+          "enum": [
+            [
+              "Claim",
+              "Evidence",
+              "Reproduce",
+              "Verdict",
+              "Limits"
+            ]
+          ]
+        },
+        "third_party": {
+          "type": "boolean",
+          "description": "false for a case written by the author of the tool"
+        }
+      }
+    },
+    "metric_row": {
+      "type": "object",
+      "required": [
+        "id",
+        "value",
+        "command",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "command": {
+          "type": "string",
+          "minLength": 8
+        },
+        "status": {
+          "enum": [
+            "logged",
+            "no_log",
+            "not_run_here"
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "logged"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "digest"
+            ]
+          }
+        }
+      ]
+    },
+    "elimination": {
+      "type": "object",
+      "required": [
+        "hypothesis",
+        "artifact",
+        "revival"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "hypothesis": {
+          "type": "string",
+          "minLength": 12
+        },
+        "artifact": {
+          "type": "string",
+          "minLength": 3
+        },
+        "revival": {
+          "type": "string",
+          "minLength": 20
+        }
+      }
+    }
+  }
+}
