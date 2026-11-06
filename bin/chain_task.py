@@ -90,7 +90,7 @@ def emit() -> int:
         "max_allowance": 0.20,
         "must_not_call": ["write"],
         "tools": ["search", "read", "list"],
-        "anchor_regex": word_c,
+        "anchor_regex": name,
         "min_objects": 3,
     }
     item = {
