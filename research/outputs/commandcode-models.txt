@@ -1,0 +1,16 @@
+# Модели commandcode (api.commandcode.ai)
+
+Каталог открыт без ключа: 95 моделей. Среди них три, которых нет в OpenRouter или которые там
+недоступны:
+
+| id | имя | контекст | поддерживаемые эндпоинты |
+|---|---|---|---|
+| stealth/crouton-alpha | Crouton Alpha | 1 048 576 | /chat/completions |
+| stealth/glyph-cluster:free | Glyph Cluster | 256 000 | /chat/completions, /responses |
+| reflection/beam:free | Beam 1.0 | 1 048 576 | /chat/completions, /responses |
+
+Плюс платные: claude-sonnet-5-5, claude-opus-5-5, gpt-6.1-sol, gpt-6.1-terra, gpt-5.6-luna,
+deepseek/deepseek-v4-pro, moonshotai/Kimi-K3.1-Pro и другие.
+
+# Проверить протокол не удалось: нужен ключ LLL_API_KEY (провайдер commandcode в профиле DSH).
+# Без ключа эндпоинт отвечает 401 UNAUTHORIZED. Ключа в окружении и в env/secrets нет.
