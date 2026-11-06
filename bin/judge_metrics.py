@@ -32,7 +32,11 @@ SERIES = ["p27-", "p27r2-", "refusal-", "refusal2-", "refusal3-", "musique3-", "
 
 def all_criteria() -> dict[str, dict]:
     result: dict[str, dict] = {}
-    for folder in ("accept/p27", "accept/musique", "accept/refusal"):
+    # Все папки критериев: серии из истории лежат в accept/history*, и без них индекс ссылается
+    # на несуществующие критерии.
+    for folder in ("accept/p27", "accept/musique", "accept/refusal", "accept/history",
+                   "accept/history2", "accept/history3", "accept/history4", "accept/history5",
+                   "accept/history6"):
         for path in sorted((ROOT / folder).glob("*.json")):
             result[path.stem] = json.loads(path.read_text(encoding="utf-8"))
     return result
@@ -43,7 +47,18 @@ def musique_order() -> list[str]:
     return [task["id"] for task in data["tasks"]]
 
 
+INDEX = ROOT / "runs" / "index.json"
+
+
 def resolve(name: str, criteria: dict[str, dict], order: list[str]) -> str | None:
+    # Сначала явный индекс: имя журнала перестало быть единственным источником правды.
+    # Если индекса нет, работает прежнее правило по префиксу серии.
+    if INDEX.exists():
+        data = json.loads(INDEX.read_text(encoding="utf-8")).get("runs", {})
+        stem = name[:-4] if name.endswith(".bin") else name
+        entry = data.get(stem)
+        if entry is not None:
+            return entry.get("task")
     stem = name[:-4] if name.endswith(".bin") else name
     for prefix in SERIES:
         if stem.startswith(prefix):

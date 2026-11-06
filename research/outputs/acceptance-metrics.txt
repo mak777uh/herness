@@ -1,11 +1,43 @@
 # Метрики приёмки по журналам
 
 задача                              прогонов  принято  pass@1  pass^2
+H2-commit-2ac92b2                          1        1    1.00       —
+H2-commit-785cd52                          1        1    1.00       —
+H2-commit-df126ee                          1        1    1.00       —
+H2-journal-journal-hard                    1        1    1.00       —
+H2-journal-journal-set-3                   1        1    1.00       —
+H2-journal-journal-set-7                   1        1    1.00       —
+H2-journal-musique-0                       1        1    1.00       —
+H3-adr-link                                1        1    1.00       —
+H3-blocked-count                           1        1    1.00       —
+H3-commit-span                             1        1    1.00       —
+H3-fail-class-count                        1        1    1.00       —
+H3-longest-run                             1        1    1.00       —
+H4-adr-union                               1        1    1.00       —
+H4-commit-word                             1        1    1.00       —
+H4-three-classes                           1        1    1.00       —
+H4-two-top                                 1        1    1.00       —
+H5-absent-license                          1        1    1.00       —
+H5-tools-count                             1        0    0.00       —
+H5-write-zero                              1        1    1.00       —
+H6-blocked                                 1        1    1.00       —
+H6-classes                                 1        1    1.00       —
+H6-dump-count                              1        1    1.00       —
+H6-starts                                  1        1    1.00       —
+H6-tools                                   1        1    1.00       —
+T-adr-ADR-0052-flail-is-diagnostic         2        1    0.50    0.00
+T-adr-ADR-0053-harness-admin               2        1    0.50    0.00
+T-claim-C-0196                             2        1    0.50    0.00
+T-claim-C-0205                             2        1    0.50    0.00
+T-claim-C-0211                             2        1    0.50    0.00
 T-exact-C-0004                             2        2    1.00    1.00
 T-exact-C-0021                             2        2    1.00    1.00
 T-exact-C-0112                             2        2    1.00    1.00
 T-exact-C-0122                             2        2    1.00    1.00
 T-exact-C-0179                             2        0    0.00    0.00
+T-fail-F-0029                              2        1    0.50    0.00
+T-fail-F-0033                              2        1    0.50    0.00
+T-fail-F-0034                              2        1    0.50    0.00
 T-musique-2hop__252311_366220              4        0    0.00    0.00
 T-musique-2hop__259228_793698              3        0    0.00    0.00
 T-musique-2hop__460946_294723              4        1    0.25    0.00
@@ -17,13 +49,13 @@ T-type-observation                         2        2    1.00    1.00
 T-type-statistics                          2        2    1.00    1.00
 T-type-test                                2        2    1.00    1.00
 
-заявлений «готово»: 22; подтверждено: 22; ложных: 0
+заявлений «готово»: 52; подтверждено: 52; ложных: 0
 false_completion_rate: 0.00
 completion_precision: 1.00
-pass@1 (по всем прогонам): 0.56
-pass^2 (среднее C(c,2)/C(n,2) по задачам с n≥2): 0.61
-цена всех прогонов: 0.2175; цена принятого: 0.0099
-прогонов без заявления и без вердикта: 17
+pass@1 (по всем прогонам): 0.67
+pass^2 (среднее C(c,2)/C(n,2) по задачам с n≥2): 0.40
+цена всех прогонов: 0.3449; цена принятого: 0.0065
+прогонов без заявления и без вердикта: 26
 
 # Оговорки: journal с неизвестным именем задачи пропущен; «заявлено» = claim/anchored;
 # pass^2 = вероятность, что ОБА прогона задачи приняты (надёжность, а не удача).

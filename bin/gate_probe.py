@@ -379,6 +379,16 @@ def probe_journals(root: Path) -> None:
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def probe_runs_index(root: Path) -> None:
+    # Журнал без записи в индексе: так выглядит новый прогон, о котором метрики не знают (F-0054).
+    import shutil as _shutil
+
+    source = next(iter(sorted((root / "runs" / "accept").glob("*"))), None)
+    if source is None:
+        raise RuntimeError("нет журналов для пробы")
+    _shutil.copy2(source, root / "runs" / "accept" / "PROBE-unindexed.bin")
+
+
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
@@ -409,6 +419,7 @@ PROBES = {
     "рецензии": (hs.gate_reviews, probe_reviews),
     "утверждения-проверка": (hs.gate_claims_run, probe_claims_run),
     "журналы": (hs.gate_journals, probe_journals),
+    "индекс прогонов": (hs.gate_runs_index, probe_runs_index),
 }
 
 
