@@ -1,16 +1,25 @@
 # Модели commandcode (api.commandcode.ai)
 
-Каталог открыт без ключа: 95 моделей. Среди них три, которых нет в OpenRouter или которые там
-недоступны:
+Каталог открыт без ключа: 95 моделей. Три стелс/бесплатные:
 
-| id | имя | контекст | поддерживаемые эндпоинты |
+| id | имя | контекст | состояние |
 |---|---|---|---|
-| stealth/crouton-alpha | Crouton Alpha | 1 048 576 | /chat/completions |
-| stealth/glyph-cluster:free | Glyph Cluster | 256 000 | /chat/completions, /responses |
-| reflection/beam:free | Beam 1.0 | 1 048 576 | /chat/completions, /responses |
+| reflection/beam:free | Beam 1.0 | 1 048 576 | **работает**, соблюдает протокол комнаты |
+| stealth/glyph-cluster:free | Glyph Cluster | 256 000 | 524 «upstream temporarily unavailable» |
+| stealth/crouton-alpha | Crouton Alpha | 1 048 576 | 403 «upstream_refused» — провайдер отказывает |
 
 Плюс платные: claude-sonnet-5-5, claude-opus-5-5, gpt-6.1-sol, gpt-6.1-terra, gpt-5.6-luna,
 deepseek/deepseek-v4-pro, moonshotai/Kimi-K3.1-Pro и другие.
 
-# Проверить протокол не удалось: нужен ключ LLL_API_KEY (провайдер commandcode в профиле DSH).
-# Без ключа эндпоинт отвечает 401 UNAUTHORIZED. Ключа в окружении и в env/secrets нет.
+# Замечания по доступу:
+#   без браузерного User-Agent сервер отвечает 403 с кодом 1010 (фильтр ботов);
+#   платная deepseek дала 429 — лимит запросов, ключ исчерпан по темпу.
+
+# Проверка протокола (ключ есть)
+
+- reflection/beam:free: ответ да, протокол да, инструмент да — TOOL read /mnt/CLAIMS.md
+- stealth/crouton-alpha: ответ нет — 403 upstream_refused
+- stealth/glyph-cluster:free: ответ нет — 524 upstream unavailable
+- deepseek/deepseek-v4.1-flash: ответ нет — 429 лимит
+
+годятся для цикла: 1 из 4
