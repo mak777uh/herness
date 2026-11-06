@@ -809,6 +809,32 @@ pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String>
             return Some(token);
         }
     }
+    // Третий канал: ссылка «файл:строка» в ответе. Модель часто называет источник путём, а не
+    // повтором предмета вопроса («test — /mnt/CLAIMS.md:222»). Считаем опорой саму ссылку, если
+    // такая строка есть в результатах: это то, что делает человек — смотрит туда, куда сослались
+    // (F-0068).
+    referenced_anchor(final_text, tool_results)
+}
+
+/// Ссылка «путь:строка» из ответа, подтверждённая результатом инструмента.
+fn referenced_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
+    for part in final_text.split_whitespace() {
+        let cleaned = part.trim_matches(|c: char| !(c.is_alphanumeric() || "/._:-".contains(c)));
+        let Some((path, line)) = cleaned.rsplit_once(':') else { continue };
+        if path.len() < 3 || line.is_empty() || !line.chars().all(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        let name = path.rsplit('/').next().unwrap_or(path);
+        if name.len() < 3 {
+            continue;
+        }
+        let confirmed = tool_results.iter().any(|result| {
+            result.contains(path) || (result.contains(name) && result.contains(&format!(":{line}")))
+        });
+        if confirmed {
+            return Some(cleaned.to_string());
+        }
+    }
     None
 }
 
