@@ -334,7 +334,9 @@ def cmd_bench(args) -> int:
 
 SECRET_PATTERNS = [
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
-    re.compile(r"\b(?:sk|pk|rk)-[A-Za-z0-9]{20,}"),
+    # Ключи провайдеров часто имеют дефис после префикса: sk-proj-…, sk-ant-…, sk-or-v1-…
+    # Старый шаблон требовал буквенно-цифрового хвоста и такие ключи пропускал (F-0048).
+    re.compile(r"\b(?:sk|pk|rk)-(?:[A-Za-z0-9]+-)*[A-Za-z0-9]{20,}"),
     re.compile(r"\bghp_[A-Za-z0-9]{20,}"),
     re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),

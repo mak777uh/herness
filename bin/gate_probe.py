@@ -62,8 +62,10 @@ def sandbox() -> Path:
 
 
 def probe_secrets(root: Path) -> None:
+    # Ключ собирается из частей: иначе сам файл пробы становится находкой гейта секретов.
+    key = "-".join(["sk", "proj", "0123456789abcdefghijklmnopqrstuv"])
     (root / "docs" / "PROBE-secret.md").write_text(
-        "# проба\n\nключ провайдера: sk-proj-0123456789abcdefghijklmnopqrstuv\n", encoding="utf-8"
+        f"# проба\n\nключ провайдера: {key}\n", encoding="utf-8"
     )
 
 
