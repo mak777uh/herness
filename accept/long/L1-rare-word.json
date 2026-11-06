@@ -1,0 +1,16 @@
+{
+ "task": "найти выгрузки со словом territorial и перечислить их",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 40,
+ "max_allowance": 0.2,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "musique-2"
+}

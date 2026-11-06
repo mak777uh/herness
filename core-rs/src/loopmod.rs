@@ -783,12 +783,12 @@ pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String>
     // было «ADR-0052». Требуем, чтобы имя из результата целиком входило в имя из ответа и было
     // не короче четырёх знаков, — это не ослабляет опору, а сверяет её по вхождению (F-0037).
     for token in tokens(final_text) {
-        if let Some(found) = haystack
+        let contained = haystack
             .iter()
-            .filter(|candidate| candidate.chars().count() >= 4 && token.contains(candidate.as_str()))
-            .max_by_key(|candidate| candidate.chars().count())
-        {
-            return Some(found.clone());
+            .any(|candidate| candidate.chars().count() >= 4 && token.contains(candidate.as_str()));
+        if contained {
+            // Возвращаем токен ИЗ ОТВЕТА: опора живёт в ответе, а не в результате.
+            return Some(token);
         }
     }
     None
