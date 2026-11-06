@@ -37,6 +37,9 @@ COPY = [
     "core",
     "bin",
     "procedures.json",
+    "capabilities.json",
+    "tests",
+    "research",
 ]
 
 
@@ -125,6 +128,77 @@ def probe_procs(root: Path) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+def first_prereg(root: Path) -> Path | None:
+    items = sorted((root / "lab" / "prereg").glob("*.json"))
+    return items[0] if items else None
+
+
+def probe_seals(root: Path) -> None:
+    # Печать перестаёт сходиться: файл изменили после запечатывания. Так выглядит правка
+    # пре-регистрации задним числом. Проверка ищет sidecar рядом с файлом.
+    # Изменение должно попасть В ПРЕФИКС до маркера «## Seal»: хвост после маркера не защищён.
+    # Дописать пробел в конец — значит ничего не изменить (так и вышло в первом заходе).
+    for store in sorted(root.rglob("*.sha256")):
+        target = Path(str(store)[: -len(".sha256")])
+        if not target.exists():
+            continue
+        content = target.read_text(encoding="utf-8")
+        marker = content.find("## Seal")
+        head = content[:marker] if marker >= 0 else content
+        tail = content[marker:] if marker >= 0 else ""
+        target.write_text("# правка после запечатывания\n" + head + tail, encoding="utf-8")
+        return
+    raise RuntimeError("нет запечатанных файлов для пробы")
+
+
+def probe_vectors(root: Path) -> None:
+    path = root / "tests" / "vectors" / "journal.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    chain = data.get("chain") or []
+    if not chain:
+        raise RuntimeError("нет цепочки векторов")
+    chain[0]["event"]["kind"] = "подмена"
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def probe_coverage(root: Path) -> None:
+    # Артефакт покрытия отстал от реестра: утверждение добавили, пересчёт не сделали.
+    path = root / "research" / "claims-coverage.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, dict) and "total" in data:
+        data["total"] = int(data["total"]) + 1
+    elif isinstance(data, dict) and "claims" in data:
+        data["claims"] = int(data["claims"]) + 1
+    else:
+        data["probe"] = True
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def probe_core_claims(root: Path) -> None:
+    path = root / "lab" / "core-claims.txt"
+    if not path.exists():
+        raise RuntimeError("нет lab/core-claims.txt")
+    path.write_text(path.read_text(encoding="utf-8").rstrip("\n") + "\nC-9999\n", encoding="utf-8")
+
+
+def probe_autonomy(root: Path) -> None:
+    # Из правил изъято обязательное поле: так выглядит правка правил «на ходу».
+    path = root / "lab" / "autonomy-rules.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data.pop("protected_paths", None)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def probe_absence(root: Path) -> None:
+    path = root / "CLAIMS.md"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        text.rstrip("\n") + "\n| C-9998 | отсутствие без артефакта попыток | absence | `true` | "
+        "research/outputs/нет-такого.txt | 06.11.2026 | `x` |\n",
+        encoding="utf-8",
+    )
+
+
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
@@ -136,6 +210,12 @@ PROBES = {
     "пре-регистрация": (hs.gate_prereg, probe_prereg),
     "решения": (hs.gate_adoptions, probe_adoptions),
     "процедуры": (hs.gate_procs, probe_procs),
+    "печати": (hs.gate_seals, probe_seals),
+    "векторы": (hs.gate_vectors, probe_vectors),
+    "покрытие": (hs.gate_coverage, probe_coverage),
+    "ядро утверждений": (hs.gate_core_claims, probe_core_claims),
+    "автономия": (hs.gate_autonomy, probe_autonomy),
+    "отсутствие": (hs.gate_absence, probe_absence),
 }
 
 
