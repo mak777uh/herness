@@ -12,6 +12,5 @@
   "read",
   "list"
  ],
- "anchor_regex": "tool/call",
- "min_objects": 3
+ "anchor_regex": "tool/call"
 }

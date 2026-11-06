@@ -63,7 +63,6 @@ def emit() -> int:
                 "must_not_call": ["write"],
                 "tools": ["search", "read", "list"],
                 "anchor_regex": "tool/call",
-                "min_objects": 3,
             },
         }
     )
