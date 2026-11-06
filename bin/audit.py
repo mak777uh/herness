@@ -75,11 +75,20 @@ def main(argv: list[str] | None = None) -> int:
         coverage = {}
 
     marker_counts = Counter()
+    # Файлы, которые по своей природе содержат эти слова: сам аудит, его помощник и план.
+    skip = {"audit.py", "audit_facts.py", "AUDIT-PLAN.md", "WHERE-WE-ARE.md"}
     for pattern in ("bin/*.py", "core-rs/src/*.rs", "docs/*.md"):
         for path in ROOT.glob(pattern):
+            if path.name in skip:
+                continue
             text = read(path)
             for word in ("TODO", "FIXME", "XXX"):
-                marker_counts[word] += len(re.findall(word, text))
+                # Плейсхолдеры в шаблонах (C-XXXX, F-XXXX, H-XXXX) — не незавершённость.
+                for match in re.finditer(rf"\b{word}\b", text):
+                    tail = text[match.end():match.end() + 2]
+                    if word == "XXX" and tail.startswith("X"):
+                        continue
+                    marker_counts[word] += 1
 
     ledger = []
     try:
