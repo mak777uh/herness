@@ -1,12 +1,15 @@
-# Модели через OpenRouter (прокси 127.0.0.1:2080)
+# Модели через OpenRouter (прокси 127.0.0.1:2080, выход Lugano CH)
 
-Проверка: ответ, соблюдение протокола одной строки, вызов из набора инструментов комнаты.
+Проверка: ответ на вопрос с известным ответом, соблюдение протокола одной строки, вызов из набора
+инструментов комнаты (search, list, read, write, seal).
 
+- stealth/crouton-alpha: НЕ РАБОТАЕТ — 403 «This model is not available in your region» (провайдер Stealth)
 - nvidia/nemotron-3-ultra-550b-a55b:free: протокол да, инструмент да — TOOL read /mnt/CLAIMS.md
 - nvidia/nemotron-3.5-super-vl:free: протокол да, инструмент да — TOOL search /mnt/CLAIMS.md C-0042
-- nvidia/nemotron-3.5-lightning:free: протокол НЕТ, инструмент НЕТ — 
-- dots-studio/dots-3-note-preview:free: протокол да, инструмент да — TOOL read /mnt/CLAIMS.md
-- cohere/north-mini-code:free: протокол НЕТ, инструмент НЕТ — list /mnt
-- recursive/flint-v1.0:free: протокол да, инструмент да — TOOL search /mnt C-0042
+- dots-studio/dots-3-note-preview:free: протокол да, инструмент да — TOOL list /mnt
+- cohere/north-mini-code:free: протокол да, инструмент да — TOOL list /mnt
+- nvidia/nemotron-3.5-lightning:free: протокол НЕТ — пустой ответ
+- recursive/flint-v1.0:free: протокол НЕТ (в этом прогоне)
 
-годятся для цикла: 4 из 6
+# Стелс-модель: 1 048 576 контекста, цена 0, но региональный запрет.
+# Узлы Amsterdam (ams5, ast1) недоступны — таймаут; рабочий узел — Swiss (Lugano).

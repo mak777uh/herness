@@ -24,6 +24,7 @@ SECRETS = Path("C:/111/env/secrets")
 PROXY = "http://127.0.0.1:2080"
 
 FREE = [
+    "stealth/crouton-alpha",
     "nvidia/nemotron-3-ultra-550b-a55b:free",
     "nvidia/nemotron-3.5-super-vl:free",
     "nvidia/nemotron-3.5-lightning:free",
