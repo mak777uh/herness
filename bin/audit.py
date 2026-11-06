@@ -59,7 +59,14 @@ def main(argv: list[str] | None = None) -> int:
 
     gates_text = read(ROOT / "bin" / "hs.py")
     gates = re.findall(r'\("([^"]+)", gate_[a-z_]+\)', gates_text)
-    probes = [name for name in ("autonomy", "adoptions") if (ROOT / "bin" / f"check_{name}.py").exists()]
+    # Контроль гейта — это проба, которая подкладывает дефект и требует находки. Считаем по отчёту
+    # проб, а не по старому списку двух скриптов: иначе аудит показывает устаревшую картину (F-0055).
+    probes = []
+    probe_report = read(ROOT / "research" / "outputs" / "gate-probes.txt")
+    for line in probe_report.splitlines():
+        parts = line.split()
+        if len(parts) >= 4 and parts[-1] == "да":
+            probes.append(parts[0])
 
     coverage = {}
     try:
@@ -97,8 +104,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if uncited:
         warns.append(f"артефактов без ссылок в утверждениях: {len(uncited)} ({', '.join(uncited[:5])})")
-    if len(probes) < 5:
-        warns.append(f"гейтов с отрицательным контролем: {len(probes)} из {len(gates)} (план P0.1: ≥5)")
+    if len(probes) < len(gates):
+        missing = sorted(set(gates) - set(probes))
+        warns.append(f"гейтов с пробой: {len(probes)} из {len(gates)}; без пробы: {', '.join(missing[:5])}")
     if not (ROOT / "runs" / "index.json").exists():
         warns.append("нет runs/index.json: метрики определяют задачу по имени журнала (план P0.2)")
     if without_guard:
