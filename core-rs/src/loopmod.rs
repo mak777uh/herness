@@ -462,11 +462,15 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
         }
         let Ok(text) = std::fs::read_to_string(&path) else { continue };
         for (index, line) in text.lines().enumerate() {
-            if !line.contains(needle) {
+            // Регистр не должен менять ответ: «usually» и «Usually» — одно и то же слово для
+            // человека и для задачи (F-0067).
+            let lower_line = line.to_lowercase();
+            let lower_needle = needle.to_lowercase();
+            if !lower_line.contains(&lower_needle) {
                 continue;
             }
             total += 1;
-            if let Some(position) = line.find(needle) {
+            if let Some(position) = lower_line.find(&lower_needle) {
                 let tail: String = line[position..]
                     .split_whitespace()
                     .take(2)
@@ -477,11 +481,25 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
                 }
             }
             if matches.len() < MAX_MATCHES {
+                // Окно показа сдвигается к совпадению: иначе слово за 160-м символом находится,
+                // но не показывается, и поиск по нему следом даёт ноль (F-0066).
+                let trimmed = line.trim();
+                let start = trimmed.chars().count().saturating_sub(160);
+                let shown: String = if start == 0 {
+                    trimmed.chars().take(160).collect()
+                } else {
+                    let offset = trimmed
+                        .char_indices()
+                        .nth(start.min(trimmed.chars().count().saturating_sub(1)))
+                        .map(|(byte, _)| byte)
+                        .unwrap_or(0);
+                    format!("…{}", trimmed[offset..].chars().take(160).collect::<String>())
+                };
                 matches.push(format!(
                     "{}:{}: {}",
                     path.display(),
                     index + 1,
-                    line.trim().chars().take(160).collect::<String>()
+                    shown
                 ));
             } else {
                 truncated = true;

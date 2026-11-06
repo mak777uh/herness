@@ -1,6 +1,6 @@
 {
- "total": 255,
- "closed": 255,
+ "total": 256,
+ "closed": 256,
  "malformed": 0,
  "coverage": 1.0,
  "verdict": "CHECKED_ANCHORED",
