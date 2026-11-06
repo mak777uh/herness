@@ -248,6 +248,40 @@ def probe_selfref_count(root: Path) -> int:
     return 1
 
 
+def probe_compile(root: Path) -> None:
+    # Синтаксическая ошибка в скрипте: так выглядит правка, сделанная «на глаз».
+    (root / "bin" / "PROBE-broken.py").write_text("def f(:\n    return 1\n", encoding="utf-8")
+
+
+def probe_lab(root: Path) -> None:
+    # Реестр программы без следующей гипотезы: непонятно, что делать дальше.
+    path = root / "lab" / "registry.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data.setdefault("program", {})["next_hypotheses"] = []
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def probe_capabilities(root: Path) -> None:
+    path = root / "capabilities.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    tools = data.get("tools")
+    if isinstance(tools, list) and tools:
+        tools.append("probe-fake-tool")
+    else:
+        data["tools"] = ["probe-fake-tool"]
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def probe_bigfiles(root: Path) -> None:
+    # Файл больше мегабайта в индексе git: данные попали в репозиторий (F-0023).
+    import subprocess
+
+    target = root / "PROBE-big.bin"
+    target.write_bytes(b"0" * (1024 * 1024 + 1024))
+    subprocess.run(["git", "init", "-q"], cwd=str(root), capture_output=True)
+    subprocess.run(["git", "add", "-f", "PROBE-big.bin"], cwd=str(root), capture_output=True)
+
+
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
@@ -269,6 +303,10 @@ PROBES = {
     "README": (hs.gate_readme_numbers, probe_readme_numbers),
     "модели": (hs.gate_models, probe_models),
     "самоссылка": (hs.gate_selfref, probe_selfref),
+    "компиляция": (hs.gate_compile, probe_compile),
+    "лаборатория": (hs.gate_lab, probe_lab),
+    "способности": (hs.gate_capabilities, probe_capabilities),
+    "большие файлы": (hs.gate_bigfiles, probe_bigfiles),
 }
 
 
@@ -283,7 +321,8 @@ def run(names: list[str]) -> int:
             baseline = gate(clean)
             inject(clean)
             after = gate(clean)
-            caught = len(after) > len(baseline)
+            fresh = [item for item in after if item not in baseline]
+            caught = bool(fresh)
             rows.append((name, len(baseline), len(after), caught))
             if not caught:
                 broken += 1
