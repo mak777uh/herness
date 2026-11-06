@@ -40,6 +40,8 @@ COPY = [
     "capabilities.json",
     "tests",
     "research",
+    "profiles.json",
+    "evidence",
 ]
 
 
@@ -199,6 +201,53 @@ def probe_absence(root: Path) -> None:
     )
 
 
+def probe_wording(root: Path) -> None:
+    # Слово силы при слабом типе свидетельства: «доказано» у наблюдения.
+    path = root / "CLAIMS.md"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        text.rstrip("\n") + "\n| C-9997 | это доказано на практике | observation | `true` | "
+        "CLAIMS.md | 06.11.2026 | `x` |\n",
+        encoding="utf-8",
+    )
+
+
+def probe_readme_numbers(root: Path) -> None:
+    # Число в README, которого нет ни в одном утверждении: документ сильнее дерева.
+    path = root / "README.md"
+    # Число берём четырёхзначное: регулярка гейта ловит только 1–4 цифры, а пятизначное
+    # проходило мимо неё, и проба ничего не доказывала (F-0050).
+    path.write_text(
+        path.read_text(encoding="utf-8").rstrip("\n") + "\n\nПроба: 7777 прогонов.\n", encoding="utf-8"
+    )
+
+
+def probe_models(root: Path) -> None:
+    path = root / "profiles.json"
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    data.setdefault("default", {})["model"] = "какая-то-другая-модель"
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def probe_selfref(root: Path) -> None:
+    # Новое самоссылочное утверждение: доказательство лежит в research/*.md.
+    path = root / "CLAIMS.md"
+    text = path.read_text(encoding="utf-8")
+    # Самоссылка по определению гейта: команда содержит check_artifacts, а свидетельство — .md в
+    # research/. Строка обязана иметь ровно семь полей, иначе гейт её просто пропускает (F-0050).
+    path.write_text(
+        text.rstrip("\n")
+        + "\n| C-9996 | проба самоссылки | test | `python bin/check_artifacts.py C-9996` | "
+        "research/INSIGHTS.md | 06.11.2026 | `x` |\n",
+        encoding="utf-8",
+    )
+
+
+def probe_selfref_count(root: Path) -> int:
+    """Самоссылка может уже быть в базе: считаем рост, а не факт находки."""
+    return 1
+
+
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
@@ -216,6 +265,10 @@ PROBES = {
     "ядро утверждений": (hs.gate_core_claims, probe_core_claims),
     "автономия": (hs.gate_autonomy, probe_autonomy),
     "отсутствие": (hs.gate_absence, probe_absence),
+    "формулировки": (hs.gate_wording, probe_wording),
+    "README": (hs.gate_readme_numbers, probe_readme_numbers),
+    "модели": (hs.gate_models, probe_models),
+    "самоссылка": (hs.gate_selfref, probe_selfref),
 }
 
 
