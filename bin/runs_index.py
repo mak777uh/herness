@@ -21,10 +21,10 @@ INDEX = ROOT / "runs" / "index.json"
 JOURNALS = ROOT / "runs" / "accept"
 SERIES = [
     "p27-", "p27r2-", "refusal-", "refusal2-", "refusal3-", "musique3-", "musique4-",
-    "musique5-", "musique6-", "musique7-", "hist-", "fix-", "h2-", "h3-", "h4-", "h5-", "h6-", "long-", "beam-", "ext-", "chain-",
+    "musique5-", "musique6-", "musique7-", "hist-", "fix-", "h2-", "h3-", "h4-", "h5-", "h6-", "long-", "beam-", "ext-", "chain-", "plan-",
 ]
 FOLDERS = ("accept/p27", "accept/musique", "accept/refusal", "accept/history", "accept/history2",
-           "accept/history3", "accept/history4", "accept/history5", "accept/history6", "accept/long", "accept/extension", "accept/chain")
+           "accept/history3", "accept/history4", "accept/history5", "accept/history6", "accept/long", "accept/extension", "accept/chain", "accept/plan")
 
 
 def criteria_map() -> dict[str, Path]:
