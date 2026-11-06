@@ -1,0 +1,16 @@
+{
+ "task": "Какой тип свидетельства у утверждения C-0196? Ответь одним словом.",
+ "require_status": "done",
+ "require_commit": true,
+ "max_steps": 9,
+ "max_allowance": 0.05,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ],
+ "anchor_regex": "C-0196"
+}
