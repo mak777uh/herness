@@ -42,6 +42,8 @@ COPY = [
     "research",
     "profiles.json",
     "evidence",
+    "inbox",
+    "runs",
 ]
 
 
@@ -282,6 +284,63 @@ def probe_bigfiles(root: Path) -> None:
     subprocess.run(["git", "add", "-f", "PROBE-big.bin"], cwd=str(root), capture_output=True)
 
 
+def probe_audit(root: Path) -> None:
+    # Инсайт без applies_to: его нельзя перенести, потому что неизвестно куда.
+    # Заголовок заметки — строки «ключ: значение» подряд; тело начинается с первой строки без
+    # такого вида. Поле insight относится к телу, а не к шапке (иначе заметка молча не разберётся).
+    (root / "inbox" / "harness" / "PROBE-insight.md").write_text(
+        "from: probe\nto: harness\nkind: insight\nseverity: high\n"
+        "repro: python bin/gate_probe.py --only аудит\n\n"
+        "insight: проба без адреса\n",
+        encoding="utf-8",
+    )
+
+
+def probe_reviews(root: Path) -> None:
+    # Рецензия с вердиктом вне словаря: так выглядит копипаста чужой формы.
+    (root / "lab" / "reviews" / "PROBE-review.md").write_text(
+        "id: R-9999\ndate: 06.11.2026\nclaim: проба\nverdict: принято-наверное\n"
+        "artifact_checked: research/outputs/gate-probes.txt\nmethod: проба\n"
+        "what_would_kill_it: ничего\n",
+        encoding="utf-8",
+    )
+
+
+def probe_claims_run(root: Path) -> None:
+    # Утверждение, чья проверка заведомо провалится: команда вернёт ошибку.
+    path = root / "CLAIMS.md"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        text.rstrip("\n")
+        + "\n| C-9995 | проба проверки утверждений | test | `python -c \"raise SystemExit(1)\"` | "
+        "research/outputs/gate-probes.txt | 06.11.2026 | `x` |\n",
+        encoding="utf-8",
+    )
+
+
+def probe_journals(root: Path) -> None:
+    # Порча цепочки: в журнал вставлена строка, не являющаяся JSON. Так выглядит подмена
+    # свидетельства после прогона.
+    import json as _json
+
+    runs = root / "runs"
+    # Гейт берёт последние 60 каталогов по времени изменения, поэтому портить надо именно
+    # свежий журнал: испорченный старый в окно проверки не попадёт (так и вышло в первом заходе).
+    candidates = [
+        path for path in runs.glob("*")
+        if path.is_dir() and (path / "events.jsonl").exists() and not path.name.startswith("test-")
+    ]
+    if not candidates:
+        raise RuntimeError("нет журналов с events.jsonl для пробы")
+    candidates.sort(key=lambda path: (path / "events.jsonl").stat().st_mtime)
+    target = candidates[-1] / "events.jsonl"
+    lines = target.read_text(encoding="utf-8").splitlines()
+    if len(lines) < 2:
+        raise RuntimeError("журнал слишком короткий для пробы")
+    lines.insert(1, "{это не json}")
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
@@ -307,6 +366,10 @@ PROBES = {
     "лаборатория": (hs.gate_lab, probe_lab),
     "способности": (hs.gate_capabilities, probe_capabilities),
     "большие файлы": (hs.gate_bigfiles, probe_bigfiles),
+    "аудит": (hs.gate_audit, probe_audit),
+    "рецензии": (hs.gate_reviews, probe_reviews),
+    "утверждения-проверка": (hs.gate_claims_run, probe_claims_run),
+    "журналы": (hs.gate_journals, probe_journals),
 }
 
 
