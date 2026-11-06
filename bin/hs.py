@@ -377,12 +377,20 @@ def gate_claims(root: Path) -> list[str]:
     if not claims.exists():
         return ["CLAIMS.md отсутствует"]
     problems = []
-    for lineno, line in enumerate(claims.read_text(encoding="utf-8").splitlines(), 1):
+    lines = claims.read_text(encoding="utf-8").splitlines()
+    # Число колонок задаёт заголовок таблицы. Раньше оно было зашито (6), и седьмая колонка
+    # «ожидание» не проверялась вовсе: строки с ней и без неё выглядели одинаково (F-0053).
+    width = 6
+    for line in lines:
+        if line.startswith("| id |"):
+            width = len([c for c in line.strip().strip("|").split("|")])
+            break
+    for lineno, line in enumerate(lines, 1):
         if not line.startswith("| C-"):
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) < 6:
-            problems.append(f"CLAIMS.md:{lineno}: строка без 6 полей")
+        if len(cells) != width:
+            problems.append(f"CLAIMS.md:{lineno}: {len(cells)} полей вместо {width}")
             continue
         cid, text, ctype, cmd, artifact, _date = cells[:6]
         if not cmd or not artifact:

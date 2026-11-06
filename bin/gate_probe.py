@@ -78,6 +78,16 @@ def probe_claims(root: Path) -> None:
     )
 
 
+def probe_claims_columns(root: Path) -> None:
+    # Строка короче заголовка: седьмая колонка «ожидание» потеряна при копипасте (F-0053).
+    path = root / "CLAIMS.md"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        text.rstrip("\n") + "\n| C-9994 | проба без ожидания | test | `true` | CLAIMS.md | 06.11.2026 |\n",
+        encoding="utf-8",
+    )
+
+
 def probe_links(root: Path) -> None:
     (root / "docs" / "PROBE-link.md").write_text(
         "# проба\n\nсм. [нет такого файла](PROBE-missing.md)\n", encoding="utf-8"
@@ -372,6 +382,7 @@ def probe_journals(root: Path) -> None:
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
+    "утверждения-колонки": (hs.gate_claims, probe_claims_columns),
     "ссылки": (hs.gate_links, probe_links),
     "глубины": (hs.gate_depths, probe_depths),
     "харнессы": (hs.gate_harnesses, probe_harnesses),
@@ -414,6 +425,7 @@ IN_PLACE = {
 FAST = [
     "секреты",
     "утверждения",
+    "утверждения-колонки",
     "ссылки",
     "глубины",
     "харнессы",
