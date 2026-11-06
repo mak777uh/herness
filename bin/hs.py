@@ -1616,6 +1616,30 @@ def cmd_gates(args) -> int:
         print(f"[{'ok' if not problems else 'FAIL'}] {name}: {len(problems)} проблем")
         for p in problems[:20]:
             print(f"   - {p}")
+    # Пробы: гейт, который не падает на подложенном дефекте, ничего не проверяет. Гоняем быстрый
+    # набор — без внешних процессов и обхода сотен каталогов. Отключается флагом --no-probes.
+    if not getattr(args, "no_probes", False):
+        try:
+            sys.path.insert(0, str(ROOT))
+            from bin.gate_probe import FAST, run as run_probes
+            import io
+            from contextlib import redirect_stdout
+
+            buffer = io.StringIO()
+            with redirect_stdout(buffer):
+                code = run_probes(FAST)
+            missed = [line.split()[0] for line in buffer.getvalue().splitlines()
+                      if line.strip().endswith("НЕТ")]
+            if code != 0:
+                total += len(missed) or 1
+                print(f"[FAIL] пробы: {len(missed)} гейтов не поймали подложенный дефект")
+                for name in missed:
+                    print(f"   - {name}")
+            else:
+                print(f"[ok] пробы: {len(FAST)} гейтов ловят подложенный дефект")
+        except Exception as exc:  # noqa: BLE001
+            total += 1
+            print(f"[FAIL] пробы: не запустились ({type(exc).__name__}: {exc})")
     return 0 if total == 0 else 1
 
 
@@ -1864,6 +1888,8 @@ def main(argv: list[str]) -> int:
 
     p = sub.add_parser("gates", help="секреты, утверждения, ссылки")
     p.add_argument("--root", default=str(ROOT))
+    p.add_argument("--no-probes", action="store_true",
+                   help="не прогонять пробы гейтов (быстрый режим)")
     p.set_defaults(func=cmd_gates)
 
     p = sub.add_parser("refs", help="справочник: репозитории и внешние источники")

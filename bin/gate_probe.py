@@ -113,9 +113,24 @@ def probe_failures(root: Path) -> None:
 
 
 def probe_prereg(root: Path) -> None:
-    (root / "lab" / "prereg" / "H-9999.json").write_text(
-        json.dumps({"name": "проба", "closed": True}, ensure_ascii=False), encoding="utf-8"
-    )
+    # Берём существующую пре-регистрацию и закрываем её без вывода: так выглядит «закрыли, потому
+    # что надоело». Новая запись без полей тоже дефект, но у неё другая причина (F-0052).
+    items = sorted((root / "lab" / "prereg").glob("*.json"))
+    if not items:
+        raise RuntimeError("нет пре-регистраций для пробы")
+    # Берём ЗАКРЫТУЮ запись с выводом: только у неё есть что убрать. У незакрытой удаление
+    # conclusion ничего не меняет, и проба молча проходит (F-0052).
+    target = None
+    for item in items:
+        data = json.loads(item.read_text(encoding="utf-8"))
+        if data.get("closed") and data.get("conclusion"):
+            target = (item, data)
+            break
+    if target is None:
+        raise RuntimeError("нет закрытой пре-регистрации с выводом")
+    item, data = target
+    data.pop("conclusion", None)
+    item.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def probe_adoptions(root: Path) -> None:
@@ -265,6 +280,17 @@ def probe_lab(root: Path) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+def lab_reads_real_root() -> bool:
+    """Валидатор лаборатории читает ROOT модуля, а не песочницу: проба вне изоляции бесполезна."""
+    try:
+        sys.path.insert(0, str(ROOT))
+        from bin import lab as lab_module
+
+        return Path(lab_module.ROOT).resolve() == ROOT.resolve()
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def probe_capabilities(root: Path) -> None:
     path = root / "capabilities.json"
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -375,14 +401,53 @@ PROBES = {
 }
 
 
+# Гейты, читающие файл по пути модуля, а не по переданному root: проба для них делается на
+# настоящем файле и сразу откатывается.
+IN_PLACE = {
+    "лаборатория": "lab/registry.json",
+    "пре-регистрация": "lab/prereg",
+}
+
+
+# Быстрые пробы: без внешних процессов и без обхода сотен каталогов. Их можно гонять при каждом
+# запуске гейтов, чтобы заметить, когда гейт перестал ловить.
+FAST = [
+    "секреты",
+    "утверждения",
+    "ссылки",
+    "глубины",
+    "харнессы",
+    "критерии",
+    "отказы",
+    "пре-регистрация",
+    "процедуры",
+    "формулировки",
+    "README",
+    "самоссылка",
+    "компиляция",
+    "лаборатория",
+]
+
+
 def run(names: list[str]) -> int:
     rows = []
     broken = 0
     for name, (gate, inject) in PROBES.items():
         if names and name not in names:
             continue
-        clean = sandbox()
+        # Гейты, читающие ROOT модуля (лаборатория), в песочнице не проверяются: подкладываем
+        # дефект в настоящий файл и возвращаем его на место сразу после проверки.
+        in_place = name in IN_PLACE
+        clean = ROOT if in_place else sandbox()
+        backup = None
         try:
+            if in_place:
+                # Резервная копия — каталог целиком (пре-регистрации) или один файл (реестр).
+                source = clean / IN_PLACE[name]
+                if source.is_dir():
+                    backup = {item.name: item.read_text(encoding="utf-8") for item in source.glob("*.json")}
+                else:
+                    backup = source.read_text(encoding="utf-8")
             baseline = gate(clean)
             inject(clean)
             after = gate(clean)
@@ -392,7 +457,15 @@ def run(names: list[str]) -> int:
             if not caught:
                 broken += 1
         finally:
-            shutil.rmtree(clean, ignore_errors=True)
+            if in_place and backup is not None:
+                source = clean / IN_PLACE[name]
+                if isinstance(backup, dict):
+                    for name_file, content in backup.items():
+                        (source / name_file).write_text(content, encoding="utf-8")
+                else:
+                    source.write_text(backup, encoding="utf-8")
+            if not in_place:
+                shutil.rmtree(clean, ignore_errors=True)
 
     lines = ["# Пробы гейтов: падает ли гейт на реалистичном дефекте", ""]
     lines.append(f"{'гейт':16} до  после  поймал")
@@ -400,7 +473,9 @@ def run(names: list[str]) -> int:
         lines.append(f"{name:16} {before:>2}  {after:>5}  {'да' if caught else 'НЕТ'}")
     lines += ["", f"поймали: {len(rows) - broken} из {len(rows)}"]
     text = "\n".join(lines) + "\n"
-    (ROOT / "research" / "outputs" / "gate-probes.txt").write_text(text, encoding="utf-8")
+    # Быстрый набор не должен затирать отчёт о полном: у них разные файлы.
+    name = "gate-probes-fast.txt" if set(names) == set(FAST) else "gate-probes.txt"
+    (ROOT / "research" / "outputs" / name).write_text(text, encoding="utf-8")
     print(text)
     return 0 if broken == 0 else 1
 
