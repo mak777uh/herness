@@ -35,6 +35,8 @@ COPY = [
     "accept",
     "src",
     "core",
+    "bin",
+    "procedures.json",
 ]
 
 
@@ -53,8 +55,6 @@ def sandbox() -> Path:
 
 
 def probe_secrets(root: Path) -> None:
-    # Дефект должен быть похож на настоящее: шаблон sk-… ловится, а «sk-proj-…» с дефисом —
-    # уже нет. Здесь проверяется именно то, что мы реально держим в ключах провайдеров.
     (root / "docs" / "PROBE-secret.md").write_text(
         "# проба\n\nключ провайдера: sk-proj-0123456789abcdefghijklmnopqrstuv\n", encoding="utf-8"
     )
@@ -88,12 +88,54 @@ def probe_harnesses(root: Path) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+def probe_criteria(root: Path) -> None:
+    path = root / "docs" / "CRITERIA.md"
+    text = path.read_text(encoding="utf-8")
+    # Критерий без способа установления и с выдуманным статусом: так выглядит копипаста строки.
+    path.write_text(
+        text.rstrip("\n") + "\n| K999 | проба | выдуман | | docs/CRITERIA.md |\n", encoding="utf-8"
+    )
+
+
+def probe_failures(root: Path) -> None:
+    (root / "lab" / "failures" / "F-9999.md").write_text(
+        "id: F-9999\ndate: 06.11.2026\ntitle: проба без обязательных полей\n", encoding="utf-8"
+    )
+
+
+def probe_prereg(root: Path) -> None:
+    (root / "lab" / "prereg" / "H-9999.json").write_text(
+        json.dumps({"name": "проба", "closed": True}, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def probe_adoptions(root: Path) -> None:
+    path = root / "lab" / "adoptions.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    # Внедрённое решение без источника и без отрицательного контроля — так выглядит «взял, потому что
+    # понравилось».
+    data.append({"id": "A-9999", "mechanism": "проба", "status": "adopted", "decision": "взято"})
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def probe_procs(root: Path) -> None:
+    path = root / "procedures.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data.setdefault("procedures", []).append({"id": "P-9999", "name": "проба"})
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
     "ссылки": (hs.gate_links, probe_links),
     "глубины": (hs.gate_depths, probe_depths),
     "харнессы": (hs.gate_harnesses, probe_harnesses),
+    "критерии": (hs.gate_criteria, probe_criteria),
+    "отказы": (hs.gate_failures, probe_failures),
+    "пре-регистрация": (hs.gate_prereg, probe_prereg),
+    "решения": (hs.gate_adoptions, probe_adoptions),
+    "процедуры": (hs.gate_procs, probe_procs),
 }
 
 
@@ -116,9 +158,9 @@ def run(names: list[str]) -> int:
             shutil.rmtree(clean, ignore_errors=True)
 
     lines = ["# Пробы гейтов: падает ли гейт на реалистичном дефекте", ""]
-    lines.append(f"{'гейт':14} до  после  поймал")
+    lines.append(f"{'гейт':16} до  после  поймал")
     for name, before, after, caught in rows:
-        lines.append(f"{name:14} {before:>2}  {after:>5}  {'да' if caught else 'НЕТ'}")
+        lines.append(f"{name:16} {before:>2}  {after:>5}  {'да' if caught else 'НЕТ'}")
     lines += ["", f"поймали: {len(rows) - broken} из {len(rows)}"]
     text = "\n".join(lines) + "\n"
     (ROOT / "research" / "outputs" / "gate-probes.txt").write_text(text, encoding="utf-8")
