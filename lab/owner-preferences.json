@@ -43,6 +43,13 @@
    "how": "bin/history_tasks.py извлекает задачи и ключи из тех же источников; 364 задачи на 01.11.2026",
    "check": "auto: python bin/history_tasks.py печатает счётчики по источникам",
    "status": "active"
+  },
+  {
+   "id": "P-0007",
+   "rule": "вести список инсайтов и будущих фич; владелец добавляет пункты постепенно",
+   "how": "research/INSIGHTS.md — у каждого пункта «что», «зачем», «как проверять», статус",
+   "check": "python bin/check_insights.py (с --self-test)",
+   "status": "active"
   }
  ]
 }
