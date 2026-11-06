@@ -1,0 +1,12 @@
+# Модели через OpenRouter (прокси 127.0.0.1:2080)
+
+Проверка: ответ, соблюдение протокола одной строки, вызов из набора инструментов комнаты.
+
+- nvidia/nemotron-3-ultra-550b-a55b:free: протокол да, инструмент да — TOOL read /mnt/CLAIMS.md
+- nvidia/nemotron-3.5-super-vl:free: протокол да, инструмент да — TOOL search /mnt/CLAIMS.md C-0042
+- nvidia/nemotron-3.5-lightning:free: протокол НЕТ, инструмент НЕТ — 
+- dots-studio/dots-3-note-preview:free: протокол да, инструмент да — TOOL read /mnt/CLAIMS.md
+- cohere/north-mini-code:free: протокол НЕТ, инструмент НЕТ — list /mnt
+- recursive/flint-v1.0:free: протокол да, инструмент да — TOOL search /mnt C-0042
+
+годятся для цикла: 4 из 6

@@ -50,6 +50,13 @@
    "how": "research/INSIGHTS.md — у каждого пункта «что», «зачем», «как проверять», статус",
    "check": "python bin/check_insights.py (с --self-test)",
    "status": "active"
+  },
+  {
+   "id": "P-0008",
+   "rule": "приоритет бесплатным моделям; платная — только для необходимых прогонов",
+   "how": "bin/probe_free_models.py отбирает модели, соблюдающие протокол; профиль модели задаётся критерием",
+   "check": "python bin/probe_free_models.py",
+   "status": "active"
   }
  ]
 }
