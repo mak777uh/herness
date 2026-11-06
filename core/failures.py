@@ -11,8 +11,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-FIELDS = ("id", "date", "what", "class", "principle", "detect", "test", "cost", "trap", "check")
-REQUIRED = ("id", "date", "what", "class", "principle", "detect", "test")
+FIELDS = ("id", "date", "what", "class", "principle", "detect", "test", "caught_by", "cost", "trap", "check")
+REQUIRED = ("id", "date", "what", "class", "principle", "detect", "test", "caught_by")
 ID_RE = re.compile(r"^F-\d{4}$")
 LINE = re.compile(r"^([a-z_]+):\s*(.*)$")
 
