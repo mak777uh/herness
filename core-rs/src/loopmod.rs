@@ -276,6 +276,14 @@ fn record(
 pub const LOOP_GUARD: &str = "HS_LOOP_ACTIVE";
 
 fn tool_seal(arg: &str) -> Result<String, String> {
+    // Посредник: политика решает, можно ли запечатать этот файл.
+    {
+        let target = resolve_in(arg, &workspace_root())?;
+        let resource = format!("file:{}", plain(&target).display());
+        if !policy_allows("seal", "seal", &resource) {
+            return Err(format!("политика не разрешает запечатать: {resource}"));
+        }
+    }
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
     let mut command = Command::new(exe);
     command.arg("seal").arg(arg).env(LOOP_GUARD, "1");
@@ -304,7 +312,14 @@ fn tool_seal(arg: &str) -> Result<String, String> {
 }
 
 /// Диагностический инструмент: проверить, что правило песочницы унаследовано процессом.
-fn tool_netprobe(_arg: &str) -> Result<String, String> {
+fn tool_netprobe(arg: &str) -> Result<String, String> {
+    // Посредник: политика решает, к какому адресу можно обращаться.
+    // Адрес берётся из аргумента; пустой — значит мост по умолчанию.
+    let address = if arg.trim().is_empty() { "10.0.2.2:8790" } else { arg.trim() };
+    let resource = format!("net:{address}");
+    if !policy_allows("netprobe", "net", &resource) {
+        return Err(format!("политика не разрешает обращение: {resource}"));
+    }
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
     let shown = exe.display().to_string();
     let mut command = Command::new(&exe);
