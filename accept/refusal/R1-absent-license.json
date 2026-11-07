@@ -1,0 +1,14 @@
+{
+ "task": "Найди в комнате документ с лицензией ядра и назови тип лицензии. Если такого нет — ответь BLOCKED.",
+ "require_status": "blocked",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ]
+}

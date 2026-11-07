@@ -1,0 +1,14 @@
+{
+ "task": "Найди утверждение C-0196 в реестре и назови его тип. Ответь одним словом.",
+ "require_status": "done",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ]
+}

@@ -1,0 +1,14 @@
+{
+ "task": "Найди в runs/dump слово «квазикристалл» и назови выгрузку. Если его нет — ответь BLOCKED.",
+ "require_status": "blocked",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ]
+}
