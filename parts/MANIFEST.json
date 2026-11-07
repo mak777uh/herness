@@ -1,0 +1,38 @@
+{
+ "version": 1,
+ "principle": "части — атомарные независимые ячейки; herness связывает их, но не растворяет",
+ "migrated_at": "2026-11-07T13:40:04+03:00",
+ "not_migrated": [
+  "- (Morphogenesis) — владелец объяснит позже"
+ ],
+ "parts": [
+  {
+   "name": "flowguard-spec",
+   "url": "https://github.com/mak777uh/flowguard-spec.git",
+   "commit": "e98cfe5bd748eab02b358b2d4799958803674ee6",
+   "subject": "cross-audit: LexSpec - independent_of_agent is a boolean the claimant writes",
+   "commits": 249
+  },
+  {
+   "name": "lexspec",
+   "url": "https://github.com/mak777uh/lexspec.git",
+   "commit": "34853439d381d86009c42e45a13ac6683005fe84",
+   "subject": "fix: the catalogue generator was the one gate that did not know about the new code",
+   "commits": 84
+  },
+  {
+   "name": "VecDHT",
+   "url": "https://github.com/mak777uh/VecDHT.git",
+   "commit": "177460ae66879104050abae1d7753cb590872829",
+   "subject": "lab: E-0177 supports — смоук-профиль 48 узлов даёт рабочую проверку механики (p95 13 мс, 0 ошибок тр",
+   "commits": 750
+  },
+  {
+   "name": "nomos",
+   "url": "https://github.com/mak777uh/nomos.git",
+   "commit": "b7a386d708c69347edbf1ae3c2693acf2c6373ee",
+   "subject": "base: ingest round two - publicity names what is visible, exit names what is kept, and scale needs a",
+   "commits": 69
+  }
+ ]
+}

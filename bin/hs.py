@@ -344,7 +344,7 @@ SECRET_PATTERNS = [
     re.compile(r"\b0x[0-9a-fA-F]{64}\b"),
 ]
 
-SKIP_DIRS = {".git", "node_modules", "home", "runs", "refs-cache", "__pycache__", ".venv", "dist", "build", "sessions", "out", ".secrets"}
+SKIP_DIRS = {".git", "node_modules", "home", "runs", "refs-cache", "__pycache__", ".venv", "dist", "build", "sessions", "out", ".secrets", "parts"}
 TEXT_EXT = {".md", ".py", ".ts", ".js", ".json", ".yml", ".yaml", ".toml", ".txt", ".ps1", ".sh", ".cfg", ".ini"}
 
 

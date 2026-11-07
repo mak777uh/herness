@@ -57,3 +57,9 @@ core-rs/boot/
 core-rs/acc.img
 core-rs/*.img
 lab/p27/musique/*.jsonl
+
+# части харнесса: независимые репозитории, у каждой свой git
+# клонируются командой python bin/migrate_parts.py --run
+parts/*/
+!parts/README.md
+!parts/MANIFEST.json

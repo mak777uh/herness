@@ -57,6 +57,9 @@ def verify(path: Path, marker: str = DEFAULT_MARKER) -> tuple[bool, str]:
 def verify_all(root: Path = ROOT) -> list[str]:
     problems = []
     for store in sorted(root.rglob("*.sha256")):
+        # Части — независимые репозитории: у них свои печати и свои проверки.
+        if "parts" in store.parts:
+            continue
         target = Path(str(store)[: -len(".sha256")])
         if not target.exists():
             problems.append(f"{store}: файла {target.name} нет")
