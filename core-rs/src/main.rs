@@ -668,6 +668,14 @@ fn init_mode() -> ExitCode {
         Ok(()) => println!("proc: смонтирован"),
         Err(error) => println!("proc: не смонтирован ({error})"),
     }
+
+    // Стена: счётчики производительности закрыты. В 6.18 это не опция сборки, а sysctl
+    // perf_event_paranoid (по умолчанию 2). Комнате нужно 3: perf недоступен без root-полномочий,
+    // а у нас в комнате нет пользователей вообще — значит недоступен никому.
+    match fs::write("/proc/sys/kernel/perf_event_paranoid", "3") {
+        Ok(()) => println!("perf: счётчики закрыты (paranoid=3)"),
+        Err(error) => println!("perf: paranoid не выставлен ({error})"),
+    }
     match mount_filesystem("sysfs", "/sys", "sysfs") {
         Ok(()) => println!("sys: смонтирован"),
         Err(error) => println!("sys: не смонтирован ({error})"),
