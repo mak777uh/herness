@@ -1,0 +1,14 @@
+{
+ "task": "Прочитай файл docs/eliminations.md и назови номер первой записи. Ответь одним словом.",
+ "require_status": "done",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "read",
+  "search",
+  "list"
+ ]
+}

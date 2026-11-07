@@ -1,0 +1,14 @@
+{
+ "task": "Сколько записей в docs/eliminations.md? Ответь числом.",
+ "require_status": "done",
+ "max_steps": 20,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "read",
+  "search",
+  "list"
+ ]
+}

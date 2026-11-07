@@ -1,0 +1,14 @@
+{
+ "task": "Прочитай файл research/P38-FLOWGUARD-DOCS.md и назови, сколько документов разобрано. Ответь числом.",
+ "require_status": "done",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "read",
+  "search",
+  "list"
+ ]
+}

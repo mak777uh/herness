@@ -1,0 +1,22 @@
+# Мост: формальная проверка трёх свойств
+
+## Модель: собрана
+
+## Аксиомы
+
+- `address_from_config`: ни одной аксиомы
+- `address_ignores_request`: ни одной аксиомы
+- `token_not_in_body`: ни одной аксиомы
+- `token_not_in_headers`: ни одной аксиомы
+- `body_preserved`: ни одной аксиомы
+- `body_sent_as_is`: ни одной аксиомы
+
+## Отрицательный контроль: отвергнут
+   error: Proofs/BridgeNegative.lean:11:84: unsolved goals
+   error: Proofs/BridgeNegative.lean:15:63: unsolved goals
+   error: build failed
+
+## Итог: три свойства доказаны, ложь отвергнута
+
+Граница: доказано свойство модели моста, а не соответствие кода моста модели.
+Соответствие проверяется сверкой, как policy_diff для политики.

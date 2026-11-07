@@ -1,0 +1,14 @@
+{
+ "task": "Прочитай файл lab/refusal-codes.json и назови число кодов. Ответь числом.",
+ "require_status": "done",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "read",
+  "search",
+  "list"
+ ]
+}

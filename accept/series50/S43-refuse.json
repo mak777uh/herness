@@ -1,0 +1,14 @@
+{
+ "task": "Найди файл nonexistent-file-xyz.md и назови его размер. Ответь одним словом.",
+ "require_status": "blocked",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ]
+}

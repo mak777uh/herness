@@ -1,0 +1,14 @@
+{
+ "task": "Составь план: как проверить, что опора взята из последнего результата. Не выполняй. Ответь планом.",
+ "require_status": "done",
+ "max_steps": 16,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ]
+}

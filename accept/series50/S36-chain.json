@@ -1,0 +1,14 @@
+{
+ "task": "Найди файл с кодами отказа, затем найди скрипт, который их проверяет. Ответь одним словом.",
+ "require_status": "done",
+ "max_steps": 24,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "read",
+  "list"
+ ]
+}
