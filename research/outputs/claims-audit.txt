@@ -1,0 +1,37 @@
+# Утверждения: может ли автор подтвердить себя собой
+
+утверждений: 278
+слабых ожиданий: 103
+
+| утверждение | ожидание | артефакт |
+|---|---|---|
+| C-0003 | npm | docs/DECISION-0001-base-os-language.md |
+| C-0005 | host boundary | refs-cache/nearai/ironclaw/README.md |
+| C-0008 | lake | вывод команды, 29.10.2026 |
+| C-0012 | MISSING_CREDENTIAL | runs/*/stderr.log |
+| C-0014 |  | — |
+| C-0016 | permission denied | lab/pilot/out/T-01-L2.evidence.txt |
+| C-0017 | SECURITY DEFINER | lab/pilot/out/T-01-L2.evidence.txt |
+| C-0018 | FreeUsageLimitError | вывод пробы, 29.10.2026 |
+| C-0023 | бюджет: | tests/test_budget.py |
+| C-0030 | done | runs/glm-failure.log |
+| C-0034 | decision=REFUSE | bin/live_cases.py |
+| C-0037 | action=ask | bin/live_cases.py |
+| C-0039 | Что сделано | docs/AUDIT-2026-10-29.md |
+| C-0040 | Закреплено | docs/MODELS.md |
+| C-0043 | MetaGPT | harnesses.json |
+| C-0045 | харнессов: | harnesses.json |
+| C-0046 | удалён | research/WINDOWS-BUILD-2026-10-31.md |
+| C-0048 | unanimous | oses.json |
+| C-0049 | packages.guix | oses.json |
+| C-0054 | класс | depths.json |
+
+## Правило
+
+Ожидание обязано быть числом, путём или кодом — тем, что можно найти в артефакте,
+но нельзя придумать. Общее слово вроде «ок» или «пройдено» подтверждает себя собой.
+
+## Граница
+
+Это проверка формы ожидания, а не содержания утверждения. Утверждение с числом
+всё ещё может быть ложным — но его ложность видна при сверке с артефактом.

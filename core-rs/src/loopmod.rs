@@ -939,7 +939,14 @@ pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String>
         }
         out
     };
-    let haystack: Vec<String> = tool_results.iter().flat_map(|r| tokens(r)).collect();
+    // Опора берётся из ПОСЛЕДНЕГО результата, а не из любого (аудит гейтов).
+    // Причина: последний результат — то, на что агент смотрел, когда отвечал. Ссылка на
+    // старый результат — это память, а не подтверждение. Если результатов нет, опоры нет.
+    let last_result = match tool_results.last() {
+        Some(text) => text,
+        None => return None,
+    };
+    let haystack: Vec<String> = tokens(last_result);
     for token in tokens(final_text) {
         if haystack.contains(&token) {
             return Some(token);
