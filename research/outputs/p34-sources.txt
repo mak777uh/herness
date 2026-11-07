@@ -1,0 +1,14 @@
+# Источники P34 с числами (из research/P34-TRIAGE.md)
+
+CodeAct, arXiv 2402.01030 — кодовые действия 74.4 % против текстовых 53.7 % (gpt-4-1106), на 2.1 хода меньше
+Hyperlight + CodeAct (Microsoft Agent Framework) — 27.81 с / 6890 токенов → 13.23 с / 2489 токенов
+More with Less, arXiv 2510.16786 — 65 % против 63 % при $129 против $408
+WALTZZ, USENIX Sec 2025 — 7 рантаймов, 72 часа, 20 багов, 17 CVE
+Firecracker, NSDI 2020 — 500 загрузок, ~3 МБ накладных, <125 мс до init
+gVisor security record — 96 % защищено, 3 % пропатчено, 1 % смягчено, 0 % уязвимо
+SandboxEscapeBench, arXiv 2603.02277 — 18 задач, 5 попыток на пару, 2.5 млн токенов
+SEV, OSDI 2024 — 15 логических ошибок verifier за месяц, 2 эксплуатируемы
+Wasmtime advisories 09.04.2026 — 12 исправлений, 2 Critical (Winch, aarch64 Cranelift)
+Mewz, arXiv 2411.01129 — 1.3x против WasmEdge, но 2.5x медленнее native
+WaSC — старт 15 мс p99, 8.4 МБ накладных
+starlark-go — память потока не ограничивается, нужен отдельный процесс с ulimit/cgroup
