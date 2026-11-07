@@ -397,6 +397,87 @@ fn plain(path: &Path) -> PathBuf {
     }
 }
 
+/// Политика: что инструменту разрешено. Данные, а не код — поэтому её можно проверить отдельно.
+///
+/// Зачем отдельная структура: раньше граница была размазана по функциям («здесь проверяем,
+/// здесь не забыли»). Теперь она объявлена один раз и проверяется в одном месте — это посредник
+/// из flowguard-spec: не «система безопасна», а «мимо этой точки значение не пройдёт».
+#[derive(Debug, Clone, PartialEq)]
+pub enum Effect {
+    Allow,
+    Deny,
+}
+
+#[derive(Debug, Clone)]
+pub struct Rule {
+    pub tool: &'static str,
+    pub action: &'static str,
+    pub resource: &'static str,
+    pub effect: Effect,
+}
+
+/// Политика инструментов. Совпадает с lab/tools/policy.json; расхождение ловит гейт.
+pub const POLICY: &[Rule] = &[
+    Rule { tool: "read", action: "read", resource: "file:/mnt/**", effect: Effect::Allow },
+    Rule { tool: "read", action: "write", resource: "file:/mnt/**", effect: Effect::Deny },
+    Rule { tool: "read", action: "net", resource: "net:**", effect: Effect::Deny },
+    Rule { tool: "search", action: "read", resource: "file:/mnt/**", effect: Effect::Allow },
+    Rule { tool: "search", action: "write", resource: "file:/mnt/**", effect: Effect::Deny },
+    Rule { tool: "search", action: "net", resource: "net:**", effect: Effect::Deny },
+    Rule { tool: "list", action: "list", resource: "dir:/mnt/**", effect: Effect::Allow },
+    Rule { tool: "list", action: "write", resource: "file:/mnt/**", effect: Effect::Deny },
+    Rule { tool: "write", action: "write", resource: "file:/mnt/work/**", effect: Effect::Allow },
+    Rule { tool: "write", action: "net", resource: "net:**", effect: Effect::Deny },
+    Rule { tool: "seal", action: "seal", resource: "file:/mnt/work/**", effect: Effect::Allow },
+    Rule { tool: "netprobe", action: "net", resource: "net:10.0.2.2:8790", effect: Effect::Allow },
+];
+
+/// Проверить политику: разрешено ли инструменту действие над ресурсом.
+///
+/// Правило приоритета: запрет сильнее разрешения. Если ни одно правило не разрешает — отказ.
+/// Это и есть «неявных разрешений нет»: кто не назван, тот не может.
+pub fn policy_allows(tool: &str, action: &str, resource: &str) -> bool {
+    let mut allowed = false;
+    for rule in POLICY {
+        if rule.tool != tool || rule.action != action {
+            continue;
+        }
+        if !resource_matches(rule.resource, resource) {
+            continue;
+        }
+        if rule.effect == Effect::Deny {
+            return false;
+        }
+        allowed = true;
+    }
+    allowed
+}
+
+/// Совпадает ли ресурс с шаблоном политики. `**` — любой хвост, `*` — один сегмент.
+///
+/// `/mnt` в шаблоне означает «внутри корня», а не буквально путь: корень бывает разным
+/// (комната `/mnt`, тесты — временный каталог, хостовый прогон — свой). Поэтому шаблон
+/// сравнивается по хвосту после `/mnt`.
+fn resource_matches(pattern: &str, resource: &str) -> bool {
+    let pattern = pattern.strip_prefix("file:").unwrap_or(pattern);
+    let resource = resource.strip_prefix("file:").unwrap_or(resource);
+    let inside = |tail: &str| -> bool {
+        // «внутри корня»: хвост пустой или начинается с разделителя
+        tail.is_empty() || tail.starts_with('/') || tail.starts_with('\\')
+    };
+    if let Some(prefix) = pattern.strip_suffix("/**") {
+        if let Some(root) = prefix.strip_suffix("/mnt") {
+            // шаблон вида <корень>/mnt/** — ресурс обязан лежать внутри своего корня
+            return inside(root);
+        }
+        return resource == prefix || resource.starts_with(&format!("{prefix}/"));
+    }
+    if let Some(prefix) = pattern.strip_suffix("**") {
+        return resource.starts_with(prefix);
+    }
+    pattern == resource
+}
+
 fn resolve_in(arg: &str, root: &Path) -> Result<PathBuf, String> {
     let root = normalize(&plain(&root.canonicalize().unwrap_or_else(|_| root.to_path_buf())));
     let raw = Path::new(arg.trim());
@@ -407,12 +488,18 @@ fn resolve_in(arg: &str, root: &Path) -> Result<PathBuf, String> {
         Ok(real) => normalize(&plain(&real)),
         Err(_) => normalize(&joined),
     };
+    // Посредник: решение принимает политика, а не эта функция. Проверка `starts_with` остаётся
+    // как дополнительная стена, но отказ формулирует политика — так граница одна.
     if !path.starts_with(&root) {
         return Err(format!(
             "путь вне рабочего каталога {}: {}",
             root.display(),
             arg.trim()
         ));
+    }
+    let resource = format!("file:{}", plain(&path).display());
+    if !policy_allows("read", "read", &resource) {
+        return Err(format!("политика не разрешает чтение: {resource}"));
     }
     Ok(path)
 }

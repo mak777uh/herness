@@ -30,7 +30,8 @@
    "resource": "file:!/mnt/**",
    "effect": "deny",
    "level": "A",
-   "why": "замыкание объявлено — за его пределами отказ"
+   "why": "замыкание объявлено — за его пределами отказ",
+   "implied": true
   },
   {
    "id": "read-deny-net",
@@ -110,7 +111,8 @@
    "resource": "file:!/mnt/work/**",
    "effect": "deny",
    "level": "A",
-   "why": "запись вне рабочего каталога — отказ"
+   "why": "запись вне рабочего каталога — отказ",
+   "implied": true
   },
   {
    "id": "write-deny-net",
@@ -140,7 +142,8 @@
    "resource": "file:!/mnt/work/**",
    "effect": "deny",
    "level": "A",
-   "why": "запечатывать можно только своё"
+   "why": "запечатывать можно только своё",
+   "implied": true
   },
   {
    "id": "netprobe-allow",
@@ -160,7 +163,8 @@
    "resource": "net:!10.0.2.2:8790",
    "effect": "deny",
    "level": "A",
-   "why": "сеть за мостом — отказ"
+   "why": "сеть за мостом — отказ",
+   "implied": true
   },
   {
    "id": "netprobe-deny-fs",
@@ -170,7 +174,8 @@
    "resource": "file:/mnt/**",
    "effect": "deny",
    "level": "A",
-   "why": "проверка сети не читает файлы"
+   "why": "проверка сети не читает файлы",
+   "implied": true
   }
  ],
  "delegation": []
