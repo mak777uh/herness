@@ -33,6 +33,16 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
+def series50() -> str:
+    """Серия из 50 задач: сколько прошло из скольких."""
+    text = read(OUT / "series50.txt")
+    total = re.search(r"задач: (\d+)", text)
+    passed = re.search(r"PASS: (\d+)", text)
+    if not total or not passed:
+        return "?"
+    return f"{passed.group(1)} из {total.group(1)}"
+
+
 def facts() -> dict[str, str]:
     audit = read(OUT / "audit-report.txt")
     metrics = read(OUT / "acceptance-metrics.txt")
@@ -70,6 +80,7 @@ def facts() -> dict[str, str]:
         "pass^2": grab(r"pass\^2[^\n]*?: ([\d.]+)", metrics),
         "ложных «готово»": grab(r"false_completion_rate: ([\d.]+)", metrics),
         "цена принятого": grab(r"цена принятого: ([\d.]+)", metrics),
+        "серия 50 задач": series50(),
     }
 
 
