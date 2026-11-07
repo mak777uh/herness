@@ -159,3 +159,35 @@ unknown_share         = |{unverified}| / |{все прогоны}|
 | Anthropic, Claude Managed Agents quickstarts | 13 полных приложений на Managed Agents; среди них образцы «работает без человека»: `daily-brief` (крон, закладка на источник вместо «последних 24 часов», журнал против повторов, нечитаемый источник помечается как нечитаемый, а не как тихий день), `knowledge-wiki` (свод один раз, ответы из сводки, у каждого факта происхождение `[source | as-of]`), `self-hosted-sandboxes` (очередь сессий, контейнер на сессию, ключ среды не попадает в контейнер) | github.com/anthropics/claude-quickstarts/tree/main/managed-agents |
 
 Статус **[А]**: прочитан README целиком, код приложений не читался.
+
+## 12. Добавлено 07.11.2026 (разбор P32, см. research/P32-TRIAGE.md)
+
+Статусы: [Ф] фрагменты первичного текста, [А] аннотация, [В] вторичный источник. Полных PDF не читали.
+
+| источник | ключевое число | статус |
+|---|---|---|
+| EvolveTool-Bench, arXiv 2604.00392 | 96.8% из 222 инструментов с C=0 на отложенном наборе; TC 0.29–0.36 | [Ф] |
+| ToolMaker, ACL 2025 | 12/15 инструментов прошли скрытые тесты; $0.94 за инструмент | [Ф] |
+| On the risk of coding before testing, arXiv 2607.05139 | обнаружение дефектов 14% после кода против 25% независимо | [А] |
+| Rethinking the Influence of Source Code on Test Case Generation | точность тестов 80.45% против 57.12% | [Ф] |
+| LLM vs. Human Unit Tests, arXiv 2606.08588 | 20/29 против 5/29, но с разной информацией | [Ф] |
+| TestGenEval, ICLR 2025 | 1210 пар, GPT-4o: coverage 35.2%, mutation 18.8% | [Ф] |
+| MOAT, USENIX Sec 2024 | 26/26 известных CVE, накладные 4–9% | [Ф] |
+| RLBox | пустой вызов 0.22 мкс, создание песочницы ~1 мс | [Ф] |
+| Wasmer ICPE 2022 | 5–10x медленнее native на частых коротких вызовах | [Ф] |
+| WaSC | старт 15 мс p99, ~10 МБ, WASI-путь 3.2x | [Ф] |
+| starlark-go | нет ограничения памяти потока; лимит шагов не равен CPU | [Ф] |
+| SandDriller | 8 zero-day breakout в 6 песочницах | [Ф] |
+| Maven breaking changes | треть релизов ломает совместимость | [А] |
+| BreakGuard, arXiv 2608.20167 | 27/89 обнаружено, ~$0.90 за находку | [Ф] |
+| CRAFT, ICLR 2024 | рост набора 0→261→337→525 повышает SAcc; имя функции важнее | [Ф] |
+| TOOLRET, ACL 2025 | 7.6k задач, 43k инструментов; nDCG@10 33.83 | [Ф] |
+| METR reward hacking | 39/128 прогонов RE-Bench, 30.4% | [Ф] |
+| CoT monitoring (OpenAI) | recall 95% у CoT против 60% у action-монитора | [Ф] |
+| Reward Hacking Benchmark, ICML 2026 | exploit 0–13.9%, hardening −5.7 п.п. | [В] |
+| ImpossibleBench, arXiv 2510.20270 | GPT-5 обходит тесты в 54% на Conflicting-SWEbench | [Ф] |
+| AgentDojo | 97 задач, 629 кейсов; фильтр инструментов снижает ASR до 7.5% | [Ф] |
+| LATM, ICLR 2024 | Dyck 20.4% → 92.2% с переиспользуемым инструментом | [Ф] |
+| EvilGenie | обходы через правку тестов; held-out помог слабо | [Ф] |
+| Tool Forge (nextmoca) | 100 offline intent specs; sandbox-валидация | [А] |
+| cap-protocol (npm) | lifecycle-реестр с версиями и append-only журналом | [А] |
