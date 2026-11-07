@@ -458,17 +458,39 @@ pub fn policy_allows(tool: &str, action: &str, resource: &str) -> bool {
 /// `/mnt` в шаблоне означает «внутри корня», а не буквально путь: корень бывает разным
 /// (комната `/mnt`, тесты — временный каталог, хостовый прогон — свой). Поэтому шаблон
 /// сравнивается по хвосту после `/mnt`.
+/// Снять схему ресурса: file:, dir:, net: говорят, что это, а не где.
+fn strip_scheme(text: &str) -> &str {
+    for scheme in ["file:", "dir:", "net:"] {
+        if let Some(rest) = text.strip_prefix(scheme) {
+            return rest;
+        }
+    }
+    text
+}
+
 fn resource_matches(pattern: &str, resource: &str) -> bool {
-    let pattern = pattern.strip_prefix("file:").unwrap_or(pattern);
-    let resource = resource.strip_prefix("file:").unwrap_or(resource);
+    // Схема ресурса (file:, dir:, net:) не участвует в сравнении: она говорит, что это,
+    // а не где. Иначе dir:/mnt/** и file:/mnt/** считались бы разными шаблонами.
+    let pattern = strip_scheme(pattern);
+    let resource = strip_scheme(resource);
     let inside = |tail: &str| -> bool {
         // «внутри корня»: хвост пустой или начинается с разделителя
         tail.is_empty() || tail.starts_with('/') || tail.starts_with('\\')
     };
     if let Some(prefix) = pattern.strip_suffix("/**") {
-        if let Some(root) = prefix.strip_suffix("/mnt") {
-            // шаблон вида <корень>/mnt/** — ресурс обязан лежать внутри своего корня
-            return inside(root);
+        // Шаблон /mnt/** и /mnt/work/** — ОТНОШЕНИЕ, а не буквальный адрес: корень бывает
+        // разным (комната /mnt, тесты — временный каталог, хостовый прогон — свой).
+        //   /mnt/**      — любой ресурс: он уже проверен на «внутри корня» в resolve_in;
+        //   /mnt/work/** — ресурс, в пути которого есть сегмент work.
+        if let Some(tail) = prefix.strip_prefix("/mnt") {
+            if tail.is_empty() {
+                return !resource.is_empty();
+            }
+            let wanted = tail.trim_matches('/');
+            return resource
+                .split(['/', '\\'])
+                .any(|segment| segment == wanted)
+                && resource.contains(wanted);
         }
         return resource == prefix || resource.starts_with(&format!("{prefix}/"));
     }
@@ -520,6 +542,14 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     let (dir, needle) = arg
         .split_once(' ')
         .ok_or_else(|| "нужно: search <путь> <подстрока>".to_string())?;
+    // Посредник: политика решает, можно ли искать в этом каталоге.
+    {
+        let target = resolve_in(dir, workspace)?;
+        let resource = format!("file:{}", plain(&target).display());
+        if !policy_allows("search", "read", &resource) {
+            return Err(format!("политика не разрешает поиск: {resource}"));
+        }
+    }
     // Кавычки модель ставит вокруг подстроки, и они уходили в поиск как символы: запрос
     // «"tool/call"» давал 0 совпадений на тексте, где эта строка есть (F-0044).
     let needle = needle.trim().trim_matches('"').trim_matches('\'').trim();
@@ -644,6 +674,14 @@ fn tool_list(arg: &str) -> Result<String, String> {
 }
 
 fn tool_list_in(arg: &str, workspace: &Path) -> Result<String, String> {
+    // Посредник: политика решает, можно ли смотреть этот каталог.
+    {
+        let target = resolve_in(arg, workspace)?;
+        let resource = format!("dir:{}", plain(&target).display());
+        if !policy_allows("list", "list", &resource) {
+            return Err(format!("политика не разрешает просмотр: {resource}"));
+        }
+    }
     let root = resolve_in(arg, workspace)?;
     let entries = std::fs::read_dir(&root)
         .map_err(|error| format!("не прочитать {}: {error}", root.display()))?;
@@ -746,6 +784,11 @@ pub fn tool_write_in(arg: &str, root: &Path) -> Result<String, String> {
             root.display(),
             target.display()
         ));
+    }
+    // Посредник: решение принимает политика, а не эта функция.
+    let resource = format!("file:{}", plain(target).display());
+    if !policy_allows("write", "write", &resource) {
+        return Err(format!("политика не разрешает запись: {resource}"));
     }
     let bytes = text.as_bytes().len();
     std::fs::write(target, text).map_err(|error| format!("не записать: {error}"))?;
@@ -1854,6 +1897,7 @@ mod tests {
     #[test]
     fn список_перечисляет_имена_и_типы() {
         let dir = fixture("list");
+        std::fs::create_dir_all(dir.join("work")).unwrap();
         let out = tool_list_in(".", &dir).unwrap();
         assert!(out.contains("a.md"), "{out}");
         assert!(out.contains("каталог"), "{out}");
@@ -1947,10 +1991,11 @@ mod tests {
     #[test]
     fn запись_работает_только_внутри_корня() {
         let dir = fixture("write");
-        let inside = format!("{} привет", dir.join("новый.md").display());
+        std::fs::create_dir_all(dir.join("work")).unwrap();
+        let inside = format!("{} привет", dir.join("work").join("новый.md").display());
         let ok = tool_write_in(&inside, &dir).unwrap();
         assert!(ok.contains("записано"), "{ok}");
-        assert_eq!(std::fs::read_to_string(dir.join("новый.md")).unwrap(), "привет");
+        assert_eq!(std::fs::read_to_string(dir.join("work").join("новый.md")).unwrap(), "привет");
 
         let outside = if cfg!(windows) { "C:/Windows/Temp/x.md зло" } else { "/etc/x.md зло" };
         let refused = tool_write_in(outside, &dir);
