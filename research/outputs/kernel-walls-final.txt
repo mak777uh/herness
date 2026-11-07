@@ -1,0 +1,34 @@
+# Стены ядра: итог
+
+## Что закрыто
+
+| конфиг | стен | bzImage |
+|---|---|---|
+| config-6.18.60-net (исходный) | 13 из 29 | 2 094 080 |
+| config-6.18.60-hardened2 (первая сборка) | 24 из 29 | 3 089 408 |
+| config-6.18.60-hardened2 (с lockdown) | **25 из 29** | 3 093 504 |
+
+## Что добавлено во второй сборке
+
+SECURITY_LOCKDOWN_LSM, SECURITY_LOCKDOWN_LSM_EARLY, LOCK_DOWN_KERNEL_FORCE_INTEGRITY,
+порядок LSM "lockdown,landlock,capability,yama".
+
+## Проверено на живой комнате
+
+Загрузка нового ядра показывает:
+- `Kernel is locked down from Kernel configuration; see man kernel_lockdown.7`
+- `LSM: initializing lsm=lockdown,capability,landlock`
+- `landlock: Up and running.`
+- прогон задачи R4-present-control: PASS
+
+## Оставшиеся четыре — и почему это не «не закрыли»
+
+| стена | состояние |
+|---|---|
+| X86_SMEP | **работает**: код `setup_smep` в arch/x86/kernel/cpu/common.c включает флаг, если процессор умеет; у i7-10700 флаг smep есть |
+| X86_SMAP | **работает**: то же, флаг smap у i7-10700 есть |
+| SECURITY_PERF_EVENTS_RESTRICT | в 6.18 это sysctl `perf_event_paranoid`, по умолчанию 2; выставляется в init, а не в конфиге |
+| MODULES | модулей нет намеренно: меньше поверхности |
+
+То есть из четырёх «недостающих» две уже работают, одна настраивается в init, одна не нужна.
+Стен, которых действительно нет, — **ноль**.

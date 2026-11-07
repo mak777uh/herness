@@ -25,7 +25,6 @@ NOT_OPTIONS = {
     "X86_SMAP": "включается автоматически, если процессор умеет",
     "PAGE_TABLE_ISOLATION": "в 6.18 называется MITIGATION_PAGE_TABLE_ISOLATION",
     "SECURITY_PERF_EVENTS_RESTRICT": "в этой версии это sysctl, а не опция сборки",
-    "LOCK_DOWN_KERNEL_FORCE": "требует CONFIG_SECURITY_LOCKDOWN_LSM, которого в tinyconfig нет",
     "MODULES": "модулей нет намеренно: меньше поверхности",
 }
 
@@ -60,7 +59,7 @@ WALLS = [
     ("SECURITY_DMESG_RESTRICT", "y", "журнал ядра закрыт для пользователя"),
     ("SECURITY_PERF_EVENTS_RESTRICT", "y", "счётчики производительности закрыты"),
     ("X86_KERNEL_IBT", "y", "защита непрямых переходов"),
-    ("LOCK_DOWN_KERNEL_FORCE", "integrity", "перевод ядра в режим ограничений"),
+    ("LOCK_DOWN_KERNEL_FORCE_INTEGRITY", "y", "перевод ядра в режим ограничений"),
     # митигации процессора
     ("MITIGATION_RETPOLINE", "y", "защита от Spectre v2"),
     ("CPU_MITIGATIONS", "y", "митигации процессора включены"),

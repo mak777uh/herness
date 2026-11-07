@@ -1,0 +1,36 @@
+=== где определён SECURITY_LOCKDOWN_LSM
+./security/lockdown/Kconfig
+./kernel/module/Kconfig
+--- определение:
+./security/lockdown/Kconfig:1:config SECURITY_LOCKDOWN_LSM
+./security/lockdown/Kconfig-2-	bool "Basic module for enforcing kernel lockdown"
+./security/lockdown/Kconfig-3-	depends on SECURITY
+./security/lockdown/Kconfig-4-	select MODULE_SIG if MODULES
+./security/lockdown/Kconfig-5-	help
+./security/lockdown/Kconfig-6-	  Build support for an LSM that enforces a coarse kernel lockdown
+./security/lockdown/Kconfig-7-	  behaviour.
+./security/lockdown/Kconfig-8-
+./security/lockdown/Kconfig-9-config SECURITY_LOCKDOWN_LSM_EARLY
+./security/lockdown/Kconfig-10-	bool "Enable lockdown LSM early in init"
+./security/lockdown/Kconfig-11-	depends on SECURITY_LOCKDOWN_LSM
+./security/lockdown/Kconfig-12-	help
+./security/lockdown/Kconfig-13-	  Enable the lockdown LSM early in boot. This is necessary in order
+=== LOCK_DOWN_KERNEL_FORCE
+./security/lockdown/Kconfig:27:config LOCK_DOWN_KERNEL_FORCE_NONE
+./security/lockdown/Kconfig-28-	bool "None"
+./security/lockdown/Kconfig-29-	help
+./security/lockdown/Kconfig-30-	  No lockdown functionality is enabled by default. Lockdown may be
+./security/lockdown/Kconfig-31-	  enabled via the kernel commandline or /sys/kernel/security/lockdown.
+./security/lockdown/Kconfig-32-
+./security/lockdown/Kconfig:33:config LOCK_DOWN_KERNEL_FORCE_INTEGRITY
+./security/lockdown/Kconfig-34-	bool "Integrity"
+./security/lockdown/Kconfig-35-	help
+./security/lockdown/Kconfig-36-	 The kernel runs in integrity mode by default. Features that allow
+./security/lockdown/Kconfig-37-	 the kernel to be modified at runtime are disabled.
+./security/lockdown/Kconfig-38-
+./security/lockdown/Kconfig:39:config LOCK_DOWN_KERNEL_FORCE_CONFIDENTIALITY
+./security/lockdown/Kconfig-40-	bool "Confidentiality"
+=== размер: сколько кода добавляет lockdown
+security/lockdown/lockdown.c
+173 security/lockdown/lockdown.c
+DONE

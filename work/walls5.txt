@@ -1,0 +1,33 @@
+=== 1. SMEP/SMAP: включены ли в сборке
+CONFIG_X86_64=y
+367:static __always_inline void setup_smep(struct cpuinfo_x86 *c)
+2028:	setup_smep(c);
+--- строки, где включается SMEP:
+__setup("serialnumber", x86_serial_nr_setup);
+#else
+static inline void squash_the_stupid_serial_number(struct cpuinfo_x86 *c)
+{
+}
+#endif
+
+static __always_inline void setup_smep(struct cpuinfo_x86 *c)
+{
+	if (cpu_has(c, X86_FEATURE_SMEP))
+		cr4_set_bits(X86_CR4_SMEP);
+}
+
+static __always_inline void setup_smap(struct cpuinfo_x86 *c)
+{
+	unsigned long eflags = native_save_fl();
+
+	/* This should have been cleared long ago */
+	BUG_ON(eflags & X86_EFLAGS_AC);
+
+	if (cpu_has(c, X86_FEATURE_SMAP))
+=== 2. PERF_EVENTS_RESTRICT: sysctl по умолчанию
+467:int sysctl_perf_event_paranoid __read_mostly = 2;
+551:		.data		= &sysctl_perf_event_paranoid,
+552:		.maxlen		= sizeof(sysctl_perf_event_paranoid),
+=== 3. LOCK_DOWN: что требует
+=== 4. SECURITY_LOCKDOWN_LSM_EARLY
+DONE
