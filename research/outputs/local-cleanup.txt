@@ -1,0 +1,107 @@
+# Очистка локальных копий
+
+## Оставить
+- C:/111/herness (есть)
+- C:/111/proofs-registry (есть)
+- C:/111/system/repos/morph (есть)
+
+## Удалить: 70 каталогов, 36.8 ГБ
+- C:/111/spec (260 МБ)
+- C:/111/lexspec-review (2 МБ)
+- C:/111/VecDHT (31 МБ)
+- C:/111/_vec (56 МБ)
+- C:/111/work/nomos (0 МБ)
+- C:/111/work/flowguard (6 МБ)
+- C:/111/work/harness (1 МБ)
+- C:/111/cases (0 МБ)
+- C:/111/work/rocketpool-invariants (4 МБ)
+- C:/111/work/verified-cells-cairo (11 МБ)
+- C:/111/work/verified_cells_cairo (6 МБ)
+- C:/111/work/sealed-invoice (0 МБ)
+- C:/111/pharos-agent-arena (3 МБ)
+- C:/111/lean-agent-verify (0 МБ)
+- C:/111/modelproof (0 МБ)
+- C:/111/gh-audit (1312 МБ)
+- C:/111/projects (2824 МБ)
+- C:/111/work (4263 МБ)
+- C:/111/agents (1301 МБ)
+- C:/111/research (1106 МБ)
+- C:/111/lab (668 МБ)
+- C:/111/system (18585 МБ)
+- C:/111/env (5219 МБ)
+- C:/111/vuln-work (2 МБ)
+- C:/111/treasury (83 МБ)
+- C:/111/stealth (48 МБ)
+- C:/111/incoming (350 МБ)
+- C:/111/poidh (150 МБ)
+- C:/111/probe-tmp (0 МБ)
+- C:/111/bench (0 МБ)
+- C:/111/browser-mcp (23 МБ)
+- C:/111/chat-research (1 МБ)
+- C:/111/chrome-cdp (575 МБ)
+- C:/111/findings (0 МБ)
+- C:/111/grants (0 МБ)
+- C:/111/hashn (1 МБ)
+- C:/111/inbox (0 МБ)
+- C:/111/proposals (0 МБ)
+- C:/111/reports (0 МБ)
+- C:/111/tmp (27 МБ)
+- C:/111/disk_audit (0 МБ)
+- C:/111/audit (0 МБ)
+- C:/111/applications (0 МБ)
+- C:/111/agntn_raw (0 МБ)
+- C:/111/node_modules (2 МБ)
+- C:/111/__pycache__ (0 МБ)
+- C:/111/_attack (0 МБ)
+- C:/111/_attack2 (0 МБ)
+- C:/111/_attack3 (3 МБ)
+- C:/111/_claims (3 МБ)
+- C:/111/_dsh_asar (413 МБ)
+- C:/111/_dshhome2 (1 МБ)
+- C:/111/_dshhome3 (1 МБ)
+- C:/111/_gos1_probe (0 МБ)
+- C:/111/_lexprobe (0 МБ)
+- C:/111/_lexprobe2 (0 МБ)
+- C:/111/_lexprobe3 (0 МБ)
+- C:/111/_lexprobe4 (0 МБ)
+- C:/111/_lexprobe5 (0 МБ)
+- C:/111/_m7 (0 МБ)
+- C:/111/_m7v2 (0 МБ)
+- C:/111/_m7v3 (0 МБ)
+- C:/111/_pagila (13 МБ)
+- C:/111/_pg (320 МБ)
+- C:/111/_profile (0 МБ)
+- C:/111/_schemas (12 МБ)
+- C:/111/_xatt (0 МБ)
+- C:/111/_xatt2 (1 МБ)
+- C:/111/.dsh-plugins (0 МБ)
+- C:/111/.sentry-native (0 МБ)
+
+удалено: 44
+ошибок: 26
+  C:/111/spec: [WinError 5] Отказано в доступе: 'C:\\111\\spec\\.git\\objects\\00\\1b19416d75a553b3827df202a0cb31c5ea4274'
+  C:/111/lexspec-review: [WinError 5] Отказано в доступе: 'C:\\111\\lexspec-review\\.git\\objects\\pack\\pack-0beba3c124d8b25c05e7c5eb1ec4ce2d2494b9ef.idx'
+  C:/111/VecDHT: [WinError 5] Отказано в доступе: 'C:\\111\\VecDHT\\.git\\objects\\pack\\pack-2aff24f4b298b2a7628e0a1aac021b34451b3cda.idx'
+  C:/111/_vec: [WinError 5] Отказано в доступе: 'C:\\111\\_vec\\.git\\objects\\00\\8aa1290ebb037af475a90afe93bde9425fb0bc'
+  C:/111/work/flowguard: [WinError 5] Отказано в доступе: 'C:\\111\\work\\flowguard\\.git\\objects\\02\\3b73b4f34265f96fae9a0adf930e7d0d4e736f'
+  C:/111/work/harness: [WinError 5] Отказано в доступе: 'C:\\111\\work\\harness\\.git\\objects\\90\\1951d4c74b57d570eaa4c19462c2b12abc3f5a'
+  C:/111/cases: [WinError 5] Отказано в доступе: 'C:\\111\\cases\\.git\\objects\\00\\73b111b998c6f353397ab6e20f49f2e31f24dd'
+  C:/111/work/rocketpool-invariants: [WinError 5] Отказано в доступе: 'C:\\111\\work\\rocketpool-invariants\\.git\\objects\\01\\7cb39163fda226e0dbe838ba5c73bf1dad5ed9'
+  C:/111/work/verified-cells-cairo: [WinError 5] Отказано в доступе: 'C:\\111\\work\\verified-cells-cairo\\.git\\objects\\0a\\38748cf9d9c1f57d899c193b6a7025f9f8e869'
+  C:/111/work/verified_cells_cairo: [WinError 5] Отказано в доступе: 'C:\\111\\work\\verified_cells_cairo\\.git\\objects\\00\\99feb73edfb06112810b0720c1bf8e35feddc5'
+  C:/111/work/sealed-invoice: [WinError 5] Отказано в доступе: 'C:\\111\\work\\sealed-invoice\\.git\\objects\\0b\\7075781512c21339b9a71e0d28db64143ffe87'
+  C:/111/pharos-agent-arena: [WinError 5] Отказано в доступе: 'C:\\111\\pharos-agent-arena\\.git\\objects\\pack\\pack-a40f6687ef27a4fab22e3c758a39b6f1cfad6bfb.idx'
+  C:/111/lean-agent-verify: [WinError 5] Отказано в доступе: 'C:\\111\\lean-agent-verify\\.git\\objects\\pack\\pack-1a1b9d12ed9f89fa396adce42839c6153bb29520.idx'
+  C:/111/modelproof: [WinError 5] Отказано в доступе: 'C:\\111\\modelproof\\.git\\objects\\pack\\pack-855245cc3929159ca472e9f0ae8922e79892333a.idx'
+  C:/111/gh-audit: [WinError 5] Отказано в доступе: 'C:\\111\\gh-audit\\repos\\-\\.git\\objects\\pack\\pack-c45e61cb378a746a58347119b5a0f05785a3e5f6.idx'
+  C:/111/projects: [WinError 5] Отказано в доступе: 'C:\\111\\projects\\aave_aToken_wrapper\\.git\\objects\\pack\\pack-759de101175b8839a7fd3740d193d6f1fde0ba0a.idx'
+  C:/111/work: [WinError 5] Отказано в доступе: 'C:\\111\\work\\aave-wrapper\\.git\\objects\\pack\\pack-759de101175b8839a7fd3740d193d6f1fde0ba0a.idx'
+  C:/111/agents: [WinError 5] Отказано в доступе: 'C:\\111\\agents\\cardano\\data\\conjectures\\conjectures-tasks\\.git\\objects\\pack\\pack-9fc94d57c75fa9ffeb0148877fae341984b178d3.idx'
+  C:/111/research: [WinError 5] Отказано в доступе: 'C:\\111\\research\\repos\\aera-contracts-public\\.git\\objects\\pack\\pack-ce8873eb49e5725ab8af4c33f83e645234f57521.idx'
+  C:/111/system: [WinError 5] Отказано в доступе: 'C:\\111\\system\\repos\\cases\\.git\\objects\\pack\\pack-d62a712a7185d4be1f748aa07c64fb9a214eabaa.idx'
+  C:/111/env: [WinError 5] Отказано в доступе: 'C:\\111\\env\\bin\\cloudflared.exe'
+  C:/111/vuln-work: [WinError 5] Отказано в доступе: 'C:\\111\\vuln-work\\oswaldoalarconrueda-source__torre-de-control__2243500809\\.git\\objects\\pack\\pack-be4ef046798d158018ee725cc7f0e3b0a79d86e6.idx'
+  C:/111/poidh: [WinError 5] Отказано в доступе: 'C:\\111\\poidh\\1485\\.git\\objects\\0d\\45953b4bd9756d4b2eb818562991e6d14c94bc'
+  C:/111/probe-tmp: [WinError 5] Отказано в доступе: 'C:\\111\\probe-tmp\\ironclaw\\.git\\objects\\pack\\pack-8b11e122e117718592da5c898ed05be7cc6c6998.idx'
+  C:/111/_pg: [WinError 32] Процесс не может получить доступ к файлу, так как этот файл занят другим процессом: 'C:\\111\\_pg\\data'
+  C:/111/_profile: [WinError 5] Отказано в доступе: 'C:\\111\\_profile\\.git\\objects\\26\\5d928e643f711d95e419f37c2297bb02b73ca4'
