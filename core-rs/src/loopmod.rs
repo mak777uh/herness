@@ -279,7 +279,7 @@ fn tool_seal(arg: &str) -> Result<String, String> {
     // Посредник: политика решает, можно ли запечатать этот файл.
     {
         let target = resolve_in(arg, &workspace_root())?;
-        let resource = format!("file:{}", plain(&target).display());
+        let resource = resource_of(&target, &workspace_root());
         if !policy_allows("seal", "seal", &resource) {
             return Err(format!("политика не разрешает запечатать: {resource}"));
         }
@@ -473,6 +473,23 @@ pub fn policy_allows(tool: &str, action: &str, resource: &str) -> bool {
 /// `/mnt` в шаблоне означает «внутри корня», а не буквально путь: корень бывает разным
 /// (комната `/mnt`, тесты — временный каталог, хостовый прогон — свой). Поэтому шаблон
 /// сравнивается по хвосту после `/mnt`.
+/// Ресурс для политики: путь ОТНОСИТЕЛЬНО корня, с префиксом `/mnt`.
+///
+/// Зачем так: политика объявлена для комнаты (`/mnt`), а корень бывает разным — комната,
+/// тесты, хостовый прогон. Ресурс строится от корня, поэтому шаблон `/mnt/**` совпадает
+/// буквально и при этом не зависит от того, где физически лежит корень (F-0072).
+fn resource_of(path: &Path, root: &Path) -> String {
+    let path = plain(path);
+    let root = plain(&root.canonicalize().unwrap_or_else(|_| root.to_path_buf()));
+    let relative = path.strip_prefix(&root).map(|tail| tail.to_path_buf()).unwrap_or(path);
+    let tail = relative.display().to_string().replace('\\', "/");
+    if tail.is_empty() {
+        "file:/mnt".to_string()
+    } else {
+        format!("file:/mnt/{}", tail.trim_start_matches('/'))
+    }
+}
+
 /// Снять схему ресурса: file:, dir:, net: говорят, что это, а не где.
 fn strip_scheme(text: &str) -> &str {
     for scheme in ["file:", "dir:", "net:"] {
@@ -488,25 +505,11 @@ fn resource_matches(pattern: &str, resource: &str) -> bool {
     // а не где. Иначе dir:/mnt/** и file:/mnt/** считались бы разными шаблонами.
     let pattern = strip_scheme(pattern);
     let resource = strip_scheme(resource);
-    let inside = |tail: &str| -> bool {
-        // «внутри корня»: хвост пустой или начинается с разделителя
-        tail.is_empty() || tail.starts_with('/') || tail.starts_with('\\')
-    };
+    // Шаблон проверяется БУКВАЛЬНО (F-0072). Раньше `/mnt/**` совпадал с любым ресурсом,
+    // потому что «внутри корня» проверялось отдельно в resolve_in. Но `policy_allows` —
+    // публичная функция: с `file:/etc/passwd` она отвечала «разрешено». Сверка с моделью
+    // в Lean показала 10 расхождений из 18, все в сторону разрешения.
     if let Some(prefix) = pattern.strip_suffix("/**") {
-        // Шаблон /mnt/** и /mnt/work/** — ОТНОШЕНИЕ, а не буквальный адрес: корень бывает
-        // разным (комната /mnt, тесты — временный каталог, хостовый прогон — свой).
-        //   /mnt/**      — любой ресурс: он уже проверен на «внутри корня» в resolve_in;
-        //   /mnt/work/** — ресурс, в пути которого есть сегмент work.
-        if let Some(tail) = prefix.strip_prefix("/mnt") {
-            if tail.is_empty() {
-                return !resource.is_empty();
-            }
-            let wanted = tail.trim_matches('/');
-            return resource
-                .split(['/', '\\'])
-                .any(|segment| segment == wanted)
-                && resource.contains(wanted);
-        }
         return resource == prefix || resource.starts_with(&format!("{prefix}/"));
     }
     if let Some(prefix) = pattern.strip_suffix("**") {
@@ -534,7 +537,7 @@ fn resolve_in(arg: &str, root: &Path) -> Result<PathBuf, String> {
             arg.trim()
         ));
     }
-    let resource = format!("file:{}", plain(&path).display());
+    let resource = resource_of(&path, &root);
     if !policy_allows("read", "read", &resource) {
         return Err(format!("политика не разрешает чтение: {resource}"));
     }
@@ -560,7 +563,7 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     // Посредник: политика решает, можно ли искать в этом каталоге.
     {
         let target = resolve_in(dir, workspace)?;
-        let resource = format!("file:{}", plain(&target).display());
+        let resource = resource_of(&target, workspace);
         if !policy_allows("search", "read", &resource) {
             return Err(format!("политика не разрешает поиск: {resource}"));
         }
@@ -692,7 +695,7 @@ fn tool_list_in(arg: &str, workspace: &Path) -> Result<String, String> {
     // Посредник: политика решает, можно ли смотреть этот каталог.
     {
         let target = resolve_in(arg, workspace)?;
-        let resource = format!("dir:{}", plain(&target).display());
+        let resource = resource_of(&target, workspace).replace("file:", "dir:");
         if !policy_allows("list", "list", &resource) {
             return Err(format!("политика не разрешает просмотр: {resource}"));
         }
@@ -801,7 +804,7 @@ pub fn tool_write_in(arg: &str, root: &Path) -> Result<String, String> {
         ));
     }
     // Посредник: решение принимает политика, а не эта функция.
-    let resource = format!("file:{}", plain(target).display());
+    let resource = resource_of(target, &root);
     if !policy_allows("write", "write", &resource) {
         return Err(format!("политика не разрешает запись: {resource}"));
     }

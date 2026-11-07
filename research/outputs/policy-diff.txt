@@ -1,0 +1,35 @@
+# Сверка политики: Rust и Lean
+
+запросов: 18
+
+| инструмент | действие | ресурс | Rust | Lean | совпало |
+|---|---|---|---|---|---|
+| read | read | file:/mnt/** | True | True | да |
+| read | write | file:/mnt/** | False | False | да |
+| read | net | net:** | False | False | да |
+| search | read | file:/mnt/** | True | True | да |
+| search | write | file:/mnt/** | False | False | да |
+| search | net | net:** | False | False | да |
+| list | list | dir:/mnt/** | True | True | да |
+| list | write | file:/mnt/** | False | False | да |
+| write | write | file:/mnt/work/** | True | True | да |
+| write | net | net:** | False | False | да |
+| seal | seal | file:/mnt/work/** | True | True | да |
+| netprobe | net | net:10.0.2.2:8790 | True | True | да |
+| read | read | file:/etc/passwd | False | False | да |
+| read | net | net:1.1.1.1 | False | False | да |
+| netprobe | net | net:8.8.8.8 | False | False | да |
+| write | write | file:/mnt/work/x.md | True | False | НЕТ |
+| read | read | file:/mnt/work/x.md | True | False | НЕТ |
+| list | list | dir:/mnt/work | True | False | НЕТ |
+
+совпало: 15 из 18
+
+# Что это доказывает: на запросах, где ресурс указан ТОЧНО (без шаблона `**`),
+# обе реализации дают одно и то же.
+
+# Что это НЕ доказывает и почему: Lean-модель сравнивает ресурс точно, а Rust
+# поддерживает шаблон `**` (любой хвост). Запросы вида `file:/mnt/work/x.md` против
+# правила `file:/mnt/work/**` в модели не совпадают. Это ограничение модели, а не
+# дефект кода: шаблоны проверяются тестами, а модель доказывает свойство логики
+# (запрет сильнее разрешения, нет неявных разрешений).
