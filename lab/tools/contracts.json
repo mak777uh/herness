@@ -1,0 +1,477 @@
+{
+ "read": {
+  "work_id": "tool:read",
+  "version": 1,
+  "purpose": "дать агенту прочитать файл, не дав ему выйти за комнату и не утопив его в тексте",
+  "atoms": [
+   {
+    "id": "a1",
+    "relation": "right",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "read",
+     "object": "file",
+     "scope": "/mnt/**"
+    },
+    "conditions": [
+     "path_inside_room"
+    ],
+    "why": "без этого инструмент бесполезен"
+   },
+   {
+    "id": "a2",
+    "relation": "duty",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "cite",
+     "object": "path:line"
+    },
+    "negated": false,
+    "why": "ответ без источника не считается результатом (наш гейт опоры)"
+   },
+   {
+    "id": "a3",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "limit",
+     "object": "output",
+     "quantity": "8192B"
+    },
+    "negated": false,
+    "why": "контекст модели — бюджет, а не бесплатный ресурс"
+   },
+   {
+    "id": "a4",
+    "relation": "duty",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "write",
+     "object": "file"
+    },
+    "negated": true,
+    "why": "чтение не должно менять то, что читает"
+   },
+   {
+    "id": "a5",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "refuse",
+     "object": "path_outside_room"
+    },
+    "negated": false,
+    "why": "замыкание объявлено — отказ обязан быть явным"
+   }
+  ],
+  "escapes": [
+   {
+    "atom": "a6",
+    "reason": "time_limit_not_enforced_by_kernel",
+    "detail": "лимит 100 мс объявлен, но ядро его не проверяет; это уход, а не гарантия"
+   }
+  ],
+  "verdicts": [
+   "FULFILLED",
+   "REFUSED",
+   "VIOLATED"
+  ],
+  "closure": {
+   "fs": {
+    "read": [
+     "/mnt/**"
+    ],
+    "write": []
+   },
+   "net": [],
+   "time_ms": 100,
+   "memory_mb": 4,
+   "output_bytes": 8192
+  }
+ },
+ "search": {
+  "work_id": "tool:search",
+  "version": 1,
+  "purpose": "дать агенту найти нужное, не заставив его перечитывать всё",
+  "atoms": [
+   {
+    "id": "a1",
+    "relation": "right",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "search",
+     "object": "files",
+     "scope": "/mnt/**"
+    },
+    "conditions": [
+     "path_inside_room"
+    ],
+    "why": "поиск — основной способ найти ответ"
+   },
+   {
+    "id": "a2",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "count",
+     "object": "distinct_values"
+    },
+    "negated": false,
+    "why": "модель не умеет считать; число разных даёт харнесс"
+   },
+   {
+    "id": "a3",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "show",
+     "object": "context_around_match"
+    },
+    "negated": false,
+    "why": "совпадение без контекста бесполезно"
+   },
+   {
+    "id": "a4",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "limit",
+     "object": "output",
+     "quantity": "16000B"
+    },
+    "negated": false,
+    "why": "контекст — бюджет"
+   },
+   {
+    "id": "a5",
+    "relation": "duty",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "write",
+     "object": "file"
+    },
+    "negated": true,
+    "why": "поиск ничего не меняет"
+   }
+  ],
+  "escapes": [
+   {
+    "atom": "a6",
+    "reason": "case_insensitive_only",
+    "detail": "регистр не важен; поиск по точной форме не поддерживается — это уход"
+   }
+  ],
+  "verdicts": [
+   "FULFILLED",
+   "REFUSED",
+   "VIOLATED"
+  ],
+  "closure": {
+   "fs": {
+    "read": [
+     "/mnt/**"
+    ],
+    "write": []
+   },
+   "net": [],
+   "time_ms": 2000,
+   "memory_mb": 32,
+   "output_bytes": 16000
+  }
+ },
+ "list": {
+  "work_id": "tool:list",
+  "version": 1,
+  "purpose": "дать агенту увидеть, что есть в каталоге, не утопив его в перечне",
+  "atoms": [
+   {
+    "id": "a1",
+    "relation": "right",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "list",
+     "object": "directory",
+     "scope": "/mnt/**"
+    },
+    "conditions": [
+     "path_inside_room"
+    ],
+    "why": "без этого агент не знает, что есть"
+   },
+   {
+    "id": "a2",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "limit",
+     "object": "entries",
+     "quantity": "100"
+    },
+    "negated": false,
+    "why": "перечень на 93 файла модель не охватывает"
+   },
+   {
+    "id": "a3",
+    "relation": "duty",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "write",
+     "object": "file"
+    },
+    "negated": true,
+    "why": "просмотр каталога ничего не меняет"
+   }
+  ],
+  "escapes": [
+   {
+    "atom": "a4",
+    "reason": "single_level_only",
+    "detail": "рекурсии нет; дерево не показывается — это уход"
+   }
+  ],
+  "verdicts": [
+   "FULFILLED",
+   "REFUSED",
+   "VIOLATED"
+  ],
+  "closure": {
+   "fs": {
+    "read": [
+     "/mnt/**"
+    ],
+    "write": []
+   },
+   "net": [],
+   "time_ms": 200,
+   "memory_mb": 8,
+   "output_bytes": 8000
+  }
+ },
+ "write": {
+  "work_id": "tool:write",
+  "version": 1,
+  "purpose": "дать агенту записать результат, не дав испортить то, что вне его рабочего каталога",
+  "atoms": [
+   {
+    "id": "a1",
+    "relation": "right",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "write",
+     "object": "file",
+     "scope": "/mnt/work/**"
+    },
+    "conditions": [
+     "path_inside_work"
+    ],
+    "why": "без этого агент не может оставить результат"
+   },
+   {
+    "id": "a2",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "refuse",
+     "object": "path_outside_work"
+    },
+    "negated": false,
+    "why": "запись вне рабочего каталога — отказ, а не молчание"
+   },
+   {
+    "id": "a3",
+    "relation": "duty",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "overwrite",
+     "object": "outside_scope"
+    },
+    "negated": true,
+    "why": "перезапись чужих файлов — нарушение договора"
+   }
+  ],
+  "escapes": [
+   {
+    "atom": "a4",
+    "reason": "no_edit_only_overwrite",
+    "detail": "правки нет, только перезапись целиком — это уход, а не удобство"
+   }
+  ],
+  "verdicts": [
+   "FULFILLED",
+   "REFUSED",
+   "VIOLATED"
+  ],
+  "closure": {
+   "fs": {
+    "read": [
+     "/mnt/**"
+    ],
+    "write": [
+     "/mnt/work/**"
+    ]
+   },
+   "net": [],
+   "time_ms": 200,
+   "memory_mb": 8,
+   "output_bytes": 500
+  }
+ },
+ "seal": {
+  "work_id": "tool:seal",
+  "version": 1,
+  "purpose": "дать агенту зафиксировать содержимое отпечатком, чтобы правка была видна",
+  "atoms": [
+   {
+    "id": "a1",
+    "relation": "right",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "seal",
+     "object": "file",
+     "scope": "/mnt/work/**"
+    },
+    "conditions": [
+     "path_inside_work"
+    ],
+    "why": "отпечаток — способ зафиксировать"
+   },
+   {
+    "id": "a2",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "return",
+     "object": "digest"
+    },
+    "negated": false,
+    "why": "отпечаток без значения бесполезен"
+   },
+   {
+    "id": "a3",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "seal",
+     "object": "content_after_marker"
+    },
+    "negated": true,
+    "why": "правка после маркера не должна менять отпечаток — иначе он бесполезен"
+   }
+  ],
+  "escapes": [
+   {
+    "atom": "a4",
+    "reason": "marker_based_scope",
+    "detail": "отпечаток считается до маркера «## Seal»; это договорённость, а не свойство"
+   }
+  ],
+  "verdicts": [
+   "FULFILLED",
+   "REFUSED",
+   "VIOLATED"
+  ],
+  "closure": {
+   "fs": {
+    "read": [
+     "/mnt/**"
+    ],
+    "write": [
+     "/mnt/work/**"
+    ]
+   },
+   "net": [],
+   "time_ms": 200,
+   "memory_mb": 8,
+   "output_bytes": 500
+  }
+ },
+ "netprobe": {
+  "work_id": "tool:netprobe",
+  "version": 1,
+  "purpose": "дать агенту проверить, доступен ли адрес, не дав выйти в сеть",
+  "atoms": [
+   {
+    "id": "a1",
+    "relation": "right",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "probe",
+     "object": "address",
+     "scope": "10.0.2.2:8790"
+    },
+    "conditions": [
+     "address_in_allowlist"
+    ],
+    "why": "единственный разрешённый адрес — мост"
+   },
+   {
+    "id": "a2",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "refuse",
+     "object": "address_outside_allowlist"
+    },
+    "negated": false,
+    "why": "сеть за мостом — отказ, а не попытка"
+   },
+   {
+    "id": "a3",
+    "relation": "duty",
+    "bearer": "agent",
+    "counterparty": "harness",
+    "action": {
+     "verb": "download",
+     "object": "content"
+    },
+    "negated": true,
+    "why": "проверка доступности не должна тянуть содержимое"
+   }
+  ],
+  "escapes": [
+   {
+    "atom": "a4",
+    "reason": "reachability_only",
+    "detail": "проверяется только доступность; содержимое не читается — это уход"
+   }
+  ],
+  "verdicts": [
+   "FULFILLED",
+   "REFUSED",
+   "VIOLATED"
+  ],
+  "closure": {
+   "fs": {
+    "read": [],
+    "write": []
+   },
+   "net": [
+    "10.0.2.2:8790"
+   ],
+   "time_ms": 3000,
+   "memory_mb": 4,
+   "output_bytes": 500
+  }
+ }
+}

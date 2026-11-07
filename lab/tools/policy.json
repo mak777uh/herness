@@ -1,0 +1,177 @@
+{
+ "version": 1,
+ "principle": "запрет сильнее разрешения; неявных разрешений нет; кто не назван — тот не может",
+ "rules": [
+  {
+   "id": "read-allow",
+   "tool": "read",
+   "subject": "agent",
+   "action": "read",
+   "resource": "file:/mnt/**",
+   "effect": "allow",
+   "level": "A",
+   "why": "без чтения инструмент бесполезен"
+  },
+  {
+   "id": "read-deny-write",
+   "tool": "read",
+   "subject": "agent",
+   "action": "write",
+   "resource": "file:/mnt/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "чтение не должно менять то, что читает"
+  },
+  {
+   "id": "read-deny-outside",
+   "tool": "read",
+   "subject": "agent",
+   "action": "read",
+   "resource": "file:!/mnt/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "замыкание объявлено — за его пределами отказ"
+  },
+  {
+   "id": "read-deny-net",
+   "tool": "read",
+   "subject": "agent",
+   "action": "net",
+   "resource": "net:**",
+   "effect": "deny",
+   "level": "A",
+   "why": "чтение файла не требует сети"
+  },
+  {
+   "id": "search-allow",
+   "tool": "search",
+   "subject": "agent",
+   "action": "read",
+   "resource": "file:/mnt/**",
+   "effect": "allow",
+   "level": "A",
+   "why": "поиск — основной способ найти ответ"
+  },
+  {
+   "id": "search-deny-write",
+   "tool": "search",
+   "subject": "agent",
+   "action": "write",
+   "resource": "file:/mnt/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "поиск ничего не меняет"
+  },
+  {
+   "id": "search-deny-net",
+   "tool": "search",
+   "subject": "agent",
+   "action": "net",
+   "resource": "net:**",
+   "effect": "deny",
+   "level": "A",
+   "why": "поиск не требует сети"
+  },
+  {
+   "id": "list-allow",
+   "tool": "list",
+   "subject": "agent",
+   "action": "list",
+   "resource": "dir:/mnt/**",
+   "effect": "allow",
+   "level": "A",
+   "why": "без этого агент не знает, что есть"
+  },
+  {
+   "id": "list-deny-write",
+   "tool": "list",
+   "subject": "agent",
+   "action": "write",
+   "resource": "file:/mnt/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "просмотр каталога ничего не меняет"
+  },
+  {
+   "id": "write-allow",
+   "tool": "write",
+   "subject": "agent",
+   "action": "write",
+   "resource": "file:/mnt/work/**",
+   "effect": "allow",
+   "level": "A",
+   "why": "без этого агент не может оставить результат"
+  },
+  {
+   "id": "write-deny-outside",
+   "tool": "write",
+   "subject": "agent",
+   "action": "write",
+   "resource": "file:!/mnt/work/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "запись вне рабочего каталога — отказ"
+  },
+  {
+   "id": "write-deny-net",
+   "tool": "write",
+   "subject": "agent",
+   "action": "net",
+   "resource": "net:**",
+   "effect": "deny",
+   "level": "A",
+   "why": "запись файла не требует сети"
+  },
+  {
+   "id": "seal-allow",
+   "tool": "seal",
+   "subject": "agent",
+   "action": "seal",
+   "resource": "file:/mnt/work/**",
+   "effect": "allow",
+   "level": "A",
+   "why": "отпечаток — способ зафиксировать"
+  },
+  {
+   "id": "seal-deny-outside",
+   "tool": "seal",
+   "subject": "agent",
+   "action": "seal",
+   "resource": "file:!/mnt/work/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "запечатывать можно только своё"
+  },
+  {
+   "id": "netprobe-allow",
+   "tool": "netprobe",
+   "subject": "agent",
+   "action": "net",
+   "resource": "net:10.0.2.2:8790",
+   "effect": "allow",
+   "level": "A",
+   "why": "единственный разрешённый адрес — мост"
+  },
+  {
+   "id": "netprobe-deny-other",
+   "tool": "netprobe",
+   "subject": "agent",
+   "action": "net",
+   "resource": "net:!10.0.2.2:8790",
+   "effect": "deny",
+   "level": "A",
+   "why": "сеть за мостом — отказ"
+  },
+  {
+   "id": "netprobe-deny-fs",
+   "tool": "netprobe",
+   "subject": "agent",
+   "action": "read",
+   "resource": "file:/mnt/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "проверка сети не читает файлы"
+  }
+ ],
+ "delegation": []
+}
