@@ -570,5 +570,18 @@
   "prior_art": "Lean 4.36, proofs-registry",
   "negative_control": "два ложных утверждения в Proofs/Negative.lean обязаны дать unsolved goals",
   "claim": "C-0276"
+ },
+ {
+  "id": "A-0046",
+  "mechanism": "закрытый словарь кодов отказа",
+  "source": "lexspec docs/11-REFUSAL-CODES.md",
+  "content": "код не переиспользуется и не перенумеровывается; у каждого кода значение и действие; неизвестный код отвергается",
+  "use_now": "внедрено: lab/refusal-codes.json, 19 кодов, серия размечена",
+  "use_later": "каждый гейт возвращает код, а не только PASS/FAIL",
+  "status": "adopted",
+  "decision": "взято",
+  "prior_art": "lexspec",
+  "negative_control": "bin/refusal_codes_probe.py — 4 из 4",
+  "claim": "C-0280"
  }
 ]
