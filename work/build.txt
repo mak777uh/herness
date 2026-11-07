@@ -1,0 +1,2 @@
+EXIT=True
+-rw-r--r-- 1 root root 3089408 Nov  7 07:15 arch/x86/boot/bzImage

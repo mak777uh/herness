@@ -3,12 +3,16 @@
 Берёт базовый конфиг (обычно config-6.18.60-net) и включает опции закалки, которых в нём нет.
 Каждая опция — стена, а не договор: ядро просто не пускает.
 
+Почему не всё включается: некоторые опции требуют поддержки в архитектуре или ядре. Если опция
+не включается, это надо назвать, а не молча пропустить.
+
     python bin/kernel_harden.py --base config-6.18.60-net --out config-6.18.60-hardened2
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -34,7 +38,6 @@ ENABLE = {
     "STATIC_USERMODEHELPER": "y",
     "SECURITY_DMESG_RESTRICT": "y",
     "SECURITY_PERF_EVENTS_RESTRICT": "y",
-    "LOCK_DOWN_KERNEL_FORCE_INTEGRITY": "y",
     "MITIGATION_RETPOLINE": "y",
     "CPU_MITIGATIONS": "y",
     # производительность: обход файлов важнее размера
@@ -48,15 +51,22 @@ DISABLE = {
     "X86_DISABLED_FEATURE_RETPOLINE_LFENCE": "n",
 }
 
+# Опции, которые нельзя включить в этой конфигурации, и почему.
+# Это не «забыли», а объявленное ограничение.
+CANNOT = {
+    "LOCK_DOWN_KERNEL_FORCE": "требует CONFIG_SECURITY_LOCKDOWN_LSM; в tinyconfig его нет",
+    "MODULES": "модулей нет намеренно: меньше поверхности; включать не нужно",
+}
 
-def apply(base: Path, out: Path) -> tuple[int, int]:
+
+def option_line(name: str, value: str) -> str:
+    return f"CONFIG_{name}={value}" if value == "y" else f"# CONFIG_{name} is not set"
+
+
+def apply(base: Path, out: Path) -> tuple[int, int, list[str]]:
     lines = base.read_text(encoding="utf-8", errors="replace").splitlines()
     enabled = disabled = 0
     seen: set[str] = set()
-
-    def set_option(name: str, value: str) -> str:
-        return f"CONFIG_{name}={value}" if value == "y" else f"# CONFIG_{name} is not set"
-
     result = []
     for line in lines:
         stripped = line.strip()
@@ -66,28 +76,27 @@ def apply(base: Path, out: Path) -> tuple[int, int]:
         elif stripped.startswith("# CONFIG_") and stripped.endswith(" is not set"):
             matched = stripped[len("# CONFIG_"):-len(" is not set")]
         if matched in ENABLE:
-            result.append(set_option(matched, ENABLE[matched]))
+            result.append(option_line(matched, ENABLE[matched]))
             seen.add(matched)
             enabled += 1
             continue
         if matched in DISABLE:
-            result.append(set_option(matched, DISABLE[matched]))
+            result.append(option_line(matched, DISABLE[matched]))
             seen.add(matched)
             disabled += 1
             continue
         result.append(line)
 
-    # Опции, которых в базе не было вовсе, — дописываем в конец.
     for name, value in {**ENABLE, **DISABLE}.items():
         if name not in seen:
-            result.append(set_option(name, value))
+            result.append(option_line(name, value))
             if name in ENABLE:
                 enabled += 1
             else:
                 disabled += 1
 
     out.write_text("\n".join(result) + "\n", encoding="utf-8")
-    return enabled, disabled
+    return enabled, disabled, sorted(CANNOT)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -100,8 +109,10 @@ def main(argv: list[str] | None = None) -> int:
     if not base.exists():
         print(f"нет базового конфига: {base}", file=sys.stderr)
         return 2
-    enabled, disabled = apply(base, out)
+    enabled, disabled, cannot = apply(base, out)
     print(f"записано: {out.relative_to(ROOT)}; включено {enabled}, выключено {disabled}")
+    for name in cannot:
+        print(f"  не включается: {name} — {CANNOT[name]}")
     return 0
 
 

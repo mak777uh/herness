@@ -1,0 +1,20 @@
+=== SMEP/SMAP: это не опции конфига, а проверка CPU
+367:static __always_inline void setup_smep(struct cpuinfo_x86 *c)
+370:		cr4_set_bits(X86_CR4_SMEP);
+409:static const unsigned long cr4_pinned_mask = X86_CR4_SMEP | X86_CR4_SMAP | X86_CR4_UMIP |
+2028:	setup_smep(c);
+240:#define X86_FEATURE_SMEP		( 9*32+ 7) /* "smep" Supervisor Mode Execution Protection */
+253:#define X86_FEATURE_SMAP		( 9*32+20) /* "smap" Supervisor Mode Access Prevention */
+=== SLUB_TINY отключает рандомизацию кучи: выключаем
+=== RELOCATABLE и KASLR
+=== PERF_EVENTS_RESTRICT: в этой версии нет опции, есть sysctl
+467:int sysctl_perf_event_paranoid __read_mostly = 2;
+550:		.procname	= "perf_event_paranoid",
+=== после olddefconfig
+SLUB_TINY: НЕТ
+SLAB_FREELIST_RANDOM: CONFIG_SLAB_FREELIST_RANDOM=y
+SLAB_FREELIST_HARDENED: CONFIG_SLAB_FREELIST_HARDENED=y
+RANDOM_KMALLOC_CACHES: CONFIG_RANDOM_KMALLOC_CACHES=y
+RELOCATABLE: CONFIG_RELOCATABLE=y
+RANDOMIZE_BASE: CONFIG_RANDOMIZE_BASE=y
+DONE

@@ -1,0 +1,5 @@
+/usr/bin/make
+/usr/bin/gcc
+/usr/bin/bison
+/usr/bin/flex
+EXIT=True

@@ -1,0 +1,40 @@
+# Ядро hardened2: стены, сборка, прогон
+
+## Что было и что стало
+
+| конфиг | стен | размер bzImage |
+|---|---|---|
+| config-6.18.60-net (было) | 13 из 29 | 2 094 080 байт |
+| config-6.18.60-hardened2 (стало) | 24 из 29 | 3 089 408 байт |
+
+## Что включено (11 новых стен)
+
+STACKPROTECTOR_STRONG, RANDOMIZE_KSTACK_OFFSET, MITIGATION_PAGE_TABLE_ISOLATION,
+RANDOMIZE_BASE (KASLR), RELOCATABLE, SLAB_FREELIST_RANDOM, SLAB_FREELIST_HARDENED,
+RANDOM_KMALLOC_CACHES, DEBUG_LIST, STATIC_USERMODEHELPER, SECURITY_DMESG_RESTRICT,
+MITIGATION_RETPOLINE, CPU_MITIGATIONS, CC_OPTIMIZE_FOR_PERFORMANCE.
+
+## Что не применимо и почему
+
+| стена | почему |
+|---|---|
+| X86_SMEP, X86_SMAP | не опции конфига: включаются автоматически, если процессор умеет (setup_smep в arch/x86/kernel/cpu/common.c) |
+| SECURITY_PERF_EVENTS_RESTRICT | в 6.18 это sysctl perf_event_paranoid, а не опция сборки |
+| LOCK_DOWN_KERNEL_FORCE | требует CONFIG_SECURITY_LOCKDOWN_LSM, которого в tinyconfig нет |
+| MODULES | модулей нет намеренно: меньше поверхности |
+
+## Найденная причина
+
+SLUB_TINY=y (из tinyconfig) отключает SLAB_FREELIST_RANDOM, SLAB_FREELIST_HARDENED и
+RANDOM_KMALLOC_CACHES — у них `depends on !SLUB_TINY`. Выключение SLUB_TINY включает все три.
+
+RELOCATABLE не был включён, поэтому не включался RANDOMIZE_BASE (KASLR): у него
+`depends on RELOCATABLE`.
+
+## Сборка
+
+make -j16 bzImage: exit 0, bzImage 3 089 408 байт.
+
+## Прогон
+
+Задача R4-present-control на ядре vmlinuz-own-hardened2: PASS.

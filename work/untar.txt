@@ -1,0 +1,2 @@
+EXIT=True
+/root/linux-6.18.60

@@ -1,0 +1,14 @@
+=== SLUB_TINY
+mm/Kconfig:176:config SLUB_TINY
+mm/Kconfig-177-	bool "Configure for minimal memory footprint"
+mm/Kconfig-178-	depends on EXPERT && !COMPILE_TEST
+mm/Kconfig-179-	select SLAB_MERGE_DEFAULT
+mm/Kconfig-180-	help
+mm/Kconfig-181-	   Configures the slab allocator in a way to achieve minimal memory
+mm/Kconfig-182-	   footprint, sacrificing scalability, debugging and other features.
+mm/Kconfig-183-	   This is intended only for the smallest system that had used the
+mm/Kconfig-184-	   SLOB allocator and is not recommended for systems with more than
+текущее: CONFIG_SLUB_TINY=y
+=== SMEP/SMAP в исходниках (любое упоминание в Kconfig)
+=== PERF_EVENTS_RESTRICT
+DONE

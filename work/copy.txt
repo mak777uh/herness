@@ -1,0 +1,1 @@
+-rwxrwxrwx 1 root root 3089408 Nov  7 07:15 /mnt/c/111/herness/core-rs/boot/vmlinuz-own-hardened2

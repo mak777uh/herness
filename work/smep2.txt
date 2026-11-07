@@ -1,0 +1,6 @@
+mm/Kconfig:203:config SLAB_FREELIST_RANDOM
+mm/Kconfig:211:config SLAB_FREELIST_HARDENED
+mm/Kconfig:223:	default SLAB_FREELIST_HARDENED
+mm/Kconfig:261:config RANDOM_KMALLOC_CACHES
+mm/Kconfig:282:	default SLAB_FREELIST_RANDOM && ACPI_NUMA
+mm/Kconfig:290:	  allocations to compliment SLAB_FREELIST_RANDOM, but the

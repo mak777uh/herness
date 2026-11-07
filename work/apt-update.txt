@@ -1,0 +1,4 @@
+E: Problem renaming the file /var/cache/apt/srcpkgcache.bin.6hrO1S to /var/cache/apt/srcpkgcache.bin - rename (2: No such file or directory)
+W: You may want to run apt-get update to correct these problems
+E: The package cache file is corrupted
+done

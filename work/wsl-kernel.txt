@@ -1,0 +1,1 @@
+ls: cannot access '/root/linux-6.18.60': No such file or directory

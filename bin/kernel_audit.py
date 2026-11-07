@@ -18,6 +18,17 @@ KERNEL = ROOT / "core-rs" / "kernel"
 
 # Стены: имя опции, ожидаемое значение, зачем.
 # Три исхода: есть (ok), нет (missing), не проверялось (unknown).
+# Стены, которых в этой версии ядра нет как опций конфига, и почему.
+# Это не «забыли включить», а объявленное ограничение.
+NOT_OPTIONS = {
+    "X86_SMEP": "включается автоматически, если процессор умеет (setup_smep)",
+    "X86_SMAP": "включается автоматически, если процессор умеет",
+    "PAGE_TABLE_ISOLATION": "в 6.18 называется MITIGATION_PAGE_TABLE_ISOLATION",
+    "SECURITY_PERF_EVENTS_RESTRICT": "в этой версии это sysctl, а не опция сборки",
+    "LOCK_DOWN_KERNEL_FORCE": "требует CONFIG_SECURITY_LOCKDOWN_LSM, которого в tinyconfig нет",
+    "MODULES": "модулей нет намеренно: меньше поверхности",
+}
+
 WALLS = [
     # изоляция
     ("SECURITY_LANDLOCK", "y", "ограничение файлового доступа для процесса"),
@@ -29,7 +40,7 @@ WALLS = [
     ("STACKPROTECTOR_STRONG", "y", "канарейки в стеке"),
     ("X86_SMEP", "y", "запрет исполнения в страницах данных"),
     ("X86_SMAP", "y", "запрет доступа к пространству пользователя из ядра"),
-    ("PAGE_TABLE_ISOLATION", "y", "изоляция таблиц страниц (Meltdown)"),
+    ("MITIGATION_PAGE_TABLE_ISOLATION", "y", "изоляция таблиц страниц (Meltdown)"),
     ("STRICT_KERNEL_RWX", "y", "ядро не пишет в исполняемые страницы"),
     ("HARDENED_USERCOPY", "y", "проверка копирования из/в пользователя"),
     ("FORTIFY_SOURCE", "y", "проверки переполнений на этапе сборки"),
@@ -102,7 +113,11 @@ def main(argv: list[str] | None = None) -> int:
             lines.append("| нет стены | зачем нужна | сейчас |")
             lines.append("|---|---|---|")
             for name, why, actual in missing:
-                lines.append(f"| `{name}` | {why} | {actual} |")
+                note = NOT_OPTIONS.get(name)
+                if note:
+                    lines.append(f"| `{name}` | {why} | не применимо: {note} |")
+                else:
+                    lines.append(f"| `{name}` | {why} | {actual} |")
             lines.append("")
         else:
             lines.append("все стены на месте")

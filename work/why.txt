@@ -1,0 +1,30 @@
+=== RELOCATABLE
+config RELOCATABLE
+	bool "Build a relocatable kernel"
+	default y
+	help
+	  This builds a kernel image that retains relocation information
+	  so it can be loaded someplace besides the default 1MB.
+	  The relocations tend to make the kernel binary about 10% larger,
+	  but are discarded at runtime.
+
+	  One use is for the kexec on panic case where the recovery kernel
+	  must live at a different physical address than the primary
+	  kernel.
+
+	  Note: If CONFIG_RELOCATABLE=y, then the kernel runs from the address
+	  it has been loaded at and the compile time physical address
+	  (CONFIG_PHYSICAL_START) is used as the minimum location.
+
+config RANDOMIZE_BASE
+	bool "Randomize the address of the kernel image (KASLR)"
+	depends on RELOCATABLE
+	default y
+=== SMEP/SMAP (поиск по всем Kconfig)
+=== текущие значения
+RELOCATABLE: НЕТ
+RANDOMIZE_BASE: НЕТ
+X86_SMEP: НЕТ
+X86_SMAP: НЕТ
+=== olddefconfig предупреждения
+DONE

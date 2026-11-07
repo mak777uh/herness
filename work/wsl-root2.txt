@@ -1,0 +1,8 @@
+total 24
+drwx------  4 root root 4096 Nov  6 15:39 .
+drwxr-xr-x 19 root root 4096 Nov  7 06:47 ..
+-rw-r--r--  1 root root 3106 Apr 20  2026 .bashrc
+drwx------  2 root root 4096 Nov  6 15:39 .cache
+-rw-r--r--  1 root root    0 Nov  7 00:32 .motd_shown
+-rw-r--r--  1 root root  132 Apr 20  2026 .profile
+drwx------  2 root root 4096 Aug 27 17:11 .ssh

@@ -1,0 +1,84 @@
+=== X86_SMEP
+=== X86_SMAP
+=== RANDOMIZE_BASE
+arch/arm64/Kconfig:2366:config RANDOMIZE_BASE
+arch/arm64/Kconfig-2367-	bool "Randomize the address of the kernel image"
+arch/arm64/Kconfig-2368-	select RELOCATABLE
+arch/arm64/Kconfig-2369-	help
+arch/arm64/Kconfig-2370-	  Randomizes the virtual address at which the kernel image is
+arch/arm64/Kconfig-2371-	  loaded, as a security feature that deters exploit attempts
+arch/arm64/Kconfig-2372-	  relying on knowledge of the location of kernel internals.
+--
+arch/mips/Kconfig:2659:config RANDOMIZE_BASE
+arch/mips/Kconfig-2660-	bool "Randomize the address of the kernel image"
+arch/mips/Kconfig-2661-	depends on RELOCATABLE
+arch/mips/Kconfig-2662-	help
+arch/mips/Kconfig-2663-	  Randomizes the physical and virtual address at which the
+arch/mips/Kconfig-2664-	  kernel image is loaded, as a security feature that
+arch/mips/Kconfig-2665-	  deters exploit attempts relying on knowledge of the location
+--
+arch/loongarch/Kconfig:655:config RANDOMIZE_BASE
+arch/loongarch/Kconfig-656-	bool "Randomize the address of the kernel (KASLR)"
+arch/loongarch/Kconfig-657-	depends on RELOCATABLE
+arch/loongarch/Kconfig-658-	help
+arch/loongarch/Kconfig-659-	   Randomizes the physical and virtual address at which the
+arch/loongarch/Kconfig-660-	   kernel image is loaded, as a security feature that
+arch/loongarch/Kconfig-661-	   deters exploit attempts relying on knowledge of the location
+--
+arch/x86/Kconfig:2082:config RANDOMIZE_BASE
+arch/x86/Kconfig-2083-	bool "Randomize the address of the kernel image (KASLR)"
+arch/x86/Kconfig-2084-	depends on RELOCATABLE
+arch/x86/Kconfig-2085-	default y
+arch/x86/Kconfig-2086-	help
+arch/x86/Kconfig-2087-	  In support of Kernel Address Space Layout Randomization (KASLR),
+arch/x86/Kconfig-2088-	  this randomizes the physical address at which the kernel image
+--
+arch/powerpc/Kconfig:686:config RANDOMIZE_BASE
+arch/powerpc/Kconfig-687-	bool "Randomize the address of the kernel image"
+arch/powerpc/Kconfig-688-	depends on PPC_85xx && FLATMEM
+arch/powerpc/Kconfig-689-	depends on RELOCATABLE
+arch/powerpc/Kconfig-690-	help
+arch/powerpc/Kconfig-691-	  Randomizes the virtual address at which the kernel image is
+arch/powerpc/Kconfig-692-	  loaded, as a security feature that deters exploit attempts
+--
+arch/riscv/Kconfig:1130:config RANDOMIZE_BASE
+arch/riscv/Kconfig-1131-        bool "Randomize the address of the kernel image"
+arch/riscv/Kconfig-1132-        select RELOCATABLE
+arch/riscv/Kconfig-1133-        depends on MMU && 64BIT && !XIP_KERNEL
+arch/riscv/Kconfig-1134-        help
+arch/riscv/Kconfig-1135-          Randomizes the virtual address at which the kernel image is
+arch/riscv/Kconfig-1136-          loaded, as a security feature that deters exploit attempts
+--
+arch/s390/Kconfig:666:config RANDOMIZE_BASE
+arch/s390/Kconfig-667-	bool "Randomize the address of the kernel image (KASLR)"
+arch/s390/Kconfig-668-	default y
+arch/s390/Kconfig-669-	help
+arch/s390/Kconfig-670-	  In support of Kernel Address Space Layout Randomization (KASLR),
+arch/s390/Kconfig-671-	  this randomizes the address at which the kernel image is loaded,
+arch/s390/Kconfig-672-	  as a security feature that deters exploit attempts relying on
+=== SLAB_FREELIST_RANDOM
+mm/Kconfig:203:config SLAB_FREELIST_RANDOM
+mm/Kconfig-204-	bool "Randomize slab freelist"
+mm/Kconfig-205-	depends on !SLUB_TINY
+mm/Kconfig-206-	help
+mm/Kconfig-207-	  Randomizes the freelist order used on creating new pages. This
+mm/Kconfig-208-	  security feature reduces the predictability of the kernel slab
+mm/Kconfig-209-	  allocator against heap overflows.
+=== SLAB_FREELIST_HARDENED
+mm/Kconfig:211:config SLAB_FREELIST_HARDENED
+mm/Kconfig-212-	bool "Harden slab freelist metadata"
+mm/Kconfig-213-	depends on !SLUB_TINY
+mm/Kconfig-214-	help
+mm/Kconfig-215-	  Many kernel heap attacks try to target slab cache metadata and
+mm/Kconfig-216-	  other infrastructure. This options makes minor performance
+mm/Kconfig-217-	  sacrifices to harden the kernel slab allocator against common
+=== RANDOM_KMALLOC_CACHES
+mm/Kconfig:261:config RANDOM_KMALLOC_CACHES
+mm/Kconfig-262-	default n
+mm/Kconfig-263-	depends on !SLUB_TINY
+mm/Kconfig-264-	bool "Randomize slab caches for normal kmalloc"
+mm/Kconfig-265-	help
+mm/Kconfig-266-	  A hardening feature that creates multiple copies of slab caches for
+mm/Kconfig-267-	  normal kmalloc allocation and makes kmalloc randomly pick one based
+=== SECURITY_PERF_EVENTS_RESTRICT
+DONE
