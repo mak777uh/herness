@@ -1,0 +1,21 @@
+# Формальная проверка политики в Lean
+
+## Доказательства: собраны
+
+## Аксиомы каждой теоремы
+
+- `deny_beats_allow`: Classical.choice, Quot.sound, propext
+- `deny_means_not_allowed`: Classical.choice, Quot.sound, propext
+- `no_allow_means_denied`: Classical.choice, Quot.sound, propext
+- `empty_policy_denies`: Classical.choice, Quot.sound, propext
+- `mediator_refuses`: Classical.choice, Quot.sound, propext
+- `mediator_performs`: Classical.choice, Quot.sound, propext
+
+## Отрицательный контроль: отвергнут
+   error: Proofs/Negative.lean:17:79: unsolved goals
+   error: Proofs/Negative.lean:23:62: unsolved goals
+
+## Итог: доказательства приняты, ложь отвергнута
+
+Граница: доказано свойство модели политики, а не соответствие Rust-кода модели.
+Соответствие проверяется тестами и сверкой (policy_sync, closure_probe).

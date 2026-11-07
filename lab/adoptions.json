@@ -557,5 +557,18 @@
   "prior_art": "flowguard-spec, reference monitor (Anderson 1972)",
   "negative_control": "путь вне корня и адрес вне моста обязаны получить отказ с формулировкой политики",
   "claim": "C-0275"
+ },
+ {
+  "id": "A-0045",
+  "mechanism": "формальная верификация политики в Lean с отрицательным контролем",
+  "source": "flowguard-spec уровень A; proofs-registry (форма бейджа)",
+  "content": "модель политики в Lean, шесть теорем, аксиомы ограничены тремя стандартными, ложные утверждения обязаны быть отвергнуты",
+  "use_now": "внедрено: bin/lean_check.py, research/outputs/lean-check.txt",
+  "use_later": "доказать соответствие Rust-кода модели, а не только свойство модели",
+  "status": "adopted",
+  "decision": "взято",
+  "prior_art": "Lean 4.36, proofs-registry",
+  "negative_control": "два ложных утверждения в Proofs/Negative.lean обязаны дать unsolved goals",
+  "claim": "C-0276"
  }
 ]
