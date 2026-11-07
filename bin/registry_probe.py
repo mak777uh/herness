@@ -1,7 +1,7 @@
-"""registry_probe — отрицательный контроль реестра (эксперимент E1 плана P33).
+"""registry_probe — отрицательный контроль реестра (E1 плана P33 + A-0042).
 
-Проверяем, что реестр отвергает записи без хеша среды и без происхождения, и что повтор
-(имя, версия) ловится.
+Проверяем, что реестр отвергает записи без хеша среды, без происхождения, без примеров вызова
+и повтор (имя, версия). Годный реестр не должен давать находок.
 
     python bin/registry_probe.py
 """
@@ -22,15 +22,14 @@ def main() -> int:
     rows = [json.loads(line) for line in reg.REGISTRY.read_text(encoding="utf-8").splitlines() if line.strip()]
     baseline = reg.problems(rows)
 
-    cases = []
-    # 1. запись без хеша среды
-    broken_env = [dict(rows[0], environment="")] + rows[1:]
-    cases.append(("без хеша среды", broken_env))
-    # 2. запись без происхождения
-    broken_prov = [dict(rows[0], provenance="")] + rows[1:]
-    cases.append(("без происхождения", broken_prov))
-    # 3. повтор (имя, версия)
-    cases.append(("повтор имени и версии", rows + [rows[0]]))
+    cases = [
+        ("без хеша среды", [dict(rows[0], environment="")] + rows[1:]),
+        ("без происхождения", [dict(rows[0], provenance="")] + rows[1:]),
+        ("повтор имени и версии", rows + [rows[0]]),
+        ("без примеров вызова", [dict(rows[0], examples=[])] + rows[1:]),
+        ("шесть примеров", [dict(rows[0], examples=["a", "b", "c", "d", "e", "f"])] + rows[1:]),
+        ("без семантики", [dict(rows[0], semantics="")] + rows[1:]),
+    ]
 
     lines = ["# Отрицательный контроль реестра инструментов", ""]
     caught = 0
@@ -40,7 +39,6 @@ def main() -> int:
         caught += 1 if ok else 0
         lines.append(f"{name:26} {'поймано' if ok else 'ПРОПУЩЕНО'}  {found[:1]}")
 
-    # 4. годный реестр не должен давать находок
     clean = reg.problems(rows)
     lines.append(f"{'годный реестр':26} {'чисто' if not clean else 'ЛОЖНАЯ ТРЕВОГА'}  {clean[:1]}")
     lines += ["", f"поймано дефектов: {caught} из {len(cases)}"]
