@@ -36,7 +36,7 @@ def all_criteria() -> dict[str, dict]:
     # на несуществующие критерии.
     for folder in ("accept/p27", "accept/musique", "accept/refusal", "accept/history",
                    "accept/history2", "accept/history3", "accept/history4", "accept/history5",
-                   "accept/history6", "accept/long", "accept/chain", "accept/extension"):
+                   "accept/history6", "accept/long", "accept/chain", "accept/extension", "accept/plan", "accept/refusal"):
         for path in sorted((ROOT / folder).glob("*.json")):
             result[path.stem] = json.loads(path.read_text(encoding="utf-8"))
     return result
