@@ -5,25 +5,34 @@
 
 ## Что найдено
 
-### Наши репозитории (переносим)
+### Наши репозитории из закрепа (переносим)
 
-| локальный путь | удалённый | состояние |
-|---|---|---|
-| `C:\111\spec` | `mak777uh/flowguard-spec` | чисто, запушено |
-| `C:\111\lexspec-review` | `mak777uh/lexspec` | чисто |
-| `C:\111\VecDHT` | `mak777uh/VecDHT` | **1 неотслеживаемый файл** |
-| `C:\111\_vec` | `mak777uh/VecDHT` (ветка interop) | **1 неотслеживаемый файл** |
-| `C:\111\lean-agent-verify` | `mak777uh/lean-agent-verify` | чисто |
-| `C:\111\modelproof` | `mak777uh/modelproof` | чисто |
-| `C:\111\proofs-registry` | **нет .git** | 0,5 МБ, локальное |
-| `C:\111\pharos-agent-arena` | `mak777uh/pharos-agent-arena` | чисто |
-| `C:\111\cases` | `mak777uh/cases` | **9 незапушенных коммитов** |
-| `C:\111\work\nomos` | **нет .git** | 0,3 МБ, локальное |
-| `C:\111\work\flowguard` | `mak777uh/flowguard-spec` | **6 неотслеживаемых файлов** |
-| `C:\111\work\harness` | `mak777uh/harness` | чисто |
-| `C:\111\work\rocketpool-invariants` | `mak777uh/rocketpool-invariants` | **4 незапушенных коммита** |
-| `C:\111\work\verified-cells-cairo` | `mak777uh/verified-cells-cairo` | **3 незапушенных коммита** |
-| `C:\111\work\sealed-invoice` | `mak777uh/sealed-invoice` | чисто |
+**Поправка владельца 07.11.2026: переносим только то, что в закрепе** (`python bin/hs.py refs list`).
+
+| имя в закрепе | локальный путь | удалённый | состояние |
+|---|---|---|---|
+| `flowguard-spec` | `C:\111\spec` | `mak777uh/flowguard-spec` | чисто, запушено |
+| `lexspec` | `C:\111\lexspec-review` | `mak777uh/lexspec` | чисто |
+| `VecDHT` | `C:\111\VecDHT` | `mak777uh/VecDHT` | **1 неотслеживаемый файл** |
+| `cases` | `C:\111\cases` | `mak777uh/cases` | **9 незапушенных коммитов** |
+| `rocketpool-invariants` | `C:\111\work\rocketpool-invariants` | `mak777uh/rocketpool-invariants` | **4 незапушенных коммита** |
+| `pharos-agent-arena` | `C:\111\pharos-agent-arena` | `mak777uh/pharos-agent-arena` | чисто |
+| `lean-agent-verify` | `C:\111\lean-agent-verify` | `mak777uh/lean-agent-verify` | чисто |
+| `modelproof` | `C:\111\modelproof` | `mak777uh/modelproof` | чисто |
+| `-` (морфогенез) | `C:\111\system\repos\morph` | `mak777uh/-` | **НЕ ТРОГАЕМ** |
+
+### Не переносим: не в закрепе
+
+| путь | почему |
+|---|---|
+| `C:\111\work\nomos` | **не в закрепе**; локальная копия без `.git` |
+| `C:\111\proofs-registry` | **не в закрепе**; локальная копия без `.git` |
+| `C:\111\work\harness` | не в закрепе |
+| `C:\111\work\flowguard` | дубликат `spec`, не в закрепе |
+| `C:\111\work\verified-cells-cairo` | не в закрепе |
+| `C:\111\work\sealed-invoice` | не в закрепе |
+| `C:\111\_vec` | рабочая копия ветки VecDHT, не отдельный репозиторий |
+| `C:\111\projects\*` | чужие клоны (Uniswap, Aave и т.д.), 1,9 ГБ |
 
 ### НЕ трогаем
 
@@ -124,10 +133,9 @@ herness/
 
 ## Что нужно решить владельцу
 
-1. **Подтвердить план** — или выбрать другой вариант.
-2. **Разрешить запушить** 16 коммитов в `cases`, `rocketpool-invariants`, `verified-cells-cairo`.
-3. **Разрешить создать** репозитории `proofs-registry` и `nomos` на GitHub (сейчас их там нет).
-4. **Сказать**, что делать с `projects/*` — чужими клонами на 1,9 ГБ.
+1. **Подтвердить план** — переносим только восемь репозиториев из закрепа.
+2. **Разрешить запушить** 13 коммитов: `cases` (9), `rocketpool-invariants` (4).
+3. **Сказать**, что делать с `_vec` — там ветка VecDHT с одним неотслеживаемым файлом.
 
 ## Чего я НЕ буду делать без разрешения
 
