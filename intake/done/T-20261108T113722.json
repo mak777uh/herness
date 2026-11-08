@@ -1,0 +1,16 @@
+{
+ "task": "привет",
+ "require_status": "done",
+ "max_steps": 24,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "verdict": "PASS",
+ "answer": "Привет — это репозиторий herness: «не один репозиторий, а сеть атомарных безопасных ячеек» (README.md:3); вопрос в задаче не поставлен, отвечать нечем — BLOCKED не требуется."
+}

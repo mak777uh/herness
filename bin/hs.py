@@ -1358,6 +1358,21 @@ def gate_autonomy(root: Path) -> list[str]:
     return lines or ["check_autonomy.py завершился с ошибкой"]
 
 
+def gate_requirements(root: Path) -> list[str]:
+    """У каждого принятого требования есть инвариант или явное «не проверяется»."""
+    import subprocess
+
+    script = root / "bin" / "gate_requirements.py"
+    if not script.exists():
+        return ["нет bin/gate_requirements.py"]
+    result = subprocess.run([sys.executable, str(script)], capture_output=True, text=True,
+                            encoding="utf-8", cwd=root)
+    if result.returncode == 0:
+        return []
+    return [line.strip(" -") for line in (result.stdout or "").splitlines()
+            if line.strip().startswith("-")][:10] or ["гейт требований не прошёл"]
+
+
 def gate_depths(root: Path) -> list[str]:
     """Карта глубин должна покрывать все решения: каждый ADR упомянут в depths.json."""
     path = root / "depths.json"
@@ -1641,7 +1656,8 @@ def cmd_gates(args) -> int:
                  ("модели", gate_models), ("утверждения-проверка", gate_claims_run),
                  ("самоссылка", gate_selfref), ("журналы", gate_journals),
                  ("автономия", gate_autonomy), ("способности", gate_capabilities),
-                 ("компиляция", gate_compile), ("векторы", gate_vectors)]
+                 ("компиляция", gate_compile), ("векторы", gate_vectors),
+                 ("требования", gate_requirements)]
     circuit_b = [("утверждения", gate_claims), ("ссылки", gate_links), ("аудит", gate_audit),
                  ("процедуры", gate_procs), ("формулировки", gate_wording),
                  ("README", gate_readme_numbers), ("харнессы", gate_harnesses),
