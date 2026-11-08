@@ -31,6 +31,8 @@ window.__ModuleLoader__.load({
       .hsr-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
         overflow:hidden;font-family:inherit;color:var(--dsw-alias-label-primary,#1d1d1f);
         background:var(--dsw-alias-bg-base,transparent)}
+      /* Короткий экран: запас снизу уменьшается, чтобы лента не схлопнулась. */
+      @media (max-height:700px){.hsr-form{padding-bottom:calc(12px + var(--hsr-bottom-gap,24px))}}
       .hsr-head{display:flex;align-items:center;gap:10px;padding:10px 16px;
         border-bottom:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.18));
         flex:0 0 auto}
@@ -52,10 +54,14 @@ window.__ModuleLoader__.load({
       .hsr-PASS{background:rgba(63,185,80,.18);color:#3fb950}
       .hsr-FAIL{background:rgba(248,81,73,.18);color:#f85149}
       .hsr-UNKNOWN{background:rgba(210,153,34,.18);color:#d29922}
-      /* Ввод прибит к низу панели: form — последний flex-элемент,
-         и он не сжимается (flex:0 0 auto). */
+      /* Ввод прибит к низу панели, но с запасом снизу.
+         Замер по скриншоту 08.11.2026: нижние 58 px экрана (y 1021..1078)
+         накрыты сплошной светлой полосой #efefef на всю ширину, и вердикты
+         PASS/FAIL оказывались под ней. Запас отодвигает ввод в видимую зону.
+         Значение задаётся переменной --hsr-bottom-gap (по умолчанию 64 px). */
       .hsr-form{flex:0 0 auto;display:flex;gap:10px;align-items:flex-end;
         padding:12px 16px 16px;
+        padding-bottom:calc(16px + var(--hsr-bottom-gap,64px));
         border-top:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.18));
         background:var(--dsw-alias-bg-primary,transparent)}
       .hsr-input{flex:1;resize:none;min-height:46px;max-height:160px;padding:12px 14px;
@@ -87,11 +93,45 @@ window.__ModuleLoader__.load({
       return { ...row, answer, verdict };
     }
 
+    /**
+     * Сколько пикселей внизу окна накрыто посторонним слоем.
+     *
+     * Замер 08.11.2026 по скриншоту: нижние 58 px занимает светлая полоса на
+     * всю ширину, и поле ввода оказывалось под ней. Жёсткое число — это
+     * догадка о чужом экране; здесь мерим сами: сравниваем высоту окна с
+     * нижней границей панели. Если панель кончается выше окна — разница и
+     * есть перекрытие.
+     */
+    function measureBottomGap(el) {
+      if (!el || typeof el.getBoundingClientRect !== "function") return 0;
+      const rect = el.getBoundingClientRect();
+      const viewport = window.innerHeight || document.documentElement.clientHeight || 0;
+      if (!viewport || !rect.height) return 0;
+      const gap = Math.round(viewport - rect.bottom);
+      // Разумный предел: больше 200 px — это уже не «полоса», а ошибка замера.
+      return gap > 0 && gap <= 200 ? gap : 0;
+    }
+
     function Room() {
       const [messages, setMessages] = useState([]);
       const [busy, setBusy] = useState(false);
       const [text, setText] = useState("");
+      const [bottomGap, setBottomGap] = useState(0);
       const chatRef = useRef(null);
+      const wrapRef = useRef(null);
+
+      // Запас снизу меряется по фактическому положению панели и
+      // пересчитывается при изменении размера окна.
+      useEffect(() => {
+        const apply = () => setBottomGap(measureBottomGap(wrapRef.current));
+        apply();
+        const timer = window.setTimeout(apply, 250);
+        window.addEventListener("resize", apply);
+        return () => {
+          window.clearTimeout(timer);
+          window.removeEventListener("resize", apply);
+        };
+      }, []);
 
       useEffect(() => {
         fetch(API + "/history")
@@ -138,7 +178,11 @@ window.__ModuleLoader__.load({
         }
       }, [text, busy]);
 
-      return h("div", { className: "hsr-wrap" }, [
+      return h("div", {
+        className: "hsr-wrap",
+        ref: wrapRef,
+        style: bottomGap ? { "--hsr-bottom-gap": bottomGap + "px" } : undefined,
+      }, [
         h("div", { className: "hsr-head", key: "head" }, [
           h("h2", { className: "hsr-title", key: "t" }, "Комната herness"),
           h("span", { className: "hsr-sub", key: "s" },
