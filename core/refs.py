@@ -132,6 +132,16 @@ def sync(only: list[str] | None = None) -> dict:
                     continue
                 stats["bytes"] += _save_doc(src_id, doc, body)
                 stats["fetched"] += 1
+        elif src.get("kind") == "local":
+            # Локальный источник: файл уже в репозитории, копируем в кэш справочника,
+            # чтобы поиск искал по нему так же, как по внешним.
+            path = ROOT / src.get("path", "")
+            if not path.exists():
+                stats["missing"] += 1
+                continue
+            body = path.read_bytes()
+            stats["bytes"] += _save_doc(src_id, path.name, body)
+            stats["fetched"] += 1
         elif src.get("kind") == "url":
             try:
                 body = _fetch(src["url"], timeout=20)

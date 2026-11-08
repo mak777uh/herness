@@ -104,7 +104,7 @@ const HISTORY_BRIEF: usize = 120;
 /// Сколько знаков последнего результата показывается целиком.
 const LAST_RESULT: usize = 4000;
 /// Сколько шагов истории держим в подсказке.
-const HISTORY_MAX: usize = 12;
+const HISTORY_MAX: usize = 6;
 
 fn brief(call: &str, text: &str, ok: bool) -> String {
     let head = text.lines().next().unwrap_or_default().trim();
