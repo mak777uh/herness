@@ -1,0 +1,19 @@
+=== 1. crates.io доступен?
+crates.io: 000
+static.crates.io: 000
+github.com: 000
+=== 2. cargo install kani-verifier
+    Updating crates.io index
+warning: spurious network error (3 tries remaining): [28] Timeout was reached (Failed to connect to index.crates.io port 443 after 30028 ms: Timeout was reached)
+warning: spurious network error (2 tries remaining): [28] Timeout was reached (Failed to connect to index.crates.io port 443 after 30030 ms: Timeout was reached)
+warning: spurious network error (1 tries remaining): [28] Timeout was reached (Failed to connect to index.crates.io port 443 after 30031 ms: Timeout was reached)
+error: download of config.json failed
+
+Caused by:
+  failed to download from `https://index.crates.io/config.json`
+
+Caused by:
+  [28] Timeout was reached (Failed to connect to index.crates.io port 443 after 30030 ms: Timeout was reached)
+install: 101
+/mnt/c/111/herness/work/kani2.sh: line 16: kani: command not found
+DONE

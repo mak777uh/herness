@@ -1,0 +1,20 @@
+
+--- number_word_never_panics
+         Verification will fail if one or more of these constructs is reachable.
+number_word_never_panics: 124
+--- normalize_token_never_panics
+         Verification will fail if one or more of these constructs is reachable.
+normalize_token_never_panics: 124
+--- resource_matches_never_panics
+         Verification will fail if one or more of these constructs is reachable.
+VERIFICATION:- SUCCESSFUL
+Verification Time: 49.355556s
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+resource_matches_never_panics: 0
+--- deny_outside_prefix
+         Verification will fail if one or more of these constructs is reachable.
+VERIFICATION:- SUCCESSFUL
+Verification Time: 26.203644s
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+deny_outside_prefix: 0
+

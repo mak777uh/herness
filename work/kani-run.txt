@@ -1,0 +1,23 @@
+=== 1. Что проверяем
+=== 2. Kani
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+/opt/kani/kani-0.68.0/bin/kani-compiler: error while loading shared libraries: librustc_driver-59857489213b2a36.so: cannot open shared object file: No such file or directory
+error: /opt/kani/kani-0.68.0/bin/kani-compiler exited with status exit status: 127
+number_word: 1
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+/opt/kani/kani-0.68.0/bin/kani-compiler: error while loading shared libraries: librustc_driver-59857489213b2a36.so: cannot open shared object file: No such file or directory
+error: /opt/kani/kani-0.68.0/bin/kani-compiler exited with status exit status: 127
+normalize_token: 1
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+/opt/kani/kani-0.68.0/bin/kani-compiler: error while loading shared libraries: librustc_driver-59857489213b2a36.so: cannot open shared object file: No such file or directory
+error: /opt/kani/kani-0.68.0/bin/kani-compiler exited with status exit status: 127
+resource_matches: 1
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+/opt/kani/kani-0.68.0/bin/kani-compiler: error while loading shared libraries: librustc_driver-59857489213b2a36.so: cannot open shared object file: No such file or directory
+error: /opt/kani/kani-0.68.0/bin/kani-compiler exited with status exit status: 127
+deny_outside_prefix: 1
+DONE

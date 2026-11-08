@@ -1,0 +1,11 @@
+=== 1. Что скачано
+-rwxrwxrwx 1 root root 175M Nov  8 05:49 /mnt/c/111/herness/work/rust-1.85.0-x86_64-unknown-linux-gnu.tar.xz
+=== 2. Распаковка в ~/.rustup/toolchains
+распаковываю /mnt/c/111/herness/work/rust-1.85.0-x86_64-unknown-linux-gnu.tar.xz
+tar: 0
+/root/.rustup/toolchains/rust-1.85.0-x86_64-unknown-linux-gnu
+=== 3. Проверка
+тулчейн: /root/.rustup/toolchains/rust-1.85.0-x86_64-unknown-linux-gnu
+/mnt/c/111/herness/work/wsl_rust4.sh: line 27: /root/.rustup/toolchains/rust-1.85.0-x86_64-unknown-linux-gnu/bin/rustc: No such file or directory
+/mnt/c/111/herness/work/wsl_rust4.sh: line 28: /root/.rustup/toolchains/rust-1.85.0-x86_64-unknown-linux-gnu/bin/cargo: No such file or directory
+DONE

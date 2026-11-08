@@ -1,0 +1,14 @@
+{
+ "task": "Найди C-0276 в CLAIMS.md и назови его тип. Ответь одним словом.",
+ "require_status": "done",
+ "max_steps": 8,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ]
+}

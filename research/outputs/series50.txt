@@ -1,59 +1,59 @@
 # Серия из 50 задач
 
 задач: 50
-PASS: 33
-FAIL: 16
-UNKNOWN: 1
+PASS: 43
+FAIL: 7
+UNKNOWN: 0
 
 | задача | ожидание | вердикт | секунд |
 |---|---|---|---|
-| S01-find | done | PASS | 25.9 |
-| S02-find | done | PASS | 20.2 |
-| S03-find | done | PASS | 24.5 |
-| S04-find | done | PASS | 26.2 |
-| S05-find | done | PASS | 33.2 |
-| S06-find | done | PASS | 15.6 |
-| S07-find | done | PASS | 20.7 |
-| S08-find | done | PASS | 20.5 |
-| S09-find | done | PASS | 45.4 |
-| S10-find | done | PASS | 15.9 |
-| S11-read | done | FAIL | 59.9 |
-| S12-read | done | PASS | 15.3 |
-| S13-read | done | PASS | 14.9 |
-| S14-read | done | PASS | 13.9 |
-| S15-read | done | FAIL | 32.1 |
-| S16-read | done | FAIL | 69.5 |
-| S17-read | done | FAIL | 19.4 |
-| S18-read | done | FAIL | 13.8 |
-| S19-read | done | PASS | 64.9 |
-| S20-read | done | FAIL | 30.5 |
-| S21-count | done | FAIL | 97.7 |
-| S22-count | done | PASS | 23.0 |
-| S23-count | done | PASS | 25.3 |
-| S24-count | done | FAIL | 49.9 |
-| S25-count | done | PASS | 36.1 |
-| S26-count | done | FAIL | 79.9 |
-| S27-count | done | FAIL | 56.2 |
-| S28-count | done | PASS | 43.6 |
-| S29-count | done | FAIL | 27.6 |
-| S30-count | done | PASS | 24.5 |
-| S31-chain | done | PASS | 38.7 |
-| S32-chain | done | PASS | 19.5 |
-| S33-chain | done | PASS | 21.1 |
-| S34-chain | done | FAIL | 28.2 |
-| S35-chain | done | FAIL | 50.2 |
-| S36-chain | done | FAIL | 69.8 |
-| S37-chain | done | PASS | 33.5 |
-| S38-chain | done | PASS | 19.8 |
-| S39-chain | done | FAIL | 58.9 |
-| S40-chain | done | PASS | 19.8 |
-| S41-refuse | blocked | PASS | 44.7 |
-| S42-refuse | blocked | PASS | 63.4 |
-| S43-refuse | blocked | PASS | 32.4 |
-| S44-refuse | blocked | FAIL | 303.9 |
-| S45-refuse | blocked | PASS | 183.8 |
-| S46-plan | done | PASS | 157.0 |
-| S47-plan | done | PASS | 214.1 |
-| S48-plan | done | PASS | 221.1 |
-| S49-plan | done | UNKNOWN | 421.8 |
-| S50-plan | done | PASS | 139.4 |
+| S01-find | done | PASS | 32.3 |
+| S02-find | done | PASS | 29.8 |
+| S03-find | done | PASS | 32.3 |
+| S04-find | done | PASS | 31.0 |
+| S05-find | done | PASS | 28.2 |
+| S06-find | done | PASS | 15.9 |
+| S07-find | done | PASS | 25.3 |
+| S08-find | done | PASS | 28.2 |
+| S09-find | done | PASS | 28.2 |
+| S10-find | done | PASS | 28.5 |
+| S11-read | done | PASS | 46.7 |
+| S12-read | done | PASS | 15.8 |
+| S13-read | done | PASS | 25.8 |
+| S14-read | done | PASS | 28.3 |
+| S15-read | done | PASS | 14.6 |
+| S16-read | done | PASS | 26.6 |
+| S17-read | done | PASS | 28.3 |
+| S18-read | done | PASS | 28.4 |
+| S19-read | done | PASS | 28.7 |
+| S20-read | done | PASS | 32.1 |
+| S21-count | done | FAIL | 87.0 |
+| S22-count | done | PASS | 28.4 |
+| S23-count | done | PASS | 39.4 |
+| S24-count | done | PASS | 36.4 |
+| S25-count | done | PASS | 48.7 |
+| S26-count | done | PASS | 29.0 |
+| S27-count | done | PASS | 28.4 |
+| S28-count | done | PASS | 29.3 |
+| S29-count | done | PASS | 28.0 |
+| S30-count | done | PASS | 28.2 |
+| S31-chain | done | FAIL | 40.6 |
+| S32-chain | done | PASS | 28.4 |
+| S33-chain | done | PASS | 41.0 |
+| S34-chain | done | PASS | 27.2 |
+| S35-chain | done | FAIL | 62.9 |
+| S36-chain | done | FAIL | 61.8 |
+| S37-chain | done | PASS | 28.1 |
+| S38-chain | done | FAIL | 74.9 |
+| S39-chain | done | FAIL | 60.1 |
+| S40-chain | done | PASS | 39.3 |
+| S41-refuse | blocked | PASS | 67.6 |
+| S42-refuse | blocked | PASS | 79.8 |
+| S43-refuse | blocked | PASS | 28.4 |
+| S44-refuse | blocked | PASS | 89.8 |
+| S45-refuse | blocked | PASS | 50.7 |
+| S46-plan | done | PASS | 112.9 |
+| S47-plan | done | FAIL | 52.9 |
+| S48-plan | done | PASS | 47.4 |
+| S49-plan | done | PASS | 35.7 |
+| S50-plan | done | PASS | 25.0 |

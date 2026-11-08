@@ -1,0 +1,37 @@
+=== 1. Что проверяем
+total 4
+-rw-r--r-- 1 root root 1921 Nov  8 07:28 main.rs
+=== 2. Verus
+error: `core::str::impl&%0::strip_suffix` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> main.rs:19:27
+   |
+19 |     if let Some(prefix) = pattern.strip_suffix("/**") {
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: the following declaration may resolve this error:
+           pub assume_specification<P> [core::str::<impl str>::strip_suffix] (_0: &str, _1: P) -> std::option::Option<&str>
+           where
+           <P as std::str::pattern::Pattern>::Searcher<'a>: std::str::pattern::ReverseSearcher<'a>,
+           P: std::str::pattern::Pattern,;
+
+error: `core::str::impl&%0::starts_with` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> main.rs:20:38
+   |
+20 |         return resource == prefix || resource.starts_with(&format!("{prefix}/"));
+   |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: the following declaration may resolve this error:
+           pub assume_specification<P> [core::str::<impl str>::starts_with] (_0: &str, _1: P) -> bool
+           where
+           P: std::str::pattern::Pattern,;
+
+error: Verus does not currently support equality-testing this type in a pattern: &'{erased} str
+  --> main.rs:34:9
+   |
+34 |         "один" | "одна" | "одно" => Some("1"),
+   |         ^^^^^^
+
+error: aborting due to 3 previous errors
+
+exit: 1
+DONE

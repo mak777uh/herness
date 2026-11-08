@@ -1,0 +1,95 @@
+=== 1. Verus
+note: while loop: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+  --> main.rs:79:5
+   |
+79 |     while i < p.len()
+   |     ^^^^^^^^^^^^^^^^^
+
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+ --> main.rs:7:1
+  |
+7 | pub fn resource_matches(pattern: &str, resource: &str) -> (r: bool)
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: postcondition not satisfied
+  --> main.rs:11:9
+   |
+11 | /         (forall|i: int| 0 <= i < pattern@.len() ==> pattern@[i] != '*')
+12 | |             ==> (r == (pattern@ =~= resource@)),
+   | |_______________________________________________^ failed this postcondition
+...
+86 |               return false;
+   |               ------------ at this exit
+
+error: postcondition not satisfied
+  --> main.rs:11:9
+   |
+11 | /         (forall|i: int| 0 <= i < pattern@.len() ==> pattern@[i] != '*')
+12 | |             ==> (r == (pattern@ =~= resource@)),
+   | |_______________________________________________^ failed this postcondition
+...
+90 |       true
+   |       ---- at the end of the function body
+
+error: postcondition not satisfied
+  --> main.rs:11:9
+   |
+11 | /         (forall|i: int| 0 <= i < pattern@.len() ==> pattern@[i] != '*')
+12 | |             ==> (r == (pattern@ =~= resource@)),
+   | |_______________________________________________^ failed this postcondition
+...
+68 |                   return true;
+   |                   ----------- at this exit
+
+error: postcondition not satisfied
+  --> main.rs:11:9
+   |
+11 | /         (forall|i: int| 0 <= i < pattern@.len() ==> pattern@[i] != '*')
+12 | |             ==> (r == (pattern@ =~= resource@)),
+   | |_______________________________________________^ failed this postcondition
+...
+48 |                   return true;
+   |                   ----------- at this exit
+
+error: postcondition not satisfied
+  --> main.rs:11:9
+   |
+11 | /         (forall|i: int| 0 <= i < pattern@.len() ==> pattern@[i] != '*')
+12 | |             ==> (r == (pattern@ =~= resource@)),
+   | |_______________________________________________^ failed this postcondition
+...
+21 |           return true;
+   |           ----------- at this exit
+
+error: postcondition not satisfied
+  --> main.rs:14:9
+   |
+14 |         (pattern@ =~= "**"@) ==> r,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+86 |             return false;
+   |             ------------ at this exit
+
+error: postcondition not satisfied
+  --> main.rs:14:9
+   |
+14 |         (pattern@ =~= "**"@) ==> r,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+76 |         return false;
+   |         ------------ at this exit
+
+error: postcondition not satisfied
+  --> main.rs:14:9
+   |
+14 |         (pattern@ =~= "**"@) ==> r,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+71 |         return false;
+   |         ------------ at this exit
+
+verification results:: 3 verified, 2 errors
+error: aborting due to 8 previous errors
+
+exit: 1
+DONE

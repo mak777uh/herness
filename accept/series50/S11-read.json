@@ -1,5 +1,5 @@
 {
- "task": "Прочитай файл CLAIMS.md и назови номер последнего утверждения. Ответь одним словом.",
+ "task": "Прочитай CLAIMS.md и назови номер последнего утверждения. Ответь одним словом.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,
@@ -7,8 +7,8 @@
   "write"
  ],
  "tools": [
-  "read",
   "search",
-  "list"
+  "list",
+  "read"
  ]
 }

@@ -1,5 +1,5 @@
 {
- "task": "Сколько записей в docs/eliminations.md? Ответь числом.",
+ "task": "Сколько принципов в docs/PRINCIPLES.md? Ответь числом.",
  "require_status": "done",
  "max_steps": 20,
  "max_allowance": 0.1,
@@ -7,8 +7,8 @@
   "write"
  ],
  "tools": [
-  "read",
   "search",
-  "list"
+  "list",
+  "read"
  ]
 }

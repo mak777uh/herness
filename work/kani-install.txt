@@ -1,0 +1,16 @@
+=== 1. Rust
+ставлю rust через rustup
+curl: (28) Failed to connect to sh.rustup.rs port 443 after 133494 ms: Could not connect to server
+curl: 28
+sh: 0: cannot open /tmp/rustup.sh: No such file
+rustup: 2
+/mnt/c/111/herness/work/kani_install.sh: line 17: /root/.cargo/bin/cargo: No such file or directory
+=== 2. Kani
+/mnt/c/111/herness/work/kani_install.sh: line 24: cargo: command not found
+install: 127
+/mnt/c/111/herness/work/kani_install.sh: line 27: kani: command not found
+=== 3. Kani setup
+/mnt/c/111/herness/work/kani_install.sh: line 30: kani: command not found
+setup: 127
+/mnt/c/111/herness/work/kani_install.sh: line 32: kani: command not found
+DONE

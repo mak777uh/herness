@@ -1,0 +1,11 @@
+=== 1. Версия
+Kani Rust Verifier 0.68.0 (standalone)
+версия: 0
+=== 2. CBMC
+6.11.0 (cbmc-6.11.0)
+=== 3. Нужен rustc той же версии
+nightly-2026-08-21-x86_64-unknown-linux-gnurustc 1.100.0-nightly (8925ea358 2026-08-20)
+=== 4. Симлинк в PATH
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+DONE

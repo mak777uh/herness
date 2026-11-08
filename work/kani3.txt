@@ -1,0 +1,10 @@
+=== 1. Распаковка
+tar: 0
+kani-0.68.0
+=== 2. Что внутри
+/opt/kani
+/opt/kani/kani-0.68.0
+/opt/kani/kani-0.68.0/bin/cbmc
+=== 3. Проверка
+kani: 
+DONE

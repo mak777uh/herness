@@ -1,0 +1,28 @@
+=== 1. Verus
+error: `core::str::impl&%0::starts_with` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> main.rs:13:5
+   |
+13 |     s.starts_with(prefix)
+   |     ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: the following declaration may resolve this error:
+           pub assume_specification<P> [core::str::<impl str>::starts_with] (_0: &str, _1: P) -> bool
+           where
+           P: std::str::pattern::Pattern,;
+
+error: `core::str::impl&%0::strip_suffix` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> main.rs:25:27
+   |
+25 |     if let Some(prefix) = pattern.strip_suffix("/**") {
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: the following declaration may resolve this error:
+           pub assume_specification<P> [core::str::<impl str>::strip_suffix] (_0: &str, _1: P) -> std::option::Option<&str>
+           where
+           <P as std::str::pattern::Pattern>::Searcher<'a>: std::str::pattern::ReverseSearcher<'a>,
+           P: std::str::pattern::Pattern,;
+
+error: aborting due to 2 previous errors
+
+exit: 1
+DONE

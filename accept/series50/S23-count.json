@@ -1,5 +1,5 @@
 {
- "task": "Сколько отказов записано в lab/failures? Ответь числом.",
+ "task": "Сколько отказов записано в failures? Ответь числом.",
  "require_status": "done",
  "max_steps": 20,
  "max_allowance": 0.1,

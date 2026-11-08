@@ -1,0 +1,7 @@
+=== 1. Распаковка
+/mnt/c/111/herness/work/verus_install.sh: line 11: unzip: command not found
+unzip: 127
+=== 2. Что внутри
+=== 3. Проверка
+verus: 
+DONE

@@ -1,0 +1,20 @@
+# Протокол агента: формальная проверка
+
+## Модель: собрана
+
+## Аксиомы
+
+- `done_not_first`: propext
+- `done_not_allowed_at_start`: propext
+- `no_step_after_finish`: propext
+- `can_finish_from_working`: propext
+- `reachable_from_start`: propext
+
+## Отрицательный контроль: отвергнут
+   error: Proofs/SessionNegative.lean:10:53: Tactic `decide` proved that the proposition
+   error: Proofs/SessionNegative.lean:13:70: unsolved goals
+   error: build failed
+
+## Итог: пять теорем доказаны, ложь отвергнута
+
+Граница: доказан протокол, а не то, что содержимое DONE отвечает задаче.

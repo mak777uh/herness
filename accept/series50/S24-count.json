@@ -1,5 +1,5 @@
 {
- "task": "Сколько решений в lab/adoptions.json? Ответь числом.",
+ "task": "Сколько строк в README.md? Ответь числом.",
  "require_status": "done",
  "max_steps": 20,
  "max_allowance": 0.1,
@@ -7,8 +7,8 @@
   "write"
  ],
  "tools": [
-  "read",
   "search",
-  "list"
+  "list",
+  "read"
  ]
 }

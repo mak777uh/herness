@@ -1,5 +1,5 @@
 {
- "task": "Сколько файлов в каталоге docs? Ответь числом.",
+ "task": "Сколько шагов в docs/NEXT-PLAN.md? Ответь числом.",
  "require_status": "done",
  "max_steps": 20,
  "max_allowance": 0.1,
@@ -7,8 +7,8 @@
   "write"
  ],
  "tools": [
-  "list",
   "search",
+  "list",
   "read"
  ]
 }

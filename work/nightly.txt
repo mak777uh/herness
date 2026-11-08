@@ -1,0 +1,27 @@
+=== 1. Распаковка
+tar: 0
+rust-nightly-x86_64-unknown-linux-gnu
+=== 2. install.sh
+src: /opt/rust-nightly/rust-nightly-x86_64-unknown-linux-gnu
+install: creating uninstall script at /opt/rust-nightly/tc/lib/rustlib/uninstall.sh
+install: installing component 'rustc'
+install: installing component 'rust-std-x86_64-unknown-linux-gnu'
+install: installing component 'rust-docs'
+install: installing component 'rust-docs-json-preview'
+install: installing component 'cargo'
+install: installing component 'rustfmt-preview'
+install: installing component 'rust-analyzer-preview'
+install: installing component 'llvm-tools-preview'
+install: installing component 'clippy-preview'
+install: installing component 'miri-preview'
+install: installing component 'rust-analysis-x86_64-unknown-linux-gnu'
+install: installing component 'rustc-codegen-cranelift-preview'
+install: installing component 'llvm-bitcode-linker-preview'
+
+    rust installed.
+
+install: 0
+=== 3. Проверка
+rustc 1.100.0-nightly (8925ea358 2026-08-20)
+cargo 1.100.0-nightly (514c56dd7 2026-08-19)
+DONE

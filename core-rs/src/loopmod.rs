@@ -102,7 +102,7 @@ pub const KNOWN_TOOLS: [&str; 6] = ["seal", "netprobe", "search", "list", "read"
 /// Сколько знаков из результата попадает в строку истории.
 const HISTORY_BRIEF: usize = 120;
 /// Сколько знаков последнего результата показывается целиком.
-const LAST_RESULT: usize = 4000;
+const LAST_RESULT: usize = 12000;
 /// Сколько шагов истории держим в подсказке.
 const HISTORY_MAX: usize = 6;
 
@@ -131,7 +131,13 @@ fn compose_prompt(task: &str, history: &[String], last: Option<&str>) -> String 
     }
     if let Some(text) = last {
         out.push_str("\nПоследний результат:\n");
-        let cut: String = text.chars().take(LAST_RESULT).collect();
+        let total_chars = text.chars().count();
+    let cut: String = if total_chars > LAST_RESULT {
+        let head: String = text.chars().take(LAST_RESULT).collect();
+        format!("{head}\n… (обрезано: {total_chars} символов, показано {LAST_RESULT})")
+    } else {
+        text.to_string()
+    };
         let truncated = cut.chars().count() < text.chars().count();
         out.push_str(&cut);
         if truncated {
@@ -350,7 +356,7 @@ pub const MAX_FILES: usize = 500;
 pub const MAX_DEPTH: usize = 4;
 pub const MAX_FILE: u64 = 1024 * 1024;
 pub const MAX_MATCHES: usize = 40;
-pub const MAX_READ: usize = 8 * 1024;
+pub const MAX_READ: usize = 24 * 1024;
 
 fn skip_dir(name: &str) -> bool {
     matches!(name, ".git" | "target" | "node_modules" | "__pycache__" | ".venv")
@@ -770,6 +776,13 @@ fn tool_read_in(arg: &str, workspace: &Path) -> Result<String, String> {
         out.push_str(&format!(
             "… (обрезано; всего {total} строк, продолжи: read {name} {next})"
         ));
+    } else {
+        // Файл прочитан целиком: сказать это явно и запретить искать то же самое.
+        // Найдено прогоном S20: файл прочитан, потом восемь шагов поиска того же файла.
+        // Это не подсказка ответа, а граница: повторный поиск прочитанного — трата шагов.
+        out.push_str(&format!(
+            "(файл прочитан целиком, {total} строк; повторно искать его не нужно — ответ уже здесь)"
+        ));
     }
     Ok(out)
 }
@@ -905,15 +918,77 @@ fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<Strin
     }
 }
 
+/// Число словом → цифра. Нужно для опоры: в тексте «Пять разных механизмов»,
+/// а агент отвечает «5». Без этого верный ответ получал unverified (найдено прогоном S20).
+/// Число словом → цифра. Сравнение по длине и байтам, без match по строкам:
+/// так функция остаётся верифицируемой (Kani упирался в to_lowercase, Verus — в match).
+fn number_word(token: &str) -> Option<&'static str> {
+    // Таблица: слово в нижнем регистре, длина в байтах, цифра.
+    // Длина проверяется первой: она отсекает почти всё без сравнения байтов.
+    const TABLE: &[(&str, usize, &str)] = &[
+        ("один", 4, "1"), ("одна", 4, "1"), ("одно", 4, "1"),
+        ("два", 3, "2"), ("две", 3, "2"),
+        ("три", 3, "3"),
+        ("четыре", 6, "4"),
+        ("пять", 4, "5"),
+        ("шесть", 5, "6"),
+        ("семь", 4, "7"),
+        ("восемь", 6, "8"),
+        ("девять", 6, "9"),
+        ("десять", 6, "10"),
+        ("одиннадцать", 11, "11"),
+        ("двенадцать", 10, "12"),
+        ("тринадцать", 10, "13"),
+        ("четырнадцать", 12, "14"),
+        ("пятнадцать", 10, "15"),
+        ("двадцать", 8, "20"),
+        ("тридцать", 8, "30"),
+        ("сорок", 5, "40"),
+        ("пятьдесят", 9, "50"),
+        ("сто", 3, "100"),
+    ];
+    let bytes = token.as_bytes();
+    let len = bytes.len();
+    for (word, word_len, digit) in TABLE {
+        if len != *word_len {
+            continue;
+        }
+        // Сравнение точное, байт за байтом: to_ascii_lowercase не поддержан Verus,
+        // а регистр уже приведён вызывающим кодом (normalize_token).
+        let matched = word.as_bytes().iter().zip(bytes.iter()).all(|(a, b)| a == b);
+        if matched {
+            return Some(digit);
+        }
+    }
+    None
+}
+
+/// Привести токен к сравнимому виду: число словом → цифра, иначе как есть.
+fn normalize_token(token: &str) -> String {
+    // number_word сравнивает байты точно (Verus не умеет to_ascii_lowercase),
+    // поэтому регистр приводим здесь, до вызова.
+    let lower = token.to_lowercase();
+    match number_word(&lower) {
+        Some(digit) => digit.to_string(),
+        None => token.to_string(),
+    }
+}
+
 /// Опора утверждения: минимальная механическая проверка «сказанное взялось из журнала».
 ///
 /// Что это ловит: модель закончила работу, ничего не выполнив, или придумала путь/число, которого
 /// инструменты не возвращали. Что это НЕ делает: не проверяет истинность утверждения — только то,
 /// что в нём есть хотя бы один элемент, действительно пришедший из результата инструмента.
-pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
+fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
     // Опора должна быть «именем», а не общим словом: иначе проверку удовлетворяет «реестр»
     // или «строка», которые есть в любом отчёте. Требуем цифру или разделитель пути/имени.
     let looks_specific = |token: &str| -> bool {
+        // Число словом — конкретный токен, а не общее слово: «Пять» в тексте и «5» в ответе
+        // это одна опора. Без этой ветки «Пять» отбрасывалось, и верный ответ получал
+        // unverified (найдено прогоном S20).
+        if number_word(token).is_some() {
+            return true;
+        }
         // Порог 3, а не 4: имена файлов вида p01/p11 — три знака, и правильный ответ с ними
         token.chars().count() >= 3
             && (token.chars().any(|c| c.is_ascii_digit())
@@ -947,8 +1022,10 @@ pub fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String>
         None => return None,
     };
     let haystack: Vec<String> = tokens(last_result);
+    let haystack_norm: Vec<String> = haystack.iter().map(|t| normalize_token(t)).collect();
     for token in tokens(final_text) {
-        if haystack.contains(&token) {
+        let normalized = normalize_token(&token);
+        if haystack.contains(&token) || haystack_norm.contains(&normalized) {
             return Some(token);
         }
     }
@@ -1320,6 +1397,16 @@ fn run_task_from(
                 break;
             }
             Step::Done { text } => {
+                // Протокол (доказан в Lean, bin/session_types.py): DONE не может быть первым
+                // шагом — нечего завершать. Без TOOL опоры не будет, и «готово» окажется пустым.
+                if calls == 0 {
+                    record(&mut journal, &mut events, "step/error",
+                           "DONE первым шагом: нечего завершать, сначала TOOL".to_string())?;
+                    status = "bad-step";
+                    last = Some("Ты ещё ничего не сделал. Сначала TOOL, потом DONE.".to_string());
+                    prompt = compose_prompt(task, &history, last.as_deref());
+                    continue;
+                }
                 // Опора проверяется до закрытия прогона: утверждение — часть результата, а не
                 // событие после него. Иначе порядок «… → run/end» перестаёт быть последним.
                 // Свидетельства продолжаются через обрыв: результаты, полученные до падения,
@@ -1716,7 +1803,8 @@ mod tests {
         // Длинный результат обрезается, и это сказано словами, а не молча.
         let long = "я".repeat(LAST_RESULT + 10);
         let prompt = compose_prompt("t", &[], Some(&long));
-        assert!(prompt.contains("… (обрезано)"), "обрезка не отмечена");
+        assert!(prompt.contains("обрезано:"), "обрезка не отмечена");
+        assert!(prompt.contains(&format!("показано {LAST_RESULT}")), "не сказано, сколько показано");
         // История не растёт беспредельно: старое выпадает.
         let many: Vec<String> = (0..40).map(|i| format!("шаг {i}")).collect();
         let prompt = compose_prompt("t", &many, None);

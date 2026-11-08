@@ -1,0 +1,4 @@
+=== 1. Verus
+verification results:: 2 verified, 0 errors
+exit: 0
+DONE

@@ -1,0 +1,7 @@
+=== 1. Проверка
+[31mverus: required rust toolchain 1.99.1-x86_64-unknown-linux-gnu not found[0m
+[34mrun the following command (in a bash-compatible shell) to install the necessary toolchain:[0m
+  [37mrustup install 1.99.1-x86_64-unknown-linux-gnu[0m
+/opt/rustup-shim/bin/rustup: line 8: /opt/rust-1.99/tc/bin/1.99.1-x86_64-unknown-linux-gnu: No such file or directory
+версия: 127
+DONE

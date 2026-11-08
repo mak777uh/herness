@@ -1,5 +1,5 @@
 {
- "task": "Прочитай файл docs/VERIFICATION-SPEC.md и назови число теорем. Ответь числом.",
+ "task": "Прочитай docs/VISION-0001-harness-as-cell.md и назови, сколько частей в таблице. Ответь числом.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,
@@ -7,8 +7,8 @@
   "write"
  ],
  "tools": [
-  "read",
   "search",
-  "list"
+  "list",
+  "read"
  ]
 }

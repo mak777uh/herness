@@ -1,0 +1,6 @@
+verus: required rust toolchain 
+rustup install 
+Ycurl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain 
+VERUS_USE_RUSTUP
+__VERUS_DRIVER_VIA_CARGO__executable in argscould not determine the directory containing the verus executablerust_verifyrustuptoolchain
+Thaiverus: rustup not found, or not executableverus needs a rustup installationrun the following command (in a bash-compatible shell) to install rustup:or visit https://rustup.rs/ for more informationrun the following command (in a bash-compatible shell) to install the necessary toolchain:run--VSTD_KINDVERUS_Z3_PATHworking directory invalidVERUS_CVC5_PATH./cvc5.record-history--emit=dep-info,linkRerunning verus to create zip archive (verus outputs are blocked)

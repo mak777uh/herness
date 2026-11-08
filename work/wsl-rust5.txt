@@ -1,0 +1,46 @@
+=== 1. Что внутри
+COPYRIGHT
+LICENSE-APACHE
+LICENSE-MIT
+README.md
+builder-config
+cargo
+clippy-preview
+components
+git-commit-hash
+git-commit-info
+install.sh
+llvm-bitcode-linker-preview
+llvm-tools-preview
+rls-preview
+rust-analysis-x86_64-unknown-linux-gnu
+rust-analyzer-preview
+rust-docs
+rust-docs-json-preview
+rust-installer-version
+rust-std-x86_64-unknown-linux-gnu
+rustc
+rustfmt-preview
+version
+=== 2. install.sh
+install: creating uninstall script at /root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/uninstall.sh
+install: installing component 'rustc'
+install: installing component 'rust-std-x86_64-unknown-linux-gnu'
+install: installing component 'rust-docs'
+install: installing component 'rust-docs-json-preview'
+install: installing component 'cargo'
+install: installing component 'rustfmt-preview'
+install: installing component 'rls-preview'
+install: installing component 'rust-analyzer-preview'
+install: installing component 'llvm-tools-preview'
+install: installing component 'clippy-preview'
+install: installing component 'rust-analysis-x86_64-unknown-linux-gnu'
+install: installing component 'llvm-bitcode-linker-preview'
+
+    rust installed.
+
+install: 0
+=== 3. Проверка
+rustc 1.85.0 (4d91de4e4 2025-02-17)
+cargo 1.85.0 (d73d2caf9 2024-12-31)
+DONE

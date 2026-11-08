@@ -1,0 +1,88 @@
+# Проверки: что ловит каждая
+
+всего проверок: 47
+
+| файл | в гейтах | что делает |
+|---|---|---|
+| `_browser_probe.py` | нет | Живой поиск через браузер: заходим и забираем текст выдачи. |
+| `_recheck.py` | нет | Перепроверка: 2607.16127 (я записал как несуществующий), 2505.03275, OSF, tamperlog, costwright. |
+| `anchor_probe.py` | да | anchor_probe — может ли агент подделать опору, выбрав удобный токен? |
+| `audit.py` | нет | audit — повторяемый аудит репозитория по принципам, а не разовое эссе. |
+| `audit_facts.py` | нет | audit_facts — сухие факты о репозитории для аудита (без оценок). |
+| `audit_harness.py` | нет | audit_harness — внешний взгляд на репозиторий: есть ли у него подсистемы харнесса. |
+| `bridge_verify.py` | нет | bridge_verify — что мост обязан гарантировать, и проверено ли это. |
+| `check_admin_inbox.py` | нет | check_admin_inbox — находки не теряются и не приходят без формата. |
+| `check_adoptions.py` | да | check_adoptions — механизм нельзя внедрить без источника и отрицательного контроля. |
+| `check_artifacts.py` | да | check_artifacts — сверка утверждения с его свидетельством. |
+| `check_autonomy.py` | да | check_autonomy — гейт правил автономии. |
+| `check_briefs.py` | да | check_briefs — формат внешних брифов и правил владельца. |
+| `check_insights.py` | нет | check_insights — у каждого пункта списка инсайтов есть что, зачем, как проверять и статус. |
+| `claims_audit.py` | да | claims_audit — может ли автор утверждения подтвердить себя собой? |
+| `closure_probe.py` | да | closure_probe — проверка, что код инструмента соответствует объявленному замыканию. |
+| `contract_probe.py` | да | contract_probe — проверка, что контракт инструментов доходит до модели. |
+| `factcheck2_h2.py` | нет | Fact-check v2: утверждение проверяется по ПОЛНЫМ текстам источников, а не по одному фрагменту. |
+| `factcheck_h2.py` | нет | Fact-check ответов H-0002: следует ли утверждение из файла, на который ссылаются. |
+| `gate_audit.py` | да | gate_audit — может ли агент удовлетворить гейт, написав нужное поле? |
+| `gate_probe.py` | да | gate_probe — доказать, что гейт умеет падать. |
+| `kernel_audit.py` | да | kernel_audit — проверка, какие стены в ядре есть, а каких нет. |
+| `lean_check.py` | да | lean_check — формальная проверка политики посредника в Lean. |
+| `link_check.py` | нет | link_check — проверка доступности ссылок из research/DATA-LINKS.md. |
+| `live_probe.py` | нет | live_probe — проверка живого ключа без вывода секрета. |
+| `loop_audit.py` | нет | loop_audit — считать петли по определению DeLoop на уже лежащих журналах. |
+| `models_probe.py` | нет | Список моделей у рабочего провайдера: что доступно без OpenRouter. |
+| `models_probe2.py` | нет | Модели рабочего провайдера: ключ берём из ~/.dsh/.credentials.yaml (значение не печатаем). |
+| `or_probe.py` | нет | Проверка доступа к OpenRouter: без печати ключа. |
+| `or_probe2.py` | нет | Диагностика ответа OpenRouter: код и текст ошибки, без ключа. |
+| `pdf_probe.py` | нет | pdf_probe — что внутри PDF: страниц, текстовый слой или скан. |
+| `plan_check.py` | нет | plan_check — приёмка режима «план»: план без правок. |
+| `policy_probe.py` | нет | policy_probe — отрицательный контроль политики. |
+| `probe_api.py` | нет | probe_api — проверка утверждений о доступе к провайдерам. |
+| `probe_commandcode.py` | нет | probe_commandcode — какие модели commandcode годятся для цикла. |
+| `probe_extension.py` | нет | probe_extension — замер продления бюджета. |
+| `probe_free_models.py` | нет | probe_free_models — какие бесплатные модели годятся для цикла. |
+| `probe_harness.py` | нет | probe_harness — заполняет пустые измерения по фактам из репозитория. |
+| `probe_harness2.py` | нет | probe2 — рекурсивное дерево репозитория вместо корневого листинга. |
+| `probes_inventory.py` | нет | probes_inventory — что ловит каждая проверка и есть ли дубли. |
+| `refusal_codes_probe.py` | да | refusal_codes_probe — отрицательный контроль словаря кодов отказа. |
+| `registry_probe.py` | да | registry_probe — отрицательный контроль реестра (E1 плана P33 + A-0042). |
+| `scope_audit.py` | нет | scope_audit — уходит ли модель из названного каталога. |
+| `security_audit.py` | да | security_audit — полная проверка системы на безопасность и формальную верификацию. |
+| `self_audit.py` | нет | self_audit — факты о репозитории для честного саморазбора. |
+| `verify_answers.py` | нет | verify_answers — машинная проверка смысла ответа для нашего семейства задач. |
+| `verify_claims.py` | да | verify — прогон утверждений их же командами и сверка с ожидаемым значением. |
+| `verify_journal.py` | да | Проверка хеш-цепочки журнала: подмена и удаление событий видны. |
+
+## Кандидаты на удаление (не в гейтах)
+
+Проверок вне гейтов: **30**. Каждая — либо разведка, либо дубль.
+
+- `_browser_probe.py`
+- `_recheck.py`
+- `audit.py`
+- `audit_facts.py`
+- `audit_harness.py`
+- `bridge_verify.py`
+- `check_admin_inbox.py`
+- `check_insights.py`
+- `factcheck2_h2.py`
+- `factcheck_h2.py`
+- `link_check.py`
+- `live_probe.py`
+- `loop_audit.py`
+- `models_probe.py`
+- `models_probe2.py`
+- `or_probe.py`
+- `or_probe2.py`
+- `pdf_probe.py`
+- `plan_check.py`
+- `policy_probe.py`
+- `probe_api.py`
+- `probe_commandcode.py`
+- `probe_extension.py`
+- `probe_free_models.py`
+- `probe_harness.py`
+- `probe_harness2.py`
+- `probes_inventory.py`
+- `scope_audit.py`
+- `self_audit.py`
+- `verify_answers.py`

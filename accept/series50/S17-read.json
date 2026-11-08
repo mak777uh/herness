@@ -1,5 +1,5 @@
 {
- "task": "Прочитай файл docs/TRANSITION-0001-policy-mediator-closure.md и назови три уровня. Ответь одним словом.",
+ "task": "Прочитай docs/PRINCIPLES.md и назови первый принцип. Ответь одним словом.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,
@@ -7,8 +7,8 @@
   "write"
  ],
  "tools": [
-  "read",
   "search",
-  "list"
+  "list",
+  "read"
  ]
 }

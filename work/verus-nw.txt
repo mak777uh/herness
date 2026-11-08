@@ -1,0 +1,27 @@
+=== 1. Verus
+error: `core::num::impl&%6::to_ascii_lowercase` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> main.rs:53:32
+   |
+53 |                 if !(a == b || a.to_ascii_lowercase() == b.to_ascii_lowercase()) {
+   |                                ^^^^^^^^^^^^^^^^^^^^^^    ----------------------
+   |
+   = help: the following declaration may resolve this error:
+           pub assume_specification [core::num::<impl u8>::to_ascii_lowercase] (_0: &u8) -> u8;
+
+error: cannot call function `vstd::array::array_as_slice` with mode exec
+  --> main.rs:11:67
+   |
+11 |       const TABLE: &'static [(&'static str, usize, &'static str)] = &[
+   |  ___________________________________________________________________^
+12 | |         ("один", 4, "1"), ("одна", 4, "1"), ("одно", 4, "1"),
+13 | |         ("два", 3, "2"), ("две", 3, "2"),
+14 | |         ("три", 3, "3"),
+...  |
+31 | |         ("сто", 3, "100"),
+32 | |     ];
+   | |_____^
+
+error: aborting due to 2 previous errors
+
+exit: 1
+DONE

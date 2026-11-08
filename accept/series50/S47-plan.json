@@ -8,7 +8,7 @@
  ],
  "tools": [
   "search",
-  "read",
-  "list"
+  "list",
+  "read"
  ]
 }
