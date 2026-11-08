@@ -94,20 +94,26 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * Сколько пикселей внизу окна накрыто посторонним слоем.
+     * Сколько пикселей внизу окна недоступно.
      *
-     * Замер 08.11.2026 по скриншоту: нижние 58 px занимает светлая полоса на
-     * всю ширину, и поле ввода оказывалось под ней. Жёсткое число — это
-     * догадка о чужом экране; здесь мерим сами: сравниваем высоту окна с
-     * нижней границей панели. Если панель кончается выше окна — разница и
-     * есть перекрытие.
+     * Замер 08.11.2026: экран 1536x864 при масштабе 125 %, рабочая область
+     * 1536x816 — 48 логических px снизу заняты панелью задач. Окно DSH
+     * развёрнуто и достаёт до 823, то есть его низ уходит ПОД панель.
+     * Приложение при этом рисует полную высоту, и последние ~48 px
+     * оказываются вне экрана — вместе с полем ввода.
+     *
+     * Берём visualViewport: он знает реально видимую высоту, а не
+     * запрошенную. Разница и есть недоступная полоса.
      */
     function measureBottomGap(el) {
       if (!el || typeof el.getBoundingClientRect !== "function") return 0;
       const rect = el.getBoundingClientRect();
-      const viewport = window.innerHeight || document.documentElement.clientHeight || 0;
-      if (!viewport || !rect.height) return 0;
-      const gap = Math.round(viewport - rect.bottom);
+      const vv = window.visualViewport;
+      const visibleBottom = vv
+        ? vv.offsetTop + vv.height
+        : (window.innerHeight || document.documentElement.clientHeight || 0);
+      if (!visibleBottom || !rect.height) return 0;
+      const gap = Math.round(visibleBottom - rect.bottom);
       // Разумный предел: больше 200 px — это уже не «полоса», а ошибка замера.
       return gap > 0 && gap <= 200 ? gap : 0;
     }
@@ -127,9 +133,20 @@ window.__ModuleLoader__.load({
         apply();
         const timer = window.setTimeout(apply, 250);
         window.addEventListener("resize", apply);
+        // visualViewport меняется, когда панель задач или масштаб меняют
+        // реально видимую высоту, и resize окна при этом может не прийти.
+        const vv = window.visualViewport;
+        if (vv) {
+          vv.addEventListener("resize", apply);
+          vv.addEventListener("scroll", apply);
+        }
         return () => {
           window.clearTimeout(timer);
           window.removeEventListener("resize", apply);
+          if (vv) {
+            vv.removeEventListener("resize", apply);
+            vv.removeEventListener("scroll", apply);
+          }
         };
       }, []);
 

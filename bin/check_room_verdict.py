@@ -60,7 +60,7 @@ process.exit(bad ? 1 : 0);
 
 
 def check_journal() -> tuple[bool, list[str]]:
-    """Чтение ответа из журнала: берётся последний run/end, кириллица не ломается."""
+    """Чтение ответа из журнала: только из журнала ЭТОЙ задачи (F-ROOM-3)."""
     lines: list[str] = []
     ok_all = True
     with tempfile.TemporaryDirectory() as tmp:
@@ -99,6 +99,59 @@ console.log(JSON.stringify(answerFromJournal({json.dumps(str(missing))})));
         ok = code == 0 and out.strip() == '""'
         ok_all &= ok
         lines.append(f"{'ok  ' if ok else 'FAIL'} журнала нет: ждали пустую строку, получили {out.strip()}")
+
+        # F-ROOM-3: журнал от ДРУГОЙ задачи не должен отдавать свой ответ.
+        foreign = Path(tmp) / "чужой.bin"
+        foreign.write_bytes(
+            b"HSJ1\x01\x00\x00\x00"
+            + b"run/start task: \xd0\xbf\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82\x00"
+            + b"run/end " + "ответ на привет".encode("utf-8") + b"\x00"
+        )
+        script = f"""
+import {{ answerFromJournal }} from {json.dumps(PLUGIN.as_uri())};
+console.log(JSON.stringify(answerFromJournal(
+  {json.dumps(str(foreign))}, "найди все текстовые файлы", 0)));
+"""
+        code, out = run_node(script)
+        ok = code == 0 and out.strip() == '""'
+        ok_all &= ok
+        lines.append(
+            f"{'ok  ' if ok else 'FAIL'} журнал чужой задачи: ждали пустую строку, получили {out.strip()}")
+
+        # Положительный контроль: та же задача — ответ принимается.
+        script = f"""
+import {{ answerFromJournal }} from {json.dumps(PLUGIN.as_uri())};
+console.log(JSON.stringify(answerFromJournal(
+  {json.dumps(str(foreign))}, "привет", 0)));
+"""
+        code, out = run_node(script)
+        try:
+            value = json.loads(out.strip())
+        except json.JSONDecodeError:
+            value = None
+        ok = code == 0 and value == "ответ на привет"
+        ok_all &= ok
+        lines.append(
+            f"{'ok  ' if ok else 'FAIL'} журнал своей задачи: ждали 'ответ на привет', получили {value!r}")
+
+        # Журнал старше прогона — не принимается, даже если задача совпала.
+        old = Path(tmp) / "старый.bin"
+        old.write_bytes(
+            b"HSJ1\x01\x00\x00\x00"
+            + b"run/start task: \xd0\xbf\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82\x00"
+            + b"run/end " + "старый ответ".encode("utf-8") + b"\x00"
+        )
+        future = int(old.stat().st_mtime * 1000) + 60000
+        script = f"""
+import {{ answerFromJournal }} from {json.dumps(PLUGIN.as_uri())};
+console.log(JSON.stringify(answerFromJournal(
+  {json.dumps(str(old))}, "привет", {future})));
+"""
+        code, out = run_node(script)
+        ok = code == 0 and out.strip() == '""'
+        ok_all &= ok
+        lines.append(
+            f"{'ok  ' if ok else 'FAIL'} журнал старше прогона: ждали пустую строку, получили {out.strip()}")
     return ok_all, lines
 
 

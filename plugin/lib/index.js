@@ -21,7 +21,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -57,20 +57,51 @@ function now() {
 }
 
 /**
- * Достать ответ агента из журнала приёмки.
+ * Достать ответ агента из журнала приёмки — но только если журнал
+ * принадлежит ЭТОЙ задаче.
  *
- * Берётся ПОСЛЕДНЕЕ событие `run/end` (журнал дописывается прогонами),
- * а не первое: несколько прогонов в одном журнале иначе отдали бы ответ
- * предыдущей задачи.
+ * Дефект F-ROOM-3 (найден 08.11.2026 по истории окна). accept-run.ps1 удаляет
+ * журнал перед прогоном, но если прогон падает раньше записи, журнала нет
+ * вовсе или он остаётся от ПРЕДЫДУЩЕГО прогона. Прежняя версия брала из него
+ * последний `run/end` и отдавала ЧУЖОЙ ответ: на «найди все текстовые файлы»
+ * приходил ответ на «привет».
+ *
+ * Теперь ответ принимается, только если:
+ *   — файл журнала изменён после старта прогона (mtime >= startedAt), и
+ *   — событие `run/start` в журнале несёт ровно эту задачу.
+ * Иначе ответ пуст, и вердикт понижается до UNKNOWN.
  */
-export function answerFromJournal(journalPath) {
+export function answerFromJournal(journalPath, task = "", startedAt = 0) {
   if (!existsSync(journalPath)) return "";
+  let stat;
+  try {
+    stat = statSync(journalPath);
+  } catch {
+    return "";
+  }
+  // Журнал старше прогона — это журнал другого прогона.
+  if (startedAt && stat.mtimeMs < startedAt) return "";
+
   let raw;
   try {
     raw = readFileSync(journalPath, "latin1");
   } catch {
     return "";
   }
+  // Задача должна совпасть с той, что записана в run/start этого журнала.
+  // Сравниваем по вхождению, а не по равенству: запись журнала приписывает
+  // к тексту служебный байт (в замере 08.11.2026 — «…числом.5»), и строгое
+  // равенство отвергало бы СВОЙ журнал. Задача длинная, случайного
+  // совпадения с чужой не будет.
+  if (task) {
+    const starts = [...raw.matchAll(/run\/start task: ([^\x00\x06\n]+)/g)];
+    if (!starts.length) return "";
+    const needle = task.trim();
+    const recorded = starts.map((m) =>
+      Buffer.from(m[1], "latin1").toString("utf8"));
+    if (!recorded.some((text) => text.includes(needle))) return "";
+  }
+
   const matches = [...raw.matchAll(/run\/end ([^\x00\x06\n]+)/g)];
   if (!matches.length) return "";
   const bytes = Buffer.from(matches[matches.length - 1][1], "latin1");
@@ -131,7 +162,11 @@ async function runTask(root, kernel, timeoutSec, task) {
     }
   }
 
-  const answer = answerFromJournal(join(root, "runs", "accept", "journal.bin"));
+  // Ответ принимается только из журнала ЭТОГО прогона: файл должен быть
+  // записан после старта и нести ту же задачу. Иначе журнал чужой, и ответ
+  // пуст — вердикт понизится до UNKNOWN (F-ROOM-3).
+  const answer = answerFromJournal(
+    join(root, "runs", "accept", "journal.bin"), task, started);
   const verdict = settleVerdict(reported, answer);
 
   const seconds = Number(((Date.now() - started) / 1000).toFixed(1));
