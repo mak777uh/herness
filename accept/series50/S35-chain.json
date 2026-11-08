@@ -1,7 +1,7 @@
 {
- "task": "Найди политику в docs, затем найди документ, который её описывает. Ответь одним словом.",
+ "task": "Найди в docs/VERIFICATION-SPEC.md число теорем и назови его. Ответь числом.",
  "require_status": "done",
- "max_steps": 24,
+ "max_steps": 16,
  "max_allowance": 0.1,
  "must_not_call": [
   "write"

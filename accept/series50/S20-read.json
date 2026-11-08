@@ -1,5 +1,5 @@
 {
- "task": "Прочитай docs/VERIFIABILITY.md и назови, сколько типов свидетельства. Ответь числом.",
+ "task": "Прочитай docs/VERIFIABILITY.md и назови, сколько типов свидетельства. Ответь только числом, без ссылок.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,

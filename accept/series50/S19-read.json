@@ -1,5 +1,5 @@
 {
- "task": "Прочитай docs/NEXT-PLAN.md и назови число шагов плана. Ответь числом.",
+ "task": "Прочитай docs/NEXT-PLAN.md и назови число шагов плана. Ответь только числом, без ссылок и цитат.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,

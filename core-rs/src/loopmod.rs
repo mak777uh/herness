@@ -923,40 +923,41 @@ fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<Strin
 /// Число словом → цифра. Сравнение по длине и байтам, без match по строкам:
 /// так функция остаётся верифицируемой (Kani упирался в to_lowercase, Verus — в match).
 fn number_word(token: &str) -> Option<&'static str> {
-    // Таблица: слово в нижнем регистре, длина в байтах, цифра.
-    // Длина проверяется первой: она отсекает почти всё без сравнения байтов.
-    const TABLE: &[(&str, usize, &str)] = &[
-        ("один", 4, "1"), ("одна", 4, "1"), ("одно", 4, "1"),
-        ("два", 3, "2"), ("две", 3, "2"),
-        ("три", 3, "3"),
-        ("четыре", 6, "4"),
-        ("пять", 4, "5"),
-        ("шесть", 5, "6"),
-        ("семь", 4, "7"),
-        ("восемь", 6, "8"),
-        ("девять", 6, "9"),
-        ("десять", 6, "10"),
-        ("одиннадцать", 11, "11"),
-        ("двенадцать", 10, "12"),
-        ("тринадцать", 10, "13"),
-        ("четырнадцать", 12, "14"),
-        ("пятнадцать", 10, "15"),
-        ("двадцать", 8, "20"),
-        ("тридцать", 8, "30"),
-        ("сорок", 5, "40"),
-        ("пятьдесят", 9, "50"),
-        ("сто", 3, "100"),
+    // Таблица: слово в нижнем регистре и цифра. Длина НЕ хранится: `word.len()` всегда
+    // в байтах, и это единственная мера, по которой идёт сравнение. Хранимая длина в
+    // символах давала None для всей кириллицы («три» — 3 символа, но 6 байт).
+    const TABLE: &[(&str, &str)] = &[
+        ("один", "1"), ("одна", "1"), ("одно", "1"),
+        ("два", "2"), ("две", "2"),
+        ("три", "3"),
+        ("четыре", "4"),
+        ("пять", "5"),
+        ("шесть", "6"),
+        ("семь", "7"),
+        ("восемь", "8"),
+        ("девять", "9"),
+        ("десять", "10"),
+        ("одиннадцать", "11"),
+        ("двенадцать", "12"),
+        ("тринадцать", "13"),
+        ("четырнадцать", "14"),
+        ("пятнадцать", "15"),
+        ("двадцать", "20"),
+        ("тридцать", "30"),
+        ("сорок", "40"),
+        ("пятьдесят", "50"),
+        ("сто", "100"),
     ];
     let bytes = token.as_bytes();
-    let len = bytes.len();
-    for (word, word_len, digit) in TABLE {
-        if len != *word_len {
+    for (word, digit) in TABLE {
+        let word_bytes = word.as_bytes();
+        // Длина берётся из слова: она всегда в байтах, как и bytes.len().
+        if bytes.len() != word_bytes.len() {
             continue;
         }
         // Сравнение точное, байт за байтом: to_ascii_lowercase не поддержан Verus,
         // а регистр уже приведён вызывающим кодом (normalize_token).
-        let matched = word.as_bytes().iter().zip(bytes.iter()).all(|(a, b)| a == b);
-        if matched {
+        if word_bytes.iter().zip(bytes.iter()).all(|(a, b)| a == b) {
             return Some(digit);
         }
     }
@@ -986,7 +987,16 @@ fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
         // Число словом — конкретный токен, а не общее слово: «Пять» в тексте и «5» в ответе
         // это одна опора. Без этой ветки «Пять» отбрасывалось, и верный ответ получал
         // unverified (найдено прогоном S20).
-        if number_word(token).is_some() {
+        // number_word сравнивает байты точно, поэтому регистр приводим здесь.
+        // Проверка идёт ДО отбрасывания: иначе «Три» с большой буквы отбрасывалось и
+        // опора не срабатывала (60 % ложных отказов на классе number-word).
+        if number_word(&token.to_lowercase()).is_some() {
+            return true;
+        }
+        // Чистое число — конкретный токен независимо от длины: ответ «3» на вопрос
+        // «сколько теорем» не должен отбрасываться порогом в три знака (60 % ложных
+        // отказов на классе number-word, замер bin/oracle_run.py).
+        if token.chars().all(|c| c.is_ascii_digit()) {
             return true;
         }
         // Порог 3, а не 4: имена файлов вида p01/p11 — три знака, и правильный ответ с ними
@@ -1014,14 +1024,15 @@ fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
         }
         out
     };
-    // Опора берётся из ПОСЛЕДНЕГО результата, а не из любого (аудит гейтов).
-    // Причина: последний результат — то, на что агент смотрел, когда отвечал. Ссылка на
-    // старый результат — это память, а не подтверждение. Если результатов нет, опоры нет.
-    let last_result = match tool_results.last() {
-        Some(text) => text,
-        None => return None,
-    };
-    let haystack: Vec<String> = tokens(last_result);
+    // Опора ищется во ВСЕХ результатах прогона, а не только в последнем.
+    // Замер на 199 случаях (bin/oracle_run.py): поиск только в последнем давал 77 % ложных
+    // отказов, когда агент читал несколько файлов и отвечал по первому. Результат инструмента —
+    // свидетельство независимо от того, когда он получен; «памятью» его делает не время, а
+    // отсутствие в журнале. Всё, что здесь, — из журнала.
+    if tool_results.is_empty() {
+        return None;
+    }
+    let haystack: Vec<String> = tool_results.iter().flat_map(|text| tokens(text)).collect();
     let haystack_norm: Vec<String> = haystack.iter().map(|t| normalize_token(t)).collect();
     for token in tokens(final_text) {
         let normalized = normalize_token(&token);
@@ -1033,9 +1044,13 @@ fn claim_anchor(final_text: &str, tool_results: &[String]) -> Option<String> {
     // было «ADR-0052». Требуем, чтобы имя из результата целиком входило в имя из ответа и было
     // не короче четырёх знаков, — это не ослабляет опору, а сверяет её по вхождению (F-0037).
     for token in tokens(final_text) {
-        let contained = haystack
-            .iter()
-            .any(|candidate| candidate.chars().count() >= 4 && token.contains(candidate.as_str()));
+        // Вхождение проверяется в ОБЕ стороны: «ADR-0001» в ответе и «ADR-0001-test.md» в
+        // результате — одно и то же имя файла. Односторонняя проверка давала 50 % ложных
+        // отказов на классе direct (замер bin/oracle_run.py).
+        let contained = haystack.iter().any(|candidate| {
+            candidate.chars().count() >= 4
+                && (token.contains(candidate.as_str()) || candidate.contains(token.as_str()))
+        });
         if contained {
             // Возвращаем токен ИЗ ОТВЕТА: опора живёт в ответе, а не в результате.
             return Some(token);
@@ -1810,6 +1825,22 @@ mod tests {
         let prompt = compose_prompt("t", &many, None);
         assert!(!prompt.contains("шаг 0 "), "старое не выпало");
         assert!(prompt.contains("шаг 39"), "новое потерялось");
+    }
+
+    #[test]
+    fn число_словом_находится_в_любом_регистре() {
+        // Опора должна понимать «Три» и «три» одинаково: в тексте число словом,
+        // в ответе цифрой (найдено прогоном S15).
+        // number_word сравнивает байты точно: регистр приводит normalize_token.
+        assert_eq!(number_word("три"), Some("3"), "нижний регистр");
+        assert_eq!(number_word("пять"), Some("5"));
+        assert_eq!(number_word("сто"), Some("100"));
+        assert_eq!(number_word("нет такого"), None);
+        // Регистр приводится на уровне normalize_token — так и вызывается опора.
+        assert_eq!(normalize_token("Три"), "3", "заглавная первая");
+        assert_eq!(normalize_token("ТРИ"), "3", "все заглавные");
+        assert_eq!(normalize_token("Пять"), "5");
+        assert_eq!(normalize_token("C-0276"), "C-0276", "не число — без изменений");
     }
 
     #[test]

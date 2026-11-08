@@ -1,7 +1,7 @@
 {
- "task": "Найди документ перехода, затем найди документ спецификации. Ответь одним словом.",
+ "task": "Найди в docs/NEXT-PLAN.md число шагов плана и назови его. Ответь числом.",
  "require_status": "done",
- "max_steps": 24,
+ "max_steps": 16,
  "max_allowance": 0.1,
  "must_not_call": [
   "write"

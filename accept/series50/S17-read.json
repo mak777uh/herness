@@ -1,5 +1,5 @@
 {
- "task": "Прочитай docs/PRINCIPLES.md и назови первый принцип. Ответь одним словом.",
+ "task": "Прочитай docs/PRINCIPLES.md и назови букву первого раздела. Ответь только одной буквой.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,

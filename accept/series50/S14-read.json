@@ -1,5 +1,5 @@
 {
- "task": "Прочитай docs/eliminations.md и назови номер первой записи. Ответь одним словом.",
+ "task": "Прочитай docs/eliminations.md и назови номер первой записи. Ответь только номером.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,

@@ -1,0 +1,1395 @@
+[
+ {
+  "id": "direct-1",
+  "kind": "direct",
+  "result": "| C-271 | Утверждение номер 1 | proof |",
+  "answer": "C-271",
+  "correct": true
+ },
+ {
+  "id": "direct-2",
+  "kind": "direct",
+  "result": "| C-272 | Утверждение номер 2 | proof |",
+  "answer": "C-272",
+  "correct": true
+ },
+ {
+  "id": "direct-3",
+  "kind": "direct",
+  "result": "| C-273 | Утверждение номер 3 | proof |",
+  "answer": "C-273",
+  "correct": true
+ },
+ {
+  "id": "direct-4",
+  "kind": "direct",
+  "result": "| C-274 | Утверждение номер 4 | proof |",
+  "answer": "C-274",
+  "correct": true
+ },
+ {
+  "id": "direct-5",
+  "kind": "direct",
+  "result": "| C-275 | Утверждение номер 5 | proof |",
+  "answer": "C-275",
+  "correct": true
+ },
+ {
+  "id": "direct-6",
+  "kind": "direct",
+  "result": "| C-276 | Утверждение номер 6 | proof |",
+  "answer": "C-276",
+  "correct": true
+ },
+ {
+  "id": "direct-7",
+  "kind": "direct",
+  "result": "| C-277 | Утверждение номер 7 | proof |",
+  "answer": "C-277",
+  "correct": true
+ },
+ {
+  "id": "direct-8",
+  "kind": "direct",
+  "result": "| C-278 | Утверждение номер 8 | proof |",
+  "answer": "C-278",
+  "correct": true
+ },
+ {
+  "id": "direct-9",
+  "kind": "direct",
+  "result": "| C-279 | Утверждение номер 9 | proof |",
+  "answer": "C-279",
+  "correct": true
+ },
+ {
+  "id": "direct-10",
+  "kind": "direct",
+  "result": "| C-280 | Утверждение номер 10 | proof |",
+  "answer": "C-280",
+  "correct": true
+ },
+ {
+  "id": "direct-11",
+  "kind": "direct",
+  "result": "| C-281 | Утверждение номер 11 | proof |",
+  "answer": "C-281",
+  "correct": true
+ },
+ {
+  "id": "direct-12",
+  "kind": "direct",
+  "result": "| C-282 | Утверждение номер 12 | proof |",
+  "answer": "C-282",
+  "correct": true
+ },
+ {
+  "id": "direct-13",
+  "kind": "direct",
+  "result": "| C-283 | Утверждение номер 13 | proof |",
+  "answer": "C-283",
+  "correct": true
+ },
+ {
+  "id": "direct-14",
+  "kind": "direct",
+  "result": "| C-284 | Утверждение номер 14 | proof |",
+  "answer": "C-284",
+  "correct": true
+ },
+ {
+  "id": "direct-15",
+  "kind": "direct",
+  "result": "| C-285 | Утверждение номер 15 | proof |",
+  "answer": "C-285",
+  "correct": true
+ },
+ {
+  "id": "direct-16",
+  "kind": "direct",
+  "result": "| C-286 | Утверждение номер 16 | proof |",
+  "answer": "C-286",
+  "correct": true
+ },
+ {
+  "id": "direct-17",
+  "kind": "direct",
+  "result": "| C-287 | Утверждение номер 17 | proof |",
+  "answer": "C-287",
+  "correct": true
+ },
+ {
+  "id": "direct-18",
+  "kind": "direct",
+  "result": "| C-288 | Утверждение номер 18 | proof |",
+  "answer": "C-288",
+  "correct": true
+ },
+ {
+  "id": "direct-19",
+  "kind": "direct",
+  "result": "| C-289 | Утверждение номер 19 | proof |",
+  "answer": "C-289",
+  "correct": true
+ },
+ {
+  "id": "direct-20",
+  "kind": "direct",
+  "result": "| C-290 | Утверждение номер 20 | proof |",
+  "answer": "C-290",
+  "correct": true
+ },
+ {
+  "id": "direct-file-1",
+  "kind": "direct",
+  "result": "docs/ADR-0001-test.md: строка 1",
+  "answer": "ADR-0001",
+  "correct": true
+ },
+ {
+  "id": "direct-file-2",
+  "kind": "direct",
+  "result": "docs/ADR-0002-test.md: строка 2",
+  "answer": "ADR-0002",
+  "correct": true
+ },
+ {
+  "id": "direct-file-3",
+  "kind": "direct",
+  "result": "docs/ADR-0003-test.md: строка 3",
+  "answer": "ADR-0003",
+  "correct": true
+ },
+ {
+  "id": "direct-file-4",
+  "kind": "direct",
+  "result": "docs/ADR-0004-test.md: строка 4",
+  "answer": "ADR-0004",
+  "correct": true
+ },
+ {
+  "id": "direct-file-5",
+  "kind": "direct",
+  "result": "docs/ADR-0005-test.md: строка 5",
+  "answer": "ADR-0005",
+  "correct": true
+ },
+ {
+  "id": "direct-file-6",
+  "kind": "direct",
+  "result": "docs/ADR-0006-test.md: строка 6",
+  "answer": "ADR-0006",
+  "correct": true
+ },
+ {
+  "id": "direct-file-7",
+  "kind": "direct",
+  "result": "docs/ADR-0007-test.md: строка 7",
+  "answer": "ADR-0007",
+  "correct": true
+ },
+ {
+  "id": "direct-file-8",
+  "kind": "direct",
+  "result": "docs/ADR-0008-test.md: строка 8",
+  "answer": "ADR-0008",
+  "correct": true
+ },
+ {
+  "id": "direct-file-9",
+  "kind": "direct",
+  "result": "docs/ADR-0009-test.md: строка 9",
+  "answer": "ADR-0009",
+  "correct": true
+ },
+ {
+  "id": "direct-file-10",
+  "kind": "direct",
+  "result": "docs/ADR-0010-test.md: строка 10",
+  "answer": "ADR-0010",
+  "correct": true
+ },
+ {
+  "id": "direct-file-11",
+  "kind": "direct",
+  "result": "docs/ADR-0011-test.md: строка 11",
+  "answer": "ADR-0011",
+  "correct": true
+ },
+ {
+  "id": "direct-file-12",
+  "kind": "direct",
+  "result": "docs/ADR-0012-test.md: строка 12",
+  "answer": "ADR-0012",
+  "correct": true
+ },
+ {
+  "id": "direct-file-13",
+  "kind": "direct",
+  "result": "docs/ADR-0013-test.md: строка 13",
+  "answer": "ADR-0013",
+  "correct": true
+ },
+ {
+  "id": "direct-file-14",
+  "kind": "direct",
+  "result": "docs/ADR-0014-test.md: строка 14",
+  "answer": "ADR-0014",
+  "correct": true
+ },
+ {
+  "id": "direct-file-15",
+  "kind": "direct",
+  "result": "docs/ADR-0015-test.md: строка 15",
+  "answer": "ADR-0015",
+  "correct": true
+ },
+ {
+  "id": "direct-file-16",
+  "kind": "direct",
+  "result": "docs/ADR-0016-test.md: строка 16",
+  "answer": "ADR-0016",
+  "correct": true
+ },
+ {
+  "id": "direct-file-17",
+  "kind": "direct",
+  "result": "docs/ADR-0017-test.md: строка 17",
+  "answer": "ADR-0017",
+  "correct": true
+ },
+ {
+  "id": "direct-file-18",
+  "kind": "direct",
+  "result": "docs/ADR-0018-test.md: строка 18",
+  "answer": "ADR-0018",
+  "correct": true
+ },
+ {
+  "id": "direct-file-19",
+  "kind": "direct",
+  "result": "docs/ADR-0019-test.md: строка 19",
+  "answer": "ADR-0019",
+  "correct": true
+ },
+ {
+  "id": "direct-file-20",
+  "kind": "direct",
+  "result": "docs/ADR-0020-test.md: строка 20",
+  "answer": "ADR-0020",
+  "correct": true
+ },
+ {
+  "id": "word-1",
+  "kind": "number-word",
+  "result": "## Три теоремы\n\nПервая...",
+  "answer": "3",
+  "correct": true
+ },
+ {
+  "id": "word-2",
+  "kind": "number-word",
+  "result": "## Пять разных механизмов",
+  "answer": "5",
+  "correct": true
+ },
+ {
+  "id": "word-3",
+  "kind": "number-word",
+  "result": "## Шесть теорем доказано",
+  "answer": "6",
+  "correct": true
+ },
+ {
+  "id": "word-4",
+  "kind": "number-word",
+  "result": "## Четыре уровня",
+  "answer": "4",
+  "correct": true
+ },
+ {
+  "id": "word-5",
+  "kind": "number-word",
+  "result": "## Два правила",
+  "answer": "2",
+  "correct": true
+ },
+ {
+  "id": "word-6",
+  "kind": "number-word",
+  "result": "## Семь шагов плана",
+  "answer": "7",
+  "correct": true
+ },
+ {
+  "id": "word-7",
+  "kind": "number-word",
+  "result": "## Восемь гейтов",
+  "answer": "8",
+  "correct": true
+ },
+ {
+  "id": "word-8",
+  "kind": "number-word",
+  "result": "## Девять отказов",
+  "answer": "9",
+  "correct": true
+ },
+ {
+  "id": "word-9",
+  "kind": "number-word",
+  "result": "## Десять утверждений",
+  "answer": "10",
+  "correct": true
+ },
+ {
+  "id": "word-10",
+  "kind": "number-word",
+  "result": "## Один раздел",
+  "answer": "1",
+  "correct": true
+ },
+ {
+  "id": "word-11",
+  "kind": "number-word",
+  "result": "## ТРИ ТЕОРЕМЫ (заглавными)",
+  "answer": "3",
+  "correct": true
+ },
+ {
+  "id": "word-12",
+  "kind": "number-word",
+  "result": "## Пять механизмов (с большой)",
+  "answer": "5",
+  "correct": true
+ },
+ {
+  "id": "word-13",
+  "kind": "number-word",
+  "result": "## Три теоремы",
+  "answer": "3 теоремы",
+  "correct": true
+ },
+ {
+  "id": "word-14",
+  "kind": "number-word",
+  "result": "## Пять механизмов",
+  "answer": "пять",
+  "correct": true
+ },
+ {
+  "id": "word-15",
+  "kind": "number-word",
+  "result": "## Шесть теорем",
+  "answer": "6 штук",
+  "correct": true
+ },
+ {
+  "id": "word-16",
+  "kind": "number-word",
+  "result": "## Три теоремы",
+  "answer": "три",
+  "correct": true
+ },
+ {
+  "id": "word-17",
+  "kind": "number-word",
+  "result": "## Пять механизмов",
+  "answer": "5 механизмов",
+  "correct": true
+ },
+ {
+  "id": "word-18",
+  "kind": "number-word",
+  "result": "## Двадцать правил",
+  "answer": "20",
+  "correct": true
+ },
+ {
+  "id": "word-19",
+  "kind": "number-word",
+  "result": "## Тридцать гейтов",
+  "answer": "30",
+  "correct": true
+ },
+ {
+  "id": "word-20",
+  "kind": "number-word",
+  "result": "## Сто записей",
+  "answer": "100",
+  "correct": true
+ },
+ {
+  "id": "word-21",
+  "kind": "number-word",
+  "result": "## Четыре уровня",
+  "answer": "4 уровня",
+  "correct": true
+ },
+ {
+  "id": "word-22",
+  "kind": "number-word",
+  "result": "## Девять отказов",
+  "answer": "девять",
+  "correct": true
+ },
+ {
+  "id": "word-23",
+  "kind": "number-word",
+  "result": "## Семь шагов",
+  "answer": "семь",
+  "correct": true
+ },
+ {
+  "id": "word-24",
+  "kind": "number-word",
+  "result": "## Восемь гейтов",
+  "answer": "восемь гейтов",
+  "correct": true
+ },
+ {
+  "id": "word-25",
+  "kind": "number-word",
+  "result": "## Десять утверждений",
+  "answer": "десять",
+  "correct": true
+ },
+ {
+  "id": "word-26",
+  "kind": "number-word",
+  "result": "## Один раздел",
+  "answer": "один",
+  "correct": true
+ },
+ {
+  "id": "word-27",
+  "kind": "number-word",
+  "result": "## Два правила",
+  "answer": "два",
+  "correct": true
+ },
+ {
+  "id": "word-28",
+  "kind": "number-word",
+  "result": "## Три теоремы",
+  "answer": "3 (три)",
+  "correct": true
+ },
+ {
+  "id": "word-29",
+  "kind": "number-word",
+  "result": "## Пять механизмов",
+  "answer": "5 (пять)",
+  "correct": true
+ },
+ {
+  "id": "word-30",
+  "kind": "number-word",
+  "result": "## Шесть теорем",
+  "answer": "6 (шесть)",
+  "correct": true
+ },
+ {
+  "id": "para-1",
+  "kind": "paraphrase",
+  "result": "docs/VERIFICATION-SPEC.md:15 — Три теоремы",
+  "answer": "3",
+  "correct": true
+ },
+ {
+  "id": "para-2",
+  "kind": "paraphrase",
+  "result": "docs/VERIFICATION-SPEC.md:15",
+  "answer": "VERIFICATION-SPEC.md",
+  "correct": true
+ },
+ {
+  "id": "para-3",
+  "kind": "paraphrase",
+  "result": "docs/NEXT-PLAN.md:47 — План: пять шагов",
+  "answer": "5",
+  "correct": true
+ },
+ {
+  "id": "para-4",
+  "kind": "paraphrase",
+  "result": "docs/NEXT-PLAN.md",
+  "answer": "NEXT-PLAN.md",
+  "correct": true
+ },
+ {
+  "id": "para-5",
+  "kind": "paraphrase",
+  "result": "README.md: гейтов 29",
+  "answer": "29",
+  "correct": true
+ },
+ {
+  "id": "para-6",
+  "kind": "paraphrase",
+  "result": "README.md",
+  "answer": "README.md",
+  "correct": true
+ },
+ {
+  "id": "para-7",
+  "kind": "paraphrase",
+  "result": "| C-0276 | Доказано | proof |",
+  "answer": "C-0276",
+  "correct": true
+ },
+ {
+  "id": "para-8",
+  "kind": "paraphrase",
+  "result": "| C-0276 | Доказано | proof |",
+  "answer": "proof",
+  "correct": true
+ },
+ {
+  "id": "para-9",
+  "kind": "paraphrase",
+  "result": "CLAIMS.md:302",
+  "answer": "302",
+  "correct": true
+ },
+ {
+  "id": "para-10",
+  "kind": "paraphrase",
+  "result": "CLAIMS.md:302",
+  "answer": "CLAIMS.md",
+  "correct": true
+ },
+ {
+  "id": "para-11",
+  "kind": "paraphrase",
+  "result": "docs/PRINCIPLES.md: ## A. Истина",
+  "answer": "A",
+  "correct": true
+ },
+ {
+  "id": "para-12",
+  "kind": "paraphrase",
+  "result": "docs/PRINCIPLES.md: ## A. Истина",
+  "answer": "PRINCIPLES.md",
+  "correct": true
+ },
+ {
+  "id": "para-13",
+  "kind": "paraphrase",
+  "result": "docs/eliminations.md: E-0001",
+  "answer": "E-0001",
+  "correct": true
+ },
+ {
+  "id": "para-14",
+  "kind": "paraphrase",
+  "result": "docs/eliminations.md: E-0001",
+  "answer": "eliminations.md",
+  "correct": true
+ },
+ {
+  "id": "para-15",
+  "kind": "paraphrase",
+  "result": "NOT-CLAIMED.md: NC-001",
+  "answer": "NC-001",
+  "correct": true
+ },
+ {
+  "id": "para-16",
+  "kind": "paraphrase",
+  "result": "NOT-CLAIMED.md: NC-001",
+  "answer": "NOT-CLAIMED.md",
+  "correct": true
+ },
+ {
+  "id": "para-17",
+  "kind": "paraphrase",
+  "result": "docs/VERIFIABILITY.md: пять механизмов",
+  "answer": "5",
+  "correct": true
+ },
+ {
+  "id": "para-18",
+  "kind": "paraphrase",
+  "result": "docs/VERIFIABILITY.md",
+  "answer": "VERIFIABILITY.md",
+  "correct": true
+ },
+ {
+  "id": "para-19",
+  "kind": "paraphrase",
+  "result": "docs/VISION-0001: пять частей",
+  "answer": "5",
+  "correct": true
+ },
+ {
+  "id": "para-20",
+  "kind": "paraphrase",
+  "result": "docs/VISION-0001",
+  "answer": "VISION-0001",
+  "correct": true
+ },
+ {
+  "id": "para-21",
+  "kind": "paraphrase",
+  "result": "docs/TRANSITION-0001: три уровня",
+  "answer": "3",
+  "correct": true
+ },
+ {
+  "id": "para-22",
+  "kind": "paraphrase",
+  "result": "docs/TRANSITION-0001",
+  "answer": "TRANSITION-0001",
+  "correct": true
+ },
+ {
+  "id": "para-23",
+  "kind": "paraphrase",
+  "result": "failures/F-0035.md: застой",
+  "answer": "F-0035",
+  "correct": true
+ },
+ {
+  "id": "para-24",
+  "kind": "paraphrase",
+  "result": "failures/F-0035.md: застой",
+  "answer": "F-0035.md",
+  "correct": true
+ },
+ {
+  "id": "para-25",
+  "kind": "paraphrase",
+  "result": "docs/P2P-SEARCH-MODULE.md: три уровня",
+  "answer": "3",
+  "correct": true
+ },
+ {
+  "id": "para-26",
+  "kind": "paraphrase",
+  "result": "docs/P2P-SEARCH-MODULE.md",
+  "answer": "P2P-SEARCH-MODULE.md",
+  "correct": true
+ },
+ {
+  "id": "para-27",
+  "kind": "paraphrase",
+  "result": "docs/RUST-VERIFICATION-RESULT.md: два harness",
+  "answer": "2",
+  "correct": true
+ },
+ {
+  "id": "para-28",
+  "kind": "paraphrase",
+  "result": "docs/RUST-VERIFICATION-RESULT.md",
+  "answer": "RUST-VERIFICATION-RESULT.md",
+  "correct": true
+ },
+ {
+  "id": "para-29",
+  "kind": "paraphrase",
+  "result": "docs/VERIFICATION-METHODS.md: шесть шагов",
+  "answer": "6",
+  "correct": true
+ },
+ {
+  "id": "para-30",
+  "kind": "paraphrase",
+  "result": "docs/VERIFICATION-METHODS.md",
+  "answer": "VERIFICATION-METHODS.md",
+  "correct": true
+ },
+ {
+  "id": "multi-1",
+  "kind": "multi",
+  "result": "docs/A.md: 1\n---\ndocs/B.md: C-0276",
+  "answer": "C-0276",
+  "correct": true
+ },
+ {
+  "id": "multi-2",
+  "kind": "multi",
+  "result": "docs/A.md: 1\n---\ndocs/B.md: C-0276",
+  "answer": "B.md",
+  "correct": true
+ },
+ {
+  "id": "multi-3",
+  "kind": "multi",
+  "result": "README.md: 29\n---\nCLAIMS.md: 280",
+  "answer": "29",
+  "correct": true
+ },
+ {
+  "id": "multi-4",
+  "kind": "multi",
+  "result": "README.md: 29\n---\nCLAIMS.md: 280",
+  "answer": "280",
+  "correct": true
+ },
+ {
+  "id": "multi-5",
+  "kind": "multi",
+  "result": "docs/X.md: три\n---\ndocs/Y.md: пять",
+  "answer": "3",
+  "correct": true
+ },
+ {
+  "id": "multi-6",
+  "kind": "multi",
+  "result": "docs/X.md: три\n---\ndocs/Y.md: пять",
+  "answer": "5",
+  "correct": true
+ },
+ {
+  "id": "multi-7",
+  "kind": "multi",
+  "result": "failures/F-1.md: E-1\n---\nfailures/F-2.md: E-2",
+  "answer": "F-1",
+  "correct": true
+ },
+ {
+  "id": "multi-8",
+  "kind": "multi",
+  "result": "failures/F-1.md: E-1\n---\nfailures/F-2.md: E-2",
+  "answer": "F-2",
+  "correct": true
+ },
+ {
+  "id": "multi-9",
+  "kind": "multi",
+  "result": "docs/A.md: ADR-001\n---\ndocs/B.md: ADR-002",
+  "answer": "ADR-001",
+  "correct": true
+ },
+ {
+  "id": "multi-10",
+  "kind": "multi",
+  "result": "docs/A.md: ADR-001\n---\ndocs/B.md: ADR-002",
+  "answer": "ADR-002",
+  "correct": true
+ },
+ {
+  "id": "multi-11",
+  "kind": "multi",
+  "result": "docs/A.md: NC-1\n---\ndocs/B.md: NC-2",
+  "answer": "NC-1",
+  "correct": true
+ },
+ {
+  "id": "multi-12",
+  "kind": "multi",
+  "result": "docs/A.md: NC-1\n---\ndocs/B.md: NC-2",
+  "answer": "NC-2",
+  "correct": true
+ },
+ {
+  "id": "multi-13",
+  "kind": "multi",
+  "result": "docs/A.md: два\n---\ndocs/B.md: четыре",
+  "answer": "2",
+  "correct": true
+ },
+ {
+  "id": "multi-14",
+  "kind": "multi",
+  "result": "docs/A.md: два\n---\ndocs/B.md: четыре",
+  "answer": "4",
+  "correct": true
+ },
+ {
+  "id": "multi-15",
+  "kind": "multi",
+  "result": "docs/A.md: шесть\n---\ndocs/B.md: восемь",
+  "answer": "6",
+  "correct": true
+ },
+ {
+  "id": "multi-16",
+  "kind": "multi",
+  "result": "docs/A.md: шесть\n---\ndocs/B.md: восемь",
+  "answer": "8",
+  "correct": true
+ },
+ {
+  "id": "multi-17",
+  "kind": "multi",
+  "result": "docs/A.md: семь\n---\ndocs/B.md: девять",
+  "answer": "7",
+  "correct": true
+ },
+ {
+  "id": "multi-18",
+  "kind": "multi",
+  "result": "docs/A.md: семь\n---\ndocs/B.md: девять",
+  "answer": "9",
+  "correct": true
+ },
+ {
+  "id": "multi-19",
+  "kind": "multi",
+  "result": "docs/A.md: десять\n---\ndocs/B.md: один",
+  "answer": "10",
+  "correct": true
+ },
+ {
+  "id": "multi-20",
+  "kind": "multi",
+  "result": "docs/A.md: десять\n---\ndocs/B.md: один",
+  "answer": "1",
+  "correct": true
+ },
+ {
+  "id": "multi-21",
+  "kind": "multi",
+  "result": "docs/A.md: 100\n---\ndocs/B.md: 50",
+  "answer": "100",
+  "correct": true
+ },
+ {
+  "id": "multi-22",
+  "kind": "multi",
+  "result": "docs/A.md: 100\n---\ndocs/B.md: 50",
+  "answer": "50",
+  "correct": true
+ },
+ {
+  "id": "multi-23",
+  "kind": "multi",
+  "result": "docs/A.md: 20\n---\ndocs/B.md: 30",
+  "answer": "20",
+  "correct": true
+ },
+ {
+  "id": "multi-24",
+  "kind": "multi",
+  "result": "docs/A.md: 20\n---\ndocs/B.md: 30",
+  "answer": "30",
+  "correct": true
+ },
+ {
+  "id": "multi-25",
+  "kind": "multi",
+  "result": "docs/A.md: 40\n---\ndocs/B.md: 60",
+  "answer": "40",
+  "correct": true
+ },
+ {
+  "id": "multi-26",
+  "kind": "multi",
+  "result": "docs/A.md: 40\n---\ndocs/B.md: 60",
+  "answer": "60",
+  "correct": true
+ },
+ {
+  "id": "multi-27",
+  "kind": "multi",
+  "result": "docs/A.md: 11\n---\ndocs/B.md: 12",
+  "answer": "11",
+  "correct": true
+ },
+ {
+  "id": "multi-28",
+  "kind": "multi",
+  "result": "docs/A.md: 11\n---\ndocs/B.md: 12",
+  "answer": "12",
+  "correct": true
+ },
+ {
+  "id": "multi-29",
+  "kind": "multi",
+  "result": "docs/A.md: 13\n---\ndocs/B.md: 14",
+  "answer": "13",
+  "correct": true
+ },
+ {
+  "id": "multi-30",
+  "kind": "multi",
+  "result": "docs/A.md: 13\n---\ndocs/B.md: 14",
+  "answer": "14",
+  "correct": true
+ },
+ {
+  "id": "incomplete-1",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 1, ничего полезного",
+  "answer": "C-9001",
+  "correct": false
+ },
+ {
+  "id": "incomplete-2",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 2, ничего полезного",
+  "answer": "C-9002",
+  "correct": false
+ },
+ {
+  "id": "incomplete-3",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 3, ничего полезного",
+  "answer": "C-9003",
+  "correct": false
+ },
+ {
+  "id": "incomplete-4",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 4, ничего полезного",
+  "answer": "C-9004",
+  "correct": false
+ },
+ {
+  "id": "incomplete-5",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 5, ничего полезного",
+  "answer": "C-9005",
+  "correct": false
+ },
+ {
+  "id": "incomplete-6",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 6, ничего полезного",
+  "answer": "C-9006",
+  "correct": false
+ },
+ {
+  "id": "incomplete-7",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 7, ничего полезного",
+  "answer": "C-9007",
+  "correct": false
+ },
+ {
+  "id": "incomplete-8",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 8, ничего полезного",
+  "answer": "C-9008",
+  "correct": false
+ },
+ {
+  "id": "incomplete-9",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 9, ничего полезного",
+  "answer": "C-9009",
+  "correct": false
+ },
+ {
+  "id": "incomplete-10",
+  "kind": "incomplete",
+  "result": "docs/A.md: строка 10, ничего полезного",
+  "answer": "C-9010",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-1",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 1",
+  "answer": "101",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-2",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 2",
+  "answer": "102",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-3",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 3",
+  "answer": "103",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-4",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 4",
+  "answer": "104",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-5",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 5",
+  "answer": "105",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-6",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 6",
+  "answer": "106",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-7",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 7",
+  "answer": "107",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-8",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 8",
+  "answer": "108",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-9",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 9",
+  "answer": "109",
+  "correct": false
+ },
+ {
+  "id": "incomplete-num-10",
+  "kind": "incomplete",
+  "result": "docs/B.md: без числа, текст 10",
+  "answer": "110",
+  "correct": false
+ },
+ {
+  "id": "edge-1",
+  "kind": "edge",
+  "result": "docs/A.md: 0",
+  "answer": "0",
+  "correct": true
+ },
+ {
+  "id": "edge-2",
+  "kind": "edge",
+  "result": "docs/A.md: 1",
+  "answer": "1",
+  "correct": true
+ },
+ {
+  "id": "edge-3",
+  "kind": "edge",
+  "result": "docs/A.md: 999999",
+  "answer": "999999",
+  "correct": true
+ },
+ {
+  "id": "edge-4",
+  "kind": "edge",
+  "result": "docs/A.md: C-0001",
+  "answer": "C-0001",
+  "correct": true
+ },
+ {
+  "id": "edge-5",
+  "kind": "edge",
+  "result": "docs/A.md: a",
+  "answer": "a",
+  "correct": false
+ },
+ {
+  "id": "edge-6",
+  "kind": "edge",
+  "result": "docs/A.md: ab",
+  "answer": "ab",
+  "correct": false
+ },
+ {
+  "id": "edge-7",
+  "kind": "edge",
+  "result": "docs/A.md: abc",
+  "answer": "abc",
+  "correct": false
+ },
+ {
+  "id": "edge-8",
+  "kind": "edge",
+  "result": "docs/A.md: /",
+  "answer": "/",
+  "correct": false
+ },
+ {
+  "id": "edge-9",
+  "kind": "edge",
+  "result": "docs/A.md: .",
+  "answer": ".",
+  "correct": false
+ },
+ {
+  "id": "edge-10",
+  "kind": "edge",
+  "result": "docs/A.md: _",
+  "answer": "_",
+  "correct": false
+ },
+ {
+  "id": "edge-11",
+  "kind": "edge",
+  "result": "docs/A.md: -",
+  "answer": "-",
+  "correct": false
+ },
+ {
+  "id": "edge-12",
+  "kind": "edge",
+  "result": "docs/A.md: 12.5",
+  "answer": "12.5",
+  "correct": true
+ },
+ {
+  "id": "edge-13",
+  "kind": "edge",
+  "result": "docs/A.md: v1.2.3",
+  "answer": "v1.2.3",
+  "correct": true
+ },
+ {
+  "id": "edge-14",
+  "kind": "edge",
+  "result": "docs/A.md: 1e10",
+  "answer": "1e10",
+  "correct": true
+ },
+ {
+  "id": "edge-15",
+  "kind": "edge",
+  "result": "docs/A.md: 0x1F",
+  "answer": "0x1F",
+  "correct": true
+ },
+ {
+  "id": "edge-16",
+  "kind": "edge",
+  "result": "docs/A.md: 1_000",
+  "answer": "1_000",
+  "correct": true
+ },
+ {
+  "id": "edge-17",
+  "kind": "edge",
+  "result": "docs/A.md: 100%",
+  "answer": "100%",
+  "correct": true
+ },
+ {
+  "id": "edge-18",
+  "kind": "edge",
+  "result": "docs/A.md: 50/50",
+  "answer": "50/50",
+  "correct": true
+ },
+ {
+  "id": "edge-19",
+  "kind": "edge",
+  "result": "docs/A.md: a-b_c.d",
+  "answer": "a-b_c.d",
+  "correct": true
+ },
+ {
+  "id": "edge-20",
+  "kind": "edge",
+  "result": "docs/A.md: A1B2C3",
+  "answer": "A1B2C3",
+  "correct": true
+ },
+ {
+  "id": "contra-1",
+  "kind": "contradict",
+  "result": "docs/A.md: значение 1",
+  "answer": "101",
+  "correct": false
+ },
+ {
+  "id": "contra-2",
+  "kind": "contradict",
+  "result": "docs/A.md: значение 2",
+  "answer": "102",
+  "correct": false
+ },
+ {
+  "id": "contra-3",
+  "kind": "contradict",
+  "result": "docs/A.md: значение 3",
+  "answer": "103",
+  "correct": false
+ },
+ {
+  "id": "contra-4",
+  "kind": "contradict",
+  "result": "docs/A.md: значение 4",
+  "answer": "104",
+  "correct": false
+ },
+ {
+  "id": "contra-5",
+  "kind": "contradict",
+  "result": "docs/A.md: значение 5",
+  "answer": "105",
+  "correct": false
+ },
+ {
+  "id": "contra-6",
+  "kind": "contradict",
+  "result": "docs/A.md: значение 6",
+  "answer": "106",
+  "correct": false
+ },
+ {
+  "id": "contra-7",
+  "kind": "contradict",
+  "result": "docs/A.md: значение 7",
+  "answer": "107",
+  "correct": false
+ },
+ {
+  "id": "contra-w-1",
+  "kind": "contradict",
+  "result": "docs/A.md: ## Три теоремы",
+  "answer": "4",
+  "correct": false
+ },
+ {
+  "id": "contra-w-2",
+  "kind": "contradict",
+  "result": "docs/A.md: ## Три теоремы",
+  "answer": "5",
+  "correct": false
+ },
+ {
+  "id": "contra-w-3",
+  "kind": "contradict",
+  "result": "docs/A.md: ## Три теоремы",
+  "answer": "6",
+  "correct": false
+ },
+ {
+  "id": "contra-w-4",
+  "kind": "contradict",
+  "result": "docs/A.md: ## Три теоремы",
+  "answer": "7",
+  "correct": false
+ },
+ {
+  "id": "contra-w-5",
+  "kind": "contradict",
+  "result": "docs/A.md: ## Три теоремы",
+  "answer": "8",
+  "correct": false
+ },
+ {
+  "id": "contra-w-6",
+  "kind": "contradict",
+  "result": "docs/A.md: ## Три теоремы",
+  "answer": "9",
+  "correct": false
+ },
+ {
+  "id": "contra-w-7",
+  "kind": "contradict",
+  "result": "docs/A.md: ## Три теоремы",
+  "answer": "10",
+  "correct": false
+ },
+ {
+  "id": "badref-1",
+  "kind": "badref",
+  "result": "docs/A.md: строка 1",
+  "answer": "docs/NONEXISTENT-1.md",
+  "correct": false
+ },
+ {
+  "id": "badref-2",
+  "kind": "badref",
+  "result": "docs/A.md: строка 2",
+  "answer": "docs/NONEXISTENT-2.md",
+  "correct": false
+ },
+ {
+  "id": "badref-3",
+  "kind": "badref",
+  "result": "docs/A.md: строка 3",
+  "answer": "docs/NONEXISTENT-3.md",
+  "correct": false
+ },
+ {
+  "id": "badref-4",
+  "kind": "badref",
+  "result": "docs/A.md: строка 4",
+  "answer": "docs/NONEXISTENT-4.md",
+  "correct": false
+ },
+ {
+  "id": "badref-5",
+  "kind": "badref",
+  "result": "docs/A.md: строка 5",
+  "answer": "docs/NONEXISTENT-5.md",
+  "correct": false
+ },
+ {
+  "id": "badref-6",
+  "kind": "badref",
+  "result": "docs/A.md: строка 6",
+  "answer": "docs/NONEXISTENT-6.md",
+  "correct": false
+ },
+ {
+  "id": "badref-7",
+  "kind": "badref",
+  "result": "docs/A.md: строка 7",
+  "answer": "docs/NONEXISTENT-7.md",
+  "correct": false
+ },
+ {
+  "id": "badref-num-1",
+  "kind": "badref",
+  "result": "docs/A.md: строка 1",
+  "answer": "C-8001",
+  "correct": false
+ },
+ {
+  "id": "badref-num-2",
+  "kind": "badref",
+  "result": "docs/A.md: строка 2",
+  "answer": "C-8002",
+  "correct": false
+ },
+ {
+  "id": "badref-num-3",
+  "kind": "badref",
+  "result": "docs/A.md: строка 3",
+  "answer": "C-8003",
+  "correct": false
+ },
+ {
+  "id": "badref-num-4",
+  "kind": "badref",
+  "result": "docs/A.md: строка 4",
+  "answer": "C-8004",
+  "correct": false
+ },
+ {
+  "id": "badref-num-5",
+  "kind": "badref",
+  "result": "docs/A.md: строка 5",
+  "answer": "C-8005",
+  "correct": false
+ },
+ {
+  "id": "badref-num-6",
+  "kind": "badref",
+  "result": "docs/A.md: строка 6",
+  "answer": "C-8006",
+  "correct": false
+ },
+ {
+  "id": "badref-num-7",
+  "kind": "badref",
+  "result": "docs/A.md: строка 7",
+  "answer": "C-8007",
+  "correct": false
+ },
+ {
+  "id": "badref-15",
+  "kind": "badref",
+  "result": "docs/A.md: строка 15",
+  "answer": "docs/A.md:99999",
+  "correct": false
+ }
+]

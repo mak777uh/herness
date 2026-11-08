@@ -1629,9 +1629,35 @@ def gate_runs_index(root: Path) -> list[str]:
 
 
 def cmd_gates(args) -> int:
+    """Все гейты. --circuit a — только механизм, b — только целостность репозитория."""
     root = Path(args.root).resolve()
-    checks = [("секреты", gate_secrets), ("утверждения", gate_claims),
-              ("ссылки", gate_links), ("критерии", gate_criteria), ("аудит", gate_audit), ("отказы", gate_failures), ("процедуры", gate_procs), ("формулировки", gate_wording), ("README", gate_readme_numbers), ("модели", gate_models), ("утверждения-проверка", gate_claims_run), ("самоссылка", gate_selfref), ("харнессы", gate_harnesses), ("глубины", gate_depths), ("автономия", gate_autonomy), ("решения", gate_adoptions), ("ядро утверждений", gate_core_claims), ("способности", gate_capabilities), ("журналы", gate_journals), ("рецензии", gate_reviews), ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab), ("печати", gate_seals), ("отсутствие", gate_absence), ("компиляция", gate_compile), ("векторы", gate_vectors), ("покрытие", gate_coverage), ("большие файлы", gate_bigfiles), ("индекс прогонов", gate_runs_index)]
+    # Два независимых контура (ресёрч: seL4 и Rust разделяют корректность механизма и
+    # целостность репозитория). Ошибка в README не должна выглядеть как провал механизма,
+    # а зелёный README — как подтверждение безопасности.
+    #
+    # Контур A — механизм: политика, посредник, журнал, опора, модели, компиляция.
+    # Контур B — целостность: ссылки, печати, README, формулировки, структура, индексы.
+    circuit_a = [("секреты", gate_secrets), ("критерии", gate_criteria), ("отказы", gate_failures),
+                 ("модели", gate_models), ("утверждения-проверка", gate_claims_run),
+                 ("самоссылка", gate_selfref), ("журналы", gate_journals),
+                 ("автономия", gate_autonomy), ("способности", gate_capabilities),
+                 ("компиляция", gate_compile), ("векторы", gate_vectors)]
+    circuit_b = [("утверждения", gate_claims), ("ссылки", gate_links), ("аудит", gate_audit),
+                 ("процедуры", gate_procs), ("формулировки", gate_wording),
+                 ("README", gate_readme_numbers), ("харнессы", gate_harnesses),
+                 ("глубины", gate_depths), ("решения", gate_adoptions),
+                 ("ядро утверждений", gate_core_claims), ("рецензии", gate_reviews),
+                 ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab),
+                 ("печати", gate_seals), ("отсутствие", gate_absence),
+                 ("покрытие", gate_coverage), ("большие файлы", gate_bigfiles),
+                 ("индекс прогонов", gate_runs_index)]
+    which = getattr(args, "circuit", "all")
+    if which == "a":
+        checks = circuit_a
+    elif which == "b":
+        checks = circuit_b
+    else:
+        checks = circuit_a + circuit_b
     total = 0
     for name, fn in checks:
         problems = fn(root)
@@ -1913,6 +1939,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("--root", default=str(ROOT))
     p.add_argument("--no-probes", action="store_true",
                    help="не прогонять пробы гейтов (быстрый режим)")
+    p.add_argument("--circuit", choices=["a", "b", "all"], default="all",
+                   help="a — механизм, b — целостность репозитория, all — оба")
     p.set_defaults(func=cmd_gates)
 
     p = sub.add_parser("refs", help="справочник: репозитории и внешние источники")

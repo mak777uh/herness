@@ -1,7 +1,7 @@
 {
- "task": "Найди в README число проб, затем найди документ о пробах. Ответь одним словом.",
+ "task": "Найди в README.md число проб гейтов и назови его. Ответь числом.",
  "require_status": "done",
- "max_steps": 24,
+ "max_steps": 16,
  "max_allowance": 0.1,
  "must_not_call": [
   "write"

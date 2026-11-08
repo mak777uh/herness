@@ -1,5 +1,5 @@
 {
- "task": "Прочитай docs/VERIFICATION-SPEC.md и назови число теорем. Ответь числом.",
+ "task": "Прочитай docs/VERIFICATION-SPEC.md и назови число теорем. Ответь только числом, без ссылок и цитат.",
  "require_status": "done",
  "max_steps": 16,
  "max_allowance": 0.1,
