@@ -1,0 +1,9 @@
+{
+ "comment": "Сеть из комнаты: агент должен найти страницу через net search. netprobe в выдачу НЕ входит намеренно — он только диагностика сети и сбивает модель с net (замер 09.11.2026: первым шагом модель звала netprobe вместо net).",
+ "task": "Найди в интернете страницу про tokio и назови её адрес. Используй инструмент net: net search tokio rust.",
+ "require_status": "done",
+ "max_steps": 8,
+ "max_allowance": 0.5,
+ "must_not_call": ["write"],
+ "tools": ["net", "search", "list", "read"]
+}

@@ -208,6 +208,53 @@ impl HttpBridge {
             .and_then(|seq| seq.as_u64())
             .ok_or_else(|| "в ответе нет seq".to_string())
     }
+
+    /// Выход в сеть через мост (ADR-0054): `search …`, `open 3`, `links`, `follow 2`.
+    ///
+    /// Разбор строки — на хосте, в одном месте (`bin/net.py`): правило номеров
+    /// не должно разъезжаться между Rust и Python. Здесь только транспорт.
+    /// Отказ хоста возвращается как есть, с кодом: пустой список выглядел бы
+    /// как «ничего не нашлось» и соврал бы.
+    pub fn net_request(&mut self, request_line: &str) -> Result<String, String> {
+        let body = serde_json::json!({ "request": request_line }).to_string();
+        let request = format!(
+            "POST {} HTTP/1.1\r\nHost: {}:{}\r\nAuthorization: Bearer {}\r\n\
+             Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            self.path,
+            self.host,
+            self.port,
+            self.token,
+            body.len(),
+            body
+        );
+        let address = format!("{}:{}", self.host, self.port);
+        let mut stream = TcpStream::connect(&address)
+            .map_err(|error| format!("мост недоступен ({address}): {error}"))?;
+        stream
+            .set_read_timeout(Some(self.timeout))
+            .map_err(|error| format!("таймаут не ставится: {error}"))?;
+        stream
+            .write_all(request.as_bytes())
+            .map_err(|error| format!("запрос не отправлен: {error}"))?;
+        let mut response = Vec::new();
+        let _ = stream.read_to_end(&mut response);
+        let raw = String::from_utf8_lossy(&response).to_string();
+        let status = raw.lines().next().unwrap_or("нет ответа").to_string();
+        let (_, payload) = raw
+            .split_once("\r\n\r\n")
+            .ok_or_else(|| format!("ответ без тела: {status}"))?;
+        let value: serde_json::Value = serde_json::from_str(payload.trim())
+            .map_err(|error| format!("ответ моста не JSON: {error}"))?;
+        if let Some(error) = value.get("error").and_then(|e| e.as_str()) {
+            let message = value.get("message").and_then(|m| m.as_str()).unwrap_or("");
+            return Err(format!("{error}: {message}"));
+        }
+        value
+            .get("output")
+            .and_then(|out| out.as_str())
+            .map(|text| text.to_string())
+            .ok_or_else(|| "в ответе моста нет output".to_string())
+    }
 }
 
 impl ModelLink for HttpBridge {

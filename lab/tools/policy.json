@@ -176,6 +176,27 @@
    "level": "A",
    "why": "проверка сети не читает файлы",
    "implied": true
+  },
+  {
+   "id": "net-allow-bridge",
+   "tool": "net",
+   "subject": "agent",
+   "action": "net",
+   "resource": "net:10.0.2.2:8790",
+   "effect": "allow",
+   "level": "A",
+   "why": "единственный разрешённый адрес — мост: комната не имеет прямого выхода (ADR-0046, ADR-0054)"
+  },
+  {
+   "id": "net-deny-fs",
+   "tool": "net",
+   "subject": "agent",
+   "action": "write",
+   "resource": "file:/mnt/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "выход в сеть не пишет в комнату",
+   "implied": true
   }
  ],
  "delegation": []

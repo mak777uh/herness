@@ -46,6 +46,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 MAX_BODY = 8 * 1024 * 1024
+# Корень репозитория: нужен, чтобы позвать bin/net.py по известному пути,
+# а не по текущему каталогу процесса.
+ROOT = Path(__file__).resolve().parents[1]
 BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36")
 ALLOWED_PREFIX = "/v1/"
@@ -189,6 +192,56 @@ def make_handler(bridge: Bridge):
                 answer = json.dumps({"seq": entry["seq"], "sha256": entry["sha256"]}).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(answer)))
+                self.end_headers()
+                self.wfile.write(answer)
+                return
+            # Выход в сеть для агента (ADR-0054): `search …`, `open 3`, `links`,
+            # `follow 2`. Разбор — в bin/net.py, здесь только транспорт: мост не
+            # ходит по адресам из запроса, он передаёт строку одному исполнителю.
+            if self.path.rstrip("/") == "/v1/net":
+                try:
+                    request = json.loads(body.decode("utf-8"))
+                    line = str(request["request"]).strip()
+                except (ValueError, KeyError, TypeError):
+                    self._reject(400, "нужно {request}")
+                    return
+                if not line:
+                    self._reject(400, "пустой запрос")
+                    return
+                try:
+                    import subprocess
+                    # Разбор строки — как у оболочки, но без оболочки: shlex
+                    # сохраняет кавычки («search "два слова"»), а split() их
+                    # съедал, и запрос из трёх слов разваливался на три аргумента.
+                    import shlex
+                    try:
+                        argv = shlex.split(line)
+                    except ValueError:
+                        argv = line.split()
+                    result = subprocess.run(
+                        [sys.executable, str(ROOT / "bin" / "net.py"), *argv],
+                        capture_output=True, text=True, encoding="utf-8",
+                        errors="replace", cwd=str(ROOT), timeout=120,
+                    )
+                except subprocess.TimeoutExpired:
+                    bridge.log({"ts": time.time(), "path": self.path, "status": 504,
+                                "reason": "таймаут net"})
+                    self._reject(504, "сеть не ответила за 120 с")
+                    return
+                output = (result.stdout or "").strip()
+                error = (result.stderr or "").strip()
+                bridge.log({"ts": time.time(), "path": self.path, "status": 200,
+                            "cmd": line.split()[0], "code": result.returncode,
+                            "bytes": len(output)})
+                # Отказ возвращается как есть, с кодом: пустой список выглядел бы
+                # как «ничего не нашлось» и соврал бы.
+                answer = json.dumps(
+                    {"output": output} if result.returncode == 0
+                    else {"error": error.split(":")[0] or "net", "message": error or output},
+                    ensure_ascii=False).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_header("Content-Length", str(len(answer)))
                 self.end_headers()
                 self.wfile.write(answer)

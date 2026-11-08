@@ -275,10 +275,11 @@ def _links_from(page: str, base: str) -> list[dict]:
 
 
 def cmd_search(args) -> int:
+    query = " ".join(args.query) if isinstance(args.query, list) else args.query
     text, size, truncated = fetch("https://html.duckduckgo.com/html/",
-                                  args.max_bytes, args.timeout, form={"q": args.query})
+                                  args.max_bytes, args.timeout, form={"q": query})
     results = parse_ddg(text)
-    journal({"cmd": "search", "query": args.query, "bytes": size, "found": len(results)})
+    journal({"cmd": "search", "query": query, "bytes": size, "found": len(results)})
     if not results:
         # Пустой список — это не «ничего не нашлось»: DDG мог отдать капчу.
         raise NetError("no-results",
@@ -370,8 +371,11 @@ def main(argv: list[str]) -> int:
         p.add_argument("--chars", type=int, default=6000)
         p.add_argument("--json", action="store_true")
 
+    # Запрос приходит строкой: из комнаты мост передаёт «search rust async runtime»
+    # без кавычек, и argparse иначе разбил бы его на три аргумента. Склеиваем
+    # остаток в один запрос — агенту не нужно помнить про кавычки.
     search = sub.add_parser("search", help="поиск через DuckDuckGo HTML")
-    search.add_argument("query")
+    search.add_argument("query", nargs="+", help="слова запроса")
     common(search)
 
     open_p = sub.add_parser("open", help="открыть страницу по номеру или адресу")
