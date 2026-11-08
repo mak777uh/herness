@@ -1,14 +1,15 @@
 /**
- * dsh-herness-room — клиентская часть: вкладка «Комната» в правой панели DSH.
+ * dsh-herness-room — клиентская часть: «Комната» как отдельная панель DSH.
  *
- * Почему правая панель, а не отдельное окно: задача должна стоять рядом с
- * разговором, не уводя с него. Комната — часть харнесса, а не DSH; плагин
- * только показывает её.
+ * Где живёт: кнопка — в левом меню (`sidebar.panellist`, рядом с «Плагинами»),
+ * содержимое — в центральной панели (root-слот `main` под своим ключом).
+ * Открытие — `ctx.layout.selectPanel(id)`; `conversation` в `main` зарезервирован
+ * за разговором, поэтому ключ свой.
  *
- * Регистрация типа вкладки — два шага (см. README @deepseek-ai/dsh-client-ui-sidebar-right):
- *   1. ctx.sidebarRightTabs.register({ id, kind, title, guide }) — объявление типа;
- *   2. ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({ name, key: id }, Body)).
- * Тело вкладки без объявления типа не делает вкладку: её нечем открыть.
+ * Почему не вкладка правой панели: владелец попросил место в левом меню под
+ * «Плагинами» — там глобальные панели, а не вкладки разговора.
+ *
+ * Комната — часть харнесса, а не DSH; плагин только показывает её.
  */
 
 window.__ModuleLoader__.load({
@@ -18,7 +19,6 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
     const { useState, useEffect, useRef, useCallback } = React;
 
-    const KIND = "herness-room";
     const ID = "dsh-herness-room";
     const API = "/api/dsh-herness-room";
 
@@ -153,57 +153,57 @@ window.__ModuleLoader__.load({
       ]);
     }
 
+    /**
+     * Иконка кнопки в левом меню.
+     *
+     * Кнопку рисует сам сайдбар (`sidebar.panellist` — «Global panel icons»),
+     * а сюда приходят только size и active. Поэтому возвращаем глиф, а не
+     * свою кнопку: иначе получилась бы кнопка внутри кнопки.
+     */
+    function PanelIcon({ size = 18, active = false } = {}) {
+      return h("svg", {
+        viewBox: "0 0 24 24",
+        width: size,
+        height: size,
+        "aria-hidden": "true",
+        focusable: "false",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: active ? 2 : 1.8,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+      }, [
+        h("rect", { key: "r", x: 3, y: 4, width: 18, height: 13, rx: 3 }),
+        h("path", { key: "p", d: "M8 21h8M9 12l2 2 4-4" }),
+      ]);
+    }
+
     return {
-      inject: ["slots", "sidebarRightTabs"],
+      inject: ["slots"],
       apply(ctx) {
         const styles = ctx.get("styles");
         const disposeStyles = styles && typeof styles.insert === "function"
           ? styles.insert(CSS)
           : () => {};
 
-        const tabs = ctx.get("sidebarRightTabs");
         const slots = ctx.get("slots");
-        const sidebarRight = ctx.get("sidebarRight");
+        if (!slots || typeof slots.inject !== "function") return disposeStyles;
 
-        // Шаг 1: объявление типа вкладки. Без него тело вкладки некуда открыть.
-        const disposeType = tabs && typeof tabs.register === "function"
-          ? tabs.register({
-              id: ID,
-              kind: KIND,
-              title: () => "Комната",
-              guide: [{ id: KIND, title: "Комната herness",
-                        description: "Задачи в изолированной комнате с вердиктом" }],
-            })
-          : () => {};
+        // Тело панели: глобальные панели занимают root-слот `main` под своим
+        // ключом (`conversation` зарезервирован за разговором).
+        const disposeBody = slots.inject("main", () =>
+          slots.register({ name: "main", key: ID }, Room));
 
-        // Шаг 2: тело вкладки, ключ — id типа.
-        const disposeBody = slots && typeof slots.inject === "function"
-          ? slots.inject("sidebar.right.pane.tab", () =>
-              slots.register({ name: "sidebar.right.pane.tab", key: ID }, Room))
-          : () => {};
-
-        // Открытие: только когда есть сеанс на экране и вкладки ещё нет,
-        // иначе вкладка плодилась бы на каждый рендер.
-        const open = () => {
-          if (!sidebarRight || typeof sidebarRight.openTab !== "function") return;
-          const openTabs = sidebarRight.openTabs;
-          const current = openTabs && typeof openTabs.getSnapshot === "function"
-            ? openTabs.getSnapshot()
-            : [];
-          const exists = Array.isArray(current) && current.some((t) => t && t.kind === KIND);
-          if (exists) return;
-          try { sidebarRight.openTab(KIND); } catch { /* нет сеанса на экране */ }
-        };
-
-        const disposeAuto = sidebarRight && typeof sidebarRight.mounted === "object" &&
-                            typeof sidebarRight.mounted.subscribe === "function"
-          ? sidebarRight.mounted.subscribe(() => open())
-          : () => {};
+        // Кнопка в левом меню. id обязан совпадать с ключом панели в `main`:
+        // каталог слота говорит прямо — «each list id addresses the matching
+        // main panel». order 60 — после «Плагинов» (0) и «Расписаний» (10).
+        const disposeButton = slots.inject("sidebar.panellist", () =>
+          slots.register({ name: "sidebar.panellist", id: ID, order: 60,
+                           label: "Комната" }, PanelIcon));
 
         return () => {
-          disposeAuto();
+          disposeButton();
           disposeBody();
-          disposeType();
           disposeStyles();
         };
       },
