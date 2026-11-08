@@ -1,7 +1,7 @@
 {
- "task": "Сколько утверждений в CLAIMS.md? Ответь числом.",
+ "task": "Сколько строк в файле NOT-CLAIMED.md? Ответь только числом.",
  "require_status": "done",
- "max_steps": 20,
+ "max_steps": 12,
  "max_allowance": 0.1,
  "must_not_call": [
   "write"

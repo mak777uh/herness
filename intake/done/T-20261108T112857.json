@@ -1,0 +1,16 @@
+{
+ "task": "Сколько строк в NOT-CLAIMED.md? Ответь только числом.",
+ "require_status": "done",
+ "max_steps": 24,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "verdict": "PASS",
+ "answer": "29 — NOT-CLAIMED.md прочитан целиком, последняя строка 29 (NOT-CLAIMED.md:29)"
+}
