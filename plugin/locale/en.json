@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "title": "herness room",
+    "description": "Tasks run in an isolated herness room; the answer arrives with a PASS, FAIL, or UNKNOWN verdict."
+  },
+  "room": {
+    "title": "Room",
+    "placeholder": "For example: how many lines are in NOT-CLAIMED.md? Answer with the number only.",
+    "send": "Send",
+    "sending": "Running in the room…",
+    "empty": "Ask a task — it runs in an isolated herness room.",
+    "emptyAnswer": "(empty)",
+    "retry": "Retry",
+    "open": "Open the room",
+    "error": "connection error"
+  }
+}

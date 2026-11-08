@@ -7,15 +7,27 @@
  * Почему через accept-run.ps1, а не напрямую: прогон в комнате — это QEMU,
  * собственное ядро и initramfs. Дублировать эту логику в плагине значило бы
  * иметь две реализации одного механизма.
+ *
+ * ДЕФЕКТ, ИСПРАВЛЕННЫЙ В 0.2.0 (F-ROOM-1). Ответ агента лежит в журнале
+ * событием `run/end`. accept-run.ps1 УДАЛЯЕТ журнал перед каждым прогоном
+ * (строка `Remove-Item $journal`), а прежняя версия читала ответ ПОСЛЕ
+ * прогона. Если прогон падал раньше записи журнала, журнал оставался
+ * отсутствующим, ответ получался пустым, а вердикт брался из строки
+ * «итог:» и оставался PASS. Так в intake/history.jsonl появилась строка
+ * `verdict: PASS, answer: ""` — PASS без ответа.
+ *
+ * Правило (AGENTS.md §2, R-0008): пустой ответ — это UNKNOWN, никогда не
+ * PASS. Здесь вердикт понижается до UNKNOWN, если ответа нет.
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { randomUUID } from "node:crypto";
 
 export const name = "dsh-herness-room";
 
-export const inject = ["http", "slots"];
+export const inject = ["http"];
 
 /** Настройки по умолчанию: их можно переопределить в cordis.patch.yml. */
 const DEFAULTS = {
@@ -33,10 +45,45 @@ const CRITERIA = {
   tools: ["search", "list", "read"],
 };
 
+const VERDICTS = new Set(["PASS", "FAIL", "UNKNOWN"]);
+
 function now() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+/**
+ * Достать ответ агента из журнала приёмки.
+ *
+ * Берётся ПОСЛЕДНЕЕ событие `run/end` (журнал дописывается прогонами),
+ * а не первое: несколько прогонов в одном журнале иначе отдали бы ответ
+ * предыдущей задачи.
+ */
+export function answerFromJournal(journalPath) {
+  if (!existsSync(journalPath)) return "";
+  let raw;
+  try {
+    raw = readFileSync(journalPath, "latin1");
+  } catch {
+    return "";
+  }
+  const matches = [...raw.matchAll(/run\/end ([^\x00\x06\n]+)/g)];
+  if (!matches.length) return "";
+  const bytes = Buffer.from(matches[matches.length - 1][1], "latin1");
+  return bytes.toString("utf8").trim();
+}
+
+/**
+ * Вердикт с защитой от ложного PASS.
+ *
+ * `итог:` — вердикт приёмки над журналом. Он ничего не говорит о том, что
+ * ответ доехал до окна. Ответ без текста — это UNKNOWN (R-0008).
+ */
+export function settleVerdict(reported, answer) {
+  const verdict = VERDICTS.has(reported) ? reported : "UNKNOWN";
+  if (verdict === "PASS" && !String(answer ?? "").trim()) return "UNKNOWN";
+  return verdict;
 }
 
 /**
@@ -49,7 +96,9 @@ async function runTask(root, kernel, timeoutSec, task) {
   mkdirSync(intake, { recursive: true });
   mkdirSync(done, { recursive: true });
 
-  const id = `T-${now()}`;
+  // Метка с миллисекундами и случайным хвостом: две задачи в одну секунду
+  // иначе получили бы один файл критерия.
+  const id = `T-${now()}-${randomUUID().slice(0, 8)}`;
   const criteriaPath = join(intake, `${id}.json`);
   writeFileSync(criteriaPath, JSON.stringify({ ...CRITERIA, task }, null, 1) + "\n", "utf8");
 
@@ -71,32 +120,25 @@ async function runTask(root, kernel, timeoutSec, task) {
     child.on("error", () => resolve(text));
   });
 
-  let verdict = "UNKNOWN";
+  let reported = "";
   for (const line of output.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (trimmed.startsWith("итог:")) {
-      verdict = trimmed.slice(trimmed.indexOf(":") + 1).trim();
+      reported = trimmed.slice(trimmed.indexOf(":") + 1).trim();
     }
   }
 
-  // Ответ агента лежит в журнале событием run/end: accept-run печатает вердикт,
-  // но не текст ответа.
-  let answer = "";
-  const journal = join(root, "runs", "accept", "journal.bin");
-  if (existsSync(journal)) {
-    const raw = readFileSync(journal, "utf8");
-    const found = raw.match(/run\/end ([^\x00\x06\n]+)/);
-    if (found) answer = found[1].trim();
-  }
+  const answer = answerFromJournal(join(root, "runs", "accept", "journal.bin"));
+  const verdict = settleVerdict(reported, answer);
 
   const seconds = Number(((Date.now() - started) / 1000).toFixed(1));
   writeFileSync(join(done, `${id}.json`),
-    JSON.stringify({ ...CRITERIA, task, verdict, answer }, null, 1) + "\n", "utf8");
-  try { (await import("node:fs")).unlinkSync(criteriaPath); } catch { /* уже нет */ }
+    JSON.stringify({ ...CRITERIA, task, verdict, reported, answer }, null, 1) + "\n", "utf8");
+  try { unlinkSync(criteriaPath); } catch { /* уже нет */ }
 
   // История для клиента: одна строка JSON на задачу.
   const history = join(intake, "history.jsonl");
-  const row = { task, answer, verdict, seconds, at: new Date().toISOString() };
+  const row = { task, answer, verdict, reported, seconds, at: new Date().toISOString() };
   const previous = existsSync(history) ? readFileSync(history, "utf8") : "";
   writeFileSync(history, previous + JSON.stringify(row) + "\n", "utf8");
 
@@ -132,12 +174,5 @@ export function apply(ctx, config = {}) {
     http.route("GET", "/api/dsh-herness-room/history", async (_request, reply) => {
       reply.send(readHistory(root));
     });
-  });
-
-  // Слот интерфейса: вкладка «Комната».
-  ctx.inject(["slots"], (sctx) => {
-    const slots = sctx.get("slots");
-    if (!slots || typeof slots.register !== "function") return;
-    slots.register({ name: "herness.room", key: "dsh-herness-room#room" }, () => null);
   });
 }

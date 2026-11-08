@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="herness room">
+  <title>herness room</title>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#247bbf"/>
+  <rect x="14" y="16" width="36" height="26" rx="6" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <path d="M22 48 L22 42 L30 42 Z" fill="#ffffff"/>
+  <path d="M22 25 L28 31 L22 37" fill="none" stroke="#ffffff" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M34 35 L42 35" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+</svg>

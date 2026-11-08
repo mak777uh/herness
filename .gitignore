@@ -63,3 +63,6 @@ lab/p27/musique/*.jsonl
 parts/*/
 !parts/README.md
 !parts/MANIFEST.json
+
+# Выгрузки сессий DSH: данные, не код (112 МБ)
+work/session-*/
