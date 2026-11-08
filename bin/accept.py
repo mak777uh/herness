@@ -202,8 +202,14 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
             match = re.search(r"потрачено ([0-9.eE+-]+)", rest)
             if match:
                 spent = max(spent, float(match.group(1)))
+        # F-MONEY-2 (08.11.2026). Число из журнала — это `usage.allowance`
+        # провайдера, то есть ОЦЕНКА расхода, а не факт биллинга. Раньше оно
+        # подавалось как «потрачено», и оценка выглядела фактом: в знаменатель
+        # CostPerVerifiedSuccess (AGENTS.md §5) годится только факт.
+        # Формат `потрачено: N` сохранён — на него смотрят парсеры и тесты;
+        # пометка добавлена рядом.
         rows.append((f"расход ≤ {criteria['max_allowance']}", spent <= criteria["max_allowance"],
-                     f"потрачено: {spent:.8f}"))
+                     f"потрачено: {spent:.8f} (оценка провайдера, не факт биллинга)"))
 
     if "tools" in criteria:
         # Выдача инструментов — полномочие. Проверяем не «что модель просила», а «что сработало»:
