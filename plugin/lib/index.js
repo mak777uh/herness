@@ -27,7 +27,10 @@ import { randomUUID } from "node:crypto";
 
 export const name = "dsh-herness-room";
 
-export const inject = ["http"];
+// Обязательных зависимостей нет: без webServer плагин просто не регистрирует
+// маршруты, но не висит в pending. Раньше здесь стоял `["http"]` — сервиса с
+// таким именем в профиле нет, и строка не активировалась НИКОГДА (F-ROOM-2).
+export const inject = [];
 
 /** Настройки по умолчанию: их можно переопределить в cordis.patch.yml. */
 const DEFAULTS = {
@@ -154,25 +157,100 @@ function readHistory(root, limit = 50) {
   }).filter(Boolean);
 }
 
+/**
+ * Прочитать тело запроса целиком (node:http, без фреймворка).
+ * Потолок 64 КиБ: задача — это текст, а не файл; всё сверх — отказ, а не OOM.
+ */
+function readBody(req, limit = 64 * 1024) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new Error("тело запроса больше 64 КиБ"));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+function sendJson(res, status, value) {
+  const body = JSON.stringify(value);
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": Buffer.byteLength(body),
+    "cache-control": "no-store",
+  });
+  res.end(body);
+}
+
 export function apply(ctx, config = {}) {
   const settings = { ...DEFAULTS, ...config };
   const root = settings.hernessRoot;
 
-  // HTTP-мост: клиент зовёт /api/dsh-herness-room/ask и /history.
-  ctx.inject(["http"], (hctx) => {
-    const http = hctx.get("http");
-    if (!http || typeof http.route !== "function") return;
-    http.route("POST", "/api/dsh-herness-room/ask", async (request, reply) => {
-      const task = String(request.body?.task ?? "").trim();
-      if (!task) {
-        reply.code(400).send({ error: "пустая задача" });
-        return;
-      }
-      const row = await runTask(root, settings.kernel, settings.timeoutSec, task);
-      reply.send(row);
+  // Маршруты регистрируются в webServer — это и есть HTTP-носитель DSH.
+  // Раньше здесь стоял сервис `http`, которого в профиле нет: строка висела
+  // в ожидании, маршруты не появлялись, и окно получало 404 (F-ROOM-2).
+  // Обработчик — обычный node:http (req, res), а не (request, reply).
+  ctx.inject(["webServer"], (sctx) => {
+    const server = sctx.get("webServer");
+    if (!server || typeof server.register !== "function") return;
+
+    const history = server.register({
+      kind: "exact",
+      path: "/api/dsh-herness-room/history",
+      handler: (req, res) => {
+        if (req.method !== "GET") {
+          res.writeHead(405, { allow: "GET" });
+          res.end();
+          return;
+        }
+        sendJson(res, 200, readHistory(root));
+      },
     });
-    http.route("GET", "/api/dsh-herness-room/history", async (_request, reply) => {
-      reply.send(readHistory(root));
+
+    const ask = server.register({
+      kind: "exact",
+      path: "/api/dsh-herness-room/ask",
+      handler: async (req, res) => {
+        if (req.method !== "POST") {
+          res.writeHead(405, { allow: "POST" });
+          res.end();
+          return;
+        }
+        let task = "";
+        try {
+          const raw = await readBody(req);
+          task = String(JSON.parse(raw || "{}").task ?? "").trim();
+        } catch (error) {
+          sendJson(res, 400, { error: String(error && error.message ? error.message : error) });
+          return;
+        }
+        if (!task) {
+          sendJson(res, 400, { error: "пустая задача" });
+          return;
+        }
+        try {
+          const row = await runTask(root, settings.kernel, settings.timeoutSec, task);
+          sendJson(res, 200, row);
+        } catch (error) {
+          // Прогон не состоялся — это UNKNOWN, а не PASS и не пустой ответ.
+          sendJson(res, 200, {
+            task, answer: "", verdict: "UNKNOWN", seconds: 0,
+            error: String(error && error.message ? error.message : error),
+          });
+        }
+      },
     });
+
+    return () => {
+      ask();
+      history();
+    };
   });
 }
