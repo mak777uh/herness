@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -36,37 +37,76 @@ def wsl(script: str) -> tuple[int, str]:
 
 
 def build(manifest: dict) -> int:
+    """Собрать образ через staging и переименование (F-ROOM-5).
+
+    Раньше сборка шла прямо в целевой файл: `rm -f share.img` и `dd` в него же.
+    Прерванная сборка оставляла полуразрушенный образ, а `--check` этого не
+    видел — он считает файлы. Теперь новый образ пишется рядом
+    (`share.img.new`) и подменяет старый только после успешной сборки:
+    либо прежний рабочий образ, либо новый целый, третьего нет.
+    """
     image = manifest["image"]
+    staging = f"{image}.new"
     size = manifest.get("size_mb", 160)
     copies = manifest["copy"]
     script = [
-        f"cd /mnt/c/111/herness && rm -f {image} &&",
-        f"dd if=/dev/zero of={image} bs=1M count={size} status=none &&",
-        f"mkfs.ext4 -q -F {image} && mkdir -p /tmp/room && mount -o loop {image} /tmp/room &&",
+        f"cd /mnt/c/111/herness && rm -f {staging} &&",
+        f"dd if=/dev/zero of={staging} bs=1M count={size} status=none &&",
+        f"mkfs.ext4 -q -F {staging} && mkdir -p /tmp/room && mount -o loop {staging} /tmp/room &&",
     ]
     for source, destination in copies.items():
         parent = str(Path(destination).parent)
         if parent not in (".", ""):
             script.append(f"mkdir -p /tmp/room/{parent} &&")
         script.append(f"cp -r {source} /tmp/room/{destination} &&")
-    script.append("sync && umount /tmp/room && echo собрано")
+    # Подмена только после того, как staging целиком собран и отмонтирован.
+    script.append(f"sync && umount /tmp/room && mv -f {staging} {image} && echo собрано")
     code, out = wsl(" ".join(script))
-    print(out.strip().splitlines()[-1] if out.strip() else "")
+    tail = out.strip().splitlines()[-1] if out.strip() else ""
+    print(tail)
+    if code != 0:
+        # Неудачный staging не должен остаться мусором рядом с образом.
+        wsl(f"cd /mnt/c/111/herness && rm -f {staging} && umount /tmp/room 2>/dev/null; true")
+        print("сборка не удалась — прежний образ оставлен как был")
     return 0 if code == 0 else 1
 
 
 def check(manifest: dict) -> int:
+    """Проверить образ: наличие источников, запрещённые каталоги и СОДЕРЖИМОЕ.
+
+    F-ROOM-6 (08.11.2026). Раньше проверялось только число файлов: подменённый
+    файл при том же количестве проходил, и «образ совпадает» было неправдой —
+    тихий пропуск, то есть UNKNOWN, выданный за PASS. Теперь для каждого
+    источника считается SHA-256 на хосте и в образе, и сверяется.
+
+    Заодно убран `head -5000`: на большом образе он молча обрезал список и
+    давал ложное «в образе меньше файлов».
+    """
     image = manifest["image"]
     script = (
         f"cd /mnt/c/111/herness && mkdir -p /tmp/room && mount -o loop {image} /tmp/room && "
-        "cd /tmp/room && find . -type f | sed 's|^\\./||' | sort | head -5000 && "
-        "echo '---конец---' && cd / && umount /tmp/room"
+        "cd /tmp/room && find . -type f | sed 's|^\\./||' | sort && "
+        "echo '---файлы-конец---' && "
+        "find . -type f -print0 | sort -z | xargs -0 -r sha256sum && "
+        "echo '---хеши-конец---' && cd / && umount /tmp/room"
     )
     code, out = wsl(script)
-    if code != 0 and "---конец---" not in out:
-        print("образ не смонтировался:", out.strip()[-400:])
+    if "---хеши-конец---" not in out:
+        print("образ не смонтировался или хеши не снялись:", out.strip()[-400:])
         return 1
-    inside = {line.strip() for line in out.splitlines() if line.strip() and not line.startswith("---")}
+
+    files_part, rest = out.split("---файлы-конец---", 1)
+    hashes_part = rest.split("---хеши-конец---", 1)[0]
+    inside = {line.strip() for line in files_part.splitlines() if line.strip()}
+    # sha256sum печатает "<хеш>  ./путь"
+    image_hashes: dict[str, str] = {}
+    for line in hashes_part.splitlines():
+        line = line.strip()
+        if not line or "  " not in line:
+            continue
+        digest, path = line.split("  ", 1)
+        image_hashes[path.strip().lstrip("./")] = digest
+
     problems: list[str] = []
 
     for source_in_image in manifest["verify"]:
@@ -77,31 +117,43 @@ def check(manifest: dict) -> int:
         if any(path == forbidden or path.startswith(forbidden.rstrip("/") + "/") for path in inside):
             problems.append(f"в образе запрещённый каталог {forbidden}")
 
-    print(f"файлов в образе: {len(inside)}")
+    print(f"файлов в образе: {len(inside)}, хешей снято: {len(image_hashes)}")
     for source, destination in manifest["copy"].items():
         host = ROOT / source
-        if host.is_file():
-            count_host = 1
-        elif host.is_dir():
-            count_host = sum(1 for _ in host.rglob("*") if _.is_file())
-        else:
+        if not host.exists():
             problems.append(f"источника нет в репозитории: {source}")
             continue
         if host.is_file():
-            count_image = 1 if destination in inside else 0
+            pairs = [(destination, host)]
         else:
-            prefix = destination.rstrip("/") + "/"
-            count_image = sum(1 for path in inside if path.startswith(prefix))
-        print(f"  {source:24} в репозитории {count_host:>4}  в образе {count_image:>4}")
-        if count_image < count_host:
-            problems.append(f"{source}: в образе меньше файлов ({count_image} против {count_host})")
+            pairs = []
+            for path in sorted(host.rglob("*")):
+                if path.is_file():
+                    rel = path.relative_to(host).as_posix()
+                    pairs.append((f"{destination.rstrip('/')}/{rel}", path))
+
+        mismatched = 0
+        missing = 0
+        for image_path, host_path in pairs:
+            if image_path not in image_hashes:
+                missing += 1
+                continue
+            host_digest = hashlib.sha256(host_path.read_bytes()).hexdigest()
+            if host_digest != image_hashes[image_path]:
+                mismatched += 1
+        print(f"  {source:24} файлов {len(pairs):>4}  нет в образе {missing:>3}  "
+              f"разошлись по содержимому {mismatched:>3}")
+        if missing:
+            problems.append(f"{source}: в образе нет файлов ({missing} из {len(pairs)})")
+        if mismatched:
+            problems.append(f"{source}: содержимое расходится ({mismatched} из {len(pairs)})")
 
     if problems:
         print("ПРОБЛЕМЫ:")
         for problem in problems:
             print("  -", problem)
         return 1
-    print("образ совпадает с манифестом")
+    print("образ совпадает с манифестом по составу и содержимому")
     return 0
 
 

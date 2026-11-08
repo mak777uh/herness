@@ -121,8 +121,23 @@ if (-not $exported) {
 
 # Достаём файл из образа на хосте. Монтирование только для чтения: приёмка не должна менять
 # свидетельство, которое проверяет.
+#
+# F-ROOM-4 (08.11.2026). Раньше здесь стояло `Remove-Item $journal -ErrorAction SilentlyContinue`:
+# ошибка удаления проглатывалась, и если файл был занят или не удалялся, прогон продолжался,
+# а `cp` мог оставить ПРЕЖНИЙ журнал. Тогда приёмка и окно читали чужой результат — это
+# корень F-ROOM-3 (на «раскажи стих» приходил ответ на «привет»).
+#
+# Теперь журнал обязан исчезнуть ДО прогона. Не исчез — прогон не начинается:
+# лучше не получить результат, чем получить чужой.
 $journal = Join-Path $runs "journal.bin"
-Remove-Item $journal -ErrorAction SilentlyContinue
+if (Test-Path $journal) {
+    Remove-Item $journal -Force -ErrorAction SilentlyContinue
+    if (Test-Path $journal) {
+        Write-Host "ПРИЁМКА: старый журнал не удаляется — прогон не начат (иначе результат будет чужим)" -ForegroundColor Red
+        Write-Host "  файл: $journal" -ForegroundColor Red
+        exit 4
+    }
+}
 $wsl = "cd /mnt/c/111/herness && rm -rf /tmp/acc && mkdir -p /tmp/acc && e2fsck -fy /mnt/c/111/herness/$($Image -replace '\\','/') >/dev/null 2>&1; mount -o loop /mnt/c/111/herness/$($Image -replace '\\','/') /tmp/acc && cp /tmp/acc/hs-journal.bin /mnt/c/111/herness/runs/accept/journal.bin && umount /tmp/acc && echo вынуто"
 wsl -e bash -lc $wsl
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $journal)) {
