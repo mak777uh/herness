@@ -28,6 +28,10 @@
 | C-0010 | Free-модели opencode отдают отказ квоты: HTTP 429, тип FreeUsageLimitError | observation | `python bin/probe_api.py status --check` | вывод пробы, 29.10.2026 | 29.10.2026 | `429` |
 | C-0011 | Каталог моделей opencode доступен без авторизации: 82 модели через /zen/v1/models | observation | `python bin/probe_api.py models --check` | вывод пробы, 29.10.2026 | 29.10.2026 | `models=82` |
 
+| C-0282 | Вкладка «Комната» в DSH не появлялась, потому что package.json плагина не объявлял `dsh.bundle.patch`: загрузчик отвечал `not-bundle`, строка не создавалась, плагин был установлен и никогда не монтировался (0 живых записей). После объявления bundle и перехода на `sidebarRightTabs.register` + `slots.inject` вкладка стала активным occupant `sidebar.right.pane.tab` | test | `python bin/check_room_verdict.py` | вывод команды, 08.11.2026 | 08.11.2026 | `2 из 2` |
+| C-0283 | F-ROOM-1: пустой ответ комнаты выдавался за PASS. Причина — `accept-run.ps1` удаляет журнал перед прогоном, а ответ читался после; при падении до записи журнала ответ пуст, а вердикт из строки «итог:» оставался PASS. Исправлено: пустой ответ понижается до UNKNOWN (R-0008), берётся последний `run/end`. Снятие защиты даёт 3 ложных PASS — тест ловит | test | `python bin/inject_room_defect.py` | вывод команды, 08.11.2026 | 08.11.2026 | `поймал` |
+| C-0284 | Живой прогон в комнате после пересборки образа: задача «Сколько строк в NOT-CLAIMED.md», 2 шага, все пять критериев приёмки ok, итог PASS; ответ из журнала «29 — файл /mnt/NOT-CLAIMED.md прочитан целиком» | test | `pwsh -NoProfile -File core-rs/accept-run.ps1 -Mode loop-bridge -Kernel vmlinuz-own-hardened2 -Net -TimeoutSec 420 -Criteria accept/room-smoke.json -Task "Сколько строк в NOT-CLAIMED.md? Ответь только числом."` | вывод команды, 08.11.2026 | 08.11.2026 | `итог: PASS` |
+
 Правило пополнения: новая строка — только вместе с командой, дайджестом артефакта и датой.
 Опровергнутая строка не удаляется, а переводится в `docs/eliminations.md` со ссылкой.
 

@@ -195,9 +195,12 @@ FNR 1,9 %, FPR 1,8 % на 199 случаях.
 **Источник.** Владелец, 08.11.2026.
 
 **Инвариант.** `bin/room_ui.py` (внешняя страница) и плагин `dsh-herness-room` (вкладка в DSH);
-логи в `intake/history.jsonl`, `runs/accept/journal.bin`.
+логи в `intake/history.jsonl`, `runs/accept/journal.bin`. Пустой ответ не может быть `PASS`:
+`bin/check_room_verdict.py` (9 случаев, положительный контроль), подложенный дефект ловит
+`bin/inject_room_defect.py`.
 
-**Статус.** `принято` (внешняя страница работает; плагин установлен, ждёт перезапуска DSH).
+**Статус.** `принято` (внешняя страница работает; вкладка `dsh-herness-room` — активный occupant
+`sidebar.right.pane.tab`, проверено 08.11.2026; живой прогон в комнате PASS, ответ «29»).
 
 ---
 
