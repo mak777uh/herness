@@ -23,33 +23,51 @@ window.__ModuleLoader__.load({
     const API = "/api/dsh-herness-room";
 
     const CSS = `
-      .hsr-wrap{display:flex;flex-direction:column;height:100%;min-height:320px;
-        font-family:inherit;color:var(--dsw-alias-label-primary,#1d1d1f)}
-      .hsr-chat{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
-      .hsr-msg{max-width:92%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;
-        word-wrap:break-word;font-size:13px;line-height:1.5}
-      .hsr-user{align-self:flex-end;background:var(--dsw-alias-accent-primary,#4c8dff);color:#fff;
-        border-bottom-right-radius:4px}
-      .hsr-bot{align-self:flex-start;background:var(--dsw-alias-fill-secondary,rgba(127,127,127,.12));
+      /* Окно занимает панель целиком и не может уехать за экран.
+         Родитель — .mainPanel из ui-layout: display:flex; flex:1; min-height:0,
+         БЕЗ position:relative. Поэтому absolute привязался бы к frame, а не к
+         панели; берём flex-элемент с flex:1 и min-height:0 — тогда высоту
+         задаёт панель, а не содержимое, и «съезда» вниз не будет. */
+      .hsr-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+        overflow:hidden;font-family:inherit;color:var(--dsw-alias-label-primary,#1d1d1f);
+        background:var(--dsw-alias-bg-base,transparent)}
+      .hsr-head{display:flex;align-items:center;gap:10px;padding:10px 16px;
+        border-bottom:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.18));
+        flex:0 0 auto}
+      .hsr-title{font-size:14px;font-weight:600;margin:0}
+      .hsr-sub{font-size:12px;opacity:.6;margin-left:auto}
+      .hsr-chat{flex:1 1 auto;min-height:0;overflow-y:auto;padding:16px;
+        display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+      .hsr-msg{max-width:min(760px,88%);padding:10px 14px;border-radius:14px;
+        white-space:pre-wrap;word-wrap:break-word;font-size:14px;line-height:1.55}
+      .hsr-user{align-self:flex-end;background:var(--dsw-alias-accent-primary,#4c8dff);
+        color:#fff;border-bottom-right-radius:5px}
+      .hsr-bot{align-self:flex-start;
+        background:var(--dsw-alias-fill-secondary,rgba(127,127,127,.12));
         border:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.18));
-        border-bottom-left-radius:4px}
-      .hsr-meta{font-size:11px;opacity:.7;margin-bottom:5px;display:flex;gap:8px;align-items:center;
-        flex-wrap:wrap}
+        border-bottom-left-radius:5px}
+      .hsr-meta{font-size:11px;opacity:.7;margin-bottom:6px;display:flex;gap:8px;
+        align-items:center;flex-wrap:wrap}
       .hsr-badge{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px}
       .hsr-PASS{background:rgba(63,185,80,.18);color:#3fb950}
       .hsr-FAIL{background:rgba(248,81,73,.18);color:#f85149}
       .hsr-UNKNOWN{background:rgba(210,153,34,.18);color:#d29922}
-      .hsr-form{display:flex;gap:8px;padding:10px 12px;
-        border-top:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.18))}
-      .hsr-input{flex:1;resize:none;height:44px;padding:10px 12px;border-radius:10px;
-        border:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.28));
-        background:transparent;color:inherit;font:inherit;outline:none}
+      /* Ввод прибит к низу панели: form — последний flex-элемент,
+         и он не сжимается (flex:0 0 auto). */
+      .hsr-form{flex:0 0 auto;display:flex;gap:10px;align-items:flex-end;
+        padding:12px 16px 16px;
+        border-top:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.18));
+        background:var(--dsw-alias-bg-primary,transparent)}
+      .hsr-input{flex:1;resize:none;min-height:46px;max-height:160px;padding:12px 14px;
+        border-radius:12px;border:1px solid var(--dsw-alias-border-secondary,rgba(127,127,127,.28));
+        background:var(--dsw-alias-bg-secondary,transparent);color:inherit;font:inherit;
+        line-height:1.4;outline:none;box-sizing:border-box}
       .hsr-input:focus{border-color:var(--dsw-alias-accent-primary,#4c8dff)}
-      .hsr-send{padding:0 16px;border:0;border-radius:10px;
+      .hsr-send{flex:0 0 auto;height:46px;padding:0 20px;border:0;border-radius:12px;
         background:var(--dsw-alias-accent-primary,#4c8dff);color:#fff;font:inherit;
         font-weight:600;cursor:pointer}
       .hsr-send:disabled{opacity:.5;cursor:default}
-      .hsr-empty{opacity:.6;text-align:center;margin-top:28px;font-size:13px}
+      .hsr-empty{opacity:.6;text-align:center;margin:auto;font-size:14px;max-width:420px}
       .hsr-wait{opacity:.75;font-style:italic}
       .hsr-retry{margin-top:6px;font-size:12px;background:none;border:0;padding:0;
         color:var(--dsw-alias-accent-primary,#4c8dff);cursor:pointer;text-decoration:underline}
@@ -92,6 +110,15 @@ window.__ModuleLoader__.load({
         if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
       }, [messages]);
 
+      // Поле ввода растёт вместе с текстом, но не выше max-height из CSS.
+      const inputRef = useRef(null);
+      useEffect(() => {
+        const el = inputRef.current;
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.height = Math.min(el.scrollHeight, 160) + "px";
+      }, [text]);
+
       const send = useCallback(async () => {
         const task = text.trim();
         if (!task || busy) return;
@@ -112,6 +139,11 @@ window.__ModuleLoader__.load({
       }, [text, busy]);
 
       return h("div", { className: "hsr-wrap" }, [
+        h("div", { className: "hsr-head", key: "head" }, [
+          h("h2", { className: "hsr-title", key: "t" }, "Комната herness"),
+          h("span", { className: "hsr-sub", key: "s" },
+            busy ? "выполняется…" : "изолированная комната · PASS / FAIL / UNKNOWN"),
+        ]),
         h("div", { className: "hsr-chat", ref: chatRef, key: "chat" },
           messages.length === 0
             ? [h("div", { className: "hsr-empty", key: "empty" },
@@ -132,7 +164,9 @@ window.__ModuleLoader__.load({
         h("div", { className: "hsr-form", key: "form" }, [
           h("textarea", {
             key: "input",
+            ref: inputRef,
             className: "hsr-input",
+            rows: 1,
             value: text,
             placeholder: "Например: сколько строк в NOT-CLAIMED.md? Ответь только числом.",
             onChange: (event) => setText(event.target.value),
