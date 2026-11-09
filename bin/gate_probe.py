@@ -282,6 +282,24 @@ def probe_compile(root: Path) -> None:
     (root / "bin" / "PROBE-broken.py").write_text("def f(:\n    return 1\n", encoding="utf-8")
 
 
+def probe_rust(root: Path) -> None:
+    """Подложить «правку без пересборки»: исходник новее артефакта.
+
+    Именно так выглядел F-BUILD-1: Cargo на /mnt/c не заметил изменение и
+    переиспользовал старый артефакт, тесты исполнялись над прежним кодом.
+    Гейт обязан это увидеть по времени файлов.
+    """
+    import os
+    import time
+
+    source = root / "core-rs" / "src" / "loopmod.rs"
+    if not source.exists():
+        return
+    # Сдвигаем mtime вперёд: артефакт окажется «старше» исходника.
+    future = time.time() + 3600
+    os.utime(source, (future, future))
+
+
 def probe_lab(root: Path) -> None:
     # Реестр программы без следующей гипотезы: непонятно, что делать дальше.
     path = root / "lab" / "registry.json"
@@ -412,6 +430,7 @@ PROBES = {
     "модели": (hs.gate_models, probe_models),
     "самоссылка": (hs.gate_selfref, probe_selfref),
     "компиляция": (hs.gate_compile, probe_compile),
+    "rust": (hs.gate_rust, probe_rust),
     "лаборатория": (hs.gate_lab, probe_lab),
     "способности": (hs.gate_capabilities, probe_capabilities),
     "большие файлы": (hs.gate_bigfiles, probe_bigfiles),
@@ -428,6 +447,9 @@ PROBES = {
 IN_PLACE = {
     "лаборатория": "lab/registry.json",
     "пре-регистрация": "lab/prereg",
+    # rust читает настоящий target/: в песочнице артефактов нет, и проба
+    # подложила бы «нет артефактов» вместо нужного дефекта. Откат — по mtime.
+    "rust": "core-rs/src/loopmod.rs",
 }
 
 
@@ -448,6 +470,7 @@ FAST = [
     "README",
     "самоссылка",
     "компиляция",
+    "rust",
     "лаборатория",
 ]
 
@@ -463,11 +486,16 @@ def run(names: list[str]) -> int:
         in_place = name in IN_PLACE
         clean = ROOT if in_place else sandbox()
         backup = None
+        mtime_backup = None
         try:
             if in_place:
-                # Резервная копия — каталог целиком (пре-регистрации) или один файл (реестр).
+                # Резервная копия — каталог целиком (пре-регистрации), один файл
+                # (реестр) или только время изменения (rust: содержимое не
+                # меняется, меняется mtime).
                 source = clean / IN_PLACE[name]
-                if source.is_dir():
+                if name == "rust":
+                    mtime_backup = source.stat().st_mtime
+                elif source.is_dir():
                     backup = {item.name: item.read_text(encoding="utf-8") for item in source.glob("*.json")}
                 else:
                     backup = source.read_text(encoding="utf-8")
@@ -480,7 +508,12 @@ def run(names: list[str]) -> int:
             if not caught:
                 broken += 1
         finally:
-            if in_place and backup is not None:
+            if in_place and mtime_backup is not None:
+                # Откат по времени: содержимое исходника не менялось.
+                import os
+                source = clean / IN_PLACE[name]
+                os.utime(source, (mtime_backup, mtime_backup))
+            elif in_place and backup is not None:
                 source = clean / IN_PLACE[name]
                 if isinstance(backup, dict):
                     for name_file, content in backup.items():

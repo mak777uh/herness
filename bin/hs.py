@@ -1358,6 +1358,19 @@ def gate_autonomy(root: Path) -> list[str]:
     return lines or ["check_autonomy.py завершился с ошибкой"]
 
 
+def gate_rust(root: Path) -> list[str]:
+    """Rust-тесты ядра: артефакт должен быть свежее исходника (F-BUILD-1).
+
+    Быстрый режим: Cargo на /mnt/c не замечает правок и переиспользует старый
+    артефакт — тесты тогда исполняются над прежним кодом, и это ложное зелёное.
+    Полный прогон в WSL — отдельно: python bin/gate_rust.py --rust (около 70 с,
+    поэтому не в каждом прогоне гейтов).
+    """
+    from bin.gate_rust import check_fresh
+
+    return check_fresh()
+
+
 def gate_requirements(root: Path) -> list[str]:
     """У каждого принятого требования есть инвариант или явное «не проверяется»."""
     import subprocess
@@ -1657,7 +1670,7 @@ def cmd_gates(args) -> int:
                  ("самоссылка", gate_selfref), ("журналы", gate_journals),
                  ("автономия", gate_autonomy), ("способности", gate_capabilities),
                  ("компиляция", gate_compile), ("векторы", gate_vectors),
-                 ("требования", gate_requirements)]
+                 ("требования", gate_requirements), ("rust", gate_rust)]
     circuit_b = [("утверждения", gate_claims), ("ссылки", gate_links), ("аудит", gate_audit),
                  ("процедуры", gate_procs), ("формулировки", gate_wording),
                  ("README", gate_readme_numbers), ("харнессы", gate_harnesses),
