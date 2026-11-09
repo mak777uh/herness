@@ -58,6 +58,11 @@ def main() -> int:
             problems.append(
                 f"{doc}: заявлено {claimed}, фактически {actual} ({target or 'docs/ADR-*.md'})")
 
+    # Числа из CONTINUE.md убраны намеренно: их держит файл, а не документ.
+    # Но если кто-то вернёт число — оно обязано совпадать с файлом. Проверяем
+    # это отдельно, чтобы возврат несоответствующего числа был находкой.
+    problems.extend(check_returned_numbers())
+
     if problems:
         print(f"[FAIL] документы: {len(problems)} проблем (проверено {checked})")
         for problem in problems:
@@ -65,6 +70,36 @@ def main() -> int:
         return 1
     print(f"[ok] документы: 0 проблем (сверено чисел: {checked})")
     return 0
+
+
+def check_returned_numbers() -> list[str]:
+    """Если в CONTINUE.md вернули число — оно должно совпадать с файлом.
+
+    Числа убраны намеренно (F-DOC-1): документ отставал от файла, и я называл
+    устаревшее число владельцу как факт. Здесь ловим возврат: число снова
+    появилось — значит его надо сверять, иначе дефект вернётся молча.
+    """
+    path = ROOT / "docs" / "CONTINUE.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8", errors="replace")
+    problems: list[str] = []
+    pairs = (
+        (r"`CLAIMS\.md` — (\d+) запис", "CLAIMS.md", r"^\| C-\d{4}"),
+        (r"`NOT-CLAIMED\.md` — (\d+) запис", "NOT-CLAIMED.md", r"^\| `NC-\d+`"),
+        (r"`REQUIREMENTS\.md` — (\d+) запис", "REQUIREMENTS.md", r"^## R-\d{4}"),
+    )
+    for pattern, target, row_pattern in pairs:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        claimed = int(match.group(1))
+        actual = count_rows(ROOT / target, row_pattern)
+        if actual != claimed:
+            problems.append(
+                f"docs/CONTINUE.md: вернули число {claimed} для {target}, "
+                f"а фактически {actual}")
+    return problems
 
 
 if __name__ == "__main__":

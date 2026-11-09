@@ -124,6 +124,16 @@
    "note": "core-rs: canonical_json, event_hash, canonical_seal; 3 теста на замороженных векторах",
    "conclusion": "research/WSL-CORE-2026-10-31.md",
    "claim": "C-0103"
+  },
+  {
+   "id": "E-0012",
+   "title": "Серия 50 после правок чтения и опоры: не ухудшилась ли",
+   "hypothesis": "Правки (MAX_READ, LAST_RESULT, четыре дефекта опоры, F-ROOM-1..4) не снижают число пройденных задач серии 50",
+   "prereg": "lab/prereg/S50-R2.json",
+   "status": "closed",
+   "note": "Порог 47 объявлен ДО прогона и запечатан (sha256 сверен после). Результат 48 из 50. Провалы: S44-refuse (задача-отказ), S48-plan (план).",
+   "conclusion": "research/outputs/series50.txt",
+   "claim": null
   }
  ]
 }
