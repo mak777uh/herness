@@ -1358,6 +1358,28 @@ def gate_autonomy(root: Path) -> list[str]:
     return lines or ["check_autonomy.py завершился с ошибкой"]
 
 
+def gate_docs(root: Path) -> list[str]:
+    """Числа в документации обязаны совпадать с файлами (F-DOC-1).
+
+    В docs/CONTINUE.md стояло «NOT-CLAIMED.md — 29 записей» при 14 живых, и
+    «45 решений» при 53 ADR. Гейт README сверяет число с CLAIMS.md, но не с
+    файлом; здесь сверка идёт с самими реестрами.
+    """
+    from bin.gate_docs import main as docs_main
+
+    import io
+    import contextlib
+
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        code = docs_main()
+    if code == 0:
+        return []
+    lines = [line.strip().lstrip("- ").strip() for line in buffer.getvalue().splitlines()
+             if line.strip().startswith("- ")]
+    return lines or ["расхождение чисел в документации"]
+
+
 def gate_rust(root: Path) -> list[str]:
     """Rust-тесты ядра: артефакт должен быть свежее исходника (F-BUILD-1).
 
@@ -1679,7 +1701,7 @@ def cmd_gates(args) -> int:
                  ("пре-регистрация", gate_prereg), ("лаборатория", gate_lab),
                  ("печати", gate_seals), ("отсутствие", gate_absence),
                  ("покрытие", gate_coverage), ("большие файлы", gate_bigfiles),
-                 ("индекс прогонов", gate_runs_index)]
+                 ("индекс прогонов", gate_runs_index), ("документы", gate_docs)]
     which = getattr(args, "circuit", "all")
     if which == "a":
         checks = circuit_a

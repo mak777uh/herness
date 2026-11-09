@@ -30,6 +30,7 @@ class: invented-premise
 principle: AGENTS 1c
 detect: правило 1c
 test: вопрос до действий
+caught_by: test
 """
 
 NO_TEST = """id: F-0002
