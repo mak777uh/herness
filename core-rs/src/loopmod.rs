@@ -1666,6 +1666,38 @@ mod tests {
     }
 
     #[test]
+    fn net_разрешён_только_к_мосту() {
+        // ADR-0054: комната не имеет прямого выхода. Разрешён один адрес — мост.
+        assert!(policy_allows("net", "net", "net:10.0.2.2:8790"));
+        assert!(!policy_allows("net", "net", "net:example.com:443"));
+        assert!(!policy_allows("net", "net", "net:1.1.1.1:53"));
+        // Запись в файлы для net закрыта: выход в сеть не пишет в комнату.
+        assert!(!policy_allows("net", "write", "file:/mnt/work/x"));
+    }
+
+    #[test]
+    fn net_не_перекрыт_общим_запретом() {
+        // Дефект, найденный живым прогоном 09.11.2026: общий запрет `net:**`
+        // совпадал и с адресом моста, а запрет сильнее разрешения — net не
+        // работал вовсе. Тест держит это исправление: если кто-то вернёт
+        // общий запрет, он покраснеет.
+        let blanket: Vec<&str> = POLICY
+            .iter()
+            .filter(|rule| rule.tool == "net" && rule.action == "net"
+                    && rule.effect == Effect::Deny)
+            .map(|rule| rule.resource)
+            .collect();
+        assert!(blanket.is_empty(), "общий запрет для net вернулся: {blanket:?}");
+    }
+
+    #[test]
+    fn net_есть_в_списке_инструментов() {
+        assert!(KNOWN_TOOLS.contains(&"net"));
+        // netprobe остаётся: он диагностика сети, а не выход в сеть.
+        assert!(KNOWN_TOOLS.contains(&"netprobe"));
+    }
+
+    #[test]
     fn правильный_порядок_проходит() {
         let events = vec![
             event("run/start"),
