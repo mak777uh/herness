@@ -36,6 +36,7 @@ import argparse
 import hashlib
 import json
 import os
+import socket
 import ssl
 import sys
 import time
@@ -64,6 +65,26 @@ def read_token(path: Path) -> str:
     if not text:
         raise SystemExit(f"пустой файл токена: {path}")
     return text
+
+
+def port_in_use(host: str, port: int) -> bool:
+    """Занят ли порт: пробуем занять его сами и сразу отпускаем.
+
+    Почему не «попробовать подключиться»: на Windows занятый порт может не
+    отвечать на connect (процесс висит без обработки), и проверка соврала бы.
+    Проба bind честнее: если занять не удалось — порт занят кем-то другим.
+
+    SO_REUSEADDR здесь НЕ ставится намеренно: именно он позволял двум мостам
+    слушать один порт, и второй висел вхолостую (F-BRIDGE-1).
+    """
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        probe.bind((host, port))
+        return False
+    except OSError:
+        return True
+    finally:
+        probe.close()
 
 
 def upstream_allowed(url: str) -> tuple[bool, str]:
@@ -318,12 +339,28 @@ def main(argv: list[str] | None = None) -> int:
     local_token = read_token(Path(args.token_file))
     log_path = Path(args.log) if args.log else None
     bridge = Bridge(args.upstream, provider_key, local_token, log_path)
+
+    # F-BRIDGE-1 (09.11.2026). Раньше мост на занятом порту НЕ падал: у
+    # ThreadingHTTPServer по умолчанию allow_reuse_address=1, и на Windows это
+    # позволяет двум процессам слушать один порт. Второй висел вхолостую, не
+    # получая ни одного запроса, и копился — в замере их набралось 29.
+    # Теперь порт проверяется до запуска, и занятый даёт внятный отказ с кодом,
+    # а не тихое зависание.
+    if port_in_use(args.bind, args.port):
+        print(f"порт {args.bind}:{args.port} уже занят — второй мост не нужен "
+              f"и не запускается (иначе процессы копятся)", file=sys.stderr)
+        return 3
+
     server = ThreadingHTTPServer((args.bind, args.port), make_handler(bridge))
     print(f"мост: http://{args.bind}:{args.port} -> {args.upstream}", file=sys.stderr, flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         return 0
+    finally:
+        # Сокет закрывается явно: без этого порт остаётся занятым до выхода
+        # процесса, и следующий запуск упирается в ту же ловушку.
+        server.server_close()
     return 0
 
 
