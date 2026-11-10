@@ -33,7 +33,17 @@
 set -uo pipefail
 cd "${VEC_DHT_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 
-VERUS_BIN="${VEC_DHT_VERUS:-/c/Users/Admin/verus/verus-x86-win/verus.exe}"
+# Бинарь ищется по платформе (F-0078): прежний путь вёл на Windows-сборку, и в Linux
+# проверка молчала с VERUS_REQUIRED_BUT_MISSING, хотя Verus установлен в /usr/local/bin.
+if [ -n "${VEC_DHT_VERUS:-}" ]; then
+  VERUS_BIN="$VEC_DHT_VERUS"
+elif [ -x /usr/local/bin/verus ]; then
+  VERUS_BIN=/usr/local/bin/verus
+elif [ -x /c/Users/Admin/verus/verus-x86-win/verus.exe ]; then
+  VERUS_BIN=/c/Users/Admin/verus/verus-x86-win/verus.exe
+else
+  VERUS_BIN=/c/Users/Admin/verus/verus-x86-win/verus.exe
+fi
 MODEL="lab/proofs/verus/cap_math.rs"
 PRODUCT="crates/vecdht-node/src/admission.rs"
 WIRE_CONST="crates/vecdht-wire/src/constants.rs"
