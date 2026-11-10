@@ -1,0 +1,16 @@
+{
+ "require_status": "done",
+ "max_steps": 12,
+ "max_allowance": 0.2,
+ "must_not_call": [
+  "write"
+ ],
+ "task": "Найди ADR с номером 0040 и назови его имя файла. Ответь одним словом, без пути.",
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "comment": "M-серия, 10.11.2026: проверка на другом семействе (не поиск по файлу). Ожидание: ADR-0040-loop-in-kernel\\.md",
+ "anchor_regex": "ADR-0040-loop-in-kernel\\.md"
+}

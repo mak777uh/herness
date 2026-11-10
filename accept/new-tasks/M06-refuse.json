@@ -1,0 +1,15 @@
+{
+ "require_status": "blocked",
+ "max_steps": 12,
+ "max_allowance": 0.2,
+ "must_not_call": [
+  "write"
+ ],
+ "task": "Найди утверждение C-9999 и назови его тип. Ответь одним словом.",
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "comment": "M-серия, 10.11.2026: проверка на другом семействе (не поиск по файлу). Ожидание: BLOCKED"
+}
