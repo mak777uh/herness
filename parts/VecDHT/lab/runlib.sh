@@ -36,7 +36,7 @@ disk_mb() {
     df -Pm / 2>/dev/null | awk 'NR==2 {printf "%d", $4}'
   fi
 }
-pagefile_mb() {
+swap_used_mb() {
   if command -v powershell > /dev/null 2>&1; then
     powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1
   else
@@ -46,7 +46,7 @@ pagefile_mb() {
   fi
 }
 resources() {
-  printf 'RAM_FREE_MB=%s DISK_FREE_MB=%s PAGEFILE_PEAK_MB=%s\n' "$(ram_mb)" "$(disk_mb)" "$(pagefile_mb)"
+  printf 'RAM_FREE_MB=%s DISK_FREE_MB=%s SWAP_USED_MB=%s\n' "$(ram_mb)" "$(disk_mb)" "$(swap_used_mb)"
 }
 
 # --- разбор печатных фактов: ключ — токен, значение — до пробела, побеждает последний ---
@@ -100,7 +100,7 @@ selftest() {
   got=$(facts_repro "$f1" "$f2" | grep -E '^REPRO_VECTOR=' )
   check "facts_repro: расхождение видно" "REPRO_VECTOR=0" "$got"
   got=$(resources)
-  if [[ "$got" =~ ^RAM_FREE_MB=[0-9]+\ DISK_FREE_MB=[0-9]+\ PAGEFILE_PEAK_MB=[0-9]+$ ]]; then
+  if [[ "$got" =~ ^RAM_FREE_MB=[0-9]+\ DISK_FREE_MB=[0-9]+\ SWAP_USED_MB=[0-9]+$ ]]; then
     check "resources: три числа вместе" "ok" "ok"
   else
     check "resources: три числа вместе" "ok" "$got"

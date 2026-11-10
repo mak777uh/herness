@@ -21,7 +21,7 @@ ROOT=$(pwd)
 
 ram_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1KB)" 2>/dev/null | tr -d '\r' | tail -1; }
 disk_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-PSDrive C).Free / 1MB)" 2>/dev/null | tr -d '\r' | tail -1; }
-pagefile_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
+swap_used_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
 size_mb() { [ -e "$1" ] && du -sm "$1" 2>/dev/null | cut -f1 || echo 0; }
 # Вне Windows `powershell` нет, и три функции выше вернули бы пустоту: пустое значение у напечатанного
 # ключа — молчание, а не замер. Для GNU/Linux (раннер CI, где `lab/workspace-verify.sh` тоже
@@ -32,7 +32,9 @@ case "$(uname -s 2>/dev/null)" in
   *)
     ram_mb() { free -m 2>/dev/null | awk '/^Mem:/{print $7}'; }
     disk_mb() { df -m "$ROOT" 2>/dev/null | awk 'NR==2{print $4}'; }
-    pagefile_mb() { printf 'none'; }
+    # В Linux подкачка — это swap; «пикового» значения ядро не хранит, поэтому печатаем
+    # текущее использование. Имя поля SWAP_USED_MB обещает именно это, а не пик (F-0077).
+    swap_used_mb() { awk '/SwapTotal/ {t=$2} /SwapFree/ {f=$2} END {printf "%d", (t-f)/1024}' /proc/meminfo 2>/dev/null; }
     ;;
 esac
 incremental_mb() {
@@ -45,15 +47,15 @@ incremental_mb() {
 }
 
 quick() {
-  printf 'DISK_FREE_MB=%s RAM_FREE_MB=%s PAGEFILE_PEAK_MB=%s\n' \
-    "$(disk_mb)" "$(ram_mb)" "$(pagefile_mb)"
+  printf 'DISK_FREE_MB=%s RAM_FREE_MB=%s SWAP_USED_MB=%s\n' \
+    "$(disk_mb)" "$(ram_mb)" "$(swap_used_mb)"
 }
 
 full() {
-  printf 'DISK_FREE_MB=%s TARGET_MB=%s INCREMENTAL_MB=%s CARGO_HOME_MB=%s LAB_LOGS_MB=%s RAM_FREE_MB=%s PAGEFILE_PEAK_MB=%s\n' \
+  printf 'DISK_FREE_MB=%s TARGET_MB=%s INCREMENTAL_MB=%s CARGO_HOME_MB=%s LAB_LOGS_MB=%s RAM_FREE_MB=%s SWAP_USED_MB=%s\n' \
     "$(disk_mb)" "$(size_mb "$ROOT/target")" "$(incremental_mb)" \
     "$(size_mb "${CARGO_HOME:-$HOME/.cargo}")" "$(size_mb "$ROOT/lab/logs")" \
-    "$(ram_mb)" "$(pagefile_mb)"
+    "$(ram_mb)" "$(swap_used_mb)"
 }
 
 case "${1:-}" in

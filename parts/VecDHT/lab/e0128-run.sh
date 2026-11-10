@@ -80,7 +80,7 @@ res=$(bash lab/disk-report.sh 2>&1)
 say "$res"
 disk=$(printf '%s' "$res" | sed -n 's/.*DISK_FREE_MB=\([0-9]*\).*/\1/p')
 ram=$(printf '%s' "$res" | sed -n 's/.*RAM_FREE_MB=\([0-9]*\).*/\1/p')
-pf=$(printf '%s' "$res" | sed -n 's/.*PAGEFILE_PEAK_MB=\([0-9]*\).*/\1/p')
+pf=$(printf '%s' "$res" | sed -n 's/.*SWAP_USED_MB=\([0-9]*\).*/\1/p')
 emit0 "DISK_BEFORE_MB=${disk:-MISSING}"
 emit0 "RAM_BEFORE_MB=${ram:-MISSING}"
 emit0 "PAGEFILE_BEFORE_MB=${pf:-MISSING}"
@@ -458,7 +458,7 @@ res=$(bash lab/disk-report.sh 2>&1)
 say "$res"
 disk=$(printf '%s' "$res" | sed -n 's/.*DISK_FREE_MB=\([0-9]*\).*/\1/p')
 ram=$(printf '%s' "$res" | sed -n 's/.*RAM_FREE_MB=\([0-9]*\).*/\1/p')
-pf=$(printf '%s' "$res" | sed -n 's/.*PAGEFILE_PEAK_MB=\([0-9]*\).*/\1/p')
+pf=$(printf '%s' "$res" | sed -n 's/.*SWAP_USED_MB=\([0-9]*\).*/\1/p')
 emit0 "DISK_AFTER_MB=${disk:-MISSING}"
 emit0 "RAM_AFTER_MB=${ram:-MISSING}"
 emit0 "PAGEFILE_AFTER_MB=${pf:-MISSING}"

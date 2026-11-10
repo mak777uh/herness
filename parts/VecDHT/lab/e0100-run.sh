@@ -54,7 +54,7 @@ FACT_KEYS="$CORPUS_KEYS $ATTR_KEYS $INDEX_KEYS $NODE_KEYS $MEM_KEYS"
 
 ram_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1KB)" 2>/dev/null | tr -d '\r' | tail -1; }
 disk_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-PSDrive C).Free / 1MB)" 2>/dev/null | tr -d '\r' | tail -1; }
-pagefile_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
+swap_used_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
 
 # Ключ ascii, `=`, одно слово; граница перед ключом обязательна; контроль — последнее вхождение.
 val() { grep -oE "(^|[[:space:]])$2=[^[:space:]]*" "$1" | tail -1 | cut -d= -f2-; }
@@ -84,7 +84,7 @@ VER=$(mktemp); TXT=$(mktemp); F1=$(mktemp); F2=$(mktemp); CORP=$(mktemp)
   echo "HEAD: $(git rev-parse --short HEAD)"
   echo "rustc: $(rustc --version)"
   echo "base_commit: 9687c32"
-  echo "RAM_FREE_MB_BEFORE=$(ram_mb) DISK_FREE_MB_BEFORE=$(disk_mb) PAGEFILE_PEAK_MB=$(pagefile_mb)"
+  echo "RAM_FREE_MB_BEFORE=$(ram_mb) DISK_FREE_MB_BEFORE=$(disk_mb) SWAP_USED_MB=$(swap_used_mb)"
 } >> "$LOG"
 BLOCK_START=$(wc -l < "$LOG")
 block() { tail -n +"$((BLOCK_START + 1))" "$LOG"; }
@@ -149,7 +149,7 @@ grab "$M1" r1 "$MEM_KEYS" >> "$F1"; grab "$M2" r2 "$MEM_KEYS" >> "$F2"
   echo "порог (7) снапшот: format=$(val "$I1" SNAP_FORMAT) attr_roundtrip=$(val "$I1" SNAP_ATTR_ROUNDTRIP) format1_rejected=$(val "$I1" SNAP_FORMAT1_REJECTED)"
   echo "REPRO_VECTOR=$(cmp -s <(strip_run "$F1") <(strip_run "$F2") && echo 1 || echo 0)"
   echo "порог (9) вектор n=1 против n=2: $(cmp -s <(strip_run "$F1") <(strip_run "$F2") && echo совпал || echo РАЗОШЁЛСЯ)"
-  echo "порог (11) ресурсы: disk_free_mb=$DISK_BEFORE disk_ok=$( [ "${DISK_BEFORE:-0}" -ge "$DISK_MIN" ] && echo 1 || echo 0) ram_free_mb=$(ram_mb) pagefile_peak_mb=$(pagefile_mb)"
+  echo "порог (11) ресурсы: disk_free_mb=$DISK_BEFORE disk_ok=$( [ "${DISK_BEFORE:-0}" -ge "$DISK_MIN" ] && echo 1 || echo 0) ram_free_mb=$(ram_mb) pagefile_peak_mb=$(swap_used_mb)"
   echo "порог (12) осевшие_каталоги=$(ls "${TMPDIR:-/tmp}" 2>/dev/null | grep -c "$DIR_TAG")"
 } >> "$LOG"
 
@@ -183,7 +183,7 @@ block >> "$CORP"
   echo "СВЕРКА_EXIT=$?"
 } >> "$LOG"
 
-{ echo "МЕРЕНО после: RAM_FREE_MB=$(ram_mb) DISK_FREE_MB=$(disk_mb) PAGEFILE_PEAK_MB=$(pagefile_mb) TARGET_SIZE_MB=$(du -sm target 2>/dev/null | cut -f1)"
+{ echo "МЕРЕНО после: RAM_FREE_MB=$(ram_mb) DISK_FREE_MB=$(disk_mb) SWAP_USED_MB=$(swap_used_mb) TARGET_SIZE_MB=$(du -sm target 2>/dev/null | cut -f1)"
   echo "########## E-0100 · конец блока ##########"
 } >> "$LOG"
 

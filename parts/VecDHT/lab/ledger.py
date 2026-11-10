@@ -16,7 +16,7 @@
   * только последний блок прогона в каждом файле (граница — строка `########## `): прошлые прогоны
     в append-only логе не участвуют в текущем итоге;
   * `SECONDS_<этап>=N` и `<ЭТАП>_EXIT=N` — время и вердикт каждого этапа верификации;
-  * `DISK_FREE_MB` / `RAM_FREE_MB` / `PAGEFILE_PEAK_MB` — носитель до и после;
+  * `DISK_FREE_MB` / `RAM_FREE_MB` / `SWAP_USED_MB` — носитель до и после;
   * `VERIFY_FAIL=` — итог блока; `STATUS_DLL_INIT_FAILED` — оборванные дочерние процессы;
   * `GATE_*`, `PRE_FIX_*` — что цикл потребил до замера; `REVIEW_FINDINGS` — что нашёл страж.
   * контрольные выходы (`V9CTL_*`, `*CTL_*`, `PRE_FIX*`), сводка `VERIFY` и собственный `LEDGER`
@@ -45,13 +45,13 @@ import sys
 
 # Якорь — граница токена с обеих сторон (`^` или пробел слева, не «буква/точка» справа), а не начало
 # строки: `workspace-verify.sh` печатает метки ресурсов в одну строку
-# (`DISK_FREE_MB=… RAM_FREE_MB=… PAGEFILE_PEAK_MB=…`), и якорь только по началу строки молча
+# (`DISK_FREE_MB=… RAM_FREE_MB=… SWAP_USED_MB=…`), и якорь только по началу строки молча
 # терял два из трёх чисел. Тот же класс, что и в `E-0089`/`E-0105`.
 STAGE_RE = re.compile(r"(?:^|[ \t])SECONDS_([a-z0-9_]+)=(\d+)(?![\w.])", re.MULTILINE)
 EXIT_RE = re.compile(r"(?:^|[ \t])([A-Z][A-Z0-9_]*)_EXIT=(\d+)(?![\w.])", re.MULTILINE)
 DISK_RE = re.compile(r"(?:^|[ \t])DISK_FREE_MB=(\d+)(?![\w.])", re.MULTILINE)
 RAM_RE = re.compile(r"(?:^|[ \t])RAM_FREE_MB=(\d+)(?![\w.])", re.MULTILINE)
-PF_RE = re.compile(r"(?:^|[ \t])PAGEFILE_PEAK_MB=(\d+)(?![\w.])", re.MULTILINE)
+PF_RE = re.compile(r"(?:^|[ \t])SWAP_USED_MB=(\d+)(?![\w.])", re.MULTILINE)
 DLL_RE = re.compile(r"STATUS_DLL_INIT_FAILED")
 GATE_RE = re.compile(r"(?:^|[ \t])GATE_[A-Z0-9_]*=", re.MULTILINE)
 PREFIX_RE = re.compile(r"(?:^|[ \t])PRE_FIX\S*=", re.MULTILINE)
@@ -118,7 +118,7 @@ def balance(corpus):
         f"LEDGER_INTERRUPTED={interrupted}",
         f"LEDGER_DISK_DELTA_MB={(disk[-1] - disk[0]) if len(disk) >= 2 else 'нет_двух_меток'}",
         f"LEDGER_RAM_DELTA_MB={(ram[-1] - ram[0]) if len(ram) >= 2 else 'нет_двух_меток'}",
-        f"LEDGER_PAGEFILE_PEAK_MB={max(pf) if pf else 'нет_метки'}",
+        f"LEDGER_SWAP_USED_MB={max(pf) if pf else 'нет_метки'}",
         f"LEDGER_GATE_RUNS={len(GATE_RE.findall(corpus))}",
         f"LEDGER_PREFIX_KEYS={len(PREFIX_RE.findall(corpus))}",
         f"LEDGER_MISSING_STAGES={len(missing)}",
@@ -188,7 +188,7 @@ CASES = [
         "SECONDS_test=100\nTEST_EXIT=0\nSECONDS_clippy=10\nCLIPPY_EXIT=0\n"
         "SECONDS_lean=140\nLEAN_EXIT=0\nSECONDS_lean_selftest=137\nLEANGUARD_SELFTEST_EXIT=0\n"
         "DISK_FREE_MB=18000\nDISK_FREE_MB=17900\nRAM_FREE_MB=14000\nRAM_FREE_MB=13000\n"
-        "PAGEFILE_PEAK_MB=7660\nVERIFY_FAIL=0\nGATE_H9=OK\n",
+        "SWAP_USED_MB=7660\nVERIFY_FAIL=0\nGATE_H9=OK\n",
         "LEDGER_OK=1",
         None,
     ),
@@ -234,8 +234,8 @@ CASES = [
         "метрики в одну строку: RAM читается по границе токена, а не по началу строки",
         "SECONDS_test=5\nTEST_EXIT=0\nSECONDS_clippy=5\nCLIPPY_EXIT=0\nSECONDS_lean=5\nLEAN_EXIT=0\n"
         "SECONDS_lean_selftest=5\nLEANGUARD_SELFTEST_EXIT=0\n"
-        "DISK_FREE_MB=18000 RAM_FREE_MB=14000 PAGEFILE_PEAK_MB=7660\n"
-        "DISK_FREE_MB=17900 RAM_FREE_MB=13000 PAGEFILE_PEAK_MB=7700\nVERIFY_FAIL=0\n",
+        "DISK_FREE_MB=18000 RAM_FREE_MB=14000 SWAP_USED_MB=7660\n"
+        "DISK_FREE_MB=17900 RAM_FREE_MB=13000 SWAP_USED_MB=7700\nVERIFY_FAIL=0\n",
         "LEDGER_RAM_DELTA_MB=-1000",
         None,
     ),
@@ -243,9 +243,9 @@ CASES = [
         "метрики в одну строку: пик pagefile тоже извлечён (правило трёх чисел)",
         "SECONDS_test=5\nTEST_EXIT=0\nSECONDS_clippy=5\nCLIPPY_EXIT=0\nSECONDS_lean=5\nLEAN_EXIT=0\n"
         "SECONDS_lean_selftest=5\nLEANGUARD_SELFTEST_EXIT=0\n"
-        "DISK_FREE_MB=18000 RAM_FREE_MB=14000 PAGEFILE_PEAK_MB=7660\n"
-        "DISK_FREE_MB=17900 RAM_FREE_MB=13000 PAGEFILE_PEAK_MB=7700\nVERIFY_FAIL=0\n",
-        "LEDGER_PAGEFILE_PEAK_MB=7700",
+        "DISK_FREE_MB=18000 RAM_FREE_MB=14000 SWAP_USED_MB=7660\n"
+        "DISK_FREE_MB=17900 RAM_FREE_MB=13000 SWAP_USED_MB=7700\nVERIFY_FAIL=0\n",
+        "LEDGER_SWAP_USED_MB=7700",
         None,
     ),
     (

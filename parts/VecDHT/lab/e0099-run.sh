@@ -42,7 +42,7 @@ DISK_MIN=15000
 
 ram_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1KB)" 2>/dev/null | tr -d '\r' | tail -1; }
 disk_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-PSDrive C).Free / 1MB)" 2>/dev/null | tr -d '\r' | tail -1; }
-pagefile_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
+swap_used_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
 val() { grep -oE "(^|[[:space:]])$2=[^[:space:]]*" "$1" | tail -1 | cut -d= -f2-; }
 
 mkdir -p lab/logs
@@ -53,7 +53,7 @@ mkdir -p lab/logs
   echo "verus_bin: ${VEC_DHT_VERUS:-по_умолчанию_в_приборе}"
   echo "kani_local: $(command -v cargo-kani >/dev/null 2>&1 && echo есть || echo нет)"
   echo "lean_local: $( { command -v lean >/dev/null 2>&1 || [ -x /c/Users/Admin/.elan/bin/lean ]; } && echo есть || echo нет)"
-  echo "RAM_FREE_MB_BEFORE=$(ram_mb) DISK_FREE_MB_BEFORE=$(disk_mb) PAGEFILE_PEAK_MB=$(pagefile_mb)"
+  echo "RAM_FREE_MB_BEFORE=$(ram_mb) DISK_FREE_MB_BEFORE=$(disk_mb) SWAP_USED_MB=$(swap_used_mb)"
 } >> "$LOG"
 BLOCK_START=$(wc -l < "$LOG")
 block() { tail -n +"$((BLOCK_START + 1))" "$LOG"; }
@@ -261,7 +261,7 @@ block >> "$CORP"
   echo "СВЕРКА_EXIT=$?"
 } >> "$LOG"
 
-{ echo "МЕРЕНО после: RAM_FREE_MB=$(ram_mb) DISK_FREE_MB=$(disk_mb) PAGEFILE_PEAK_MB=$(pagefile_mb) TARGET_SIZE_MB=$(du -sm target 2>/dev/null | cut -f1)"
+{ echo "МЕРЕНО после: RAM_FREE_MB=$(ram_mb) DISK_FREE_MB=$(disk_mb) SWAP_USED_MB=$(swap_used_mb) TARGET_SIZE_MB=$(du -sm target 2>/dev/null | cut -f1)"
   echo "########## E-0099 · конец блока ##########"
 } >> "$LOG"
 tail -32 "$LOG"

@@ -77,7 +77,7 @@ FACT_KEYS="$DR_KEYS $DC_KEYS"
 
 ram_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1KB)" 2>/dev/null | tr -d '\r' | tail -1; }
 disk_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-PSDrive C).Free / 1MB)" 2>/dev/null | tr -d '\r' | tail -1; }
-pagefile_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
+swap_used_mb() { powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1; }
 
 # Экстрактор по подписям печати: ключ ascii, за ним `=`, одно слово значения; граница перед ключом
 # обязательна, контроль append-only берётся последним вхождением.
@@ -107,7 +107,7 @@ REGN=$(mktemp); REGD=$(mktemp); F1=$(mktemp); F2=$(mktemp)
   echo "rustc: $(rustc --version)"
   echo "witness: $WITNESS"
   echo "counters: $COUNTERS"
-  echo "RAM_FREE_MB_BEFORE=$(ram_mb) DISK_FREE_MB_BEFORE=$(disk_mb) PAGEFILE_PEAK_MB=$(pagefile_mb)"
+  echo "RAM_FREE_MB_BEFORE=$(ram_mb) DISK_FREE_MB_BEFORE=$(disk_mb) SWAP_USED_MB=$(swap_used_mb)"
 } >> "$LOG"
 # Нумерация строк на старте блока: контроль и сверка читают ТОЛЬКО текущий блок, иначе ожидание
 # мог бы удовлетворить факт из прошлого прогона (append-only, ДИАГНОЗ-3 из `E-0087`).
@@ -198,7 +198,7 @@ block >> "$CORP"
   echo "СВЕРКА_EXIT=$?"
 } >> "$LOG"
 
-{ echo "МЕРЕНО после: RAM_FREE_MB=$(ram_mb) DISK_FREE_MB=$(disk_mb) PAGEFILE_PEAK_MB=$(pagefile_mb) TARGET_SIZE_MB=$(du -sm target 2>/dev/null | cut -f1)"
+{ echo "МЕРЕНО после: RAM_FREE_MB=$(ram_mb) DISK_FREE_MB=$(disk_mb) SWAP_USED_MB=$(swap_used_mb) TARGET_SIZE_MB=$(du -sm target 2>/dev/null | cut -f1)"
   echo "########## E-0095 · конец блока ##########"
 } >> "$LOG"
 
