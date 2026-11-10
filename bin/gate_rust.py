@@ -32,23 +32,30 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC = ROOT / "core-rs" / "src"
-# Артефакты, которые Cargo переиспользует, не замечая правок. Ищем ЛЮБОЙ
-# свежий: rust_tests.py удаляет libhs_core.rlib перед прогоном, поэтому
-# ориентироваться на один файл нельзя — после прогона остаётся тестовый
-# бинарник в target/release/deps/.
-TARGET = ROOT / "core-rs" / "target" / "release"
+# Артефакты, которые Cargo переиспользует, не замечая правок. Проверяем ОБА
+# места: target/release (тесты) и target/x86_64-unknown-linux-musl/release
+# (бинарник, который попадает в комнату). Второй важнее: 09.11.2026
+# make_initramfs взял musl-бинарник от 01:09 при исходнике новее, и в комнату
+# уехало старое поведение поиска — исправление не дошло до прогона.
+TARGETS = [
+    ROOT / "core-rs" / "target" / "release",
+    ROOT / "core-rs" / "target" / "x86_64-unknown-linux-musl" / "release",
+]
 
 
 def newest_artifact() -> tuple[float, str]:
-    """Самый свежий артефакт ядра: rlib или тестовый бинарник."""
+    """Самый свежий артефакт ядра: rlib, тестовый бинарник или musl-бинарник."""
     latest, name = 0.0, ""
-    candidates = list(TARGET.glob("libhs_core*.rlib")) + list(TARGET.glob("deps/hs_core-*"))
-    for path in candidates:
-        if not path.is_file():
-            continue
-        mtime = path.stat().st_mtime
-        if mtime > latest:
-            latest, name = mtime, path.name
+    for target in TARGETS:
+        candidates = (list(target.glob("libhs_core*.rlib"))
+                      + list(target.glob("deps/hs_core-*"))
+                      + list(target.glob("hs-core")))
+        for path in candidates:
+            if not path.is_file():
+                continue
+            mtime = path.stat().st_mtime
+            if mtime > latest:
+                latest, name = mtime, path.name
     return latest, name
 
 

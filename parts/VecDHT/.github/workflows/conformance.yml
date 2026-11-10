@@ -1,0 +1,87 @@
+name: conformance
+
+# Независимая проверка «не на нашем хосте» (условие v1: «стенд не воспроизведён на машине, которую
+# мы не контролируем»). Раннер GitHub — чужая машина, Linux, чужой тулчейн; этого достаточно для
+# части A плана 2026-11-06.
+#
+# Что проверяется и почему именно это:
+#   * `golden_vectors` — байтовый контракт §5.1: две реализации, собранные на разных ОС, обязаны
+#     дать одинаковые байты. Это единственное утверждение, которое можно проверить без сети;
+#   * `xcheck-paid-orders` — независимый пересчёт векторов платных заказов на `hashlib`, без Rust.
+#     Если он сходится на Linux, значит документ не зависит от нашей машины;
+#   * `encode` — маршрутизация §6.2 для одного текста: кластер и шард обязаны совпасть с тем, что
+#     печатает хост контура. Расхождение здесь означает, что «мой интент не находится» на другой
+#     машине по причине, а не по сети.
+#
+# Чего этот workflow НЕ доказывает: двух машин (это отдельный сценарий `lab/two-hosts.sh remote`
+# и, по-настоящему, два хоста) и воспроизводимости 200-узлового стенда (он в `release.yml` и в
+# `lab/e0105-run.sh`, живёт минуты и требует отдельного запуска).
+#
+# Запуск: Actions → conformance → Run workflow (workflow_dispatch). На push не подвешен специально:
+# это не гейт на каждую правку, а проверка на чужой машине.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conformance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance:
+    name: байтовый контракт и векторы на чужой машине
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: golden-векторы wire (§5.1) — байты одинаковы на любой ОС
+        run: |
+          set -uo pipefail
+          cargo test -q -p vecdht-wire --test golden_vectors -- --nocapture
+          rc=$?
+          echo "GOLDEN_EXIT=$rc"
+          exit $rc
+
+      - name: независимый пересчёт векторов платных заказов (hashlib, без Rust)
+        run: |
+          set -uo pipefail
+          python lab/xcheck-paid-orders.py docs/PAID_ORDER-VECTORS.md
+          rc=$?
+          echo "XCHECK_EXIT=$rc"
+          exit $rc
+
+      - name: encode — маршрутизация §6.2 для фиксированного текста
+        run: |
+          set -uo pipefail
+          cargo build -q -p vecdht-cli
+          # Тот же dev-seed, что в `lab/two-hosts.sh` (32 байта 0x07): без него центроиды другие,
+          # и текст уезжает в кластер 733/шард 45 — проверка стала бы бессмысленной.
+          DEV=$(python3 -c "print('07'*32)")
+          ./target/debug/vecdht-cli artifact init --out ./artifact --seed "$DEV" --dev-keys 1 > /dev/null
+          ./target/debug/vecdht-cli encode --artifact ./artifact --text "vec dht two host check 52" \
+            --allow-surrogate | tee encode.out
+          # Текст выбран не по смыслу: под этим артефактом он обязан попасть в кластер 9 и шард 0
+          # (то же проверяет `ceremony` в `lab/two-hosts.sh`). Если на Linux кластер другой —
+          # маршрутизация зависит от платформы, и это находка, а не шум.
+          grep -q "cluster_id           9" encode.out || { echo "ENCODE_OK=0 WHY=cluster"; exit 1; }
+          grep -q "(шард 0)" encode.out || { echo "ENCODE_OK=0 WHY=shard"; exit 1; }
+          echo "ENCODE_OK=1"
+
+      - name: сводка
+        if: always()
+        run: |
+          echo "CONFORMANCE_HOST=$(uname -srm)"
+          echo "CONFORMANCE_RUST=$(rustc --version)"
+          echo "CONFORMANCE_PY=$(python3 --version)"

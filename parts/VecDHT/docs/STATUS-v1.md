@@ -1,0 +1,214 @@
+# Status of v1: gates, what closed them, and what is not there
+
+> Cycle ids this page rests on: `E-0004`…`E-0012`, `E-0077`, `E-0079`…`E-0095`, `E-0099`, `E-0100`,
+> `E-0102`…`E-0105`, `E-0108`, `E-0118`…`E-0126`, `E-0130`, `ADR-0003`, `ADR-0004`,
+> `ADR-0042`…`ADR-0051`, `ADR-0054`, `ADR-0057`, `ADR-0058`, `ADR-0066`, `ADR-0067`, `ADR-0071`. Measured quantities
+> and their commands: [`METRICS.md`](METRICS.md). Inventory counters:
+> [`../lab/INVENTORY.md`](../lab/INVENTORY.md).
+
+Work is driven by a release queue, not by phases P0–P7. The unit of work since 2026-10-23 is the
+release gate (`ADR-0044`), which has a measurable ready/not-ready state. The readiness figure quoted
+in `../README.md` is an estimate over these five conditions, not a measurement.
+
+## The five v1 conditions and their actual state
+
+| v1 condition | State |
+|---|---|
+| The four Batch A holes are closed, each leaving a regression oracle | closed 4 of 4, in six closures, because holes 3 and 4 each split into A and B once measured: (1) gossip-path authorization — `E-0087` (`ADR-0043`); (2) per-cluster cap — `E-0088`; (3A) finiteness of the shard provider table — `E-0091` (`ADR-0046`); (3B) the ban surviving a restart and its bound — `E-0092` (`ADR-0047`); (4A) the revoked-key set surviving a restart, its bound and the silence of a revoked node — `E-0094` (`ADR-0050`); (4B) an observable door refusal reason — `E-0095` (`ADR-0051`, 22 names, finite journal, the wire is byte-for-byte the previous one). No Batch A hole is open. Two thresholds inside (4B) are not closed — "a collision is visible on the wire" (`E-0095` thresholds (4) and (6)). The two claims this row used to carry as open are since closed: `node run` passes the node directory into `NetConfig.revoked_dir` (`E-0119`, `crates/vecdht-cli/src/node_cmd.rs`), and revocation has a producer — `vecdht-cli revoke` calls `publish_revoke` (`E-0120`, `crates/vecdht-cli/src/revoke_cmd.rs`). What remains open is a motive (no revocation is issued automatically) and the fact that `apply_revoke` tears only the outgoing direction |
+| The `P1` stand (~200 nodes) has been run for the first time and Appendix C metrics were collected before the run | metrics are ready as a snapshot: `E-0104` (`ADR-0059`) — 37 node names, 7+22 transport names, a closed list, no cost attached; the stand was run in release: `E-0105` (`ADR-0060`) — 192 cold resolves, p95 = 117…257 ms against a 500 ms tolerance across five runs (the two official runs gave 257 and 151 ms), protocol bound `64 × 20 = 1 280 < 5 000` records. No hole in the gate, but the pre-registered falsifier fired: 1 probe of 192 found no provider within 3 s at p50 54 ms, so "192/192 always" is not invariant to host load. The tail of that cold-resolve sample is not yet a registered hypothesis. The stand is LAN and in one process; it has no second machine |
+| One user scenario end-to-end on different machines, repeatable by a command from the README | not done: the whole network path was verified in one process over real QUIC; there is no two-machine run |
+| §18 of the spec rewritten so that every word carries a measurement id or the mark "not implemented" | partial: §4 (the door, revocation consequences and their survivability, refusal names), §7.4 (provider-table finiteness), §9.3, §11.4 (survivability and the bound of the ban and of revocation), §13 (accountability), §14.4 (cell cap), §19.4/§19.5 and Appendix C already carry measurement ids (`E-0079`…`E-0095`, `ADR-0042`…`ADR-0051`); the §18.9 "word → id" map is closed and guarded (`E-0123`, `lab/check-claim-map.py`) |
+| The privacy layer = "what is actually protected", disk audit as a test | the audit is an executable test: `E-0108` (`s13_disk_privacy`) scans the node directory and the artifact directory for text, tokens, f32/f64 blocks and letter-like runs — 0 findings on a live corpus (owner codes and keys found 8 times and 8 times) and against five planted defects; `centroid.bin` is byte-equal to the reference. What this does NOT prove: absence of unknown byte sequences rather than only known ones; the production volume (1M records) was not scanned. Traffic padding and jitter are no longer promised for v1: §13.3 and §20.2 row 7 state that they are absent, which is what `E-0077` measures (Find lengths 505/507/535 on the wire, none 512 or 1024, no pause on the find path); the honest v1 wording is that an index node reads what it holds |
+
+Approximate readiness — about 85 % (an estimate over the five conditions, not a measurement). The figure
+moved from 78 % because of named closures, not rewording: the signing ceremony and the genesis builder
+are a command (`E-0118`), `node run` starts a node from those files and the record is found again from
+the same directory after both processes stop (`E-0119`), `centroid.bin` is loaded and `cluster_id`
+recomputed by the shipped binary (`E-0121`), `revoke` signs and spreads a revocation that a running
+node applies without restart (`E-0120`), the lease survives a restart (`E-0124`), a cold-resolution miss
+names itself under a budget of ≤ 1 per 960 probes (`E-0125`), the release kit is an instrument
+(`E-0126`), and the node keeps a startup-anchored uptime counter that survives a restart and refuses to
+print seconds when its history is missing or corrupt (`E-0130`). Missing: an automatic motive for
+revocation (the producer exists since `E-0120`, nothing calls it on its own), a metrics
+endpoint, a two-machine scenario, traffic padding, the 30-day accumulation itself — the counter is an
+instrument now, the long run has not happened (`E-0130`), a release tag and a published binary — the
+release kit is now an instrument that the cycles check (`E-0126`, `lab/check-release-kit.sh`), the tag
+itself is an owner action; v9 exists as a document
+and a separate crate and is not in the node's dependency graph. Covering the absence of a number with
+the word "ready" is not allowed, so the figure is labelled as an estimate.
+
+Every wording of this section and of both READMEs is a row of `lab/claims.tsv`, and
+`lab/check-claims.py` reads the row together with its carrier: the fragment has to sit in the carrier
+verbatim, the evidence type fixes what the sentence may say, a gate name owes a carrier of its own in
+the same sentence, and the readiness figure has one value across the three carriers that print it. A
+document that outgrows its rows turns the guard red, which is the difference between an instrument and
+a style rule.
+
+Why the tag is not set is a map rather than a paragraph: `docs/RELEASE-MAP-v1.md` walks the §18 gates
+one by one — the instrument that closes each, its state, and what would close the remainder. Three
+reasons stay open there: the rerank gate P0 (iii) has no cross-encoder in the tree; no network gate has
+been measured across two machines; and the tag is an owner action. The map also names the one §18 gate
+this document does not claim closed: the byte-equality of the golden vectors of P2 on a second machine
+— the instruments are in `crates/vecdht-crypto/tests/golden_vectors.rs` and
+`crates/vecdht-artifact/tests/golden_artifact.rs`, the second machine is not.
+
+`main` contains only what builds and tests. Each §18 gate family names its own closure carrier: P2 the
+fuzz decode that one machine can settle (`E-0134`, `E-0135`) and the wire over real QUIC
+(`crates/vecdht-net/tests/transport.rs`), P3 the crash matrix (`E-0073`), P4 the handoff and
+replication test (`crates/vecdht-node/tests/gates_p4.rs`), P5 the sybil run (`E-0001`); the other half
+of P2, golden vectors byte-equal on a second machine, is not closed here. The rest of what §18 asks
+sits in the same map row by row: the adversarial set §19.3 (`crates/vecdht-node/tests/adversarial.rs`),
+the deterministic half of P0, gate (v) on real weights and both measured P0 gates — (i) forward
+(`E-0003`) and (ii) recall on a real corpus (`E-0012`, `ADR-0004`), with the price named. Since 2026-10-24 every push to main also runs the formal
+pipeline — Verus, Kani, Lean and the product slice in one CI job (`.github/workflows/formal.yml`,
+numbers and boundaries — `E-0099`, `ADR-0053`); it proves statements about acceptance-arithmetic
+models, not about code, and that is said separately in [`FORMAL.md`](FORMAL.md).
+
+## The door, revocation and cache finiteness: what changed after `E-0085`
+
+This is the youngest and the most measured part of the system. Six cycles in a row shot the same place
+— the credcheck on handshake (§4.2, §5.3, §9.2, §9.8) — and each time found a promise without a
+mechanism:
+
+* **the ladder of reasons** — 8 credcheck bits give a `2^(8−k)` histogram, and `Revoked` is visible
+  outward only in 4 of 256 combinations; the live door emits 11 reasons inside one `CERT_INVALID` code
+  with zero names on the wire (`E-0085`; the Lean model is `S-0004`, which also carries the
+  `[64,192,320,448]` vectors);
+* **gossip must pass the same door as a direct frame** — 18 lines in `on_gossip_event`
+  (`vecdht-net/src/service.rs`, the block is marked `ADR-0043`): a `Publish`/`Find` from a relaying
+  peer that did not pass the door is dropped; before `E-0087` the author's signature was checked but
+  the record went into the index with the door closed. This is not Sybil protection: identity is cheap
+  (§11.4);
+* **the cell cap became an admission policy** — the bound `max(4096, ⌈2·live/16⌉)` holds 4096 at
+  `max_live_per_shard = 2 000 000` and 4286 at live 34 286; a cap-bound frame gives exactly one
+  eviction by the cheap `pow_bits` or exactly one refusal, the price is O(reservoir) (`E-0088`, the
+  form found by enumerating 256 variants in `E-0079`);
+* **the shard provider table is finite** — a record is removed by peer death (`forget_peer`), expires
+  on `provider_record_ttl = 420 s` on a tick, and is not accepted back by a DHT answer: the distrust
+  window lives the same `ttl` and is cleared by the §9.8 counter-proof — a successful handshake. The
+  bound is `max_providers_per_key = 20` per shard; the aggregate bound `20 × 64 = 1280` is statically
+  tied to the §18.2 gate "< 5k provider records". Before `E-0091` the table was monotone: re-asking the
+  DHT returned a dead provider and it immediately became a dial attempt into a corpse
+  (`g5_dial_errors = 1`). The boundary stayed: a kad record lives in the storage of whoever holds it
+  and our node does not revoke it (`lab/decisions/OPEN-QUESTIONS.md` item 40);
+* **the ban survives a restart and has a bound** — `denylist.bin` in the node directory, exactly
+  `18 + 32·N` bytes, written on every change (`.partial` → `sync_all` → `rename` → `fsync_dir`), read
+  at open before the first accepted frame; the bound is 4096 with **refusal instead of eviction** and
+  counters `denylist_refused_at_bound` / `denylist_save_errors`. A corrupt file means the node refuses
+  to open, not an empty list: of 227 corrupted vectors (113 truncations + 114 single-bit edits) not one
+  decodes to an empty list (`E-0092`, `ADR-0047`). Before that cycle, one restart returned a full quota
+  to an injected attacker for free;
+* **revocation survives a restart and has a bound** — `revocation.bin` in the node directory
+  (`NetConfig.revoked_dir`, default `None` = the previous behaviour), exactly `18 + 16·N` bytes, the
+  same write barrier (`.partial` → `sync_all` → `rename` → `fsync_dir`), bound 4096 with **refusal
+  instead of eviction** and counters `refused_at_bound` / `save_errors` / `duplicates`; an unreadable
+  file is a refusal to start the service, not an empty set. Its own `nonce` in the file gives
+  `self_revoked` from the first second, and the silence of a revoked node was verified by a live
+  handshake: before `E-0094` one restart returned a revoked key the right to serve
+  (`rv_g3_accepted_after_restart=1`, `rv_g6_serves_after_restart=1`), after it — no (`0` and `0`). The
+  boundary is named by a number: a node in another revocation directory does not know (`rv_g4_fresh_dir_knows=0`),
+  and a subscription to the control topic has no history.
+
+## Boundaries: what is not in v1
+
+Rule 8 of `../AGENTS.md` is "do not invent mechanisms", so here is what is actually absent.
+
+* the `P1` stand had never been run when this list was first written; it has since been run once, by
+  us, in release (`E-0105`, see the table above) — what remains unmeasured is a host we do not control,
+  and the fan-out decision (§12.1) still has no second-machine evidence;
+* circuit relay v2 from §16.3 is up since `E-0145` (`Role::Relay` is a server, any role is a client;
+  a target with no direct listeners is reachable over `/p2p/<relay>/p2p-circuit/p2p/<target>` on
+  loopback), but DCUtR is not: a direct connection is never upgraded, and a path through NAT with a
+  real WAN is unverified; addresses are spread by identify/Kademlia, and there is no "empty DHT
+  answer" promise in the code at all — an empty answer never happens, backoff is a fixed step, and
+  there is no "ready to take an episode" predicate (`E-0080`);
+* the denylist survives a restart since `E-0092`, the set of **revoked credchecks** since `E-0094`:
+  `revocation.bin` in the node directory, bound 4096 with refusal instead of eviction. The node
+  directory is passed by the product since `E-0119` (`node_cmd.rs`: `revoked_dir: Some(dir)`), and
+  revocation has a producer since `E-0120` (`vecdht-cli revoke` → `publish_revoke` over the control
+  topic). What is still absent is a motive — nothing decides on its own to revoke — and the incoming
+  direction of a revoked connection (`apply_revoke` tears only outgoing);
+* a revocation that failed to be written is not applied: decision 6 of `ADR-0050` rolls the insert back
+  on a `rename`/`fsync` error, so a broken or full disk temporarily un-applies an already executed
+  revocation and the door lets the revoked key through until `CertRevoke` is re-sent. The case never
+  arrived in the measurement (`rv_g8_save_errors=0`), so this is expected behaviour, not measured
+  (`lab/decisions/OPEN-QUESTIONS.md` item 46);
+* the ban survives a restart, the right to serve an epoch does not: `open_with_admission` raises the
+  membership chain and `denylist.bin` but not the `lease`, so a primary node after a restart answers
+  `EPOCH_STALE` before the admission gate for any key. Ban survivability is observable through the
+  `check_publish` decision, not through code on the wire (`E-0092`, `lab/decisions/OPEN-QUESTIONS.md`
+  item 42);
+* `apply_revoke` tears only the outgoing direction: a connection started by the revoked side stays
+  alive and answers `DENIED:0:0` as "frame before handshake" (release blocker 4);
+* the node **recomputes** `cluster_id` from `vec_q` and its own centroids and uses its own value; the
+  publisher's hint does not choose the cell (`E-0103`, `ADR-0058`), a recomputation into another shard
+  is rejected by the existing `SHARD_MISMATCH`, and divergence plus fail-open without an artifact are
+  visible by counters (`cluster_reassigned`/`cluster_cross_shard`/`cluster_unverified`). `pow_input`
+  still does not cover `cluster_id` — deliberately: the shard is paid for, the cell is chosen by
+  geometry. The shipping binary loads `centroid.bin` from `--artifact` and refuses to start without it
+  since `E-0121` (`with_centroids` in `crates/vecdht-cli/src/node_cmd.rs`); the price of `assign` under
+  that load remains an open measurement (`E-0103`), and the agreement of node and client centroids is a
+  separate open question (`lab/decisions/OPEN-QUESTIONS.md` item 53.2). The tail of the cap "a victim in
+  the cell is invisible to the reservoir" is closed by
+  `E-0102`: a window of live cell slots with a 256 budget and a cursor; at `live = 34 286` the answer
+  changed from `refuse` to `move`;
+* search-poisoning protection is not claimed, but its price is measured: on the 50 000 corpus, ten
+  copies of the most hub-like texts give 0/1000 top-1 and 0/1000 top-10 through the probe, exactly
+  0/1000 and 9/1000 (`E-0090`, `ADR-0057`); hubness is real (asymmetry 1.975, maximum 64, 42 zeros out
+  of 5000) but it does not explain the recall drop 0.8303 — the probe truncation does (`TRUE10_IN_PROBE`
+  0.8304); a point copy of a query captures top-1 1000/1000 with one record, and there is no protection
+  against it;
+* `node run` starts a shard node from a certificate and genesis, prints `NODE_READY`/`NODE_STATUS`,
+  and loads `centroid.bin` from `--artifact` (`E-0119`, `E-0121`); what is still absent is the semantic
+  layer on incoming traffic — `agent run` raises a listener, but `IntentTextRequest` is not served;
+* the SDK does not do weights — only an explicit surrogate with `allow_surrogate=True`;
+* paid intents and order search: §5.5 (class `free`/`paid` with a price, direction `buy`/`sell`), §12.7
+  (a selection function in search) and `ADR-0052` are specified by the spec, and since `E-0100`
+  (`supports`) the mechanism lives in code: TLV tags in `vecdht-wire`, the `slot_attr` byte next to the
+  index arena, the predicate before truncation in `search_filtered`, snapshot format 2 (`ADR-0054`). The
+  corpus without announcements stayed byte-for-byte the same, the price is not stored, memory grows by
+  +1.0 B/record. Three boundaries remain: the node filters by itself and a client cannot machine-check
+  that, the price reaches the searcher only in the publisher's signed text, and `recall` under a
+  filter is a corpus snapshot rather than a promise — the filter costs no hit inside the scanned list
+  (`RECALL == COVERAGE` in all 12 cells), and the whole loss is probe coverage: 906 ‰ at four of
+  sixteen clusters and 2 % paid, 237 ‰ at one (`E-0146`); the CLI accepts `--class` and `--intent-dir` on `index add`/`index search`
+  (`crates/vecdht-cli/src/index_cmd.rs`, `E-0144`), so an operator can declare and select the same
+  byte the node writes, but that is a
+  local instrument, not a network-visible promise; there is no settlement, escrow or tender in the
+  protocol (§13.2);
+* the §18.3 gate "golden vectors matched on two different machines" is not closed: a second host is
+  needed; the cross-platform part of P0 (iv) (AVX-512 / AVX2 / NEON) needs three machines;
+* there is no penalty/reputation table, no signal of divergence between owners of one cluster, no
+  verifiable re-computation of `l2_sq` by an agent; an index node reads what it holds
+  (honest-but-curious), cipher-traffic padding is out of scope;
+* the authority key-rotation chain is not defined (§20.2 row 8); "sum of occupancies ≤ capacity" (§9.3)
+  is marked as not implementable in v1 (`ADR-0042`) and has no mechanism.
+
+## Quality-kit v0 as declared for the interop channel (`2026-10-27`)
+
+The neighbouring repository `flowguard-spec` maintains a list of quality instruments (M1…M7) and reads
+our `interop/` daily. This is our declaration of what we actually have, so that the channel can close on
+a fact rather than on silence. Each line names the instrument that enforces it; a line without an
+instrument is a wish, and we do not write those.
+
+* M1 experiment card — `lab/templates/experiment.md`, filled per cycle by `lab/cycle-gate.py` (it fails
+  a card that lacks `claim`, `falsifier`, `oracle`, `prior_art`, `lean`).
+* M2 metrics with a command — `lab/INVENTORY.md` plus `lab/expectations/*.tsv`: every number in a closed
+  card is frozen before the run and compared by `python lab/expect.py`, and two runs of an unchanged tree
+  must agree (`STABLE=1`).
+* M5 status document — this file.
+* M6 guards — `lab/check-secrets.sh` (credential shapes, host home paths, credentials inside
+  `.git/config`, token patterns in `git log -p --all`) and `lab/check-artifact-refs.py` (every backtick
+  citation of a path must resolve; the guard prints its own counts — citations, dangling, allowances;
+  every allowance carries a written reason, and a stale allowance is a finding).
+  Both are executed from `.github/workflows/verify.yml` and exit non-zero on any finding; neither of them
+  warns. The status-claims guard `lab/check-status-claims.py` runs there too: it binds the claims above
+  to their owners in the tree (`E-0143`).
+* M3 evidence-type registry and M4 elimination register — not ours, they live in the `flowguard-spec`
+  repository (their CLAIMS and eliminations documents; we deliberately do not cite them as paths,
+  because a path in this file is required by `lab/check-artifact-refs.py` to resolve in this tree).
+  Our nearest equivalent is
+  `lab/check-claim-map.py`, which binds each §18.9 sentence to a card id or to an executable instrument;
+  the joint eight-column table is in our queue but has no card id yet: a card is opened only together with its instrument and frozen thresholds, so an id would promise an instrument that does not exist.
+* M7 independent rebuild — nobody has it. We will not declare a bundle before there is an artifact to
+  cite.

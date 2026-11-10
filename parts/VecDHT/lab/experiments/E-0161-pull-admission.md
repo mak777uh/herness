@@ -1,0 +1,81 @@
+---
+id: E-0161
+status: closed
+verdict: supports
+date: "2026-10-30"
+hypothesis: H-0161
+threshold: "19 фактов замороженной `lab/expectations/e0161.tsv`: на пине вызова admission в пути
+  pull нет (`PRE_FIX_ADMIT_IN_PULL=0`) и тест красный (`PRE_FIX_TEST_RC=1`); после правки вызов
+  есть (`POST_FIX_ADMIT_IN_PULL=1`), тест зелёный (`POST_FIX_TEST_RC=0`), `TEST_CASES=2`,
+  `TEST_PASS=2`, `BUSY_CODE=1`, `FOREIGN_FREE=1`, `WIRE_TOUCHED=0`, `SPEC_TOUCHED=0`,
+  `PRODUCT_TOUCHED=1`; `WORST_RC=0` в обоих прогонах, `STABLE=1` во втором"
+environment: "хост владельца: `x86_64-pc-windows-gnu`, standalone mingw-w64 первым в `PATH`
+  (`export PATH=…/mingw64/bin:$PATH` — путь домашнего каталога здесь не печатается), `rustfmt` в
+  тулчейне отсутствует; хост и CI-runner — разные тулчейны и не считаются равными"
+command: "bash lab/e0161-run.sh дважды на неизменном дереве; сводка — `bash
+  lab/workspace-verify.sh E-0161`"
+base_commit: "c1b279f — дерево двух официальных прогонов; пин пре-регистрации 8f72054"
+---
+
+# E-0161 — `WalPullRequest` стоит узлового admission, как publish
+
+## Вопрос
+
+Списывает ли `handle_pull_request` узловой admission §11.3.4, и наблюдаем ли отказ `E_BUSY` на
+101-м запросе хвоста WAL с одного пира при бюджете 100 admits/с? Разведка: на дереве до правки в
+теле обработчика вызова `reserve_admit` нет, тест с двумя случаями на старом коде обязан быть
+красным.
+
+## Порог
+
+Заморожен в `lab/expectations/e0161.tsv` до первого официального прогона: на пине вызова нет
+(`PRE_FIX_ADMIT_IN_PULL=0`) и тест красный (`PRE_FIX_TEST_RC=1`); после правки вызов есть
+(`POST_FIX_ADMIT_IN_PULL=1`), тест зелёный (`POST_FIX_TEST_RC=0`), `TEST_CASES=2`, `TEST_PASS=2`,
+`BUSY_CODE=1`, `FOREIGN_FREE=1`; wire и спека не тронуты (`WIRE_TOUCHED=0`, `SPEC_TOUCHED=0`),
+продукт тронут (`PRODUCT_TOUCHED=1`); соседние стражи 0; два прогона совпадают.
+
+## Прогон
+
+Два официальных прогона 2026-10-30 на неизменном дереве `c1b279f` (пин пре-регистрации
+`8f72054`), носитель `lab/e0161-run.sh` → `lab/logs/e0161-all.log`. Каждый прогон: PRE_FIX —
+`git checkout <пин> -- crates/vecdht-node/src/node.rs` и прогон теста на старом коде, POST_FIX —
+тот же тест на живом дереве, затем отдельный прогон `foreign_shard_pull_is_free`. Факты оба раза:
+
+* PRE_FIX: `PRE_FIX_ADMIT_IN_PULL=0`, `PRE_FIX_TEST_RC=1` — на пине списания нет, 101-й pull
+  проходит, и тест краснеет именно на этом утверждении;
+* POST_FIX: `POST_FIX_ADMIT_IN_PULL=1`, `POST_FIX_TEST_RC=0`, `TEST_CASES=2`, `TEST_PASS=2`,
+  `BUSY_CODE=1`, `FOREIGN_FREE=1`;
+* `WIRE_TOUCHED=0`, `SPEC_TOUCHED=0`, `PRODUCT_TOUCHED=1`; соседние стражи `GSE_EXIT=0`,
+  `PARITY_EXIT=0`, `CONTOURS_EXIT=0`, `EXPECT_FREEZE_EXIT=0`, `TEXT_EXIT=0`, `CLAIMS_EXIT=0`;
+  `DISK_READABLE=1`. `WORST_RC=0` в обоих прогонах, `STABLE=1` во втором.
+
+## Поправка
+
+Пилотный прогон носителя до официальных (дерево `53bf5bf`): все факты сошлись, кроме
+`FOREIGN_FREE` — носитель печатал код возврата (`0` при успехе), а таблица ждёт `1`, потому что
+факт назван утверждением, как `BUSY_CODE`/`TEST_PASS`, а не кодом шага. Починка в носителе:
+`ok_bool` (`rc=0 → 1`) для `FOREIGN_FREE`; значения остальных фактов не менялись, таблица
+`e0161.tsv` не менялась. Пилот в официальные прогоны не входит.
+
+Первый блок контура (строка 213 394) был красным: `CIN_EXIT=1`, пять расхождений счётчика тестов
+в шапке `.github/workflows/verify.yml` — новый набор `s11_pull_admission` добавил два `#[test]`,
+и объявленные числа устарели (`802`→`804`, всего `804`→`806`, node `208`→`210`, пара
+`208/804`→`210/806`, `~804`→`~806`). Починка — только числа в шапке; продукт, тест, носитель и
+таблица не менялись, `CIN_MATCH=18`, `CIN_FINDINGS=0`. Блок перезапущен на новом дереве.
+
+## Результат
+
+`supports` — блок контура строка 215 631 (`########## E-0161 · workspace-verify ·
+2026-10-30T20:03:22+03:00`), дерево `3ed7b61`: 137 наборов, 793 passed, 0 failed, 9 ignored;
+`TEST_EXIT=0`, `CLIPPY_EXIT=0`, `LEAN_ALL_OK=1`, `CIN_EXIT=0`, стражи 0, `TEXTGUARD_EXIT=0`,
+`VERIFY_FAIL=0`, `SECONDS_total=2744`. Красный `CIN_EXIT=1` первого блока (строка 213 394)
+закрыт правкой шапки `3ed7b61`; блок перезапущен на дереве с правкой. Диск после прогона
+`DISK_FREE_MB=6847` — ниже порога 15 000 МБ: следующий тяжёлый прогон только после `cargo clean`
+по слову владельца.
+
+## Границы
+
+Правка не вводит отдельный бюджет для pull: он тратит общий узловой бакет §11.3.4, поэтому heal
+ограничен теми же 100 запросами в секунду. Счётчик `rejected_node_busy` общий с publish — по нему
+нельзя различить вид кадра. Подпись `WalPullResponse` (D1) и гейты эпохи этой карточкой не
+трогаются.

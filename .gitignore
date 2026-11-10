@@ -60,9 +60,19 @@ lab/p27/musique/*.jsonl
 
 # части харнесса: независимые репозитории, у каждой свой git
 # клонируются командой python bin/migrate_parts.py --run
+#
+# VecDHT — исключение по решению владельца (10.11.2026): до появления отдельного
+# репозитория его файлы живут в herness, а свой .git остаётся локальным и не едет.
+# target/ — артефакты сборки, не код.
 parts/*/
 !parts/README.md
 !parts/MANIFEST.json
+# VecDHT: файлы едут, свой .git и target — нет.
+!parts/VecDHT/
+parts/VecDHT/.git/
+parts/VecDHT/target/
+# 13,3 МБ журнала верификации: гейт «большие файлы» запрещает больше 1 МБ в индексе
+parts/VecDHT/lab/logs/workspace-verify-*.log
 
 # Выгрузки сессий DSH: данные, не код (112 МБ)
 work/session-*/

@@ -1,0 +1,261 @@
+# Три независимых формальных конвейера на одном коммите (`ADR-0053`, слово владельца от 2026-10-24).
+#
+# Почему три, а не один: Lean в этом репозитории доказывает утверждения о политиках на перечислимых
+# множествах через `native_decide`, то есть через перебор, и состояний с переполнением `u64` у него
+# просто нет. Verus доказывает контракты над функцией, транскрибированной один в один из продукта,
+# через SMT. Kani проверяет достижимость состояний того же тела ограниченным перебором. Разные
+# модели ошибок — разные дефекты; один конвейер не заменяет другой, и числа каждой работы видны
+# отдельно.
+#
+# Почему Linux, а не Windows: у Kani 0.68.0 ровно четыре publish-ассета, все под Linux и macOS
+# (`L-0018`), Windows-сборки нет. Verus на Windows исполняется локально (это и есть рабочая станция
+# контура), но держать CI на одной платформе значит терять Kani. Поэтому боевая линия тулчейнов
+# здесь — `x86_64-unknown-linux-gnu`, и версии заморожены числами ниже, а не «latest»: обновление
+# тулчейна обязано быть коммитом, а не случайностью ночного прогона.
+name: formal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: formal-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERUS_VERSION: 0.2026.10.18.7d82994
+  # Хэши ассетов и скриптов, которые скачиваются по сети. Взяты из API релиза
+  # (`assets[].digest` для Verus) и из самого файла на закреплённом коммите (elan): номер версии
+  # пинает ИМЯ файла, но не его содержимое, а подменённый архив дал бы «зелёный» круг без всякого
+  # отношения к нашему коду. Несовпадение хэша — красный шаг с отдельной меткой, а не молчание.
+  VERUS_SHA256: e9af03732d4bdd32b93a8fcf471706739c24c1473fa5086618d96c47237845dd
+  KANI_VERSION: 0.68.0
+  LEAN_TOOLCHAIN: leanprover/lean4:v4.36.0-rc1
+  ELAN_COMMIT: 9605b24b08cf68b78dce0014b6fa01be1f8e2cee
+  ELAN_SHA256: a620ff1641616222c8d37c54845492004bb84d6877cdbc944dd65c1aa685bf53
+
+jobs:
+  verus:
+    name: Verus — контракты над арифметикой приёма
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # Верус просит ровно тот тулчейн, что зашит в его сборку, и его номер лежит в version.json
+      # рядом с бинарём: хранить его второй копией в этом файле значит однажды разойтись с ним.
+      - name: Установка Verus
+        run: |
+          set -euo pipefail
+          curl -sSLo /tmp/verus.zip \
+            "https://github.com/verus-lang/verus/releases/download/release/${VERUS_VERSION}/verus-${VERUS_VERSION}-x86-linux.zip"
+          # Проверка целостности до распаковки: `.zip` — не исполняемый файл, но содержит `verus`,
+          # `z3` и `rust_verify`, которые дальше запускаются как есть. Печать RC в сводку нужна,
+          # чтобы отказ был виден тому, у кого нет прав на журнал работы.
+          printf '%s  %s\n' "$VERUS_SHA256" /tmp/verus.zip | sha256sum -c - > /tmp/verus-sha.log 2>&1
+          r=$?; echo "VERUS_SHA_RC=$r" | tee -a "$GITHUB_STEP_SUMMARY"
+          cat /tmp/verus-sha.log | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "::notice::VERUS_SHA_RC=$r"
+          [ "$r" -eq 0 ] || exit 1
+          mkdir -p "$HOME/verus-dist"
+          unzip -q /tmp/verus.zip -d "$HOME/verus-dist"
+          VERUS_BIN="$(find "$HOME/verus-dist" -maxdepth 3 -type f -name verus | head -1)"
+          test -n "$VERUS_BIN"
+          # zip может не донести бит исполнения: без него verus и его z3 молча отказываются стартовать.
+          chmod -R +x "$(dirname "$VERUS_BIN")"
+          TOOLCHAIN="$(sed -n 's/.*"toolchain": "\([0-9][0-9.]*\).*/\1/p' "$(dirname "$VERUS_BIN")/version.json" | head -1)"
+          test -n "$TOOLCHAIN"
+          echo "VEC_DHT_VERUS=$VERUS_BIN" >> "$GITHUB_ENV"
+          echo "VEC_DHT_VERUS_TOOLCHAIN=$TOOLCHAIN" >> "$GITHUB_ENV"
+          echo "VERUS_TOOLCHAIN=$TOOLCHAIN"
+
+      - name: Тулчейн из version.json
+        run: |
+          set -euo pipefail
+          rustup toolchain install "$VEC_DHT_VERUS_TOOLCHAIN" --profile minimal --component rust-src
+
+      - name: Прибор (проверка модели и самопроверка с посаженными дефектами)
+        # Код возврата каждого вызова пишется в лог до `tee`: без этого красный круг работы
+        # зависел бы от того, что `tee` всегда успешен.
+        run: |
+          set -uo pipefail
+          L=/tmp/verus-ci.log; : > "$L"; rc_all=0
+          echo "### Verus (Linux, тулчейн $VEC_DHT_VERUS_TOOLCHAIN) ###" >> "$L"
+          r=0
+          VEC_DHT_VERUS_REQUIRED=1 bash lab/verus-check.sh >> "$L" 2>&1 || r=$?
+          echo "VERUS_CHECK_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          r=0
+          bash lab/verus-check.sh selftest >> "$L" 2>&1 || r=$?
+          echo "VERUS_SELFTEST_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          cat "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          # Числа обязаны быть видны тому, у кого нет прав на чтение журнала работы: `jobs/{id}/logs`
+          # отдаёт 403 без администратора, страница работы требует входа, а аннотации (`::notice::`)
+          # читаются через `/check-runs/{job_id}/annotations` анонимно. Именно их снимает шаг 8
+          # прибора `lab/e0099-run.sh` и кладёт в журнал дословно, потому что порог (12) требует
+          # «вывод каждой из четырёх работ записан в журнал», а не «работа позеленела». Аннотации
+          # печатаются ДО выхода: если прибор красный, диагностика нужнее всего.
+          grep -aE 'VERUS_CHECK_RC=|VERUS_SELFTEST_RC=|^VERUS_TOTAL|^CONST_MATCH|^VERUS_STATUS|VERUS_SELFTEST total' "$L" \
+            | tail -6 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          exit $rc_all
+
+  kani:
+    name: Kani — ограниченная модельная проверка харнесов продукта
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Первый вариант этого шага скачивал publish-тарбал и вызывал `$KANI_BIN/cargo-kani` — работа
+      # покраснела на шаге установки. Причина измерена, а не угадана: тарбал
+      # `kani-0.68.0-x86_64-unknown-linux-gnu.tar.gz` (140 315 343 Б) распакуется в каталог
+      # `kani-0.68.0/` — без подстроки `linux` в пути, поэтому `-path "*kani-0.68.0*linux*"` не
+      # находил ничего, — и в его `bin/` лежат cbmc, goto-analyzer, goto-cc, goto-instrument,
+      # kani-compiler, kani-cov, kani-driver, kissat, но `cargo-kani` среди них нет: это драйвер из
+      # crate'а `kani-verifier` (0.68.0, не yanked), а не часть релизного архива. Ставим так же, как
+      # official контур `model-checking/kani-github-action`: `cargo install --locked --version` +
+      # `cargo-kani setup`, который и приносит компоненты. Коды возврата печатаются в
+      # `$GITHUB_STEP_SUMMARY`: журнал работы без прав администратора репозитория не читается
+      # (API отдаёт 403), поэтому единственный канал диагностики — то, что шага видно в сводке.
+      - name: Установка Kani
+        run: |
+          set -uo pipefail
+          S="$GITHUB_STEP_SUMMARY"
+          cargo install --locked --version "$KANI_VERSION" kani-verifier > /tmp/kani-install.log 2>&1
+          r=$?; echo "KANI_INSTALL_RC=$r" | tee -a "$S"
+          tail -5 /tmp/kani-install.log | tee -a "$S"
+          [ "$r" -eq 0 ] || exit 1
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          cargo-kani setup > /tmp/kani-setup.log 2>&1
+          r=$?; echo "KANI_SETUP_RC=$r" | tee -a "$S"
+          tail -8 /tmp/kani-setup.log | tee -a "$S"
+          [ "$r" -eq 0 ] || exit 1
+          cargo-kani --version 2>&1 | tee -a "$S"; echo "KANI_VERSION_RC=$?" | tee -a "$S"
+
+      # Харнеси живут в продукте под `#[cfg(kani)]` (`crates/vecdht-node/src/admission.rs`), поэтому
+      # обычная сборка и `cargo test` их не видят вовсе: эта работа — единственный способ узнать, что
+      # ∀-утверждения о капе ячейки кто-то проверяет, а не только иллюстрирует на трёх точках.
+      - name: cargo kani -p vecdht-node
+        run: |
+          set -uo pipefail
+          L=/tmp/kani-ci.log
+          echo "### Kani ###" > "$L"
+          r=0
+          cargo kani -p vecdht-node >> "$L" 2>&1 || r=$?
+          echo "KANI_RC=$r" >> "$L"
+          tail -60 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          # Тот же канал, что и в других работах: аннотации читаются анонимно, журнал — нет.
+          # Здесь грепом по имени ключа ограничиваться нельзя: текст итогового отчёта Kani меняется
+          # от версии к версии, поэтому наружу выходит код возврата и последние непустые строки
+          # журнала дословно.
+          echo "::notice::KANI_RC=$r"
+          grep -av '^[[:space:]]*$' "$L" | tail -4 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          exit $r
+
+  lean:
+    name: Lean — модели дверей, лесенок и политик
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Два измеренных факта против двух способов покраснеть, которые были в первой версии шага:
+      # у `elan-init.sh` нет опции `--default` (в `usage` — только `-y`, `--no-modify-path`,
+      # `--default-toolchain <toolchain>`; неизвестный аргумент скрипт отдаёт бинарю elan, и тот
+      # выходит с кодом 1), а запись в `$GITHUB_PATH` действует только для СЛЕДУЮЩИХ шагов, поэтому
+      # `lean --version` в том же шаге обращался к бинарю, которого ещё нет в PATH. Здесь тулчейн
+      # ставится отдельной командой, PATH дополняется на месте, и каждый код возврата печатается в
+      # сводку — журнал работы без администраторских прав не читается (API отдаёт 403).
+      - name: Установка elan и замороженного тулчейна Lean
+        run: |
+          set -uo pipefail
+          S="$GITHUB_STEP_SUMMARY"
+          # URL закреплён КОММИТОМ, а не веткой `master`: скрипт установщика исполняется от имени
+          # репозитория, и `master` мог бы измениться между двумя прогонами одной и той же ревизии
+          # нашего дерева. Хэш проверяется отдельно — закреплённый коммит всё равно остаётся
+          # внешним сетевым вводом.
+          curl -sSfL "https://raw.githubusercontent.com/leanprover/elan/${ELAN_COMMIT}/elan-init.sh" -o /tmp/elan-init.sh
+          echo "ELAN_CURL_RC=$?" | tee -a "$S"
+          printf '%s  %s\n' "$ELAN_SHA256" /tmp/elan-init.sh | sha256sum -c - > /tmp/elan-sha.log 2>&1
+          r=$?; echo "ELAN_SHA_RC=$r" | tee -a "$S"; cat /tmp/elan-sha.log | tee -a "$S"
+          echo "::notice::ELAN_SHA_RC=$r"
+          [ "$r" -eq 0 ] || exit 1
+          sh /tmp/elan-init.sh -y --no-modify-path > /tmp/elan-init.log 2>&1
+          r=$?; echo "ELAN_INIT_RC=$r" | tee -a "$S"; tail -4 /tmp/elan-init.log | tee -a "$S"
+          [ "$r" -eq 0 ] || exit 1
+          export PATH="$HOME/.elan/bin:$PATH"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          elan toolchain install "$LEAN_TOOLCHAIN" > /tmp/elan-tool.log 2>&1
+          r=$?; echo "ELAN_TOOLCHAIN_RC=$r" | tee -a "$S"; tail -6 /tmp/elan-tool.log | tee -a "$S"
+          [ "$r" -eq 0 ] || exit 1
+          elan default "$LEAN_TOOLCHAIN"
+          echo "ELAN_DEFAULT_RC=$?" | tee -a "$S"
+          lean --version | tee -a "$S"; echo "LEAN_VERSION_RC=$?" | tee -a "$S"
+          # Модели импортируют `Std`: в этом тулчейне он часть поставки (`lib/lean/Std.olean` на
+          # рабочей станции это проверено файлом), поэтому наличие модуля озвучивается прямо здесь —
+          # иначе красный круг на шаге приборов пришлось бы объяснять догадками. `python` в этом
+          # шаге ещё нет (алиас заводится следующим), поэтому проверка — shell'ом.
+          echo "LEAN_STD_FILES=$(ls "$HOME"/.elan/toolchains/*/lib/lean 2>/dev/null | grep -c '^Std')" | tee -a "$S"
+
+      # Прибор зовёт `python` (на рабочей станции это единственный доступный алиас), в образах
+      # Ubuntu есть только `python3`: симлинк нужен, чтобы один и тот же скрипт шёл и локально, и в CI.
+      - name: Алиас python -> python3
+        run: sudo ln -sf "$(command -v python3)" /usr/local/bin/python
+
+      - name: Страж моделей и его самопроверка
+        run: |
+          set -uo pipefail
+          L=/tmp/lean-ci.log; : > "$L"; rc_all=0
+          echo "### Lean ###" >> "$L"
+          r=0
+          bash lab/lean-check.sh --quiet >> "$L" 2>&1 || r=$?
+          echo "LEAN_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          r=0
+          python lab/lean-check.py selftest >> "$L" 2>&1 || r=$?
+          echo "LEANGUARD_SELFTEST_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          tail -40 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          grep -aE '^LEAN_TOTAL|^LEAN_ALL_OK|LEANGUARD_SELFTEST total|^LEAN_RC=|^LEANGUARD_SELFTEST_RC=' "$L" \
+            | tail -5 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          exit $rc_all
+
+  admission:
+    name: "Продуктовый срез: тесты, clippy, компиляция харнесов"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Тесты vecdht-node
+        run: |
+          set -uo pipefail
+          L=/tmp/node-test.log
+          echo "### cargo test -p vecdht-node ###" > "$L"
+          r=0
+          cargo test -p vecdht-node --no-fail-fast >> "$L" 2>&1 || r=$?
+          echo "TEST_RC=$r" >> "$L"
+          grep -E "^test result|^error|TEST_RC" "$L" | tail -30 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          { echo "TEST_RC=$r"; grep -aE '^test result:' "$L" | tail -1; } \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          exit $r
+
+      - name: Clippy и компиляция харнесов под заглушку Kani
+        run: |
+          set -uo pipefail
+          L=/tmp/node-lint.log; : > "$L"; rc_all=0
+          echo "### clippy -D warnings ###" >> "$L"
+          r=0
+          cargo clippy -p vecdht-node --all-targets -- -D warnings >> "$L" 2>&1 || r=$?
+          echo "CLIPPY_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          echo "### kani-compile-check ###" >> "$L"
+          r=0
+          bash lab/kani-compile-check.sh >> "$L" 2>&1 || r=$?
+          echo "KCC_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          cat "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          grep -aE '^CLIPPY_RC=|^KCC_RC=|^KCC_ANCHORS=|^KCC_HARNESS_FNS=|^KCC_STATUS=' "$L" \
+            | tail -5 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          exit $rc_all

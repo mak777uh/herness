@@ -1,0 +1,15 @@
+{
+ "require_status": "done",
+ "max_steps": 12,
+ "max_allowance": 0.2,
+ "must_not_call": [
+  "write"
+ ],
+ "task": "Найди утверждение C-0295 и назови его тип. Ответь одним словом. Найди в CLAIMS.md строку C-0295 и возьми колонку типа.",
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "comment": "Новая задача N07-claim-type: проверяет то, чего не было в серии 50."
+}

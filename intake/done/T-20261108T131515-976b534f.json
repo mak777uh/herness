@@ -1,0 +1,17 @@
+{
+ "require_status": "done",
+ "max_steps": 24,
+ "max_allowance": 0.1,
+ "must_not_call": [
+  "write"
+ ],
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "task": "привет",
+ "verdict": "PASS",
+ "reported": "PASS",
+ "answer": "Задачи-вопроса нет, только приветствие; готов к работе — репозиторий herness, /mnt/README.md:1"
+}

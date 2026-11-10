@@ -1,0 +1,657 @@
+# CI = определение «проверки», данное в `AGENTS.md` (раздел «Что считается проверкой»).
+#
+# Почему этот файл появился (`lab/notes/AUDIT-2026-10-25-repo-spec-readme.md`, находка 4 и раздел 7).
+# До него в CI был только `formal.yml`: три формальных конвейера плюс работа `admission`, которая
+# гоняла `cargo test -p vecdht-node` и `cargo clippy -p vecdht-node`. Тогда это была меньшая часть
+# воркспейса, и её не сверял НИ ОДИН текстовый страж лаборатории. `AGENTS.md` тем временем
+# определяет «проверено» как `cargo test --workspace` и clippy по воркспейсу. Разрыв между
+# определением и исполнением и закрывает этот файл.
+#
+# Числа тестов — статический подсчёт, прогон не измерялся (правило: число без команды
+# не результат; команду печатаем целиком):
+#
+#     grep -rhoE '#\[test\]' crates --include=*.rs | wc -l                     # 821
+#     grep -rhoE '#\[tokio::test(\([^)]*\))?\]' crates --include=*.rs | wc -l   #   2
+#     grep -rhoE '#\[test_case' crates --include=*.rs | wc -l                   #   0
+#     ------------------------------------------------------------------------------  всего 823
+#     grep -rhoE '^[[:space:]]*#\[ignore' crates --include=*.rs | wc -l         #  11 в --ignored
+#
+#     Определение счёта: все `*.rs` под `crates/` (включая каталог `tests/`, исключая `target/`
+#     и `.git/`), метка — вхождение литерала `#[test]` в байтах файла; «всего» = `#[test]` плюс
+#     `#[tokio::test…]` плюс `#[test_case`. Это же определение исполняет `lab/check-ci-numbers.py`,
+#     и он же сверяет числа этого блока с деревом: число в комментарии без исполнителя гниёт молча
+#     (`H-0154`, внешний источник — `cross-audit/2026-10-29-lexspec-reviews-vecdht.md`, V-1).
+#
+# Разбивка по крейтам (`#[test]`): wire 59, orders 24, crypto 60, artifact 48, index 118, node 224,
+# net 106 (+2 `#[tokio::test(flavor = "current_thread")]` в `tests/kad_server_role.rs` и
+# `tests/s182_p1_scale.rs`), embed 80, cli 102. Работа `admission` в `formal.yml` покрывает 224 из
+# 823, то есть 27 %; работа `workspace` ниже добавляет остальные 599 — 73 %. Ни `#[test_case]` и ни
+# параметризованных атрибутов в дереве нет; `--ignored`-тесты (11) в CI не запускаются — это замерные
+# стенды, их цена и команда названы в карточках циклов.
+#
+# Чем runner НЕ равна хосту владельца (честно, а не «зелёное значит проверено на всех}):
+#   * runner — `ubuntu-24.04`, тулчейн `x86_64-unknown-linux-gnu`, версия — та, что лежит в образе
+#     (в репозитории нет `rust-toolchain.toml`, и пиновать здесь номер мы не стали: пин, который
+#     никто не может перепроверить на хосте контура, — это обещание без исполнителя);
+#   * хост владельца — `x86_64-pc-windows-gnu`, где сборка требует standalone mingw-w64 раньше
+#     любого другого `gcc` в `PATH` (`README.ru.md`, раздел «Сборка», и `export PATH=…/mingw64/bin`
+#     в начале `lab/workspace-verify.sh`; номера строк не пишем — они плывут при каждой правке):
+#     линковка из-под miniconda падает. Поэтому зелёная работа `workspace` — это подтверждение
+#     «собирается и тестится на GNU/Linux», а ПЕРЕПИНКА чисел цикла по-прежнему берётся из
+#     `bash lab/workspace-verify.sh E-XXXX` на хосте: это разные прогоны на разных тулчейнах,
+#     и ни один из них не отменяет другой;
+#   * `cargo fmt --check` здесь НЕТ намеренно: на хосте контура компонент `rustfmt` не установлен
+#     (`cargo fmt --check` отдаёт «'cargo-fmt.exe' is not installed for the toolchain
+#     'stable-x86_64-pc-windows-gnu'»), значит fmt-чистота дерева не проверена, а добавление шага
+#     дало бы зелёный круг, который никто не может воспроизвести локально. Дерево не переформачивали.
+#     Чинится так: `rustup component add rustfmt`, затем `cargo fmt --check` локально, и только
+#     потом шаг сюда.
+#
+# Разделение по событиям (его надо видеть, а не угадывать):
+#   * `pull_request`  → только `guards` (секунды: python и bash, без сборки);
+#   * `push` в `main` → `guards` + `workspace` (полный воркспейс: сборка и ~823 теста);
+#   * `workflow_dispatch` → `guards` + `workspace` по явному вызову;
+#   * `schedule` (ночью) → только `v9-independent` (прибор перебирает байты из текста спеки,
+#     он медленный и в PR-критический путь не ставится).
+name: verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VECTORS_DOC: docs/PAID_ORDER-VECTORS.md
+
+jobs:
+  guards:
+    name: "Стражи лаборатории: имена, пороги, круг, источники, текст, векторы v9"
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # Глубина клона здесь — не косметика: шаг `cycle-gate audit --all` вычисляет дату порога по
+      # истории. На клоне глубиной один коммит (это дефолт `actions/checkout@v4`) он печатал
+      # «сегодняшнюю» дату как порог и 88 выдуманных находок класса `ДАТА` вместо нуля
+      # (`OQ п. 132`; на хосте тот же вызов даёт `порог=2026-10-23 находок=0`). Задача #143 закрыта
+      # циклом `E-0173` (`ADR-0079`): теперь все четыре прибора, выводящие дату появления файла из
+      # истории, на неполной истории печатают `<TAG>_SHALLOW=1` и выходят кодом 3. Отказ — не вердикт
+      # «всё чисто», поэтому `fetch-depth: 0` ниже по-прежнему обязателен: шаг обязан судить по
+      # настоящей истории, а не отказываться на ней.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # В образе Ubuntu есть только `python3`; приборы контура зовут `python` (так их печатает
+      # `AGENTS.md` и helper'ы циклов). Симлинк заводится здесь, чтобы один и тот же текст команды
+      # шёл и локально, и на runner (тот же приём, что в работе `lean` файла `formal.yml`).
+      - name: Алиас python -> python3
+        run: sudo ln -sf "$(command -v python3)" /usr/local/bin/python
+
+      # `lab/cycle-gate.py` импортирует PyYAML (на хосте он есть). Без этой шага гейт покраснел бы
+      # по причине «нет библиотеки», а не по причине «круг не оформлен».
+      - name: PyYAML для гейта круга
+        run: python -m pip install --quiet pyyaml
+
+      # Каждый шаг печатает коды возврата в сводку работы и наружу как `::notice::`: журнал работы
+      # без прав администратора репозитория не читается (API отдаёт 403), аннотации — читаются.
+      - name: repo-review — разрешимость имён и находки дерева
+        run: |
+          set -uo pipefail
+          L=/tmp/repo-review.log
+          r=0
+          python lab/repo-review.py check > "$L" 2>&1 || r=$?
+          echo "REVIEW_EXIT=$r" >> "$L"
+          grep -aE '^REVIEW_(FINDINGS|TOP|REFS_STALE|REFS_UNRESOLVED|ID_TOKENS|ID_RESOLVED|REFS_UNRESOLVED_ALLOWED|REFS_UNRESOLVED_VIOLATIONS|ALLOW_LIST_[A-Z]+)=' "$L" | tail -14 || true
+          grep -aE '^РАЗРЫВ ' "$L" | head -20 || true
+          { echo "REVIEW_EXIT=$r"; grep -aE '^REVIEW_(REFS_UNRESOLVED_VIOLATIONS|REFS_UNRESOLVED_ALLOWED|REFS_STALE|FINDINGS)=' "$L"; } \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -12 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Самопроверка того же стража: страж, не проверенный посаженным дефектом, — это молчание.
+      - name: repo-review selftest — посадка висячих адресов обязана отбиваться
+        run: |
+          set -uo pipefail
+          L=/tmp/refs-selftest.log; : > "$L"; rc_all=0
+          r=0
+          python lab/repo-review.py selftest >> "$L" 2>&1 || r=$?
+          echo "SELFTEST_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          r=0
+          python lab/repo-review.py refselftest >> "$L" 2>&1 || r=$?
+          echo "REFSELFTEST_RC=$r" >> "$L"; [ "$r" -eq 0 ] || rc_all=1
+          grep -aE '^REVIEW_SELFTEST total=|^REFGUARD_SELFTEST total=|^REFGUARD_DECOY_FIRED=' "$L" || true
+          { grep -aE '^REVIEW_SELFTEST total=|^REFGUARD_SELFTEST total=|^REFGUARD_DECOY_FIRED=' "$L"; \
+            echo "REFSELFTEST_RC=$rc_all"; } | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -6 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $rc_all
+
+      - name: threshold-lint — каждый ключ ожиданий кому-то принадлежит
+        run: |
+          set -uo pipefail
+          L=/tmp/threshold-lint.log
+          r=0
+          python lab/threshold-lint.py --latest > "$L" 2>&1 || r=$?
+          echo "TL_EXIT=$r" >> "$L"
+          grep -aE '^ЦИКЛ=|^ПОРОГОВ=' "$L" | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          cat "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: cycle-gate audit — весь круг, а не окно из пяти карточек
+        run: |
+          set -uo pipefail
+          L=/tmp/cycle-gate.log
+          r=0
+          # Окно `-n 5` судило о круге по последним пяти карточкам: девять кругов с нарушениями
+          # за ним не видел ни CI, ни хост, а освобождённые по отсутствию ключа `lean:` вообще не
+          # попадали в счёт (`H-0167`). Освобождение теперь поименовано в `lab/cycle-gate-legacy.tsv`
+          # с датой добавления файла из git, и список сверяется с пересчётом по дереву.
+          python lab/cycle-gate.py audit --all > "$L" 2>&1 || r=$?
+          echo "CG_EXIT=$r" >> "$L"
+          grep -aE '^AUDIT |^AUDIT_FINDING' "$L" | tail -8 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -8 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: library check — схема индекса источников
+        run: |
+          set -uo pipefail
+          L=/tmp/library-check.log
+          r=0
+          python lab/library.py check > "$L" 2>&1 || r=$?
+          echo "LIB_EXIT=$r" >> "$L"
+          grep -aoE 'LIBCHECK [^\n]*' "$L" | tail -1 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          cat "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+        # `library.py verify` (живые URL чужих источников) сюда не входит: он требует сети до
+        # внешних хостов и падает по чужим 404, а не по нашему дефекту. Он остаётся локальным
+        # прибором круга (`AGENTS.md`, раздел «Что считается проверкой»).
+
+      # Третий класс красноты CI (`E-0129`): лабораторный код ставил и сверял даты местным часом
+      # хоста (UTC+3), а runner судит по UTC. Запись, закрытая между 21:00 и 24:00 по хосту,
+      # получает дату «завтра» относительно runner'а, и `library check` краснеет на следующем пуше,
+      # а все шаги после него пропускаются. Прибор ниже проверяет и код (единая воронка дат), и
+      # данные (ни одной даты в будущем домена UTC).
+      # `--require-git` здесь НЕ ставится, и прежняя причина этого шага была ложью: ниже, в шаге
+      # `actions/checkout@v4` этой же работы, стоит `fetch-depth: 0` (п. 132), то есть полная история
+      # на runner есть, и прибор на ней зелёен (`E-0173`: `POST_FULL_DDF_RC=0`). Флаг не включён потому, что круг
+      # `E-0173` описывал обязанность отказа и не менял поведение CI; перенос этого шага на
+      # `--require-git` — отдельная правка со своим замером, номера в очереди у неё нет. На хосте
+      # проверка с флагом исполняется в `lab/workspace-verify.sh`.
+      - name: check-date-domain — даты контура в домене UTC, не местного часа
+        run: |
+          set -uo pipefail
+          L=/tmp/check-date-domain.log
+          r=0
+          python lab/check-date-domain.py check > "$L" 2>&1 || r=$?
+          echo "DDF_STEP_EXIT=$r" >> "$L"
+          grep -aE '^DDF_(FINDINGS|DATES_AFTER_UTC|LOCAL_TODAY_CALLS|BLIND)=' "$L" | tail -6 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -14 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Гейт без посаженного дефекта через пять циклов превращается в зелёный текст (тот же довод,
+      # что посадил самопроверку в `lean-check.py` и в двух приборах класса `E-0127`/`E-0128`).
+      - name: check-date-domain selftest — девять посаженных дефектов обязаны отбиваться
+        run: |
+          set -uo pipefail
+          L=/tmp/check-date-domain-selftest.log
+          r=0
+          python lab/check-date-domain.py selftest > "$L" 2>&1 || r=$?
+          echo "DDF_SELFTEST_STEP_EXIT=$r" >> "$L"
+          grep -aE '^DDF_SELFTEST|^PLANT_' "$L" | tail -12 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -14 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Нумерация очереди: метка пункта — адрес, по которому владелец отвечает на вопрос. Прибор
+      # заведён `E-0137`, вторую форму заявок (жирная строка `**N. …` внутри тела другого пункта)
+      # он не видел до `E-0133`, и ни в том, ни в другом цикле в контуре не стоял. Строка запуска
+      # здесь — единственное, чем «прибор есть» отличается от «прибор исполняется».
+      - name: check-oq-numbering — обе формы номеров очереди и разрешимость указателей
+        run: |
+          set -uo pipefail
+          L=/tmp/check-oq-numbering.log
+          r=0
+          python lab/check-oq-numbering.py > "$L" 2>&1 || r=$?
+          python lab/check-oq-numbering.py --pointers >> "$L" 2>&1 || r=$?
+          echo "OQNUM_STEP_EXIT=$r" >> "$L"
+          grep -aE '^ПРОВЕРКА_' "$L" | tail -4 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -14 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Гейт без посаженного дефекта через пять циклов превращается в зелёный текст.
+      - name: check-oq-numbering selftest — девять посаженных дефектов обязаны отбиваться
+        run: |
+          set -uo pipefail
+          L=/tmp/check-oq-numbering-selftest.log
+          r=0
+          python lab/check-oq-numbering.py --selftest > "$L" 2>&1 || r=$?
+          echo "OQNUM_SELFTEST_STEP_EXIT=$r" >> "$L"
+          grep -aE '^PLANTED_|^SELFTEST_' "$L" | tail -8 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -14 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # `H-0152`: боевой режим, а не только посадка. `check-claim-map.py` стоял боевым шагом
+      # только на хосте (`lab/workspace-verify.sh`), то есть CI не проверял карту §18.9 вовсе:
+      # зелёная работа ничего не говорила об условии 4 v1. Шаг назван здесь, чтобы паритет двух
+      # контуров был исполнением, а не обещанием (`lab/contour-parity.tsv`).
+      - name: check-claim-map — карта «слово → id» §18.9 против тестов
+        run: |
+          set -uo pipefail
+          L=/tmp/claim-map.log
+          r=0
+          python lab/check-claim-map.py > "$L" 2>&1 || r=$?
+          echo "CLAIM_MAP_EXIT=$r" >> "$L"
+          grep -aE '^(CLAIM_MAP|CLAIM_|КЛАУЗЫ|КЛАУЗ)' "$L" | tail -6 \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -8 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Этот шаг исполняется на runner, и до `E-0128` он назывался обратное: «НЕ ИСПОЛНЯЕТСЯ
+      # ЗДЕСЬ». Он исполнял себя и краснел. Причина механическая: `lab/check-spec-mirror.sh`
+      # сравнивает `docs/*.md` с `${HOME}/OneDrive/Desktop/*.md`, а зеркало живёт ВНЕ git
+      # (правило 5 `AGENTS.md`), поэтому на свежем runner файла-зеркала просто нет. Скрипт в
+      # этом случае печатает «зеркала … нет на месте» и выходит 1 (не 2: двойку он отдаёт,
+      # когда нет ОРИГИНАЛА, то есть когда его запустили не из корня репозитория). До починки
+      # этот законный `1` обрывал шаг на строке `bash … ; r=$?` (GitHub исполняет `run:` как
+      # `bash -e`), до ветки `MIRROR_ABSENT_ON_RUNNER`, и работа краснела молча: в логе не было
+      # ни одной строки после `##[endgroup]`. Теперь код берётся из `|| r=$?`, и шаг сам
+      # решает, что он значит. Мы проваливаем работу только тогда, когда зеркало на runner
+      # всё-таки появилось и разошлось, или когда сломался оригинал.
+      # Три ветки исполнены на хосте настоящим `bash -e` (числа — в `lab/logs/e0128-all.log`):
+      # HOME без зеркала -> шаг 0 с `MIRROR_ABSENT_ON_RUNNER=1`; зеркало совпадает -> 0 с
+      # `MIRROR_OK=1`; зеркало расходится -> 1 с `::error::MIRROR_RC=`. Сам guard тоже был
+      # дырой того же класса: его пайплайн `diff | head -40` под `set -euo pipefail` обрывал
+      # скрипт раньше его строки «починить:»; теперь он закрыт `|| true` (вердикт скрипта —
+      # `exit 1` в конце, он не изменился).
+      - name: "зеркало спеки: на runner его нет (вне git), шаг обязан назвать причину и сойти 0; расхождение краснит"
+        run: |
+          set -uo pipefail
+          L=/tmp/spec-mirror.log
+          r=0
+          bash lab/check-spec-mirror.sh > "$L" 2>&1 || r=$?
+          echo "MIRROR_RC=$r" >> "$L"
+          cat "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$r" -eq 0 ]; then echo "::notice::MIRROR_OK=1"; exit 0; fi
+          if grep -qF 'нет на месте' "$L"; then
+            echo "::notice::MIRROR_ABSENT_ON_RUNNER=1 — зеркало вне git, на runner его нет; проверка остаётся локальной (AGENTS.md п. 5)"
+            exit 0
+          fi
+          echo "::error::MIRROR_RC=$r — зеркало на runner есть и разошлось (или нет оригинала): это настоящий провал"
+          exit $r
+
+      - name: check-secrets — токены в tracked и в истории, следы домашнего каталога, .git/config
+        run: |
+          set -uo pipefail
+          bash lab/check-secrets.sh --no-history | tail -12
+          echo "::notice::история в CI не сканируется: runner берёт мелкий клон, её полнота — обязанность хоста контура"
+
+      - name: check-artifact-refs — каждая цитата пути ведёт на существующий артефакт
+        run: |
+          set -uo pipefail
+          python lab/check-artifact-refs.py | tail -12
+
+      - name: check-status-claims — строки статус-документа против дерева
+        run: |
+          set -uo pipefail
+          L=/tmp/status-claims.log
+          r=0
+          python lab/check-status-claims.py selftest > "$L" 2>&1 || r=$?
+          python lab/check-status-claims.py >> "$L" 2>&1 || r=$?
+          echo "STATUS_GUARD_EXIT=$r" >> "$L"
+          grep -aE '^(STATUS_CLAIMS|STATUS_CONSISTENT|STATUS_STALE|STATUS_STALE_IDS|STATUS_EXIT)=' "$L" \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -8 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: check-text-clean — гибрид алфавитов и битая кодировка по всему дереву
+        run: |
+          set -uo pipefail
+          L=/tmp/text-clean.log
+          r=0
+          bash lab/check-text-clean.sh --all > "$L" 2>&1 || r=$?
+          echo "TEXT_EXIT=$r" >> "$L"
+          grep -aoE 'ПРОВЕРКА_ТЕКСТА .*' "$L" | tail -1 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -6 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: check-spec-cites — ссылки на строки спеки и проверяемые цитаты
+        run: |
+          set -uo pipefail
+          L=/tmp/spec-cites.log
+          r=0
+          python lab/check-spec-cites.py > "$L" 2>&1 || r=$?
+          echo "SPEC_CITES_EXIT=$r" >> "$L"
+          tail -8 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: guard selftests — у каждого стража обязана быть посадка, и она обязана исполняться
+        run: |
+          set -uo pipefail
+          L=/tmp/guard-selftests.log
+          r=0
+          # Один код на всю цепь не называет виновника: шаг был красен на четырёх пушах подряд,
+          # а те же вызовы на хосте давали ноль (`H-0167`). Теперь каждый вызов печатает свой код
+          # строкой `<МЕТКА>_EXIT=<код>`; сводная `GUARD_SELFTESTS_EXIT=` сохранена — её читают
+          # таблицы ожиданий закрытых циклов, а форма печати заморожена `H-0141`.
+          call() {
+            local name="$1"; shift
+            local rc=0
+            "$@" >> "$L" 2>&1 || rc=$?
+            echo "${name}_EXIT=$rc" >> "$L"
+            [ "$rc" -eq 0 ] || r=$rc
+          }
+          call RELEASE_KIT_SELFTEST bash lab/check-release-kit.sh --selftest
+          call SPEC_MIRROR_SELFTEST bash lab/check-spec-mirror.sh --selftest
+          call TEXTCLEAN_SELFTEST bash lab/check-text-clean.sh --selftest
+          call ARTIFACT_REFS_SELFTEST python lab/check-artifact-refs.py --selftest
+          call SECRETS_SELFTEST bash lab/check-secrets.sh --selftest
+          call PARITY_SELFTEST python lab/check-contour-parity.py --selftest
+          call GSE_SELFTEST python lab/check-guard-selftests.py --selftest
+          call GSE python lab/check-guard-selftests.py
+          # Ссылки на строки спеки (`H-0160`): объявленная цитата обязана буквально быть в разделе.
+          call SPEC_CITES_SELFTEST python lab/check-spec-cites.py --selftest
+          # Заморозка таблиц ожиданий (`H-0155`): подменённое ожидание обязано краснить страж,
+          # а не молчать; исторические 19 названы базовой линией (OQ п. 93).
+          call EXPECT_FREEZE_SELFTEST python lab/check-expect-freeze.py --selftest
+          call EXPECT_FREEZE python lab/check-expect-freeze.py
+          # Сравнение двух фактов, каждый из которых может быть `none` (`H-0156`): два молчания
+          # не считаются равенством; исторический сайт e0146:80 назван строкой реестра.
+          call NONE_CMP_SELFTEST python lab/check-none-compare.py --selftest
+          call NONE_CMP python lab/check-none-compare.py
+          # Колонка ожидания у сильных строк реестра (`H-0157`): ссылка `E-XXXX` типа
+          # `gate-closed`/`measured` обязана иметь замороженную таблицу; история существующих
+          # таблиц — владелец `check-expect-freeze.py` (H-0155), двойного счёта нет.
+          call CLAIMS_FROZEN_SELFTEST python lab/check-claims-frozen.py --selftest
+          call CLAIMS_FROZEN python lab/check-claims-frozen.py
+          # У слова `none` в таблицах ожиданий один владелец (`H-0158`): helper носителя не
+          # изготавливает `none` из отсутствия; исторические 14 таблиц названы реестром.
+          call NONE_OWNERS_SELFTEST python lab/check-none-owners.py --selftest
+          call NONE_OWNERS python lab/check-none-owners.py
+          # Паритет контуров (`H-0152`): прибор краснеет, если боевой вызов стража есть только в
+          # одном из двух контуров и эта разница не названа строкой `lab/contour-parity.tsv`.
+          call PARITY python lab/check-contour-parity.py
+          # Снимок `lab/INVENTORY.md` против пересчёта `lab/inventory.py` (`H-0167`): рукописная
+          # таблица без сверки гниёт молча, и расхождение видно только прибором.
+          call INVENTORY_SELFTEST python lab/check-inventory.py --selftest
+          call INVENTORY python lab/check-inventory.py
+          # Таблица доменов подписи против строк вызова (`H-0167`): названное расхождение живёт
+          # в `lab/domain-exceptions.tsv` с числом сайтов и причиной, непоименованное краснит.
+          call DOMAIN_TABLE_SELFTEST python lab/check-domain-table.py --selftest
+          call DOMAIN_TABLE python lab/check-domain-table.py
+          # Предковость пина (`H-0172`): носитель, снимающий PRE-факты, обязан проверить, что пин —
+          # предок HEAD; исторические несоответствия названы `lab/pin-ancestry-exceptions.tsv`.
+          call PIN_ANCESTRY_SELFTEST python lab/check-pin-ancestry.py --selftest
+          call PIN_ANCESTRY python lab/check-pin-ancestry.py
+          echo "GUARD_SELFTESTS_EXIT=$r" >> "$L"
+          grep -aE '_EXIT=[1-9]' "$L" | tee -a "$GITHUB_STEP_SUMMARY" || true
+          tail -30 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: check-claims — реестр утверждений готовности против их носителей
+        run: |
+          set -uo pipefail
+          L=/tmp/claims.log
+          r=0
+          python lab/check-claims.py --selftest > "$L" 2>&1 || r=$?
+          python lab/check-claims.py >> "$L" 2>&1 || r=$?
+          echo "CLAIMS_EXIT=$r" >> "$L"
+          grep -aE '^(CLAIMS|VIOLATIONS|DANGLING|CEILING|QUALIFIER|GATE_RATIO|READY_VALUES)=' "$L" \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -12 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: check-contours — закрытые карточки против блоков прогона контура
+        run: |
+          set -uo pipefail
+          L=/tmp/contours.log
+          r=0
+          python lab/check-contours.py --selftest > "$L" 2>&1 || r=$?
+          python lab/check-contours.py >> "$L" 2>&1 || r=$?
+          echo "CONTOURS_EXIT=$r" >> "$L"
+          grep -aoE '^(CLOSED_TOTAL|BLOCK_LABELS|COVERED|MISSING_TOTAL|UNEXPLAINED|ERA_TOTAL|MODERN_TOTAL|VIOLATIONS)=' "$L" | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -16 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: check-release-map — строки релиз-карты против их владельцев
+        run: |
+          set -uo pipefail
+          L=/tmp/release-map.log
+          r=0
+          python lab/check-release-map.py selftest > "$L" 2>&1 || r=$?
+          python lab/check-release-map.py >> "$L" 2>&1 || r=$?
+          echo "RELEASEMAP_EXIT=$r" >> "$L"
+          grep -aE '^(MAP_ROWS|ROWS_REGISTERED|ROWS_UNREGISTERED|ROWS_MISSING|EIDS|EIDS_OPEN|EIDS_MISSING|PATHS|PATHS_MISSING|OWNERS|OWNERS_MISSING|FACTS|FACTS_OK|STALE|NUMBERS|NUMBERS_OK|NUMBERS_UNDECLARED|PROV_BAD|MAP_EXIT)=' "$L" | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -30 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      - name: xcheck-paid-orders — спека v9 против порождённых векторов
+        run: |
+          set -uo pipefail
+          L=/tmp/xcheck.log
+          r=0
+          python lab/xcheck-paid-orders.py "$VECTORS_DOC" > "$L" 2>&1 || r=$?
+          echo "XC_EXIT=$r" >> "$L"
+          grep -aE '^V9_(SPEC_DOC_MISMATCH|DOC_EMPTY_CELLS|WORKED_PARSED|W_DECOY_FIRED|SPEC_DECOY_FIRED|DOC_DECOY_FIRED)=' "$L" \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -12 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Отчётный `grep` без находки возвращает 1; труба под `pipefail` отдаёт её наружу, а GitHub
+      # исполняет `run:` как `bash -e` — шаг обрывается в этой строке, ДО `exit $r`, которое и
+      # является вердиктом. Класс измерен в `E-0127` (работа `verify` краснела на зелёном дереве:
+      # `::notice::TEST_EXIT=0` при статусе `failure`). Guard обязан стоять в КОНЦЕ трубы: форма
+      # `grep … || true | while …` разбирается как `grep … || (true | while …)`, шаг зеленеет, а
+      # рассылка `::notice::` теряется — прибор считает и это отдельной находкой.
+      - name: check-ci-report-greps — отчётные трубы не обрывают шаг раньше вердикта
+        run: |
+          set -uo pipefail
+          L=/tmp/crg.log
+          r=0
+          python lab/check-ci-report-greps.py > "$L" 2>&1 || r=$?
+          echo "CRG_EXIT=$r" >> "$L"
+          grep -aE '^CRG_(FILES|RUN_BLOCKS|GREP_STATEMENTS|UNGUARDED|MISPLACED|VERDICT_GREP|LINES_NOGUARD|RECOUNT_EQ|BLIND|FAIL)=' "$L" | tail -12 || true
+          { echo "CRG_EXIT=$r"; grep -aE '^CRG_(UNGUARDED|MISPLACED|BLIND|FAIL|UNGUARDED_AT|MISPLACED_AT)=' "$L"; } \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -10 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Самопроверка того же стража: пять посаженных форм, включая слепой каталог workflow'ов.
+      # Страж, который никто не гонял с дефектом, через пять циклов становится зелёным текстом
+      # (тот же приём, что у `lean-check.py` в `E-0093`).
+      - name: check-ci-report-greps selftest — посадки обязаны отбиваться
+        run: |
+          set -uo pipefail
+          L=/tmp/crg-selftest.log
+          r=0
+          python lab/check-ci-report-greps.py selftest > "$L" 2>&1 || r=$?
+          echo "CRG_SELFTEST_RC=$r" >> "$L"
+          grep -aE '^CRG_SELFTEST' "$L" | tail -8 || true
+          { grep -aE '^CRG_SELFTEST' "$L"; echo "CRG_SELFTEST_RC=$r"; } \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -6 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Второй класс той же поломки, который `E-0127` не ловит: GitHub исполняет `run:` как
+      # `bash -e`, а идиома `команда > "$L" 2>&1; r=$?` обрывает шаг на падающей КОМАНДЕ, не
+      # доходя до `r=$?`. Отчёт теряется всегда, а вердикт ломается там, где ненулевой код
+      # ожидаем по замыслу (шаг обязан сойти нулём с названной веткой). На этом механизме
+      # `verify` краснел после починки E-0127: шаг «зеркало спеки» умирал молча на законной
+      # единице. Правильная форма — `r=0` + `команда || r=$?`: вердикт по-прежнему выносит
+      # `exit $r`, guard относится только к захвату кода.
+      - name: check-ci-rc-capture — захват $? не обрывает шаг под bash -e
+        run: |
+          set -uo pipefail
+          L=/tmp/rcc.log
+          r=0
+          python lab/check-ci-rc-capture.py --limit 30 > "$L" 2>&1 || r=$?
+          echo "RCC_EXIT=$r" >> "$L"
+          grep -aE '^RCC_(FILES|RUN_BLOCKS|BLOCKS_SET_PLUS_E|CAPTURES|GUARDED|UNGUARDED|LINES_UNGUARDED|RECOUNT_EQ|BLIND|FAIL|UNGUARDED_FILE|UNGUARDED_MORE)=' "$L" | tail -16 || true
+          { echo "RCC_EXIT=$r"; grep -aE '^RCC_(UNGUARDED|BLIND|FAIL|RECOUNT_EQ|UNGUARDED_AT)=' "$L"; } \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -10 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Самопроверка того же стража: семь синтетических форм плюс три посадки в копию ЖИВОГО
+      # дерева (флип формы, «присваивание отдельной строкой», `set +e`) — они работают на
+      # дереве любого состояния, поэтому этот же шаг ловит и будущий откат.
+      - name: check-ci-rc-capture selftest — посадки обязаны отбиваться
+        run: |
+          set -uo pipefail
+          L=/tmp/rcc-selftest.log
+          r=0
+          python lab/check-ci-rc-capture.py selftest > "$L" 2>&1 || r=$?
+          echo "RCC_SELFTEST_RC=$r" >> "$L"
+          grep -aE '^RCC_SELFTEST' "$L" | tail -14 || true
+          { grep -aE '^RCC_SELFTEST' "$L"; echo "RCC_SELFTEST_RC=$r"; } \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -6 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # `H-0154`: числа этого файла — утверждения, а не подпись. Внешняя рецензия
+      # `cross-audit/2026-10-29-lexspec-reviews-vecdht.md` (V-1) показала, что шапка разошлась с
+      # деревом на 40 тестов, и ни один из прежних стражей над этим не покраснел: они смотрят на
+      # подключение приборов, цитаты путей и адреса карточек, но не на арифметику комментария.
+      - name: check-ci-numbers — числа шапки этого файла сверены с деревом
+        run: |
+          set -uo pipefail
+          L=/tmp/ci-numbers.log
+          r=0
+          python lab/check-ci-numbers.py > "$L" 2>&1 || r=$?
+          echo "CIN_STEP_EXIT=$r" >> "$L"
+          grep -aE '^CIN_(CLAIMS|MATCH|DRIFT_COUNT|FINDINGS|DEFINITION|EXIT)=' "$L" \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -10 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+      # Боевой режим без посадки — тот же класс, что и страж без посаженного дефекта (`H-0151`):
+      # семь случаев, каждый обязан отбиться, иначе прибор превращается в зелёный текст.
+      - name: check-ci-numbers selftest — семь посаженных чисел обязаны отбиваться
+        run: |
+          set -uo pipefail
+          L=/tmp/ci-numbers-selftest.log
+          r=0
+          python lab/check-ci-numbers.py --selftest > "$L" 2>&1 || r=$?
+          echo "CIN_SELFTEST_STEP_RC=$r" >> "$L"
+          grep -aE '^(PLANTED_|CIN_SELFCASES|CIN_SELFPASSED|CIN_SELFTEST)' "$L" \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          tail -8 "$L" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $r
+
+  workspace:
+    name: "Воркспейс: cargo test --workspace и clippy -D warnings (определение AGENTS.md)"
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Тулчейн runner (не пинствуем: в дереве нет rust-toolchain.toml)"
+        run: |
+          set -uo pipefail
+          { rustc --version; cargo --version; cc --version | head -1; } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # `--no-fail-fast` — урок `ДИАГНОЗ-2 E-0087`: первый упавший таргет не должен скрывать
+      # остальные, иначе полный список поломок стоит второго долгого прогона. Параллельность
+      # хостового helper'а (`-j 2`, `RAYON_NUM_THREADS=2` в `lab/workspace-verify.sh`) здесь не
+      # повторяется: это ограничение носителя и RAM рабочего хоста, а не семантика проверки.
+      # Замерные `#[ignore]`-тесты (11) не запускаются: они требуют весов, 50k корпуса или
+      # 16 ядер и описаны своими командами в карточках циклов.
+      - name: cargo test --workspace
+        run: |
+          set -uo pipefail
+          L=/tmp/ws-test.log
+          r=0
+          cargo test --workspace --no-fail-fast > "$L" 2>&1 || r=$?
+          echo "TEST_EXIT=$r" | tee -a "$GITHUB_STEP_SUMMARY"
+          grep -aE '^test result:' "$L" | tail -40 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          { echo "TEST_EXIT=$r"; grep -aE '^test result: FAILED|^error' "$L" | tail -3; } \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          exit $r
+
+      - name: cargo clippy --workspace --all-targets -- -D warnings
+        run: |
+          set -uo pipefail
+          L=/tmp/ws-clippy.log
+          r=0
+          cargo clippy --workspace --all-targets -- -D warnings > "$L" 2>&1 || r=$?
+          echo "CLIPPY_EXIT=$r" | tee -a "$GITHUB_STEP_SUMMARY"
+          grep -aE '^(warning|error)(\[|:)' "$L" | tail -10 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo "::notice::CLIPPY_EXIT=$r"
+          exit $r
+
+  v9-independent:
+    name: "Ночью: сторонний реализатор v9 (байты только из текста спеки)"
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Алиас python -> python3
+        run: sudo ln -sf "$(command -v python3)" /usr/local/bin/python
+
+      # Прибор читает только `docs/VecDHT-SPEC-v9.md` и векторы, stdlib (`hashlib`, `unicodedata`):
+      # это и есть его условие — он не имеет права импортировать `vecdht-orders`. На PR-критический
+      # путь он не поставлен из-за цены (перебор Байт-за-Байтом по напечатанным векторам и
+      # 128 подписей RFC 8032), поэтому ночной запуск; `workflow_dispatch` позволяет снять его
+      # руками без ожидания ночи.
+      - name: python lab/v9-independent-client.py
+        run: |
+          set -uo pipefail
+          L=/tmp/v9-independent.log
+          r=0
+          python lab/v9-independent-client.py "$VECTORS_DOC" docs/VecDHT-SPEC-v9.md > "$L" 2>&1 || r=$?
+          echo "V913_EXIT=$r" >> "$L"
+          grep -aE '^V913_(ALL_OK|WORST|DECOY|RFC8032_DECOY_REJECTED|[A-Z0-9_]+EQ)=' "$L" | tail -8 \
+            | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          { echo "V913_EXIT=$r"; grep -aE '^V913_WORST=|^V913_ALL_OK=' "$L"; } | tee -a "$GITHUB_STEP_SUMMARY" || true
+          exit $r
+
+  # Гейт §18.3 «fuzz-декод 30 мин без panic» до `E-0134` не имел носителя: фаззеры умеют
+  # wall-clock бюджет (`VEC_DHT_FUZZ_SECS`), но ни CI, ни lab-контур его никогда не выставлял, и
+  # обычный `cargo test --workspace` гоняет только бюджеты по числу итераций. Ночной запуск, потому
+  # что цена — сборка в release плюс 8 тестов по 240 с в один поток (~32 мин соака); `--test-threads=1`
+  # обязателен: бюджет считается на тест, и в параллели восемь тестов съели бы 240 с суммарно, а не
+  # по очереди, тогда как агрегат гейта (§18.3) именно суммарный.
+  fuzz-soak:
+    name: "Ночью: fuzz-соак §18.3 (декод артефакта и проверка подписи, по 260 с на тест)"
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Тулчейн runner (не пинствуем: в дереве нет rust-toolchain.toml)"
+        run: |
+          set -uo pipefail
+          { rustc --version; cargo --version; cc --version | head -1; } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: fuzz-соак (VEC_DHT_FUZZ_SECS=260, один поток)
+        run: |
+          set -uo pipefail
+          L=/tmp/fuzz-soak.log
+          : > "$L"
+          export VEC_DHT_FUZZ_SECS=260
+          r1=0
+          cargo test --release -p vecdht-artifact --test fuzz_decode -- --test-threads=1 --nocapture >> "$L" 2>&1 || r1=$?
+          r2=0
+          cargo test --release -p vecdht-crypto --test fuzz_verify -- --test-threads=1 --nocapture >> "$L" 2>&1 || r2=$?
+          p=0
+          p=$(grep -c 'panicked at' "$L" || true)
+          s=0
+          s=$(grep -o 'за [0-9.]* с' "$L" | awk '{ t += $2 } END { printf "%.0f", t+0 }')
+          { echo "SOAK_ART_EXIT=$r1"; echo "SOAK_CRY_EXIT=$r2"; echo "SOAK_PANICS=$p"; echo "SOAK_WALL_SECS=$s"; } >> "$L"
+          grep -aE '^SOAK_|^test result' "$L" | tail -8 | while IFS= read -r n; do echo "::notice::${n:0:180}"; done || true
+          { echo "SOAK_ART_EXIT=$r1"; echo "SOAK_CRY_EXIT=$r2"; echo "SOAK_PANICS=$p"; echo "SOAK_WALL_SECS=$s"; } | tee -a "$GITHUB_STEP_SUMMARY" || true
+          [ "$r1" = 0 ] && [ "$r2" = 0 ] && [ "$p" = 0 ]

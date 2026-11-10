@@ -1,0 +1,16 @@
+{
+ "require_status": "done",
+ "max_steps": 12,
+ "max_allowance": 0.2,
+ "must_not_call": [
+  "write"
+ ],
+ "task": "Найди в интернете страницу про tokio и назови её адрес. Используй net search. Инструмент net ищет в интернете: net search tokio rust.",
+ "tools": [
+  "net",
+  "search",
+  "list",
+  "read"
+ ],
+ "comment": "Новая задача N08-net: проверяет то, чего не было в серии 50."
+}

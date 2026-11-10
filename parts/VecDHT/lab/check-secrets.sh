@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+# H-0131 / E-0131 (ADR-0072): страж секретов и локальных путей.
+#
+# Перенесено из flowguard-spec (`lab/check-secrets.sh`), но без их предупреждающего режима: у нас
+# молчание = провал, поэтому любая находка — выход 1. Их страж предупреждал; наш краснеет.
+#
+# Три проверки, каждая с названным вредителем:
+# (1) токены и приватные ключи в tracked-файлах — утечка, которую нельзя отозвать пушем;
+# (2) токены в истории (`git log -p --all`) — история не переписывается, значит найденное там
+#     живёт вечно и должно быть названо вслух; исключение `lab/logs` не делается: носитель лога
+#     обязан цитировать счёт, а не чужой токен. Чтобы это оставалось правдой и для собственного
+#     вывода стража, найденный токен в находке маскируется (`<скрыто>`): иначе сохранённый лог
+#     верификации сам становится утечкой, и следующий полный прогон краснеет на своём же логе
+#     (ДИАГНОЗ цикла `E-0152`).
+# (3) абсолютный локальный путь пользователя в tracked-файлах вне `lab/logs/` — не секрет, но
+#     непереносимо: сторонний реализатор не может ни прочитать упомянутый файл, ни повторить
+#     команду. `lab/logs/` исключён осознанно: носитель обязан цитировать реальные пути прогона,
+#     и вырезать их означало бы уничтожить свидетельство.
+# (4) `.git/config`: удалённый URL не обязан содержать вложенных учётных данных; если содержит —
+#     это тот же токен, что и (1), только в конфиге, который `git ls-files` не видит.
+#
+# `--selftest` сажает три дефекта в временный каталог (синтетические формы, настоящих секретов в
+# репозитории нет и не будет) и требует, чтобы страж назвал каждый; отдельно проверяется, что
+# находка не печатает полный токен. Без этого теста страж, который что-то разрешает, не имеет
+# права считаться стражем (ДИАГНОЗ-2 цикла E-0130).
+#
+# Выход: 0 — чисто; 1 — находки напечатаны; 2 — сломан сам прибор (нет git, нет репозитория).
+set -uo pipefail
+
+SELFTEST=0
+NO_HISTORY=0
+ARGS=()
+for a in "$@"; do
+  case "$a" in
+    --selftest) SELFTEST=1 ;;
+    --no-history) NO_HISTORY=1 ;;
+    *) ARGS+=("$a") ;;
+  esac
+done
+
+# Паттерны утечки. Все формы синтетические: настоящий GitHub-токен — `ghp_` + 36 base62,
+# пат `github_pat_` + 57, AWS Access Key ID — `AKIA` + 16.
+# Два литерала-подсадки, которые этот же прибор сажал в файл до того, как helper'ы перестали
+# писать черновики в каталог репозитория. Они попали в историю коммитом 546d2eb и не являются
+# учётными данными ни у кого. Исключение — по полному литералу, не по маске: любая иная форма
+# `ghp_` краснеет, и самотест ниже сажает ровно такой литерал, чтобы это было исполнимой
+# проверкой, а не обещанием в комментарии.
+SYNTHETIC='ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789|AKIAABCDEFGHIJKLMNOP'
+# Третий литерал — не подсадка, а след исправления (`H-0152`). До маскировки самотест печатал
+# ПОЛНЫЙ посадочный токен в вывод находки, а носитель верификации сохраняет вывод целиком —
+# поэтому `lab/logs/workspace-verify-2026-10-22.log` с тех пор содержит синтетический `ghp_`.
+# Страж обязан называть такой след, а не молчать; исключение — по полному литералу, который
+# синтетический по построению (собран из двух половин в самотесте этого же файла).
+LEAKED='ghp_aaaabbbbccccddddeeeeffff000011112222'
+SECRET_RE='ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{50,}|gh[osu]_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9]{32,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
+# Пути, выдающие одного конкретного пользователя на одной конкретной машине.
+LOCALPATH_RE='C:\\Users\\[^\\ ]+|[Pp]roject[Ee]xport|[A-Za-z]:\\Users\\|[[:space:]]/home/[a-z][a-z0-9_.-]{2,}|/Users/[a-z][a-z0-9_.-]{2,}'
+
+findings=0
+report() {
+  # $1 = проверка, $2 = «файл:строка», $3 = сокровённая находка
+  printf 'НАХОДКА[%s] %s :: %s\n' "$1" "$2" "$3"
+  findings=$((findings + 1))
+}
+
+check_blob() {
+  # Один файл, произвольный путь: секрет + (если разрешено) локальный путь.
+  local f="$1" skip_localpaths="${2:-0}"
+  [ -f "$f" ] || return 0
+  while IFS=: read -r ln text; do
+    [ -n "${ln:-}" ] || continue
+    report "секрет" "$f:$ln" "$(printf '%s' "$text" | sed -E "s/$SECRET_RE/<скрыто>/g" | cut -c1-72)"
+  done < <(grep -nIE "$SECRET_RE" "$f" 2>/dev/null | grep -v "SYNTHETIC=" | grep -vF -e "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" -e "AKIAABCDEFGHIJKLMNOP" -e "$LEAKED" || true)
+  if [ "$skip_localpaths" != 1 ]; then
+    while IFS=: read -r ln text; do
+      [ -n "${ln:-}" ] || continue
+      report "локальный_путь" "$f:$ln" "$(printf '%s' "$text" | cut -c1-72)"
+    done < <(grep -nIE "$LOCALPATH_RE" "$f" 2>/dev/null || true)
+  fi
+}
+
+scan_tree() {
+  # Режим репозитория: только tracked-файлы, бинарники пропускаем (-I).
+  local files
+  files=$(git ls-files) || { echo "ПРИБОР: git ls-files не исполнен" >&2; exit 2; }
+  for f in $files; do
+    case "$f" in
+      lab/logs/*) check_blob "$f" 1 ;;
+      *) check_blob "$f" 0 ;;
+    esac
+  done
+}
+
+scan_history() {
+  local n=0
+  n=$(git log -p --all 2>/dev/null | grep -IE "$SECRET_RE" | grep -vF -e "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" -e "AKIAABCDEFGHIJKLMNOP" -e "$LEAKED" | wc -l || true)
+  if [ "${n:-0}" != 0 ]; then
+    report "секрет_в_истории" "git log -p --all" "совпадений=$n"
+  fi
+  echo "ИСТОРИЯ_СОВПАДЕНИЙ=$n"
+}
+
+scan_gitconfig() {
+  local url=""
+  url=$(git config --get remote.origin.url 2>/dev/null || true)
+  [ -n "$url" ] || { echo "GITCONFIG_REMOTE=none"; return 0; }
+  if printf '%s' "$url" | grep -qE '://[^/@:]+(:[^/@]+)?@'; then
+    report "секрет_в_git_config" "remote.origin.url" "вложенные учётные данные"
+  fi
+  echo "GITCONFIG_REMOTE=clean"
+}
+
+# Посадки собираются из двух половин и печатаются через `%s`, поэтому ни один полный токен
+# не живёт в этом tracked-файле буквально. Это не косметика: в цикле E-0131 helper записал
+# черновики с посадкой в каталог репозитория, они попали в историю коммитом 546d2eb, и страж
+# секретов стал краснеть на собственном самотесте (ДИАГНОЗ: посадочный материал, который
+# прибор сам исключает литералом, проверяет только то, что не проверяет ничего). Литералы
+# ниже намеренно отличаются от SYNTHETIC-исключений — иначе самотест доказывал бы лишь то,
+# что фильтр исключений работает, а не то, что страж находит секрет.
+run_selftest() {
+  local tmp rc GHP_TAIL AK_HEAD AK_TAIL
+  tmp=$(mktemp -d) || { echo "ПРИБОР: mktemp не исполнен" >&2; exit 2; }
+  mkdir -p "$tmp/sub"
+  GHP_TAIL='999988887777666655554444333322221111'
+  AK_HEAD='AKIA'
+  AK_TAIL='QWERTYUIOPASDFGH'
+  [ "${#GHP_TAIL}" = 36 ] || { echo "ПРИБОР: посадка ghp не 36 знаков" >&2; exit 2; }
+  [ "${#AK_TAIL}" = 16 ] || { echo "ПРИБОР: посадка AKIA не 16 знаков" >&2; exit 2; }
+  printf 'token = ghp_%s\n' "$GHP_TAIL" > "$tmp/a.txt"
+  printf 'key = %s%s\n' "$AK_HEAD" "$AK_TAIL" >> "$tmp/a.txt"
+  printf 'p = C:\\Users\\someone\\work\\x.rs\n' > "$tmp/sub/b.md"
+  printf 'чисто: lab/disk-report.sh и E-0131\n' > "$tmp/clean.md"
+  rc=0
+  check_blob "$tmp/a.txt" 0
+  check_blob "$tmp/sub/b.md" 0
+  check_blob "$tmp/clean.md" 0
+  [ "$findings" = 3 ] || { echo "САМОТЕСТ: посадок 3, названо $findings" >&2; rc=1; }
+  # Отрицательная ветка: чистый файл не обязан дать ни одной находки.
+  findings=0
+  check_blob "$tmp/clean.md" 0
+  [ "$findings" = 0 ] || { echo "САМОТЕСТ: чистый файл дал находки" >&2; rc=1; }
+  # Локальный путь в носителе лога — не находка (иначе страж жёг бы свидетельства).
+  findings=0
+  printf 'cd /c/Users/Admin/vecdht-work/vecdht\n' > "$tmp/d.log"
+  check_blob "$tmp/d.log" 1
+  [ "$findings" = 0 ] || { echo "САМОТЕСТ: исключение лога не работает" >&2; rc=1; }
+  E_TAIL='ccccddddeeeeffff00001111222233334444'
+  printf 'other = ghp_%s\n' "$E_TAIL" > "$tmp/e.txt"
+  findings=0
+  check_blob "$tmp/e.txt" 0 > "$tmp/eout.txt"
+  [ "$findings" = 1 ] || { echo "САМОТЕСТ: не-подсадочный токен не назван" >&2; rc=1; }
+  # Маскировка (ДИАГНОЗ цикла E-0152): находка обязана назвать файл и строку, но не печатать сам
+  # токен — иначе вывод стража, сохранённый носителем верификации, сам становится утечкой и
+  # следующий полный прогон краснеет на собственном логе.
+  if grep -qF "ghp_${E_TAIL}" "$tmp/eout.txt" || ! grep -qF '<скрыто>' "$tmp/eout.txt"; then
+    echo "САМОТЕСТ: находка печатает полный токен или не маскирует" >&2; rc=1
+  fi
+  rm -rf "$tmp"
+  if [ "$rc" = 0 ]; then echo "SECRETS_SELFTEST=ok"
+  else echo "SECRETS_SELFTEST=fail"; fi
+  exit "$rc"
+}
+
+if [ "$SELFTEST" = 1 ]; then run_selftest; fi
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
+if [ -z "$ROOT" ]; then echo "ПРИБОР: вне git-репозитория" >&2; exit 2; fi
+cd "$ROOT"
+
+scan_tree
+scan_gitconfig
+if [ "$NO_HISTORY" = 0 ]; then scan_history; fi
+
+echo "SECRETS_FINDINGS=$findings"
+if [ "$findings" = 0 ]; then echo "SECRETS_EXIT=0"; exit 0; else echo "SECRETS_EXIT=1"; exit 1; fi

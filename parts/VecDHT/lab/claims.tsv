@@ -1,0 +1,47 @@
+# lab/claims.tsv — соединённый реестр утверждений релизной готовности (`H-0132`, `ADR-0044`).
+# Колонки: id, тип свидетельства, номер условия v1 (или «-»), носитель, формулировка, ссылки.
+# Формулировка обязана встречаться в носителе дословно (пробелы и переносы — не часть утверждения),
+# каждая ссылка обязана резолвиться в карточку с вердиктом или в файл из дерева, а тип задаёт
+# потолок того, что в этой формулировке позволено сказать. Прибор — `lab/check-claims.py`; правка
+# носителя без правки строки делает реестр красным, и наоборот.
+C-001	gate-closed	1	docs/STATUS-v1.md	closed 4 of 4, in six closures	E-0087,E-0088,E-0091,E-0092,E-0094,E-0095	четыре дыры Batch A, шесть закрытий
+C-002	measured	2	docs/STATUS-v1.md	the stand was run in release	E-0105,ADR-0060	стенд P1 в release, пять прогонов на нашем хосте
+C-003	not-done	3	docs/STATUS-v1.md	the whole network path was verified in one process over real QUIC	lab/two-hosts.sh	две машины — не прогнано
+C-004	partial	4	docs/STATUS-v1.md	partial: §4 (the door, revocation consequences and their survivability, refusal names)	E-0123,lab/check-claim-map.py	§18 размечен не целиком
+C-005	measured	5	docs/STATUS-v1.md	the audit is an executable test	E-0108	аудит диска как тест
+C-006	estimate	-	docs/STATUS-v1.md	Approximate readiness — about 85 %	docs/STATUS-v1.md	цифра готовности: оценка, не измерение
+C-007	estimate	-	README.md	85 % ready for v1	docs/STATUS-v1.md	носитель цифры в английском README
+C-008	estimate	-	README.ru.md	Ориентировочная готовность v1 — около 85 %	docs/STATUS-v1.md	носитель цифры в русском README
+C-009	gate-closed	-	docs/STATUS-v1.md	Each §18 gate family names its own closure carrier	E-0134,E-0135,crates/vecdht-net/tests/transport.rs,E-0073,crates/vecdht-node/tests/gates_p4.rs,E-0001	каждая семья гейтов называет свой носитель, а не одно предложение на четверых
+C-010	model-proof	-	docs/STATUS-v1.md	it proves statements about acceptance-arithmetic models, not about code	E-0099,ADR-0053	формальные контуры: модель, не код
+C-011	instrument	-	docs/STATUS-v1.md	the release kit is now an instrument that the cycles check	lab/check-release-kit.sh,E-0126	релизный комплект как прибор
+C-012	not-done	-	docs/STATUS-v1.md	Traffic padding and jitter are no longer promised for v1	E-0077	паддинг трафика отсутствует
+C-013	not-done	-	README.md	no release tag or binary	lab/check-release-kit.sh	тег и бинарь — действие владельца
+C-014	not-done	-	README.md	it has not been run on two hosts yet	lab/two-hosts.sh	сценарий двух хостов не исполнен
+C-015	model-proof	-	README.md	the model-to-code correspondence is not checked by an executable instrument	lab/lean-check.py	соответствие модели и кода не проверено
+C-016	instrument	-	docs/STATUS-v1.md	the §18.9 "word → id" map is closed and guarded	lab/check-claim-map.py,E-0123	карта §18.9 под прибором
+C-017	instrument	-	docs/STATUS-v1.md	Every wording of this section and of both READMEs is a row of `lab/claims.tsv`	lab/check-claims.py,lab/claims.tsv	реестр под собственным прибором: носитель без строки и строка без носителя красны
+C-018	gate-closed	-	README.md	the admission door, provider-cache bounds, durable denylist, durable revocation set and observable denial reasons were each closed	E-0087,E-0095,E-0012,ADR-0004	перечисление закрытых дыр Batch A и гейта recall: две фразы одного носителя
+C-019	measured	-	README.md	the ~200-node stand ran in release	E-0105	стенд P1: p95 из пяти прогонов на нашем хосте
+C-020	not-done	-	README.md	traffic padding is specified as absent in v1	E-0077	паддинг трафика отсутствует, и это названо измерением отсутствия
+C-021	measured	-	README.md	The vectors were re-checked by an independent `hashlib` recomputation	E-0111,E-0112,ADR-0062	перепроверка векторов и исправленное правило вердикта
+C-022	estimate	-	README.ru.md	она опирается на закрытия `E-0105`, `E-0108`, `E-0119` и `E-0130`	docs/STATUS-v1.md	русская оговорка оценки: тип estimate требует корня «оценк»
+C-023	gate-closed	-	README.ru.md	дверь приёма, пределы таблицы провайдеров, переживаемый запрет	E-0087,E-0095	русская пара фразы README.md: каждый закрыт своим циклом
+C-024	gate-closed	-	README.ru.md	гейт recall закрыт на ровной связной карте шардов с названной ценой	E-0012,ADR-0004	recall с названной ценой на двух корпусах
+C-025	measured	-	README.ru.md	стенд ~200 узлов прогнан в release	E-0105	русская пара стенда P1
+C-026	not-done	-	README.ru.md	ни релизного тега, ни опубликованного бинарника	E-0126,lab/check-release-kit.sh	тег и бинарь — действие владельца; комплект под прибором
+C-027	not-done	-	README.ru.md	padding трафика описан в спеке как отсутствующий в v1	E-0077	русская пара паддинга
+C-028	gate-closed	-	README.ru.md	Каждый гейт §18 называет свой носитель закрытия	E-0134,E-0135,crates/vecdht-net/tests/transport.rs	русская пара C-009: семья гейтов с носителем на каждого
+C-029	measured	-	README.ru.md	Векторы перепроверены независимым `hashlib`	E-0111,E-0112,ADR-0062	русская пара перепроверки векторов
+C-030	not-done	-	docs/STATUS-v1.md	Two thresholds inside (4B) are not closed	E-0095	остаток блокера (4B) назван невыполненным порогом
+C-031	gate-closed	-	docs/STATUS-v1.md	The two claims this row used to carry as open are since closed	E-0119,E-0120	producer отзыва и revoked_dir в node run — закрыты, а не обещаны
+C-032	not-done	-	docs/STATUS-v1.md	What remains open is a motive (no revocation is issued automatically)	E-0104,ADR-0059	мотив отзыва отсутствует; метрики — снимок, не эндпоинт
+C-033	gate-closed	-	docs/STATUS-v1.md	The rest of what §18 asks sits in the same map row by row	E-0003,E-0012,ADR-0004,crates/vecdht-node/tests/adversarial.rs	семья гейтов P0 с носителями, а не blanket-фраза
+C-034	measured	-	docs/STATUS-v1.md	before `E-0087` the author's signature was checked but the record went into the index	E-0087	история дыры до замера: подпись проверялась, индекс — нет
+C-035	measured	-	docs/STATUS-v1.md	the silence of a revoked node was verified by a live handshake	E-0094	молчание отозванного переживает рестарт — измерено двумя срезами
+C-036	gate-closed	-	docs/STATUS-v1.md	The tail of the cap "a victim in the cell is invisible to the reservoir" is closed	E-0102	хвост капа ячейки закрыт окном живых слотов
+C-037	measured	-	docs/STATUS-v1.md	search-poisoning protection is not claimed, but its price is measured	E-0090,ADR-0057	защита не обещана, цена отравления измерена на 50 000
+C-038	gate-closed	-	README.md	The catch-up path is checked by authority rather than by signature alone	E-0163,E-0164,E-0165	путь догонки: три закрытия по полномочию, а не по одной подписи
+C-039	gate-closed	-	README.ru.md	Путь догонки проверен по полномочию, а не только по подписи	E-0163,E-0164,E-0165	русская пара C-038
+C-040	measured	-	README.md	with a budget of at most one miss per 960 probes	E-0125	хвост P1 стал зарегистрированным гейтом: цена названа измерением
+C-041	measured	-	README.ru.md	промах холодного резолва обязан назвать себя	E-0125	русская пара C-040

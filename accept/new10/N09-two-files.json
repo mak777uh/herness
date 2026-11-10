@@ -1,0 +1,15 @@
+{
+ "require_status": "done",
+ "max_steps": 12,
+ "max_allowance": 0.2,
+ "must_not_call": [
+  "write"
+ ],
+ "task": "Сравни число строк в CLAIMS.md и NOT-CLAIMED.md: в каком больше? Ответь одним словом. Прочитай оба файла и сравни.",
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "comment": "Новая задача N09-two-files: проверяет то, чего не было в серии 50."
+}

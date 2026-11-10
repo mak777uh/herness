@@ -1,0 +1,31 @@
+# lab/exemptions.tsv — реестр исключений из контура проверки (R-03, 2026-11-06)
+#
+# Зачем файл. `#[ignore]` и «не проверялось здесь» — это исключение из гейта, и исключение без
+# владельца и даты пересмотра неотличимо от забытого. Правило: каждая строка называет, ЧТО
+# исключено, ПОЧЕМУ, КТО отвечает и КОГДА пересмотреть. Строка без любого из этих полей — дефект,
+# а не исключение.
+#
+# Колонки (TAB): id · что · где · причина · как проверить · владелец · пересмотр · статус
+#
+# Статусы: `стенд` — измерение, а не гейт (CI его не гоняет по цене, не по забывчивости);
+#          `исторический` — оракул прежнего контракта, оставлен ради воспроизводимости карточки;
+#          `ручной` — требует весов/железа/корпуса, которых нет в CI.
+#
+# Пересмотр — дата, когда исключение обязано быть подтверждено или снято. Просроченная дата —
+# находка, а не молчание.
+#
+# Источник списка: `Get-ChildItem crates -Recurse -Filter *.rs | Select-String '#\[ignore'` на
+# коммите 8dba9ad. Число строк ниже обязано совпадать с числом `#[ignore = "` в дереве; сверка —
+# `python lab/check-exemptions.py` (в очереди, см. H-0174-соседнюю карточку).
+
+ex-01	`mine` на реальной сложности (2^24 хешей)	crates/vecdht-cli/src/pow_cmd.rs:317	стоит секунды-минуты CPU, в CI не гоняется	cargo test --release -p vecdht-cli -- --ignored	кодер	2026-12-06	стенд
+ex-02	P0(i): эмбеддинги на реальных весах	crates/vecdht-embed/src/candle_backend.rs:321	нужны веса и RAYON_NUM_THREADS, в CI весов нет	cargo test --release -p vecdht-embed -- --ignored	кодер	2026-12-06	ручной
+ex-03	H-0090: hubness на 50k реального корпуса	crates/vecdht-embed/tests/h0090_hubness.rs:46	минуты CPU и корпус вне репозитория	cargo test --release -p vecdht-embed --test h0090_hubness -- --ignored	кодер	2026-12-06	стенд
+ex-04	P0(ii): 50k реальных текстов + веса	crates/vecdht-embed/tests/p0_real_corpus.rs:107	десятки минут CPU, корпус вне репозитория	cargo test --release -p vecdht-embed --test p0_real_corpus -- --ignored	кодер	2026-12-06	стенд
+ex-05	E-0019: цена записи на реальном диске	crates/vecdht-index/tests/root_cost.rs:86	замер носителя, а не предикат; RAYON_NUM_THREADS=1	cargo test --release -p vecdht-index --test root_cost -- --ignored	кодер	2026-12-06	стенд
+ex-06	стенд P1: 200 узлов, 192 холодных резолва	crates/vecdht-net/tests/s182_p1_scale.rs:279	только --release, ~20 с warmup + резолвы; CI не тянет по времени	cargo test --release -p vecdht-net --test s182_p1_scale -- --ignored	кодер	2026-12-06	стенд
+ex-07	поведение дерева до ADR-0043 (gossip-дверь открыта отказанному)	crates/vecdht-net/tests/s5_handshake_seam.rs:501	оракул прежнего контракта, оставлен ради воспроизводимости E-карточки	не гонять: контракт заменён ADR-0043	кодер	2026-12-06	исторический
+ex-08	поведение дерева до ADR-0043 (gate6d_stored=1)	crates/vecdht-net/tests/s53_door_branches.rs:488	оракул прежнего контракта	не гонять: контракт заменён ADR-0043	кодер	2026-12-06	исторический
+ex-09	гейт P5: 16 ядер × 10 минут × 2^20	crates/vecdht-node/tests/adversarial.rs:496	стоимость атаки на реальном CPU; в CI не влезает	cargo test --release -p vecdht-node --test adversarial -- --ignored --nocapture	кодер	2026-12-06	стенд
+ex-10	исторический замер E-0067 (поведение до ADR-0016)	crates/vecdht-node/tests/future_epoch_lease_freeze.rs:176	оракул прежнего контракта	не гонять: контракт заменён ADR-0016	кодер	2026-12-06	исторический
+ex-11	исторический оракул E-0069 (heal-окно §9.8 до ADR-0017)	crates/vecdht-node/tests/heal_demotion_window.rs:232	замер на rev ee6ba8e	не гонять: контракт заменён ADR-0017	кодер	2026-12-06	исторический

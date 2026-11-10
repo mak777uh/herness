@@ -1,0 +1,72 @@
+name: p1-stand
+
+# Стенд P1 (~200 узлов, 192 холодных резолва) на машине, которую мы не контролируем.
+# Часть A плана 2026-11-06, пункт 2.2. Отдельный workflow, а не шаг `conformance`, по трём причинам:
+#   * это `#[ignore]`-тест в release и живёт минуты — в общий конформанс его класть нельзя;
+#   * порог у него свой (`P95_BUDGET_MS = 500`, бюджет промахов), и красный здесь означает
+#     «стенд не воспроизвёлся», а не «контракт сломан»;
+#   * запуск ручной: на push это стоило бы 10+ минут на каждую правку.
+#
+# Чего НЕ доказывает: двух машин и двух операторов. Раннер — одна VM; условие 3 v1 закрывается
+# только настоящими двумя хостами (`lab/two-hosts.sh remote` — репетиция на одном).
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget_ms:
+        description: "Порог p95 в миллисекундах (по умолчанию 500, как в §12.6)"
+        required: false
+        default: "500"
+      nodes:
+        description: "Число узлов. 200 — полный гейт §18.2; меньше — СМОУК, не гейт"
+        required: false
+        default: "200"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p1-stand-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stand:
+    name: 200 узлов, 192 холодных резолва (release)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: сколько ядер у раннера
+        run: nproc
+
+      - name: стенд P1 — release, --ignored
+        env:
+          VEC_P1_BUDGET_MS: ${{ github.event.inputs.budget_ms }}
+          VEC_P1_NODES: ${{ github.event.inputs.nodes }}
+        run: |
+          set -uo pipefail
+          # Профиль печатается до прогона: по нему видно, гейт это или смоук.
+          if [ "${VEC_P1_NODES}" != "200" ]; then
+            echo "P1_PROFILE_REQUESTED=nodes=${VEC_P1_NODES} SMOKE=1 — это НЕ гейт §18.2:"
+            echo "  при меньшем числе узлов kad сходится в другую сетку, p95 не сравним с 500 мс,"
+            echo "  и результат нельзя цитировать как «стенд прошёл»."
+          else
+            echo "P1_PROFILE_REQUESTED=nodes=200 GATE=1"
+          fi
+          cargo test --release -q -p vecdht-net --test s182_p1_scale -- --ignored --nocapture 2>&1 | tee stand.out
+          rc=${PIPESTATUS[0]}
+          echo "P1_STAND_EXIT=$rc"
+          grep -E "P1_|p95|miss|MISS|RESOLVE" stand.out | tail -30 || true
+          exit $rc
+
+      - name: сводка
+        if: always()
+        run: |
+          echo "P1_HOST=$(uname -srm)"
+          echo "P1_CORES=$(nproc)"
+          echo "P1_BUDGET_MS=${{ github.event.inputs.budget_ms }}"
+          echo "P1_NODES_REQUESTED=${{ github.event.inputs.nodes }}"

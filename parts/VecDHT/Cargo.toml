@@ -1,0 +1,79 @@
+[workspace]
+resolver = "2"
+# В members только те crate, которые собираются и тестируются. Остальные (sdk/vecdht-py) остаются в
+# exclude — чтобы `cargo test` в main всегда был зелёным на машине без нужного рантайма.
+members = [
+    "crates/vecdht-wire",
+    "crates/vecdht-orders",
+    "crates/vecdht-crypto",
+    "crates/vecdht-artifact",
+    "crates/vecdht-index",
+    "crates/vecdht-node",
+    "crates/vecdht-net",
+    "crates/vecdht-embed",
+    "crates/vecdht-cli",
+    # Замеры (§17.1): собираются и компилируются вместе со всеми, но не запускаются `cargo test`
+    # — у мишеней `test = false`, потому что замер печатает числа, а не проверяет предикат.
+    "benches",
+]
+
+# `vecdht-py` (PyO3) требует установленного Python и собирается отдельно:
+#   cargo build -p vecdht-py
+# Он не входит в members по умолчанию, чтобы `cargo test` на машине без Python оставался зелёным.
+exclude = ["sdk/vecdht-py"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.77"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/mak777uh/VecDHT"
+
+[workspace.dependencies]
+blake3 = "1.5"
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+rand_core = "0.6"
+rand = "0.8"
+thiserror = "1.0"
+crc32fast = "1.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+hex = "0.4"
+unicode-normalization = "0.1"
+# Хеш-домен платных заказов (спека v9 §V9, ADR-0061) — SHA-256: `image_digest` обязано быть
+# sha256 по формату OCI-манифеста, а сторонний верификатор должен уметь посчитать то же самое
+# штатным `sha256sum`. В wire-формате v8 (§5.2) остаётся blake3; домены не смешиваются.
+sha2 = "0.10"
+
+# Транспорт (§17.2). `libp2p` 0.54 — та версия, под которую писан §4.1: PeerId выводит
+# транспорт, а не мы. `request-response` не новый crate, а фича того же libp2p: кадры v8 —
+# это запрос с батчем ответов, и половина протокола (`Find` → `MatchResult` + N приёмов) в
+# один ответ иначе не укладывается.
+tokio = { version = "1", features = ["net", "rt", "rt-multi-thread", "sync", "time", "macros", "fs"] }
+libp2p = { version = "0.54", features = [
+    "ed25519", "kad", "quic", "noise", "tcp", "yamux", "gossipsub", "identify",
+    "dns", "ping", "request-response", "tokio", "macros", "relay",
+] }
+# Только макрос для реализации чужого трейта `request_response::Codec`: libp2p объявляет его
+# через `#[async_trait]`, и без того же атрибута на impl сигнатуры не совпадают. Это не
+# async-рантайм и не новая транзитивная зависимость — libp2p уже тянет async-trait.
+async-trait = "0.1"
+
+# ML-рантайм (§17.2). Только под feature `candle` в vecdht-embed: без него crate собирается,
+# и детерминированная половина контракта тестируется на машине без весов.
+candle-core = "0.10"
+candle-nn = "0.10"
+candle-transformers = "0.10"
+tokenizers = { version = "0.21", default-features = false, features = ["fancy-regex"] }
+
+vecdht-wire = { path = "crates/vecdht-wire" }
+vecdht-crypto = { path = "crates/vecdht-crypto" }
+vecdht-artifact = { path = "crates/vecdht-artifact" }
+vecdht-index = { path = "crates/vecdht-index" }
+vecdht-node = { path = "crates/vecdht-node" }
+vecdht-net = { path = "crates/vecdht-net" }
+vecdht-embed = { path = "crates/vecdht-embed" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
