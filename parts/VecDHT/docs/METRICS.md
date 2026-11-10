@@ -77,15 +77,6 @@ Full tables and caveats are §19.4, §19.5 and §20.2 of the spec; the cards are
   ("violations found") in an environment without `python`, i.e. "could not run" was indistinguishable
   from "found something". After the fix, measured twice on `a49b10e`: no interpreter → `2`, planted
   violation → `1`, clean tree → `0`, second run `STABLE=1`.
-* **the whole workspace is green** (`E-0180`) — `cargo test --workspace` on `505edd2`, Linux, rustc
-  1.99.1, 2026-11-10: **143 suites, 813 passed, 0 failed, 9 ignored**. This is the first full run of
-  the workspace in this cycle; earlier numbers in this file come from the quick contour (four crates,
-  32 suites) or from the release stand. It is the baseline against which the `NODE_READY` fix
-  (`E-0178`) is checked for collateral damage: 813 green means the change did not break the
-  transport, the node, the index or the artifact crates.
-  What it does NOT prove: the 9 ignored tests are the heavy gates (adversarial, P1 stand, fuzz) and
-  were not run here; the run is debug profile, not release; and it says nothing about behaviour on
-  a second host.
 
 ## Run `E-0113` — the identified full verification run
 

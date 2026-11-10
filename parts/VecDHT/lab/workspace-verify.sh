@@ -18,6 +18,12 @@ export RAYON_NUM_THREADS="${RAYON_NUM_THREADS:-2}"
 LABEL="${1:?метка блока, например E-0061}"
 LOG="lab/logs/workspace-verify-2026-10-22.log"
 FAIL=0
+# В окружении без python (только python3) все 53 вызова ниже падали бы с 127, и «не
+# запустилось» читалось бы как «провалилось» — тот же класс, что H-0179 в
+# check-text-clean.sh. Обёртка чинит их разом и не трогает логику.
+if ! command -v python >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+  python() { python3 "$@"; }
+fi
 note() { [ "${1:-1}" -ne 0 ] && FAIL=1; return 0; }
 now() { date +%s; }
 T0=$(now); BLOCK_T0=$T0

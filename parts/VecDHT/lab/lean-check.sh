@@ -38,4 +38,14 @@ case "${1:-}" in
   "") set -- check ;;
   --quiet) set -- check --quiet ;;
 esac
-exec python lab/lean-check.py "$@"
+# В окружении без python (только python3) этот exec падал бы с 127, и «не запустилось»
+# читалось бы как «провалилось» — тот же класс, что F-0076. Выбираем интерпретатор явно.
+PY_BIN=""
+for candidate in python3 python; do
+  if command -v "$candidate" > /dev/null 2>&1; then PY_BIN="$candidate"; break; fi
+done
+if [ -z "$PY_BIN" ]; then
+  echo "lean-check: нет ни python3, ни python — проверка не запускалась (это не провал моделей)" >&2
+  exit 2
+fi
+exec "$PY_BIN" lab/lean-check.py "$@"
