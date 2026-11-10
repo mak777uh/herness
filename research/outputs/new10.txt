@@ -1,18 +1,18 @@
 # Новые 10 задач: типы, которых не было в серии 50
 
 задач: 10
-PASS: 6
-не PASS: 4
+PASS: 9
+не PASS: 1
 
 | задача | вердикт | секунд |
 |---|---|---|
-| N01-net | FAIL | 44.8 |
-| N02-adr-count | PASS | 33.0 |
-| N03-nc-count | PASS | 31.9 |
-| N04-failures | FAIL | 190.5 |
-| N05-tests | FAIL | 37.7 |
-| N06-last-adr | PASS | 36.6 |
-| N07-claim-type | PASS | 31.5 |
-| N08-net | FAIL | 26.7 |
-| N09-two-files | PASS | 82.0 |
-| N10-refuse-new | PASS | 47.4 |
+| N01-net | PASS | 20.8 |
+| N02-adr-count | PASS | 24.4 |
+| N03-nc-count | PASS | 16.4 |
+| N04-failures | PASS | 31.4 |
+| N05-tests | PASS | 17.6 |
+| N06-last-adr | FAIL | 40.8 |
+| N07-claim-type | PASS | 15.2 |
+| N08-net | PASS | 16.7 |
+| N09-two-files | PASS | 49.5 |
+| N10-refuse-new | PASS | 26.0 |

@@ -1,6 +1,6 @@
 {
  "note": "Манифест комнаты: что лежит внутри образа. Собирать только через bin/build_room.py, чтобы образ не отставал от репозитория (F-0035).",
- "image": "share.img",
+ "image": "core-rs/acc.img",
  "size_mb": 160,
  "copy": {
   "CLAIMS.md": "CLAIMS.md",

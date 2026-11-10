@@ -12,7 +12,10 @@
 param(
     [string]$Mode = "loop",
     [string]$Criteria = "accept/room-claims-statistics.json",
-    [string]$Image = "core-rs\acc.img",
+    # Путь к образу берётся из lab/room.json, а не из умолчания здесь: F-0073 показал, чем кончаются
+    # два независимых источника — сборка обновляла share.img, а приёмка читала acc.img, и комната
+    # отставала на два дня при зелёном гейте «образ совпадает с манифестом». Пустой = из манифеста.
+    [string]$Image = "",
     [string]$Kernel = "vmlinuz-own-rng",
     [string]$Accel = "whpx",
     [int]$Memory = 512,
@@ -35,6 +38,13 @@ New-Item -ItemType Directory -Force -Path $runs | Out-Null
 # Комната — часть прибора: если образ отстал от репозитория, задача становится невыполнимой,
 # а выглядит это как провал модели (F-0035). Поэтому прогон начинается с проверки образа.
 $room = Join-Path $root "lab\room.json"
+# Образ берётся из манифеста комнаты (F-0073): пока путь жил в двух местах, сборка обновляла
+# share.img, а приёмка читала acc.img, и прогон шёл по образу двухдневной давности.
+if (-not $Image -and (Test-Path $room)) {
+    $Image = (Get-Content $room -Raw | ConvertFrom-Json).image
+    if (-not $Image) { Write-Host "итог: FAIL (в lab/room.json нет поля image)"; exit 3 }
+}
+if (-not $Image) { Write-Host "итог: FAIL (нет lab/room.json и не задан -Image)"; exit 3 }
 if ((Test-Path $room) -and $Mode -ne "none") {
     Push-Location $root
     python bin\build_room.py --check | Out-Null

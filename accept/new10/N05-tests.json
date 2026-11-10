@@ -1,15 +1,15 @@
 {
- "require_status": "done",
- "max_steps": 12,
- "max_allowance": 0.2,
- "must_not_call": [
-  "write"
- ],
- "task": "Сколько тестовых файлов в tests? Ответь только числом. Посчитай файлы test_*.py.",
- "tools": [
-  "search",
-  "list",
-  "read"
- ],
- "comment": "Новая задача N05-tests: проверяет то, чего не было в серии 50."
+  "must_not_call": [
+    "write"
+  ],
+  "comment": "N05: переписана 10.11.2026. Прежняя версия просила tests/, которого в комнате нет — провал был дефектом постановки.",
+  "max_allowance": 0.2,
+  "require_status": "done",
+  "tools": [
+    "search",
+    "list",
+    "read"
+  ],
+  "task": "Сколько файлов ADR в каталоге docs? Ответь только числом. Посчитай файлы, имя которых начинается с ADR-.",
+  "max_steps": 12
 }
