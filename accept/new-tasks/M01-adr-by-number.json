@@ -1,0 +1,16 @@
+{
+ "require_status": "done",
+ "max_steps": 12,
+ "max_allowance": 0.2,
+ "must_not_call": [
+  "write"
+ ],
+ "task": "Найди ADR с номером 0032 и назови его имя файла. Ответь одним словом, без пути.",
+ "tools": [
+  "search",
+  "list",
+  "read"
+ ],
+ "comment": "Задача M-серии: создана 10.11.2026 для независимой проверки после серии new10. Ответ: ADR-0032-web-access.md",
+ "anchor_regex": "ADR-0032-web-access\\.md"
+}
