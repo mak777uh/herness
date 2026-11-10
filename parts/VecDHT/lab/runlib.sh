@@ -19,14 +19,31 @@ VEC_DHT_ROOT="${VEC_DHT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 export VEC_DHT_ROOT
 
 # --- ресурсы: три числа вместе; диск — производная давления на RAM (ДИАГНОЗ-2 `E-0088`) ---
+# Ресурсы меряются тем инструментом, который есть (F-0077): раньше все три звали powershell,
+# которого в Linux нет, и печатали пустые строки. Пустое значение читалось как «ресурсов нет»,
+# хотя это «мерить нечем». Linux меряет своим способом, Windows — своим.
 ram_mb() {
-  powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1KB)" 2>/dev/null | tr -d '\r' | tail -1
+  if command -v powershell > /dev/null 2>&1; then
+    powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1KB)" 2>/dev/null | tr -d '\r' | tail -1
+  else
+    awk '/MemAvailable/ {printf "%d", $2 / 1024; exit}' /proc/meminfo 2>/dev/null
+  fi
 }
 disk_mb() {
-  powershell -NoProfile -Command "[int][Math]::Round((Get-PSDrive C).Free / 1MB)" 2>/dev/null | tr -d '\r' | tail -1
+  if command -v powershell > /dev/null 2>&1; then
+    powershell -NoProfile -Command "[int][Math]::Round((Get-PSDrive C).Free / 1MB)" 2>/dev/null | tr -d '\r' | tail -1
+  else
+    df -Pm / 2>/dev/null | awk 'NR==2 {printf "%d", $4}'
+  fi
 }
 pagefile_mb() {
-  powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1
+  if command -v powershell > /dev/null 2>&1; then
+    powershell -NoProfile -Command "[int][Math]::Round((Get-CimInstance Win32_PageFileUsage).PeakUsage / 1)" 2>/dev/null | tr -d '\r' | tail -1
+  else
+    # В Linux подкачка — это swap; пикового значения ядро не хранит, поэтому берём текущее
+    # использование и называем это честно: не пик, а снимок.
+    awk '/SwapTotal/ {t=$2} /SwapFree/ {f=$2} END {printf "%d", (t-f)/1024}' /proc/meminfo 2>/dev/null
+  fi
 }
 resources() {
   printf 'RAM_FREE_MB=%s DISK_FREE_MB=%s PAGEFILE_PEAK_MB=%s\n' "$(ram_mb)" "$(disk_mb)" "$(pagefile_mb)"
@@ -38,8 +55,11 @@ grab() { local f="$1" s="$2" k; for k in $3; do printf '%s_%s=%s\n' "$k" "$s" "$
 # Метка прогона вшивается в ИМЯ ключа, а не в значение: без снятия `cmp` разойдётся на неизменном
 # дереве (`E-0100`, ДИАГНОЗ-1).
 strip_run() { sed -E 's/_(r[0-9]+)=/=/g' "$1"; }
+# Один интерпретатор на весь репозиторий (F-0076): без него python-вызовы падают с 127,
+# и «не запустилось» читается как «провалилось».
+. "$(dirname "$0")/lib/python-bin.sh"
 # Сверка двух векторов по карте ключ->значение, а не по байтам: печатает REPRO_VECTOR=1|0.
-facts_repro() { python "$VEC_DHT_ROOT/lab/facts.py" repro "$1" "$2" --strip-run; }
+facts_repro() { "$PY_BIN" "$VEC_DHT_ROOT/lab/facts.py" repro "$1" "$2" --strip-run; }
 
 # --- шаги и лог: блок считается от отметки начала, иначе ожидание удовлетворит старый прогон ---
 log_begin() { BLOCK_START=$(wc -l < "$LOG"); }
