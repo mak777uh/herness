@@ -154,6 +154,16 @@
    "note": "порог объявлен до правки: M05 и N05 обязаны дать PASS, M01/M02/M04/M06 остаться PASS. Замер до правки: M05 FAIL (1 шаг, done без опоры при полном списке из 112 записей), N05 PASS",
    "conclusion": "lab/failures/F-0075.md",
    "claim": null
+  },
+  {
+   "id": "E-0015",
+   "title": "SSRF-R1: фильтр исходящих URL в bin/net.py",
+   "hypothesis": null,
+   "prereg": "lab/prereg/SSRF-R1.json",
+   "status": "closed",
+   "note": "порог объявлен до правки: 9 из 9 запрещённых отклонены и положительный контроль проходит. Замер до правки: net.py открывает любой URL без проверки IP, redirect не проверяется",
+   "conclusion": "lab/failures/F-0081.md",
+   "claim": null
   }
  ]
 }
