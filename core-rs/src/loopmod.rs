@@ -865,26 +865,117 @@ pub fn tool_write_in(arg: &str, root: &Path) -> Result<String, String> {
         .ok_or_else(|| "нужно: write <путь> <текст>".to_string())?;
     let target = Path::new(path.trim());
     let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
-    let parent = target
-        .parent()
-        .ok_or_else(|| "у пути нет родителя".to_string())?
-        .canonicalize()
-        .map_err(|error| format!("нет такого каталога: {error}"))?;
-    if !parent.starts_with(&root) {
-        return Err(format!(
-            "запись только внутри {}: {} вне его",
-            root.display(),
-            target.display()
-        ));
-    }
     // Посредник: решение принимает политика, а не эта функция.
     let resource = resource_of(target, &root);
     if !policy_allows("write", "write", &resource) {
         return Err(format!("политика не разрешает запись: {resource}"));
     }
     let bytes = text.as_bytes().len();
-    std::fs::write(target, text).map_err(|error| format!("не записать: {error}"))?;
+    // Запись через openat2 (WRITE-SYMLINK-R1): путь разрешается ядром ОТНОСИТЕЛЬНО открытого
+    // корня, с запретом симлинков и выхода за корень. Проверка и открытие — одна операция,
+    // поэтому окна между «проверили» и «записали» нет.
+    write_beneath(&root, target, text.as_bytes())
+        .map_err(|error| format!("не записать: {error}"))?;
     Ok(format!("записано {bytes} байт в {}", target.display()))
+}
+
+/// Записать файл, не выходя за `root` и не следуя симлинкам.
+///
+/// `openat2` с `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS` — единственный способ сделать это
+/// атомарно: ядро само разрешает путь от открытого каталога и отказывает на любом симлинке.
+/// Последовательность `canonicalize -> проверка -> write` оставляет окно: между проверкой и
+/// записью симлинк можно подменить.
+#[cfg(target_os = "linux")]
+fn write_beneath(root: &Path, target: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    use std::ffi::CString;
+    use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+    use std::os::unix::ffi::OsStrExt;
+
+    // Путь, который ядро разрешит относительно корня: только относительный и без `..`.
+    let relative = target
+        .strip_prefix(root)
+        .map_err(|_| std::io::Error::new(std::io::ErrorKind::PermissionDenied, "вне корня"))?;
+    let relative = relative
+        .to_str()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "путь не в UTF-8"))?;
+    let c_relative = CString::new(relative)
+        .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL в пути"))?;
+    let c_root = CString::new(root.as_os_str().as_bytes())
+        .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL в корне"))?;
+
+    // Корень открывается отдельно и один раз: дальше всё считается от его дескриптора.
+    let dir_fd = unsafe { libc::open(c_root.as_ptr(), libc::O_DIRECTORY | libc::O_CLOEXEC) };
+    if dir_fd < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let dir_fd = unsafe { OwnedFd::from_raw_fd(dir_fd) };
+
+    // `open_how` объявлен `#[non_exhaustive]`: структурный литерал запрещён, поэтому поля
+    // заполняются через `MaybeUninit`. Своя копия структуры была бы вторым описанием ABI,
+    // и при смене ядром она разошлась бы молча.
+    let mut how = std::mem::MaybeUninit::<libc::open_how>::zeroed();
+    unsafe {
+        let ptr = how.as_mut_ptr();
+        (*ptr).flags = (libc::O_WRONLY | libc::O_CREAT | libc::O_TRUNC | libc::O_CLOEXEC) as u64;
+        (*ptr).mode = 0o644;
+        (*ptr).resolve = libc::RESOLVE_BENEATH | libc::RESOLVE_NO_SYMLINKS;
+    }
+    let how = unsafe { how.assume_init() };
+    let fd = unsafe {
+        libc::syscall(
+            libc::SYS_openat2,
+            dir_fd.as_raw_fd(),
+            c_relative.as_ptr(),
+            &how as *const libc::open_how,
+            std::mem::size_of::<libc::open_how>(),
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let fd = unsafe { OwnedFd::from_raw_fd(fd as i32) };
+
+    let mut written = 0usize;
+    while written < bytes.len() {
+        let chunk = unsafe {
+            libc::write(
+                fd.as_raw_fd(),
+                bytes[written..].as_ptr() as *const libc::c_void,
+                bytes.len() - written,
+            )
+        };
+        if chunk < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        written += chunk as usize;
+    }
+    Ok(())
+}
+
+/// Не-Linux: openat2 нет, поэтому остаётся прежний путь с канонизацией. Это **слабее** и
+/// названо так в отчёте: на не-Linux защита от симлинка не атомарна.
+#[cfg(not(target_os = "linux"))]
+fn write_beneath(root: &Path, target: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let parent = target
+        .parent()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "у пути нет родителя"))?
+        .canonicalize()?;
+    if !parent.starts_with(root) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "вне корня",
+        ));
+    }
+    // Симлинк на самом target проверяется отдельно: на не-Linux атомарности нет.
+    if let Ok(meta) = std::fs::symlink_metadata(target) {
+        if meta.file_type().is_symlink() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "запись через симлинк запрещена",
+            ));
+        }
+    }
+    std::fs::write(target, bytes)
 }
 
 fn tool_write(arg: &str) -> Result<String, String> {
@@ -2093,6 +2184,143 @@ mod tests {
         assert_eq!(outcome.status, "no-done");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    // --- WRITE-SYMLINK-R1: запись не выходит за корень и не следует симлинкам ---------------
+
+    /// Каталог теста: корень, сосед-снаружи и файл-жертва вне корня.
+    fn write_fixture(tag: &str) -> (std::path::PathBuf, std::path::PathBuf) {
+        let base = std::env::temp_dir().join(format!("hs-wr-{}-{}", std::process::id(), tag));
+        let _ = std::fs::remove_dir_all(&base);
+        let root = base.join("root");
+        let outside = base.join("outside");
+        std::fs::create_dir_all(&root).unwrap();
+        // Политика разрешает запись только в `work` (правило `file:/mnt/work/**`), поэтому
+        // фикстура повторяет боевой путь, а не пишет в корень.
+        std::fs::create_dir_all(root.join("work")).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(outside.join("victim.md"), "исходное\n").unwrap();
+        (root, outside)
+    }
+
+    fn read(path: &std::path::Path) -> String {
+        std::fs::read_to_string(path).unwrap_or_default()
+    }
+
+    // --- положительные контроли ------------------------------------------------------------
+
+    #[test]
+    fn обычная_запись_внутри_корня_проходит() {
+        let (root, _outside) = write_fixture("plain");
+        let arg = format!("{} содержимое", root.join("work/new.md").display());
+        tool_write_in(&arg, &root).expect("запись внутри корня обязана проходить");
+        assert_eq!(read(&root.join("work/new.md")), "содержимое");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn перезапись_существующего_файла_проходит() {
+        let (root, _outside) = write_fixture("overwrite");
+        std::fs::write(root.join("work/a.md"), "старое").unwrap();
+        let arg = format!("{} новое", root.join("work/a.md").display());
+        tool_write_in(&arg, &root).expect("перезапись внутри корня обязана проходить");
+        assert_eq!(read(&root.join("work/a.md")), "новое");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn запись_в_подкаталог_проходит() {
+        let (root, _outside) = write_fixture("subdir");
+        std::fs::create_dir_all(root.join("work/sub")).unwrap();
+        let arg = format!("{} вложенное", root.join("work/sub/x.md").display());
+        tool_write_in(&arg, &root).expect("запись в подкаталог обязана проходить");
+        assert_eq!(read(&root.join("work/sub/x.md")), "вложенное");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    // --- восемь запрещённых классов ---------------------------------------------------------
+
+    #[test]
+    fn симлинк_на_файл_снаружи_отклонён() {
+        let (root, outside) = write_fixture("link-file");
+        let link = root.join("work/escape.md");
+        std::os::unix::fs::symlink(outside.join("victim.md"), &link).unwrap();
+        let arg = format!("{} ПОДМЕНА", link.display());
+        let result = tool_write_in(&arg, &root);
+        assert!(result.is_err(), "запись через симлинк наружу обязана быть отклонена: {result:?}");
+        assert_eq!(read(&outside.join("victim.md")), "исходное\n", "файл вне корня изменён");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn симлинк_на_каталог_снаружи_отклонён() {
+        let (root, outside) = write_fixture("link-dir");
+        let link = root.join("work/outdir");
+        std::os::unix::fs::symlink(&outside, &link).unwrap();
+        let arg = format!("{} ПОДМЕНА", link.join("victim.md").display());
+        let result = tool_write_in(&arg, &root);
+        assert!(result.is_err(), "запись через симлинк-каталог обязана быть отклонена: {result:?}");
+        assert_eq!(read(&outside.join("victim.md")), "исходное\n");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn цепочка_симлинков_отклонена() {
+        let (root, outside) = write_fixture("link-chain");
+        let first = root.join("work/l1");
+        let second = root.join("work/l2");
+        std::os::unix::fs::symlink(outside.join("victim.md"), &second).unwrap();
+        std::os::unix::fs::symlink(&second, &first).unwrap();
+        let arg = format!("{} ПОДМЕНА", first.display());
+        assert!(tool_write_in(&arg, &root).is_err(), "цепочка симлинков обязана быть отклонена");
+        assert_eq!(read(&outside.join("victim.md")), "исходное\n");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn путь_с_двумя_точками_наружу_отклонён() {
+        let (root, outside) = write_fixture("dotdot");
+        let target = root.join("..").join("outside").join("victim.md");
+        let arg = format!("{} ПОДМЕНА", target.display());
+        assert!(tool_write_in(&arg, &root).is_err(), "`..` наружу обязано быть отклонено");
+        assert_eq!(read(&outside.join("victim.md")), "исходное\n");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn абсолютный_путь_наружу_отклонён() {
+        let (root, outside) = write_fixture("absolute");
+        let arg = format!("{} ПОДМЕНА", outside.join("victim.md").display());
+        assert!(tool_write_in(&arg, &root).is_err(), "абсолютный путь наружу обязано быть отклонено");
+        assert_eq!(read(&outside.join("victim.md")), "исходное\n");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn симлинк_внутри_корня_тоже_отклонён() {
+        // RESOLVE_NO_SYMLINKS запрещает ЛЮБОЙ симлинк, в том числе ведущий внутрь корня.
+        // Это строже, чем «не выйти за корень», и так и задумано: симлинк в рабочем каталоге
+        // агента — не штатный способ записи, а попытка обойти правило.
+        let (root, _outside) = write_fixture("link-inside");
+        std::fs::write(root.join("work/real.md"), "старое").unwrap();
+        let link = root.join("work/alias.md");
+        std::os::unix::fs::symlink(root.join("work/real.md"), &link).unwrap();
+        let arg = format!("{} новое", link.display());
+        assert!(tool_write_in(&arg, &root).is_err(), "симлинк обязан быть отклонён и внутри корня");
+        assert_eq!(read(&root.join("work/real.md")), "старое");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn симлинк_на_несуществующий_файл_снаружи_отклонён() {
+        // Симлинк на путь, которого ещё нет: запись создала бы файл снаружи.
+        let (root, outside) = write_fixture("link-dangling");
+        let link = root.join("work/dangling.md");
+        std::os::unix::fs::symlink(outside.join("created.md"), &link).unwrap();
+        let arg = format!("{} ПОДМЕНА", link.display());
+        assert!(tool_write_in(&arg, &root).is_err(), "висячий симлинк наружу обязан быть отклонён");
+        assert!(!outside.join("created.md").exists(), "файл снаружи создан");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
     }
 
     fn fixture(tag: &str) -> std::path::PathBuf {

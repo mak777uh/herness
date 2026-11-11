@@ -164,6 +164,16 @@
    "note": "порог объявлен до правки: 9 из 9 запрещённых отклонены и положительный контроль проходит. Замер до правки: net.py открывает любой URL без проверки IP, redirect не проверяется",
    "conclusion": "lab/failures/F-0081.md",
    "claim": null
+  },
+  {
+   "id": "E-0016",
+   "title": "WRITE-SYMLINK-R1: запись через openat2 с RESOLVE_BENEATH и RESOLVE_NO_SYMLINKS",
+   "hypothesis": null,
+   "prereg": "lab/prereg/WRITE-SYMLINK-R1.json",
+   "status": "closed",
+   "note": "порог объявлен до правки: 8 из 8 запрещённых отклонены и обычная запись проходит. Замер: 67 из 67 тестов, из них 11 новых",
+   "conclusion": "lab/failures/F-0083.md",
+   "claim": null
   }
  ]
 }
