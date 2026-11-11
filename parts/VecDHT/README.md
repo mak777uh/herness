@@ -112,6 +112,36 @@ with exit criteria somebody else can measure, and a list of things we deliberate
 | `lab/` | the measurement loop: hypotheses, experiment cards, ADRs, append-only logs, gates |
 | `lab/INVENTORY.md`, `ROADMAP.md`, `PITCH.en.md` | generated counters, the release plan, the short pitch |
 
+## The Lean→C bridge (planned, `H-0180`)
+
+The repository already has two implementations of the same policy: Rust in `crates/`, and Lean in
+`lab/lean/`. Today they are compared by a test, which means a divergence is found only on the inputs
+the test happens to cover — `F-0072` is exactly that case, where `policy_allows` said "allowed" for
+`/etc/passwd` and the Lean model said "forbidden".
+
+There is a third way, and it is not a new idea: **Rust can call the proved function instead of
+comparing with it**. Lean exports a `def` to C with `@[export]`, `lean -c` compiles it, and the result
+links against `libleanshared`; Rust then asks Lean what the policy says. The take is from the owner's
+own project `marfagenez/laws/FFI.lean` (a local file, not a public repository, so it is not a line in
+`lab/library/index.jsonl` — that guard requires an https link and a pinned sha for the class
+"implementation", and it is right to).
+
+The constraint that file states plainly, and that binds us too: **only `UInt64` and `Bool` cross the
+bridge**. `Nat` in Lean is a `lean_object*` — a heap pointer — while `UInt64` is a real `uint64_t`,
+with no boxing and no GC. A policy that returns a string or a list cannot cross this way without
+deciding who owns the memory.
+
+What is **not** planned, and why. A hand-written C ABI on top of the existing `sdk/vecdht-py` would be
+a second bridge next to the first: PyO3 already generates the C boundary, and `sdk/vecdht-py/test.py`
+exercises it with 23 checks. Two bridges are two places to diverge, which is the class of defect this
+repository exists to remove. The bridge is worth building where the comparison is *today* a test
+(`policy_diff.py`, 15 of 18), not where it is already a call.
+
+Status: `H-0180` is pre-registered with its threshold fixed before the run (`lab/experiments/E-0180`).
+The five conditions are: `lean -c` builds the file; the C links with a Rust test binary; the Rust call
+returns what `#eval` returns on three inputs; the crate's existing tests stay green; build time does
+not more than double. If any of the five fails, the answer is "no" and it is recorded as such.
+
 ## Quick start
 
 The commands below are the operator surface that exists today (flag names taken from
