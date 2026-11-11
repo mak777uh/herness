@@ -25,14 +25,14 @@ def case(name: str):
 
 def journal_bytes(events: list[str], *, break_seq: int | None = None,
                   torn: bytes = b"", commit: bool = True) -> bytes:
-    """Собрать журнал HSJ1 по правилам Rust-ядра: len, seq, crc(sha256), kind, payload."""
-    out = bytearray(b"HSJ1" + (1).to_bytes(4, "little"))
+    """Собрать журнал HSJ2 по правилам Rust-ядра: len, seq, crc(sha256 c kind), kind, payload."""
+    out = bytearray(b"HSJ2" + (2).to_bytes(4, "little"))
     records = [(1, text.encode("utf-8")) for text in events]
     if commit:
         records.append((2, b""))
     for seq, (kind, payload) in enumerate(records, start=1):
         head = len(payload).to_bytes(4, "little") + seq.to_bytes(8, "little")
-        fragment = hashlib.sha256(head + payload).digest()
+        fragment = hashlib.sha256(head + bytes([kind]) + payload).digest()
         crc = int.from_bytes(fragment[:4], "little")
         if break_seq is not None and seq == break_seq:
             crc ^= 0xFFFF

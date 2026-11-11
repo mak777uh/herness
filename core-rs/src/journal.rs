@@ -15,9 +15,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use sha2::{Digest, Sha256};
 
-pub const MAGIC: &[u8; 4] = b"HSJ1";
-pub const VERSION: u32 = 1;
+pub const MAGIC: &[u8; 4] = b"HSJ2";
+pub const VERSION: u32 = 2;
 /// Длина заголовка записи: len(u32) + seq(u64) + crc(u32) + kind(u8).
+/// HSJ2 (ADR-0056): crc покрывает len+seq+kind+payload; раскладка записи не изменилась.
 pub const RECORD_HEADER: usize = 17;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -78,6 +79,16 @@ impl Journal {
             file.write_all(&header())?;
             file.sync_all()?;
         } else {
+            // HSJ2 (ADR-0056): оборванный хвост не перезаписываем. Карантин + обрезка до
+            // валидного префикса (зеркально run_task_resume): валидные записи не теряются,
+            // хвост сохраняется в карантинном файле, продолжение становится читаемым.
+            let report = inspect(&fs::read(&path)?);
+            if report.torn_tail {
+                quarantine(&path)?;
+                let valid = file.metadata()?.len() - report.tail_bytes as u64;
+                file.set_len(valid)?;
+                file.sync_all()?;
+            }
             // Существующий журнал: писать можно только в конец, иначе затрём историю.
             file.seek(SeekFrom::End(0))?;
         }
@@ -92,7 +103,8 @@ impl Journal {
         body.extend_from_slice(&(payload.len() as u32).to_le_bytes());
         body.extend_from_slice(&self.seq.to_le_bytes());
         let mut hasher = Sha256::new();
-        hasher.update(&body);
+        hasher.update(&body); // len + seq (12 байт)
+        hasher.update([kind.byte()]); // HSJ2: kind входит в CRC (ADR-0056)
         hasher.update(payload);
         let digest = hasher.finalize();
         let crc = u32::from_le_bytes([digest[0], digest[1], digest[2], digest[3]]);
@@ -155,7 +167,7 @@ pub struct Walk {
 /// восстановлении, мы не «чиним» и не гадаем.
 pub fn walk(bytes: &[u8]) -> Result<Walk, String> {
     if bytes.len() < 8 || &bytes[..4] != MAGIC {
-        return Err("нет заголовка HSJ1".to_string());
+        return Err("нет заголовка HSJ2".to_string());
     }
     let version = u32::from_le_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
     if version != VERSION {
@@ -183,7 +195,8 @@ pub fn walk(bytes: &[u8]) -> Result<Walk, String> {
         }
         let payload = &bytes[pos + RECORD_HEADER..end];
         let mut hasher = Sha256::new();
-        hasher.update(&bytes[pos..pos + 12]);
+        hasher.update(&bytes[pos..pos + 12]); // len + seq
+        hasher.update([kind_byte]); // HSJ2: kind входит в CRC (ADR-0056)
         hasher.update(payload);
         let digest = hasher.finalize();
         let expected = u32::from_le_bytes([digest[0], digest[1], digest[2], digest[3]]);
@@ -319,7 +332,7 @@ mod tests {
     fn bad_magic_is_reported() {
         let report = inspect(b"XXXX\x01\x00\x00\x00");
         assert_eq!(report.records, 0);
-        assert!(report.status.contains("HSJ1"));
+        assert!(report.status.contains("HSJ2"));
     }
 
     #[test]
@@ -346,7 +359,7 @@ mod tests {
         journal.append(b"payload", Kind::Data).unwrap();
         journal.sync().unwrap();
         let bytes = fs::read(&path).unwrap();
-        assert_eq!(&bytes[..4], MAGIC, "файл должен начинаться с HSJ1");
+        assert_eq!(&bytes[..4], MAGIC, "файл должен начинаться с HSJ2");
         assert_eq!(&bytes[4..8], &VERSION.to_le_bytes(), "после magic идёт версия");
     }
 
@@ -372,5 +385,123 @@ mod tests {
         assert_eq!(report.records, 3, "три записи: first, commit, second");
         assert_eq!(report.committed, 1);
         assert!(!report.torn_tail);
+    }
+
+    #[test]
+    fn kind_flip_is_detected() {
+        // Негативный контроль HSJ2-KIND-R1: переворот kind Data->Commit БЕЗ пересчёта CRC
+        // обязан отвергаться. На HSJ1 (kind вне CRC) проходит — это дефект; на HSJ2 — отказ.
+        let path = tmp("hsj_kindflip.bin");
+        let _ = fs::remove_file(&path);
+        {
+            let mut journal = Journal::open(&path).unwrap();
+            journal.append(b"run/end answer", Kind::Data).unwrap();
+            journal.append(b"commit", Kind::Commit).unwrap();
+            journal.sync().unwrap();
+        }
+        let original = fs::read(&path).unwrap();
+        // Положительный контроль: неперевёрнутый журнал разбирается полностью.
+        let clean = inspect(&original);
+        assert_eq!(clean.records, 2, "исходный журнал: две записи");
+        assert!(!clean.torn_tail, "исходный журнал без хвоста");
+
+        // kind первой записи: header(8) + len(4) + seq(8) + crc(4) = offset 24.
+        let mut bytes = original.clone();
+        let kind_pos = 8 + 16;
+        assert_eq!(bytes[kind_pos], 1, "первая запись должна быть Data");
+        bytes[kind_pos] = 2; // Data -> Commit, CRC не трогаем
+        let report = inspect(&bytes);
+        assert!(report.torn_tail, "переворот kind обязан быть отвергнут (хвост в карантине)");
+        assert_eq!(report.records, 0, "перевёрнутая запись не должна приниматься");
+    }
+
+    #[test]
+    fn open_quarantines_torn_tail_without_losing_prefix() {
+        // Смежный дефект HSJ2-KIND-R1: open() на оборванном хвосте обязан карантинить хвост
+        // и обрезать до валидного префикса (зеркально run_task_resume), не теряя записи.
+        let path = tmp("hsj_open_torn.bin");
+        let _ = fs::remove_file(&path);
+        {
+            let mut journal = Journal::open(&path).unwrap();
+            journal.append(b"first", Kind::Data).unwrap();
+            journal.append(b"second", Kind::Data).unwrap();
+            journal.sync().unwrap();
+        }
+        let bytes = fs::read(&path).unwrap();
+        let cut = bytes.len() - 3; // обрыв внутри второй записи
+        fs::write(&path, &bytes[..cut]).unwrap();
+        assert!(inspect(&fs::read(&path).unwrap()).torn_tail, "хвост должен быть оборван");
+
+        {
+            let mut journal = Journal::open(&path).unwrap();
+            journal.append(b"third", Kind::Data).unwrap();
+            journal.sync().unwrap();
+        }
+        let report = inspect(&fs::read(&path).unwrap());
+        assert!(!report.torn_tail, "после open хвост обрезан, продолжение читаемо");
+        assert_eq!(report.records, 2, "first + third: валидный префикс не потерян");
+
+        let quarantined: Vec<_> = fs::read_dir(std::env::temp_dir())
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.file_name().to_string_lossy().starts_with("hsj_open_torn.tail-"))
+            .collect();
+        assert!(!quarantined.is_empty(), "оборванный хвост должен уйти в карантин");
+    }
+
+    #[test]
+    fn hsj2_frame_cross_vector_matches_python() {
+        // Кросс-сверка HSJ2-кадра (ADR-0056): замороженные байты, посчитанные эталонной
+        // Python-формулой (CRC = sha256(len++seq++kind++payload)[0..4]), обязаны разбираться
+        // Rust walk() и совпадать по kind и CRC. Переворот kind без пересчёта CRC — отказ.
+        // Вектор лежит в tests/vectors (корень репозитория), как journal.json/seal.json.
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .expect("корень репозитория")
+            .join("tests")
+            .join("vectors")
+            .join("journal_frame.json");
+        let raw = fs::read_to_string(&path).expect("вектор HSJ2-кадра");
+        let vec: serde_json::Value = serde_json::from_str(&raw).expect("валидный JSON");
+        let bytes = hex::decode(vec["hex"].as_str().expect("hex")).expect("hex байты");
+
+        // 1. Производственный разбор принимает эталонные байты без хвоста.
+        let walked = walk(&bytes).expect("walk не должен ошибиться на валидном HSJ2");
+        let records = vec["records"].as_array().expect("records");
+        assert_eq!(walked.entries.len(), records.len(), "число записей");
+        assert_eq!(walked.tail_bytes, 0, "валидный кадр без хвоста");
+        for (entry, m) in walked.entries.iter().zip(records.iter()) {
+            let kind_byte = match entry.kind { Kind::Data => 1u8, Kind::Commit => 2u8 };
+            assert_eq!(kind_byte, m["kind"].as_u64().expect("kind") as u8, "kind расходится");
+            assert_eq!(entry.payload, m["payload"].as_str().expect("payload").as_bytes(),
+                       "payload расходится");
+        }
+
+        // 2. CRC каждого кадра, пересчитанный Rust sha2, совпадает с замороженным литералом.
+        for m in records {
+            let seq = m["seq"].as_u64().expect("seq");
+            let kind = m["kind"].as_u64().expect("kind") as u8;
+            let payload = m["payload"].as_str().expect("payload").as_bytes();
+            let mut head = Vec::new();
+            head.extend_from_slice(&(payload.len() as u32).to_le_bytes());
+            head.extend_from_slice(&seq.to_le_bytes());
+            let mut hasher = Sha256::new();
+            hasher.update(&head);
+            hasher.update([kind]);
+            hasher.update(payload);
+            let digest = hasher.finalize();
+            let crc = hex::encode(&digest[..4]);
+            assert_eq!(crc, m["crc"].as_str().expect("crc"), "CRC кадра расходится с Python");
+        }
+
+        // 3. Замороженный негативный контроль: переворот kind без пересчёта CRC — отказ.
+        let kf = &vec["kind_flip"];
+        let offset = kf["offset"].as_u64().expect("offset") as usize;
+        let mut bad = bytes.clone();
+        assert_eq!(bad[offset], kf["from"].as_u64().expect("from") as u8);
+        bad[offset] = kf["to"].as_u64().expect("to") as u8;
+        let rejected = walk(&bad).expect("walk не ошибается на оборванном кадре");
+        assert_eq!(rejected.entries.len(), 0, "перевёрнутый kind не должен приниматься");
+        assert!(rejected.tail_bytes > 0, "переворот kind обязан уйти в хвост");
     }
 }

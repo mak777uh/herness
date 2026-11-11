@@ -22,7 +22,7 @@ from collections import Counter
       "require_events": ["claim/anchored"]
     }
 
-Проверка читает журнал (HSJ1) и сверяет каждое условие отдельно; итог — таблица с причинами.
+Проверка читает журнал (HSJ2) и сверяет каждое условие отдельно; итог — таблица с причинами.
 """
 
 from __future__ import annotations
@@ -44,8 +44,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-MAGIC = b"HSJ1"
+MAGIC = b"HSJ2"
 RECORD_HEADER = 17
+VERSION = 2  # HSJ2 (ADR-0056): CRC покрывает len+seq+kind+payload; старые HSJ1 отвергаются
 
 
 def parse_journal(data: bytes) -> tuple[list[tuple[int, str]], int, list[str]]:
@@ -55,10 +56,10 @@ def parse_journal(data: bytes) -> tuple[list[tuple[int, str]], int, list[str]]:
     """
     problems: list[str] = []
     if len(data) < 8 or data[:4] != MAGIC:
-        return ([], len(data), ["нет заголовка HSJ1"])
+        return ([], len(data), ["нет заголовка HSJ2"])
     version = int.from_bytes(data[4:8], "little")
-    if version != 1:
-        return ([], len(data), [f"версия {version} не поддерживается"])
+    if version != VERSION:
+        return ([], len(data), [f"версия {version} не поддерживается (нужен HSJ2)"])
 
     pos = 8
     expected_seq = 1
@@ -76,7 +77,8 @@ def parse_journal(data: bytes) -> tuple[list[tuple[int, str]], int, list[str]]:
         if end > len(data):
             break
         payload = data[pos + RECORD_HEADER : end]
-        digest = hashlib.sha256(data[pos : pos + 12] + payload).digest()
+        # HSJ2 (ADR-0056): kind входит в CRC — порядок len+seq, kind, payload (как в Rust).
+        digest = hashlib.sha256(data[pos : pos + 12] + bytes([kind]) + payload).digest()
         expected_crc = int.from_bytes(digest[:4], "little")
         if expected_crc != crc or seq != expected_seq or kind not in (1, 2):
             break

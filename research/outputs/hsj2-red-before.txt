@@ -1,0 +1,96 @@
+   Compiling hs-core v0.1.0 (/mnt/c/111/harness/core-rs)
+warning: unused import: `std::io::Write`
+   --> src/model.rs:349:9
+    |
+349 |     use std::io::Write as _;
+    |         ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` on by default
+
+warning: variable `result_tag` is assigned to, but never used
+    --> src/loopmod.rs:1516:25
+     |
+1516 |                 let mut result_tag = "err";
+     |                         ^^^^^^^^^^
+     |
+     = note: consider using `_result_tag` instead
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: value assigned to `result_tag` is never read
+    --> src/loopmod.rs:1521:25
+     |
+1521 |                         result_tag = "ok";
+     |                         ^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` on by default
+
+warning: function `run_tool` is never used
+    --> src/loopmod.rs:1001:4
+     |
+1001 | fn run_tool(name: &str, arg: &str) -> Result<String, String> {
+     |    ^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+    --> src/loopmod.rs:2112:8
+     |
+2112 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+     |
+     = note: `#[warn(non_snake_case)]` on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+   --> src/model.rs:369:8
+    |
+369 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+   --> src/model.rs:411:8
+    |
+411 |     fn недоступный_мост_это_Error_а_не_End() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 7 warnings
+    Finished `release` profile [optimized] target(s) in 10.48s
+     Running unittests src/lib.rs (target/release/deps/hs_core-1c030d145c8720dc)
+
+running 9 tests
+test journal::tests::bad_magic_is_reported ... ok
+test journal::tests::append_and_recover ... ok
+test journal::tests::commit_boundary_counts ... ok
+test journal::tests::file_starts_with_magic ... ok
+test journal::tests::corrupted_record_stops_reading ... ok
+test journal::tests::append_to_existing_keeps_prefix ... ok
+test journal::tests::torn_tail_is_detected_not_repaired ... ok
+test journal::tests::open_quarantines_torn_tail_without_losing_prefix ... FAILED
+test journal::tests::kind_flip_is_detected ... FAILED
+
+failures:
+
+---- journal::tests::open_quarantines_torn_tail_without_losing_prefix stdout ----
+
+thread 'journal::tests::open_quarantines_torn_tail_without_losing_prefix' panicked at src/journal.rs:428:9:
+после open хвост обрезан, продолжение читаемо
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- journal::tests::kind_flip_is_detected stdout ----
+
+thread 'journal::tests::kind_flip_is_detected' panicked at src/journal.rs:401:9:
+переворот kind обязан быть отвергнут (хвост в карантине)
+
+
+failures:
+    journal::tests::kind_flip_is_detected
+    journal::tests::open_quarantines_torn_tail_without_losing_prefix
+
+test result: FAILED. 7 passed; 2 failed; 0 ignored; 0 measured; 65 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`
+честный журнал: PASS
+подделка с CRC: разбор чистый (хвост 0, проблем 0), приёмка FAIL
+поймано сравнением с хостом: True; ['хост видел 6 событий, в комнате 6; события расходятся']
+[FAIL] переворот kind: переворот kind ПРОШЁЛ при зелёной CRC (дефект: kind вне CRC)
+[FAIL] подделка с пересчитанным CRC ловится сверкой с хостом

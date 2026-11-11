@@ -49,11 +49,11 @@ FALSE_DONE = [
 
 
 def journal_bytes(events: list[str]) -> bytes:
-    out = bytearray(b"HSJ1" + (1).to_bytes(4, "little"))
+    out = bytearray(b"HSJ2" + (2).to_bytes(4, "little"))
     records = [(1, text.encode()) for text in events] + [(2, b"commit")]
     for seq, (kind, payload) in enumerate(records, start=1):
         head = len(payload).to_bytes(4, "little") + seq.to_bytes(8, "little")
-        crc = int.from_bytes(hashlib.sha256(head + payload).digest()[:4], "little")
+        crc = int.from_bytes(hashlib.sha256(head + bytes([kind]) + payload).digest()[:4], "little")
         out += head + crc.to_bytes(4, "little") + bytes([kind]) + payload
     return bytes(out)
 

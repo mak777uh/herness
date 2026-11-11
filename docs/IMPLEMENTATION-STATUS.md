@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|---|
 | **политика доступа** | `core-rs/src/loopmod.rs::policy_allows` | `bin/policy_diff.py::policy_allows` (эталон для сверки), `proofs/Proofs/Policy.lean` (модель) | **15 из 18** — три расхождения названы ограничением модели (`**`) | Lean: 6 теорем, но полная сборка `Proofs` красная (`F-0080`) | `python bin/policy_diff.py` | Lean сравнивает **точным** равенством, Rust — префиксом `/**`; это и есть источник трёх расхождений |
 | **инструменты** | `core-rs/src/loopmod.rs::tool_*` | `core/tools.py` (оболочка, чтение, поиск — для хостовых сценариев) | **не сверялся** | нет | `cargo test -p hs-core` | у Python-слоя другой набор инструментов; это не «две реализации одного», а два разных набора |
-| **журнал** | `core-rs/src/journal.rs` (HSJ1) | `core/journal.py` | **не сверялся** | `tests/test_journal_chain.py` (Python) и Rust-тесты — порознь | `cargo test` + `pytest` | `kind` не входит в CRC (аудит); кросс-сверка байтов не делалась |
+| **журнал** | `core-rs/src/journal.rs` (HSJ2) | `bin/accept.py` (разбор кадра), `core/journal.py` (цепочка событий) | **кадр HSJ2 сверен** Rust↔Python (CRC+kind) | `tests/vectors/journal_frame.json`; Rust `hsj2_frame_cross_vector_matches_python` (--lib) + Python `tests/test_frame_vector.py` | `python bin/rust_tests.py` + `python tests/test_frame_vector.py` | CRC кадра — 32 бита (детектор порчи, не криптостойкость); подделку с пересчётом CRC ловит хеш-цепочка событий, не кадр; HSJ1 отвергается fail-closed; Node-плагин кадр не проверяет (ADR-0056) |
 | **цикл** | `core-rs/src/loopmod.rs` | `core/loop.py` (v0, mock-провайдер) | **нет** — разные протоколы | нет | `python bin/hs.py selftest` | Python-цикл — v0 без сети; Rust — рабочий |
 | **бюджет** | `core-rs/src/loopmod.rs::Budget` | `core/budget.py` | **не сверялся** | `tests/test_budget.py` | `pytest tests` | `last_usage() -> Option`: `None` неотличим от нуля (аудит) |
 | **приёмка** | `bin/accept.py` (хост) + `core-rs/accept-run.ps1` | — | — | 5 критериев на прогон | `pwsh accept-run.ps1` | монтирование не read-only (аудит) |
@@ -40,7 +40,6 @@
 | расхождение | класс | где записано |
 |---|---|---|
 | Lean: точное равенство; Rust: префикс `/**` | `policy_diff` 15 из 18 | `bin/policy_diff.py`, `README` |
-| `kind` не в CRC журнала | целостность | аудит 11.11.2026, план этап 2.1 |
 | `last_usage() -> Option`: `None` = ноль | бюджет | план этап 1.5 |
 | `net` нет в реестре и README | учёт | план этап 2.4 |
 | полная сборка `Proofs` красная | формальная проверка | `lab/failures/F-0080.md` |

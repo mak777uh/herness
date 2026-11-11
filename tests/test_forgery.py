@@ -39,13 +39,35 @@ FORGED = [
 
 def journal_bytes(events: list[str]) -> bytes:
     """Собрать журнал с ПРАВИЛЬНЫМИ CRC и seq — как это сделал бы знающий формат."""
-    out = bytearray(b"HSJ1" + (1).to_bytes(4, "little"))
+    out = bytearray(b"HSJ2" + (2).to_bytes(4, "little"))
     records = [(1, text.encode()) for text in events] + [(2, b"commit")]
     for seq, (kind, payload) in enumerate(records, start=1):
         head = len(payload).to_bytes(4, "little") + seq.to_bytes(8, "little")
-        crc = int.from_bytes(hashlib.sha256(head + payload).digest()[:4], "little")
+        crc = int.from_bytes(hashlib.sha256(head + bytes([kind]) + payload).digest()[:4], "little")
         out += head + crc.to_bytes(4, "little") + bytes([kind]) + payload
     return bytes(out)
+
+
+def kind_flip_control() -> tuple[bool, str]:
+    """HSJ2-KIND-R1: переворот kind Data->Commit БЕЗ пересчёта CRC обязан отвергаться.
+
+    Положительный контроль: неперевёрнутый журнал разбирается полностью. На HSJ1 (kind вне
+    CRC) переворот проходит — дефект; на HSJ2 (kind в CRC) — отказ. Хелпер journal_bytes и
+    accept.parse_journal обновляются синхронно, поэтому контроль изолирует именно переворот.
+    """
+    data = journal_bytes(["run/end answer"])  # 1 Data + 1 Commit
+    records, tail, _ = accept.parse_journal(data)
+    if len(records) != 2 or tail:
+        return False, f"положительный контроль: ждали 2 записи без хвоста, got {len(records)}, tail={tail}"
+    flipped = bytearray(data)
+    kind_pos = 8 + 16  # header(8) + len(4) + seq(8) + crc(4)
+    if flipped[kind_pos] != 1:
+        return False, f"первая запись не Data: kind={flipped[kind_pos]}"
+    flipped[kind_pos] = 2  # Data -> Commit, CRC не трогаем
+    rec2, tail2, _ = accept.parse_journal(bytes(flipped))
+    if tail2 == 0 and len(rec2) == 2:
+        return False, "переворот kind ПРОШЁЛ при зелёной CRC (дефект: kind вне CRC)"
+    return True, f"переворот kind отвергнут: записей {len(rec2)}, хвост {tail2}"
 
 
 def main() -> int:
@@ -77,7 +99,9 @@ def main() -> int:
         print(f"подделка с CRC: разбор чистый (хвост {tail}, проблем {len(problems)}), "
               f"приёмка {'PASS' if ok_forged else 'FAIL'}")
         print(f"поймано сравнением с хостом: {bool(mismatch)}; {mismatch[:1]}")
-        good = ok_honest and not ok_forged and bool(mismatch) and tail == 0 and not problems
+        flip_ok, flip_detail = kind_flip_control()
+        print(f"[{'ok' if flip_ok else 'FAIL'}] переворот kind: {flip_detail}")
+        good = ok_honest and not ok_forged and bool(mismatch) and tail == 0 and not problems and flip_ok
         print(f"[{'ok' if good else 'FAIL'}] подделка с пересчитанным CRC ловится сверкой с хостом")
         return 0 if good else 1
 
