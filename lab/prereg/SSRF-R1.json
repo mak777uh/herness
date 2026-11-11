@@ -12,6 +12,11 @@
  "runs": [
   "runs/net/net.jsonl"
  ],
- "closed": false,
- "conclusion": null
+ "closed": true,
+ "conclusion": "lab/failures/F-0081.md",
+ "result": {
+  "verdict": "порог пройден: 9 из 9 запрещённых отклонены, положительный контроль проходит (25/25 тестов bin/net_policy.py)",
+  "note": "Закрыто 2026-11-11 зеркально реестру E-0015 (closed). До правки: net.py открывал любой URL без проверки IP, redirect не проверялся. После: модуль bin/net_policy.py, 25/25 тестов (проверено прогоном). Остаток N6 — литерал 198.18/15 и пиннинг сокета — вынесен в SSRF-HARDEN-R1, в этот порог не входит.",
+  "residual": "N6 → SSRF-HARDEN-R1"
+ }
 }
