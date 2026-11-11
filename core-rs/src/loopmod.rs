@@ -364,7 +364,12 @@ fn tool_netprobe(arg: &str) -> Result<String, String> {
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
     let shown = exe.display().to_string();
     let mut command = Command::new(&exe);
-    command.arg("sandbox-probe").env(LOOP_GUARD, "1");
+    // Адрес передаётся пробе: она делает настоящий TCP-connect, а не только проверяет
+    // фильтр сокетов (план этап 1.4).
+    command
+        .arg("sandbox-probe")
+        .arg(address)
+        .env(LOOP_GUARD, "1");
     let output = command
         .output()
         .map_err(|error| {
@@ -374,11 +379,13 @@ fn tool_netprobe(arg: &str) -> Result<String, String> {
             format!("не запустить пробу {shown} ({meta}): {error}")
         })?;
     let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    // Обе строки, а не только первая: «фильтр работает» и «адрес доступен» — разные ответы.
     let line = stdout
         .lines()
-        .find(|line| line.starts_with("sandbox:"))
-        .unwrap_or("sandbox: (нет строки)")
-        .to_string();
+        .filter(|line| line.starts_with("sandbox:") || line.starts_with("reach:"))
+        .collect::<Vec<_>>()
+        .join("; ");
+    let line = if line.is_empty() { "sandbox: (нет строки)".to_string() } else { line };
     if output.status.success() {
         Ok(line)
     } else {

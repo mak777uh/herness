@@ -1122,6 +1122,9 @@ fn main() -> ExitCode {
         }
         Some("sandbox-probe") => {
             // Проба правила: UDP (оба семейства) обязан быть закрыт, TCP — остаться рабочим.
+            // Адрес, если он передан, проверяется отдельно настоящим TCP-connect: это другой
+            // вопрос, и ответ печатается отдельной строкой (план этап 1.4).
+            let address = args.get(1).map(String::as_str);
             match hs_core::sandbox::probe() {
                 Ok(checks) => {
                     let mut all_ok = true;
@@ -1133,6 +1136,15 @@ fn main() -> ExitCode {
                         parts.push(format!("{name}: {}", if ok { "да" } else { "НЕТ" }));
                     }
                     println!("sandbox: {}", parts.join(", "));
+                    if let Some(address) = address {
+                        match hs_core::sandbox::reach(&address) {
+                            Ok(()) => println!("reach: {address} доступен"),
+                            Err(error) => {
+                                println!("reach: {address} недоступен ({error})");
+                                all_ok = false;
+                            }
+                        }
+                    }
                     if all_ok { ExitCode::SUCCESS } else { ExitCode::FAILURE }
                 }
                 Err(error) => {

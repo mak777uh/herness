@@ -168,6 +168,56 @@ mod platform {
     }
 }
 
+/// Проверить, доступен ли адрес `host:port` по TCP.
+///
+/// Отдельно от `probe()`: та отвечает «работает ли фильтр сокетов», эта — «доступен ли адрес».
+/// Таймаут обязателен: без него недоступный адрес висит столько, сколько скажет ядро, а у
+/// инструмента цикла есть бюджет шага.
+pub fn reach(address: &str) -> Result<(), String> {
+    use std::net::{TcpStream, ToSocketAddrs};
+    use std::time::Duration;
+
+    let timeout = Duration::from_secs(3);
+    let mut addrs = address
+        .to_socket_addrs()
+        .map_err(|error| format!("адрес не разбирается: {error}"))?;
+    let mut last = String::from("ни одного адреса");
+    for addr in addrs.by_ref() {
+        match TcpStream::connect_timeout(&addr, timeout) {
+            Ok(_) => return Ok(()),
+            Err(error) => last = format!("{addr}: {error}"),
+        }
+    }
+    Err(last)
+}
+
 pub use platform::{deny_udp, probe};
 
+#[cfg(test)]
+mod reach_tests {
+    use super::reach;
 
+    /// Положительный контроль обязателен: функция, всегда говорящая «недоступен», прошла бы
+    /// тест на мёртвый адрес и ничего бы не проверяла.
+    #[test]
+    fn живой_адрес_доступен() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap().to_string();
+        // Слушатель не принимает соединения: для connect этого достаточно, соединение
+        // установится в очередь, и проверка скажет «доступен».
+        assert!(reach(&address).is_ok(), "живой адрес {address} назван недоступным");
+    }
+
+    #[test]
+    fn мёртвый_адрес_недоступен() {
+        // Порт 9 (discard) на loopback: почти всегда закрыт, и соединение отвергается сразу.
+        let error = reach("127.0.0.1:9").unwrap_err();
+        assert!(error.contains("refused") || error.contains("timed out"), "{error}");
+    }
+
+    #[test]
+    fn неразбираемый_адрес_даёт_ошибку_а_не_панику() {
+        let error = reach("не адрес вовсе").unwrap_err();
+        assert!(error.contains("не разбирается"), "{error}");
+    }
+}
