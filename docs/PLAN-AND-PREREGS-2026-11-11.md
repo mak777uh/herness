@@ -190,6 +190,11 @@ marfagenez FFI.lean), но оракул `lab/e0180-run.sh` **отсутству�
 `crash-resume.ps1:33` не копирует `share.img` поверх `acc.img`; образ из `lab/room.json` +
 `build_room.py --check`. Класс F-0073 закрыт по **всем** путям.
 *Приёмка:* тест «устаревший share.img не затирает свежий acc.img».
+**Выполнено 11.11.2026** (F-0087, ROOM-HSJ2-LIVE-R1, E-0019, C-0298): `crash-resume.ps1` читает
+`$image` из `lab/room.json` + `build_room.py --build` (rc проверен, fail-closed exit 3); `Copy-Item
+share.img` убран. Приёмка подтверждена NC2 — красный до (`Copy-Item share.img` → `--check` FAIL,
+6 docs / 8 failures назад), зелёный после (живой crash-resume@30 сам собрал образ 364 файла,
+продолжил прогон, итог PASS). В том же цикле развёрнут HSJ2 в musl-бинарнике комнаты (F-0087).
 
 ### P3.4. Метрики: CI + n≥10 (ресерч Q6)
 `pass^2=0.50` уже считается (`judge_metrics.py`) → апгрейд = доверительные интервалы

@@ -20,7 +20,12 @@ $root = "C:\111\herness"
 $core = Join-Path $root "core-rs"
 $boot = Join-Path $core "boot"
 $qemu = "C:\Program Files\qemu\qemu-system-x86_64.exe"
-$image = Join-Path $core "acc.img"
+# Образ берётся из манифеста комнаты (F-0073/N7): путь не живёт в двух местах.
+# Раньше $image был жёстко acc.img, а источником служил устаревший share.img.
+$room = Join-Path $root "lab\room.json"
+$imageRel = (Get-Content $room -Raw | ConvertFrom-Json).image
+if (-not $imageRel) { Write-Host "ПРОВАЛ: в lab/room.json нет поля image"; exit 3 }
+$image = Join-Path $root $imageRel
 $env:HS_MODE = "loop-bridge-resume"
 $env:HS_TASK = $Task
 $env:HS_BRIDGE_TOKEN = (Get-Content "C:\111\env\bridge-token.txt" -Raw).Trim()
@@ -30,7 +35,13 @@ $budget = [ordered]@{ steps = [int]$spec.max_steps; seconds = 240; allowance = [
 $env:HS_BUDGET = ($budget | ConvertTo-Json -Compress)
 
 python (Join-Path $root "bin\make_initramfs.py") | Out-Null
-Copy-Item (Join-Path $root "share.img") $image -Force
+if ($LASTEXITCODE -ne 0) { throw "упаковка initramfs не прошла" }
+# N7 (F-0073): раньше здесь Copy-Item share.img -> acc.img подменял свежий образ
+# устаревшим share.img (он не пересобирается с цикла fast-gate; NC2: --check FAIL,
+# 6 docs / 8 failures назад). Теперь образ пересобирается из манифеста — чистый и
+# текущий; журнал первого запуска ляжет на него и переживёт обрыв питания.
+python (Join-Path $root "bin\build_room.py") --build
+if ($LASTEXITCODE -ne 0) { Write-Host "ПРОВАЛ: образ комнаты не пересобран — прогон не начат"; exit 3 }
 
 function Start-Room([string]$log) {
     $args = @('-m', '512', '-smp', '1', '-accel', 'whpx',

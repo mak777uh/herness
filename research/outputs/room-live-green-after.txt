@@ -1,0 +1,90 @@
+=== ROOM-HSJ2-LIVE-R1: ЗЕЛЁНЫЙ ПОСЛЕ фикса (11.11.2026) ===
+Prereg: lab/prereg/ROOM-HSJ2-LIVE-R1.json sha256 4e00d95a5b90a49a… (запечатан ДО замеров).
+Красный до: research/outputs/room-live-red-before.txt (NC1 HSJ1-отказ, NC2 share.img stale).
+Сводка консолидирует выводы трёх живых прогонов; вердикты accept.py приведены ДОСЛОВНО (UTF-8).
+Консоль QEMU (CP866) в сырых tee-файлах не сохранялась — решающий вердикт приёмки ниже.
+
+--- Фикс 1: пересборка musl-бинарника ядра HSJ1 -> HSJ2 ---
+Команда (Windows cross-compile, как build.ps1): cargo build --release --target x86_64-unknown-linux-musl
+  (линкер rust-lld, mingw WinLibs; PATH ~/.cargo/bin + mingw64/bin). Finished in 12.74s, rc=0.
+Бинарник core-rs/target/x86_64-unknown-linux-musl/release/hs-core:
+  mtime 2026-11-11 20:07 (ПОСЛЕ journal.rs 19:09); grep -a -o HSJ[12] -> 4 HSJ2, 0 HSJ1; ELF.
+initramfs: make_initramfs.py -> 578056 байт; внутри gzip HSJ2=4, HSJ1=0.
+До фикса бинарник был HSJ1 (12:41, 4 HSJ1 / 0 HSJ2) — комната писала HSJ1, accept.py отвергал.
+
+--- Фикс 2: N7 — crash-resume.ps1 берёт образ из манифеста ---
+crash-resume.ps1: $image из lab/room.json (F-0073), вместо Copy-Item share.img -> build_room.py --build
+  с проверкой rc (fail-closed). Copy-Item share.img убран (остался только в комментарии).
+PARSE_ERRORS=0 (pwsh-парсинг). Сквозно подтверждено живым crash-resume: скрипт сам собрал
+  свежий образ (364 файла, «образ совпадает с манифестом», rc=0) и продолжил прогон.
+
+--- Живой прогон 1: accept-run (команда C-0284/C-0285) ---
+Команда: pwsh -NoProfile -File core-rs/accept-run.ps1 -Mode loop-bridge -Kernel vmlinuz-own-hardened2
+  -Net -TimeoutSec 420 -Criteria accept/room-smoke.json -Task "Сколько строк в NOT-CLAIMED.md? Ответь только числом."
+Журнал комнаты: magic HSJ2, version 2 (вынут runs/accept/journal.bin, 5494 байт).
+Извлечение read-only (этап 1.6): «журнал вынут с копии», «оригинал не изменён (SHA-256 dcb6594ad6f4475c… до == после)».
+Ответ комнаты: 30 (текущее число строк NOT-CLAIMED.md; было 29 в записи C-0284 — файло вырос, критерий число не фиксирует).
+Вердикт accept.py ДОСЛОВНО:
+задача: Сколько строк в NOT-CLAIMED.md? Ответь только числом.; записей: 13
+  [ok] статус = done — фактически: done
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [ok] шагов ≤ 24 — шагов: 2
+  [ok] расход ≤ 0.1 — потрачено: 0.00015526 (оценка провайдера, не факт биллинга)
+  [ok] работали только выданные ['list', 'read', 'search'] — вне выдачи выполнены: []
+итог: PASS
+accept_live_rc=0. Повторный accept.py на вынутом HSJ2-журнале -> итог: PASS, rc=0.
+
+--- Живой прогон 2: crash-resume (C-0168, N7 исправлен), KillAfterSec 30 ---
+Команда: pwsh -NoProfile -File core-rs/crash-resume.ps1 -KillAfterSec 30 -TimeoutSec 240
+  (Criteria accept/room-claims-statistics-v3.json, задача: найти statistics-утверждение в /mnt/CLAIMS.md).
+Фаза 1: обрыв на 30 с; фаза 2: «продолжение: шагов 1, вызовов 1, хвост 0 байт», «итог журнала: шагов 2, закрыт: да».
+EXT4-fs recovery complete (журнал пережил kill -9). Журнал HSJ2 version 2 (journal-crash.bin, 35039 байт).
+Извлечение read-only: «оригинал не изменён (SHA-256 21a1a6a5e4e3b4e6… до == после)».
+Вердикт accept.py ДОСЛОВНО:
+задача: найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id; записей: 14
+  [ok] статус = done — фактически: done
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [ok] опора соответствует /C-\d{4}/ — опоры: ['C-0004']
+  [ok] шагов ≤ 12 — шагов: 2
+  [ok] расход ≤ 0.05 — потрачено: 0.00038802 (оценка провайдера, не факт биллинга)
+  [ok] есть событие claim/anchored — виды: ['claim/anchored', 'model/reply', 'run/end', 'run/start', 'step', 'tool/call', 'tool/result']
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: PASS
+crash_live2_rc=0. Опора C-0004 — statistics («Холодный старт headless p50 = 0,46 с»).
+
+--- ОТРИЦАТЕЛЬНЫЙ РЕЗУЛЬТАТ (остаётся): crash-resume, KillAfterSec 12 -> FAIL ---
+Команда: pwsh -NoProfile -File core-rs/crash-resume.ps1 -KillAfterSec 12 -TimeoutSec 240
+Фаза 1: «время до init: 2.39 с», «прогон: свежий журнал на диске», до обрыва tool/call 0 —
+  первый вызов модели не успел завершиться и синхронизироваться (sync после каждого шага, F-0027).
+Фаза 2: «продолжение: шагов 0» — журнал пуст, «продолжение без задачи: в журнале нет run/start»,
+  модель мечется («TOOL search /mnt продолжение без задачи»), 8 вызовов на 7 шагов, порядок НАРУШЕН -> blocked.
+Вердикт accept.py ДОСЛОВНО:
+задача: найти в /mnt/CLAIMS.md утверждение типа statistics и назвать его id; записей: 35
+  [FAIL] статус = done — фактически: blocked
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [FAIL] опора соответствует /C-\d{4}/ — опоры: []
+  [ok] шагов ≤ 12 — шагов: 7
+  [ok] расход ≤ 0.05 — потрачено: 0.00146046 (оценка провайдера, не факт биллинга)
+  [FAIL] есть событие claim/anchored — виды: ['model/reply', 'run/blocked', 'run/end', 'run/start', 'step', 'tool/call', 'tool/result']
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: FAIL
+crash_live_rc=1.
+Причина: чувствительность к ТАЙМИНГУ обрыва, не дефект HSJ2/N7. При kill во время первого вызова
+  модели (до sync шага 1) журнал пуст -> продолжение «без задачи» -> blocked. Предсуществующее
+  (sync после каждого шага, F-0027); прошлый C-0168 (01.11) успевал 1 шаг за 12 с, латентность модели плавает.
+  HSJ2-журнал при этом корректен (35 записей, version 2, закрыт коммитом, хвост 0, ext4 recovery).
+  Порог prereg «продолжение >=1 шаг + PASS» достигнут прогоном с KillAfterSec 30 (фаза 1 успела шаг).
+
+--- Чем проверяется (сводно) ---
+NC1 красный до: accept.py на HSJ1 -> FAIL (версия 1, записей 0). NC2 красный до: Copy-Item share.img
+  -> acc.img, build_room --check FAIL (6 docs / 8 failures назад). После: бинарник HSJ2 (4/0),
+  accept-run PASS (HSJ2 v2, 2 шага), crash-resume@30 PASS (продолжение 1 шаг, HSJ2 v2).
+build_room --check после прогонов -> зелёный (rc=0). Гейты/печати — см. коммит цикла.
+
+--- Что это НЕ доказывает (граница) ---
+- Один живой обрыв в одном месте (kill во время работы, не посреди записи события): продолжение
+  после обрыва ПОСЛЕ первого шага проверено; обрыв ДО первого шага даёт «без задачи» (тайминг, выше).
+- Расход — оценка провайдера, не факт биллинга. Ответ 30 / опора C-0004 — один прогон, не exhaustive.
+- HSJ2-кадр: CRC 32 бита — подделку с пересчётом CRC ловит хеш-цепочка событий, не кадр (ADR-0056).
+- whpx/QEMU/мост — средо-зависимы; на другой платформе/без моста прогон не воспроизводится.
+- Пересборка бинарника и образа — живые тяжёлые операции; в быстрые гейты не входят (ADR-0055).
