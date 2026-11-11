@@ -68,8 +68,22 @@ def run_command(cmd: str, timeout: int = 120, retries: int = 0) -> tuple[str, st
         attempt += 1
 
 
+# ADR-0055: быстрый режим — детерминированный срез для pre-commit: без живой сети, без
+# WSL/QEMU/pwsh, без монтирования образа и без тяжёлых сборок. Такие команды плавали под
+# нагрузкой хука (accept-run — цикл QEMU до 420 с, WSL cargo — ~70 с) и мутировали образ
+# или исходники; полный режим (CI) исполняет их по-прежнему. Список — по природе команды.
 SLOW = ("live", "ping", "probe_api", "live_cases", "replay_archive", "measure_steps",
-        "dist_stats", "patterns.py", "snapshot_stats", "hs.py tools", "hs.py browser", "selftest", "hs.py run")
+        "dist_stats", "patterns.py", "snapshot_stats", "hs.py tools", "hs.py browser", "selftest", "hs.py run",
+        "hs.py bench", "rust_tests.py",
+        # ADR-0055 (11.11.2026): живые прогоны комнаты, сборка/монтирование образа, живая сеть.
+        ".ps1",                   # accept-run/crash-resume/run.ps1 — живой QEMU, мутирует образ
+        "build_room.py",          # --build/--check — WSL mkfs/mount образа
+        "check_room_content",     # негативный контроль: монтирует образ, правит history/gitlog.txt
+        "inject_room_defect",     # негативный контроль: правит plugin/lib/index.js
+        "check_bridge_singleton",  # поднимает настоящий мост, читает секреты, localhost-HTTP
+        "make_initramfs",         # сборка initramfs: качает ядро, нужен musl-бинарник
+        "wsl",                    # прямой вызов WSL (cargo test и т.п.)
+        "urlopen")                # живая сеть из inline-команды
 
 
 def main(argv: list[str]) -> int:
