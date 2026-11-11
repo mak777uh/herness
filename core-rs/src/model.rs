@@ -35,7 +35,10 @@ pub struct Usage {
     pub prompt_tokens: u64,
     pub completion_tokens: u64,
     /// Деньги, зачтённые в лимит подписки (поле allowance у провайдера).
-    pub allowance: f64,
+    ///
+    /// `None` — провайдер не сообщил расход. Это НЕ ноль: неизвестная стоимость не равна
+    /// нулевой, иначе бюджет не срабатывает никогда (план этап 1.5).
+    pub allowance: Option<f64>,
 }
 
 pub trait ModelLink {
@@ -83,6 +86,15 @@ impl ModelLink for Stub {
             }
             None => Reply::End,
         }
+    }
+
+    /// Заглушка бесплатна по построению: расход известен и равен нулю.
+    ///
+    /// Возвращать здесь `None` значило бы «провайдер не сообщил расход», и цикл ставил бы
+    /// `unknown-cost` на каждом тестовом прогоне. Неизвестная стоимость и нулевая — разные
+    /// вещи, и заглушка относится ко второй.
+    fn last_usage(&self) -> Option<Usage> {
+        Some(Usage { prompt_tokens: 0, completion_tokens: 0, allowance: Some(0.0) })
     }
 }
 
@@ -281,12 +293,12 @@ pub fn parse_usage(raw: &str) -> Option<Usage> {
         .get("completion_tokens")
         .and_then(|v| v.as_u64())
         .unwrap_or(0);
+    // `None`, а не `0.0`: провайдер без поля расхода не «бесплатный», а неизвестный.
     let allowance = usage
         .get("opencode")
         .and_then(|oc| oc.get("allowance"))
         .and_then(|v| v.as_f64())
-        .or_else(|| usage.get("cost").and_then(|v| v.as_f64()))
-        .unwrap_or(0.0);
+        .or_else(|| usage.get("cost").and_then(|v| v.as_f64()));
     Some(Usage { prompt_tokens, completion_tokens, allowance })
 }
 

@@ -1028,6 +1028,12 @@ pub fn derive_status(events: &[Event]) -> &'static str {
     if error_with("бюджет времени") {
         return "budget-time";
     }
+    // Провайдер не сообщил расход: бюджет проверить нельзя, и `done` был бы утверждением о
+    // бюджете, которого нет (план этап 1.5). Проверка стоит до `run/end`, потому что статус
+    // выводится из журнала, а не ставится переменной.
+    if error_with("не сообщил расход") {
+        return "unknown-cost";
+    }
     if !has("run/end") {
         return "no-done";
     }
@@ -1387,6 +1393,8 @@ fn run_task_from(
     let mut calls = start.as_ref().map(|state| state.calls).unwrap_or(0);
     let mut attempts = 0usize;
     let mut spent: f64 = start.as_ref().map(|state| state.spent).unwrap_or(0.0);
+    // Был ли хоть один ответ модели без данных о расходе.
+    let mut cost_unknown = false;
     let mut anchor: Option<String> = None;
     let started = std::time::Instant::now();
     let mut status: &'static str = "no-done";
@@ -1424,8 +1432,14 @@ fn run_task_from(
         }
         attempts += 1;
         let reply = link.complete(&prompt);
-        if let Some(usage) = link.last_usage() {
-            spent += usage.allowance;
+        // Неизвестный расход не считается нулевым: флаг переживёт шаг и даст статус
+        // `unknown-cost` вместо `done` (план этап 1.5).
+        match link.last_usage() {
+            Some(usage) => match usage.allowance {
+                Some(money) => spent += money,
+                None => cost_unknown = true,
+            },
+            None => cost_unknown = true,
         }
         let reply = match reply {
             Reply::Text(text) => text,
@@ -1600,6 +1614,16 @@ fn run_task_from(
                     )?,
                 }
                 status = if anchor.is_some() { "done" } else { "unverified" };
+                // Неизвестный расход — не ноль (план этап 1.5). Событие пишется здесь, а статус
+                // из него выводит `derive_status`: одно правило вместо переменной (H-0008).
+                if cost_unknown {
+                    record(
+                        &mut journal,
+                        &mut events,
+                        "step/error",
+                        "провайдер не сообщил расход: бюджет проверить нельзя".to_string(),
+                    )?;
+                }
                 record(&mut journal, &mut events, "run/end", text)?;
                 break;
             }
@@ -2452,7 +2476,7 @@ mod tests {
                 "DONE конец".to_string(),
             ],
             index: 0,
-            usage: crate::model::Usage { prompt_tokens: 10, completion_tokens: 10, allowance: 0.02 },
+            usage: crate::model::Usage { prompt_tokens: 10, completion_tokens: 10, allowance: Some(0.02) },
         };
         let budget = Budget { steps: 10, seconds: 30.0, allowance: 0.01 };
         let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
@@ -2484,6 +2508,68 @@ mod tests {
         let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
         assert_eq!(outcome.calls, 2, "ровно два шага");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// Провайдер, который не сообщает расход: `last_usage` возвращает `None`.
+    ///
+    /// Настоящий случай: в ответе провайдера нет поля `usage`. Раньше это читалось как
+    /// «бесплатно», и бюджет не срабатывал никогда.
+    struct NoUsage {
+        replies: Vec<String>,
+        index: usize,
+    }
+
+    impl NoUsage {
+        fn new(replies: Vec<String>) -> Self {
+            NoUsage { replies, index: 0 }
+        }
+    }
+
+    impl crate::model::ModelLink for NoUsage {
+        fn complete(&mut self, _prompt: &str) -> crate::model::Reply {
+            match self.replies.get(self.index).cloned() {
+                Some(text) => {
+                    self.index += 1;
+                    crate::model::Reply::Text(text)
+                }
+                None => crate::model::Reply::End,
+            }
+        }
+    }
+
+    #[test]
+    fn провайдер_без_расхода_даёт_unknown_cost_а_не_done() {
+        let dir = fixture("unknown-cost");
+        let journal = dir.join("j.bin");
+        let method = dir.join("m.md");
+        std::fs::write(&method, "тело\n").unwrap();
+        let mut link = NoUsage::new(vec![
+            format!("TOOL seal {}", method.display()),
+            "DONE запечатано: method.md".to_string(),
+        ]);
+        let budget = Budget { steps: 5, seconds: 30.0, allowance: 1.0 };
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        // Опора есть (имя файла из результата), но стоимость неизвестна: это не `done`.
+        assert_eq!(outcome.status, "unknown-cost", "{:?}", outcome.problems);
+        assert!(outcome.order_ok(), "{:?}", outcome.problems);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn провайдер_с_нулевым_расходом_даёт_done() {
+        // Обратная сторона: известный НУЛЕВОЙ расход — это не «неизвестно».
+        let dir = fixture("zero-cost");
+        let journal = dir.join("j.bin");
+        let method = dir.join("m.md");
+        std::fs::write(&method, "тело\n").unwrap();
+        let mut link = crate::model::Stub::new(vec![
+            format!("TOOL seal {}", method.display()),
+            "DONE запечатано: method.md".to_string(),
+        ]);
+        let budget = Budget { steps: 5, seconds: 30.0, allowance: 1.0 };
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        assert_eq!(outcome.status, "done", "{:?}", outcome.problems);
         std::fs::remove_dir_all(&dir).ok();
     }
 
