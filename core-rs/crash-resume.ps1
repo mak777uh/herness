@@ -82,6 +82,8 @@ if (-not $resumedLine) {
 # --- приёмка на хосте
 $journal = Join-Path $root "runs\accept\journal-crash.bin"
 Remove-Item $journal -ErrorAction SilentlyContinue
-wsl -e bash -lc "cd /mnt/c/111/herness && rm -rf /tmp/acc2 && mkdir -p /tmp/acc2 && e2fsck -fy core-rs/acc.img >/dev/null 2>&1; mount -o loop core-rs/acc.img /tmp/acc2 && cp /tmp/acc2/hs-journal.bin /mnt/c/111/herness/runs/accept/journal-crash.bin && umount /tmp/acc2 && echo вынуто"
+# Извлечение — через helper (этап 1.6, READONLY-ACCEPT-R1): копия образа, SHA-256 оригинала
+# до/после, оригинал не чинится на месте. Приёмка не меняет улику (ADR-0049).
+python (Join-Path $root "bin\extract_journal.py") $image $journal
 python (Join-Path $root "bin\accept.py") (Join-Path $root $Criteria) $journal
 exit $LASTEXITCODE

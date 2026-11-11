@@ -164,8 +164,8 @@ if (-not $exported) {
     exit 2
 }
 
-# Достаём файл из образа на хосте. Монтирование только для чтения: приёмка не должна менять
-# свидетельство, которое проверяет.
+# Достаём файл из образа на хосте через bin/extract_journal.py (этап 1.6, READONLY-ACCEPT-R1):
+# приёмка не должна менять свидетельство, которое проверяет (ADR-0049). Оригинал только читается.
 #
 # F-ROOM-4 (08.11.2026). Раньше здесь стояло `Remove-Item $journal -ErrorAction SilentlyContinue`:
 # ошибка удаления проглатывалась, и если файл был занят или не удалялся, прогон продолжался,
@@ -183,8 +183,9 @@ if (Test-Path $journal) {
         exit 4
     }
 }
-$wsl = "cd /mnt/c/111/herness && rm -rf /tmp/acc && mkdir -p /tmp/acc && e2fsck -fy /mnt/c/111/herness/$($Image -replace '\\','/') >/dev/null 2>&1; mount -o loop /mnt/c/111/herness/$($Image -replace '\\','/') /tmp/acc && cp /tmp/acc/hs-journal.bin /mnt/c/111/herness/runs/accept/journal.bin && umount /tmp/acc && echo вынуто"
-wsl -e bash -lc $wsl
+# Извлечение — через helper (этап 1.6, READONLY-ACCEPT-R1): копия образа, проверка и
+# монтирование только копии, SHA-256 оригинала до/после. Оригинал не открывается на запись.
+python (Join-Path $root "bin\extract_journal.py") $Image $journal
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $journal)) {
     Write-Host "ПРИЁМКА: не удалось вынуть журнал из образа" -ForegroundColor Red
     exit 2
