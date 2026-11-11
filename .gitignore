@@ -79,3 +79,7 @@ work/session-*/
 
 # Артефакты сборки Lean: пересобираются lake build, в git не едут
 proofs/.lake/
+
+# Релей для QEMU guestfwd: собирается bin/build_relay.py, в git не едет
+core-rs/relay.exe
+core-rs/build-relay/

@@ -24,6 +24,8 @@ param(
     [string]$Task = "",
     # Сеть нужна, чтобы цикл мог позвать модель через мост на хосте (10.0.2.2:8790).
     [switch]$Net,
+    # restrict=on: гость не ходит наружу, единственный канал — guestfwd.
+    [switch]$NetRestrict,
     # Объявить прогон хостовым: события должны подтверждаться хостом (H-0007).
     [switch]$HostRun
 )
@@ -58,6 +60,11 @@ if ((Test-Path $room) -and $Mode -ne "none") {
 }
 
 $env:HS_MODE = $Mode
+# Адрес моста внутри комнаты. При restrict=on это гостевой адрес guestfwd (10.0.2.15),
+# иначе — адрес хоста (10.0.2.2). Передаётся переменной, как режим и бюджет: initramfs
+# собирается из окружения, и другой дороги в комнату нет.
+$bridgeHost = if ($NetRestrict) { '10.0.2.15' } else { '10.0.2.2' }
+$env:HS_BRIDGE_HOST = $bridgeHost
 # Хостовый прогон: события должны подтверждаться хостом, иначе done не выдаётся (H-0007).
 if ($HostRun) { $env:HS_HOST_RUN = "accept-" + (Get-Date -Format "yyyyMMdd-HHmmss") } else { Remove-Item Env:\HS_HOST_RUN -ErrorAction SilentlyContinue }
 # Связка: если критерий требует хостовый журнал, комната обязана слать события. Иначе граница
@@ -103,9 +110,37 @@ $args = @('-m', "$Memory", '-smp', '1',
           '-initrd', (Join-Path $boot 'initramfs.cpio.gz'),
           '-device', 'virtio-rng-pci',
           '-drive', "file=$((Resolve-Path (Join-Path $root $Image)).Path),format=raw,if=virtio",
-          '-append', '"console=ttyS0 panic=-1 ip=dhcp"',
+          # Адрес гостя фиксирован, а не по DHCP: `guestfwd` требует гостевой адрес, и если
+          # DHCP выдаст другой, канал к мосту сломается молча (ровно это и случилось).
+          '-append', '"console=ttyS0 panic=-1 ip=10.0.2.15::10.0.2.2:255.255.255.0::eth0:off"',
           '-nographic', '-no-reboot')
-if ($Net) { $args = @('-netdev', 'user,id=n0', '-device', 'virtio-net-pci,netdev=n0') + $args }
+if ($Net) {
+    # restrict=on закрывает гостю выход наружу; guestfwd оставляет один канал — к мосту.
+    # Это вторая стена под политикой Rust: политика проверяется ВНУТРИ гостя, а сеть
+    # закрыта СНАРУЖИ, поэтому обход политики не даёт выхода (план этап 1.3).
+    #
+    # Без guestfwd restrict=on отрезал бы и мост, и прогон сломался бы молча: гость
+    # получил бы «нет связи» вместо ответа модели. Поэтому оба флага вместе.
+    # guestfwd запускает КОМАНДУ на хосте и соединяет её stdio с гостевым TCP, а не
+    # проксирует на порт. Поэтому командой становится сам hs-core в режиме tcp-relay:
+    # на Windows нет nc/socat, а свой режим есть и проверяется тестами.
+    # guestfwd режет команду по пробелам: `...-cmd:python C:\...\relay.py 127.0.0.1:8790`
+    # QEMU разбирает как несколько аргументов и принимает адрес за образ диска. Поэтому
+    # команда — один .cmd-файл без пробелов в пути.
+    # guestfwd запускает .exe через CreateProcess: .cmd — это скрипт для cmd.exe, и он не
+    # стартует (гость получает Connection refused). Поэтому релей — самостоятельный .exe,
+    # собранный PyInstaller из bin/tcp_relay.py (см. bin/build_relay.py).
+    # ЗАМЕР 11.11.2026: guestfwd в QEMU 11.1.0 на Windows канал не поднимает — параметр
+    # принимается, гость получает Connection refused (см. lab/failures/F-0084.md). Поэтому
+    # restrict=on по умолчанию ВЫКЛЮЧЕН: без канала к мосту прогон невыполним по построению,
+    # и это было бы хуже, чем отсутствие второй стены.
+    $netdev = if ($NetRestrict) {
+        throw "guestfwd не даёт канала на этой платформе (F-0084): запускай без -NetRestrict"
+    } else {
+        'user,id=n0'
+    }
+    $args = @('-netdev', $netdev, '-device', 'virtio-net-pci,netdev=n0') + $args
+}
 if ($Accel -ne "none") { $args = @('-accel', $Accel) + $args }
 $process = Start-Process -FilePath $qemu -ArgumentList $args -RedirectStandardOutput $out -RedirectStandardError $err -WindowStyle Hidden -PassThru
 

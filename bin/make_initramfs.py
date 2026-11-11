@@ -62,6 +62,11 @@ def entries(mode: str, payload: bytes) -> list[tuple[str, bytes, int]]:
           if os.environ.get("HS_BRIDGE_TOKEN") else []),
         *([("bridge-model", os.environ["HS_BRIDGE_MODEL"].encode(), 0o100644)]
           if os.environ.get("HS_BRIDGE_MODEL") else []),
+        # Адрес моста внутри комнаты. При restrict=on guestfwd перехватывает ГОСТЕВОЙ адрес
+        # (10.0.2.15), и цикл обязан стучаться туда; без restrict — на адрес хоста 10.0.2.2.
+        # Без этой записи переменная до комнаты не доходила (план этап 1.3).
+        *([("bridge-host", os.environ["HS_BRIDGE_HOST"].encode(), 0o100644)]
+          if os.environ.get("HS_BRIDGE_HOST") else []),
         *([("task", os.environ["HS_TASK"].encode(), 0o100644)]
           if os.environ.get("HS_TASK") else []),
         # Бюджет прогона: шаги, секунды, деньги. Приходит из критерия приёмки, чтобы «сколько

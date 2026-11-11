@@ -716,7 +716,7 @@ fn init_mode() -> ExitCode {
             .unwrap_or_else(|_| "deepseek-v4.1-flash".to_string())
             .trim()
             .to_string();
-        let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
+        let mut link = hs_core::model::HttpBridge::new(&bridge_host(), 8790, &token, &model);
         // Токен нужен и отправке событий: без него хост отвечает 401 и прогон получает unrecorded.
         std::env::set_var("HS_BRIDGE_TOKEN", &token);
         // Если задана задача и есть диск — монтируем его: задаче нужны файлы, а не только /method.md.
@@ -804,7 +804,7 @@ fn init_mode() -> ExitCode {
                 }
             }
         }
-        let mut link = hs_core::model::HttpBridge::new("10.0.2.2", 8790, &token, &model);
+        let mut link = hs_core::model::HttpBridge::new(&bridge_host(), 8790, &token, &model);
         // Токен нужен и отправке событий: без него хост отвечает 401 и прогон получает unrecorded.
         std::env::set_var("HS_BRIDGE_TOKEN", &token);
         // Выдача инструментов на прогон: файл `/tools` пишет хост (из критерия), а не модель.
@@ -1025,6 +1025,21 @@ fn init_mode() -> ExitCode {
     }
 }
 
+/// Адрес моста внутри комнаты.
+///
+/// Порядок: файл `/bridge-host` (его кладёт `make_initramfs.py` из `HS_BRIDGE_HOST`), затем
+/// переменная окружения, затем адрес хоста по умолчанию. Файл первый, потому что при
+/// `restrict=on` адрес обязан быть ГОСТЕВЫМ (10.0.2.15): `guestfwd` перехватывает именно его,
+/// а на 10.0.2.2 при этом уже никто не слушает (план этап 1.3).
+fn bridge_host() -> String {
+    std::fs::read_to_string("/bridge-host")
+        .ok()
+        .map(|text| text.trim().to_string())
+        .filter(|text| !text.is_empty())
+        .or_else(|| std::env::var("HS_BRIDGE_HOST").ok())
+        .unwrap_or_else(|| "10.0.2.2".to_string())
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -1116,6 +1131,20 @@ fn main() -> ExitCode {
                 }
                 Err(error) => {
                     eprintln!("цикл: {error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        Some("tcp-relay") => {
+            // Режим для QEMU `guestfwd`: stdio ↔ TCP. Нужен потому, что `restrict=on` закрывает
+            // гостю выход наружу, а `guestfwd` умеет только запустить команду и соединить её
+            // stdio с гостевым TCP. На Windows нет nc/socat, поэтому командой становится сам
+            // hs-core (план этап 1.3).
+            let address = args.get(1).map(String::as_str).unwrap_or("127.0.0.1:8790");
+            match hs_core::relay::run(address) {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("relay: {error}");
                     ExitCode::FAILURE
                 }
             }

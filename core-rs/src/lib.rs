@@ -7,6 +7,7 @@ pub mod clock;
 pub mod journal;
 pub mod loopmod;
 pub mod model;
+pub mod relay;
 pub mod sandbox;
 
 use serde_json::{Map, Value};

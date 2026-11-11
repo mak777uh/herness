@@ -329,7 +329,15 @@ fn tool_seal(arg: &str) -> Result<String, String> {
 /// `follow 2`. Разбор — на хосте, в одном месте, чтобы правило номеров не
 /// разъезжалось между Rust и Python.
 fn tool_net(arg: &str) -> Result<String, String> {
-    let host = std::env::var("HS_BRIDGE_HOST").unwrap_or_else(|_| "10.0.2.2".to_string());
+    // Адрес моста: сначала файл в образе, потом окружение, потом адрес хоста по умолчанию.
+    // Файл — потому что при restrict=on адрес должен быть ГОСТЕВЫМ (10.0.2.15), а переменная
+    // окружения в комнату не доходит: initramfs собирается из фиксированного списка (этап 1.3).
+    let host = std::fs::read_to_string("/bridge-host")
+        .ok()
+        .map(|text| text.trim().to_string())
+        .filter(|text| !text.is_empty())
+        .or_else(|| std::env::var("HS_BRIDGE_HOST").ok())
+        .unwrap_or_else(|| "10.0.2.2".to_string());
     let port: u16 = std::env::var("HS_BRIDGE_PORT")
         .ok()
         .and_then(|value| value.parse().ok())
@@ -999,7 +1007,15 @@ fn run_tool(name: &str, arg: &str) -> Result<String, String> {
 /// Хост берётся из окружения, а не из аргументов: это не «настройка задачи», а адрес
 /// свидетельства, и он должен задаваться снаружи комнаты.
 fn post_to_host(run: &str, event: &str) -> Result<(), String> {
-    let host = std::env::var("HS_BRIDGE_HOST").unwrap_or_else(|_| "10.0.2.2".to_string());
+    // Адрес моста: сначала файл в образе, потом окружение, потом адрес хоста по умолчанию.
+    // Файл — потому что при restrict=on адрес должен быть ГОСТЕВЫМ (10.0.2.15), а переменная
+    // окружения в комнату не доходит: initramfs собирается из фиксированного списка (этап 1.3).
+    let host = std::fs::read_to_string("/bridge-host")
+        .ok()
+        .map(|text| text.trim().to_string())
+        .filter(|text| !text.is_empty())
+        .or_else(|| std::env::var("HS_BRIDGE_HOST").ok())
+        .unwrap_or_else(|| "10.0.2.2".to_string());
     let port: u16 = std::env::var("HS_BRIDGE_PORT")
         .ok()
         .and_then(|value| value.parse().ok())
