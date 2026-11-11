@@ -42,6 +42,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+import net_policy
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 STATE = ROOT / "runs" / "net"
 SESSION = STATE / "session.json"
@@ -110,6 +112,30 @@ def normalize_url(url: str) -> str:
     return urllib.parse.urlunsplit((parts.scheme, netloc, path, query, ""))
 
 
+class _CheckedRedirect(urllib.request.HTTPRedirectHandler):
+    """Redirect проверяется до перехода: urllib иначе уйдёт на любой адрес из Location.
+
+    Без этой проверки публичная страница с `302 -> http://127.0.0.1/` обходила бы фильтр:
+    стартовый адрес внешний, а соединение состоялось бы с внутренним.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        try:
+            net_policy.check_url(newurl)
+        except net_policy.Refused as refusal:
+            raise NetError("refused", f"redirect на запрещённый адрес: {refusal.code} ({newurl})")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+# Открывалка с проверкой redirect и с явным TLS-контекстом: `OpenerDirector.open`
+# не принимает `context`, поэтому обработчик HTTPS создаётся один раз здесь.
+# Один экземпляр на процесс: пересобирать на каждый запрос незачем.
+_OPENER = urllib.request.build_opener(
+    _CheckedRedirect,
+    urllib.request.HTTPSHandler(context=ssl.create_default_context()),
+)
+
+
 def fetch(url: str, max_bytes: int, timeout: int, form: dict | None = None) -> tuple[str, int, bool]:
     """Забрать страницу. Возвращает (текст, размер, обрезано ли).
 
@@ -118,6 +144,11 @@ def fetch(url: str, max_bytes: int, timeout: int, form: dict | None = None) -> t
     Кириллический домен дополнительно переводится в punycode.
     """
     url = normalize_url(url)
+    # Посредник: адрес проверяет отдельное правило, а не эта функция (F-0081).
+    try:
+        net_policy.check_url(url)
+    except net_policy.Refused as refusal:
+        raise NetError("refused", f"{refusal.code}: {refusal.why}") from refusal
     data = urllib.parse.urlencode(form).encode() if form else None
     request = urllib.request.Request(url, data=data, headers={
         "User-Agent": UA,
@@ -125,8 +156,7 @@ def fetch(url: str, max_bytes: int, timeout: int, form: dict | None = None) -> t
         "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
     })
     try:
-        with urllib.request.urlopen(request, timeout=timeout,
-                                    context=ssl.create_default_context()) as response:
+        with _OPENER.open(request, timeout=timeout) as response:
             raw = response.read(max_bytes + 1)
             charset = response.headers.get_content_charset() or "utf-8"
     except urllib.error.HTTPError as error:
