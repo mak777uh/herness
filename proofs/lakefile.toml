@@ -1,0 +1,9 @@
+name = "proofs"
+version = "0.1.0"
+defaultTargets = ["Proofs"]
+
+# Зависимостей нет: Policy.lean и Bridge.lean — чистый core Lean.
+# Smoke/Verify из внешнего проекта сюда не перенесены (им нужен mathlib).
+
+[[lean_lib]]
+name = "Proofs"

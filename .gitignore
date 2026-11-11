@@ -76,3 +76,6 @@ parts/VecDHT/lab/logs/workspace-verify-*.log
 
 # Выгрузки сессий DSH: данные, не код (112 МБ)
 work/session-*/
+
+# Артефакты сборки Lean: пересобираются lake build, в git не едут
+proofs/.lake/
