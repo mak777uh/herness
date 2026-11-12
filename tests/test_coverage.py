@@ -45,16 +45,43 @@ def _():
         assert "покрытие: 0.50" in out, out
 
 
-@case("полностью закрытый реестр даёт CHECKED_ANCHORED", False)
+@case("полностью закрытый реестр с сильным ожиданием даёт CHECKED_ANCHORED", False)
 def _():
     with tempfile.TemporaryDirectory() as tmp:
         registry = Path(tmp) / "CLAIMS.md"
         registry.write_text(
             HEADER
-            + "| C-0001 | хорошее утверждение | observation | `echo ok` | README.md | 30.10.2026 | `ok` |\n",
+            + '| C-0001 | хорошее утверждение | observation | `python -c "print(1)"` | README.md | 30.10.2026 | `1` |\n',
             encoding="utf-8")
         code, out = run_coverage(registry)
         assert code == 0 and "CHECKED_ANCHORED" in out, out
+        assert "строгое покрытие: 1.00" in out, out
+
+
+@case("слабое ожидание при anchored 1.00 понижает вердикт до ANCHORED_WEAK", False)
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        registry = Path(tmp) / "CLAIMS.md"
+        registry.write_text(
+            HEADER
+            + '| C-0001 | хорошее утверждение | observation | `python -c "print(1)"` | README.md | 30.10.2026 | `ok` |\n',
+            encoding="utf-8")
+        code, out = run_coverage(registry)
+        assert code == 0 and "ANCHORED_WEAK" in out, out
+        assert "слабых ожиданий 1" in out, out
+
+
+@case("артефакт-описание при anchored 1.00 понижает вердикт до ANCHORED_WEAK", False)
+def _():
+    with tempfile.TemporaryDirectory() as tmp:
+        registry = Path(tmp) / "CLAIMS.md"
+        registry.write_text(
+            HEADER
+            + '| C-0001 | хорошее утверждение | observation | `python -c "print(1)"` | вывод команды | 30.10.2026 | `1` |\n',
+            encoding="utf-8")
+        code, out = run_coverage(registry)
+        assert code == 0 and "ANCHORED_WEAK" in out, out
+        assert "артефактов-описаний 1" in out, out
 
 
 @case("незакрытая запись режет вердикт", False)

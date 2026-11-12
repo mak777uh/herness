@@ -1621,7 +1621,11 @@ def gate_coverage(root: Path) -> list[str]:
     fresh = json.loads(fresh_path.read_text(encoding="utf-8"))
     fresh_path.unlink(missing_ok=True)
     problems = []
-    for field in ("total", "closed", "malformed", "verdict"):
+    # Дрейф-гейт: артефакт обязан совпадать с живым пересчётом. С ADR-0058 сверяем и строгие
+    # поля (strict_coverage/weak_expects/descriptive_artifacts) — иначе прибор мог бы молча
+    # уронить строгую меру, а anchored- headline остался бы зелёным. Это ужесточение, не порог.
+    for field in ("total", "closed", "malformed", "verdict",
+                  "strict_coverage", "weak_expects", "descriptive_artifacts"):
         if stored.get(field) != fresh.get(field):
             problems.append(f"покрытие: {field} {stored.get(field)!r} в артефакте против {fresh.get(field)!r} живьём")
     return problems

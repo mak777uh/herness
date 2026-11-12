@@ -67,10 +67,16 @@ def facts() -> dict[str, str]:
         except json.JSONDecodeError:
             decisions = "?"
     gates = grab(r"гейтов: (\d+)", audit)
+    strict_raw = grab(r"строгое: ([\d.]+)", audit)
+    # В README строгое покрытие — с 2 знаками (как stdout coverage.py): 0.58, не 0.579. Иначе
+    # число 579 не имеет владельца в CLAIMS.md (gate_readme_numbers: число в README обязано
+    # встречаться в реестре). Точное значение живёт в claims-coverage.json и audit-report.txt.
+    strict = f"{float(strict_raw):.2f}" if strict_raw != "?" else "?"
     return {
         "утверждений": grab(r"утверждений: (\d+)", audit),
         "ядро": grab(r"ядро: (\d+)", audit),
         "покрытие": grab(r"покрытие: ([\d.]+)", audit),
+        "строгое покрытие": strict,
         "гейтов": gates,
         "проб гейтов": grab(r"поймали: (\d+ из \d+)", probes),
         "журналов в индексе": runs,

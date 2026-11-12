@@ -12,24 +12,17 @@ CLAIMS.md: есть ли утверждения, где ожидание — э�
 
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from bin.claim_strength import looks_checkable  # noqa: E402
+
 CLAIMS = ROOT / "CLAIMS.md"
 OUT = ROOT / "research" / "outputs" / "claims-audit.txt"
-
-
-def looks_checkable(expect: str) -> bool:
-    """Ожидание проверяемо, если в нём есть число, путь или код — а не общее слово."""
-    if re.search(r"\d", expect):
-        return True
-    if "/" in expect or ".md" in expect or ".txt" in expect or ".json" in expect:
-        return True
-    if re.search(r"[A-Z]-\d", expect):
-        return True
-    return False
 
 
 def main() -> int:

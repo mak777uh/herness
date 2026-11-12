@@ -3,6 +3,11 @@
 Взято у lexspec (§8): coverage = |closed atoms| / |all atoms|, и знаменатель — **все** записи, включая
 битые. Причина: «число покрытия, которое растёт от того, что запись сломалась, — это число, которым
 стоит врать».
+
+ADR-0058 (F-0089): прибор различает ДВЕ меры. `anchored` (coverage) — наличие команды/артефакта/
+ожидания и разрешение пути; `strict` — исполняемая команда + артефакт-файл существует + ожидание-
+число/путь/код (то, что нельзя придумать). Anchored 1.00 при strict<1.0 даёт вердикт ANCHORED_WEAK,
+а не CHECKED_ANCHORED: headline не льстит себе. Anchored-порог (rc 0 при coverage>=1.0) не ослаблен.
 """
 
 from __future__ import annotations
@@ -15,6 +20,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from bin.store import write_json  # noqa: E402
+from bin.claim_strength import looks_checkable, is_runnable, artifact_resolves  # noqa: E402
 
 CLAIMS = ROOT / "CLAIMS.md"  # переопределяется первым аргументом
 COLUMNS = 7
@@ -31,6 +37,7 @@ def main(argv=None) -> int:
     if argv:
         CLAIMS = Path(argv[0])
     rows = []
+    active = []
     malformed = 0
     for line in CLAIMS.read_text(encoding="utf-8").splitlines():
         if not line.startswith("| C-"):
@@ -62,17 +69,30 @@ def main(argv=None) -> int:
             problems.append("артефакт не найден")
         rows.append({"id": claim_id, "closed": not problems, "why": "; ".join(problems) or "closed",
                      "kind": kind})
+        active.append({"cmd": command, "art": artifact, "exp": expect})
     total = len(rows)
     closed = sum(1 for row in rows if row["closed"])
     coverage = closed / total if total else 0.0
 
+    # Строгая проверяемость (ADR-0058): исполняемая команда + артефакт-файл существует +
+    # ожидание-число/путь/код. Anchored меряет наличие полей, strict — то, что нельзя придумать.
+    strict_closed = sum(1 for r in active if is_runnable(r["cmd"])
+                        and artifact_resolves(r["art"], ROOT) and looks_checkable(r["exp"]))
+    weak_expects = sum(1 for r in active if not looks_checkable(r["exp"]))
+    descriptive_artifacts = sum(1 for r in active if not artifact_resolves(r["art"], ROOT))
+    strict_coverage = strict_closed / len(active) if active else 0.0
+
     print(f"утверждений: {total}, закрытых: {closed}, покрытие: {coverage:.2f}")
+    print(f"строгое покрытие: {strict_coverage:.2f} (строгих {strict_closed}/{len(active)}; "
+          f"слабых ожиданий {weak_expects}, артефактов-описаний {descriptive_artifacts})")
     print(f"битых строк: {malformed} (входят в знаменатель)")
     print("всего строк реестра — это все утверждения, включая те, у которых нет команды; "
           "проверка команд считает только исполняемые (verify_claims)")
 
     if coverage >= 1.0:
-        verdict = "CHECKED_ANCHORED"
+        # Полный anchored: вердикт зависит от strict. Слабое ожидание/артефакт-описание
+        # понижают до ANCHORED_WEAK — headline не льстит себе (ADR-0058, F-0089).
+        verdict = "CHECKED_ANCHORED" if strict_coverage >= 1.0 else "ANCHORED_WEAK"
     elif coverage >= 0.8:
         verdict = "CHECKED"
     else:
@@ -88,6 +108,8 @@ def main(argv=None) -> int:
     out = out_path if out_path else ROOT / "research" / "claims-coverage.json"
     write_json(out, {"total": total, "closed": closed, "malformed": malformed,
                      "coverage": round(coverage, 3), "verdict": verdict,
+                     "strict_closed": strict_closed, "strict_coverage": round(strict_coverage, 3),
+                     "weak_expects": weak_expects, "descriptive_artifacts": descriptive_artifacts,
                      "open": open_rows})
     print(f"\nзаписано: {out}")
     # сильный вердикт требует всех закрытых записей; порог 0.8 не решает

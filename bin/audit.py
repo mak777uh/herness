@@ -121,6 +121,11 @@ def main(argv: list[str] | None = None) -> int:
     if len(covered) < len(gates):
         missing = sorted(set(gates) - covered)
         warns.append(f"гейтов с пробой: {len(covered)} из {len(gates)}; без пробы: {', '.join(missing)}")
+    weak_expects = coverage.get("weak_expects", 0)
+    descriptive_artifacts = coverage.get("descriptive_artifacts", 0)
+    if weak_expects or descriptive_artifacts:
+        warns.append(f"строгое покрытие < anchored: слабых ожиданий {weak_expects}, "
+                     f"артефактов-описаний {descriptive_artifacts} (anchored 1.00 ≠ проверяемо; ADR-0058)")
     if not (ROOT / "runs" / "index.json").exists():
         warns.append("нет runs/index.json: метрики определяют задачу по имени журнала (план P0.2)")
     if without_guard:
@@ -140,7 +145,7 @@ def main(argv: list[str] | None = None) -> int:
         "# Аудит (вычислен, не написан)",
         "",
         f"утверждений: {len(claims)} (дублей {len(duplicates)}) · ядро: {core_count()}",
-        f"покрытие: {coverage.get('coverage')} · вердикт: {coverage.get('verdict')}",
+        f"покрытие: {coverage.get('coverage')} (якорено) · строгое: {coverage.get('strict_coverage')} · вердикт: {coverage.get('verdict')}",
         f"отказов: {len(failures)} · гейтов: {len(gates)} · проб: {len(probes)} · гейтов с контролем: {len(covered)}",
         f"артефактов: {len(outputs)} · без ссылок: {len(uncited)}",
         f"решений в складе: {len(ledger)}",

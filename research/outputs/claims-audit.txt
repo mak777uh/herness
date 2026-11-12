@@ -1,7 +1,7 @@
 # Утверждения: может ли автор подтвердить себя собой
 
-утверждений: 295
-слабых ожиданий: 109
+утверждений: 300
+слабых ожиданий: 112
 
 | утверждение | ожидание | артефакт |
 |---|---|---|
@@ -13,6 +13,9 @@
 | C-0285 | итог: PASS | вывод команды, 08.11.2026 |
 | C-0286 | образ совпадает | вывод команды, 08.11.2026 |
 | C-0287 | поймала | вывод команды, 08.11.2026 |
+| C-0298 | итог: PASS | research/outputs/room-live-green-after.txt |
+| C-0299 | ПРИБОР ЧЕСТЕН | research/outputs/probe-coverage-green-after.txt |
+| C-0300 | ПРИБОР ЧЕСТЕН | research/outputs/coverage-verdict-green-after.txt |
 | C-0012 | MISSING_CREDENTIAL | runs/*/stderr.log |
 | C-0014 |  | — |
 | C-0016 | permission denied | lab/pilot/out/T-01-L2.evidence.txt |
@@ -22,9 +25,6 @@
 | C-0030 | done | runs/glm-failure.log |
 | C-0034 | decision=REFUSE | bin/live_cases.py |
 | C-0037 | action=ask | bin/live_cases.py |
-| C-0039 | Что сделано | docs/AUDIT-2026-10-29.md |
-| C-0040 | Закреплено | docs/MODELS.md |
-| C-0043 | MetaGPT | harnesses.json |
 
 ## Правило
 
