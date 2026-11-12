@@ -28,6 +28,7 @@ COPY = [
     "CLAIMS.md",
     "NOT-CLAIMED.md",
     "README.md",
+    "REQUIREMENTS.md",
     "depths.json",
     "harnesses.json",
     "docs",
@@ -407,6 +408,31 @@ def probe_runs_index(root: Path) -> None:
     _shutil.copy2(source, root / "runs" / "accept" / "PROBE-unindexed.bin")
 
 
+def probe_requirements(root: Path) -> None:
+    # Принятое требование без инварианта — пожелание, не контракт (gate_requirements).
+    path = root / "REQUIREMENTS.md"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        text.rstrip("\n")
+        + "\n\n---\n\n## R-9999 · проба без инварианта\n\n"
+        "**Требование.** Подложенный дефект: принятое требование без инварианта.\n\n"
+        "**Источник.** Проба гейта требований.\n\n"
+        "**Статус.** `принято`.\n",
+        encoding="utf-8",
+    )
+
+
+def probe_docs(root: Path) -> None:
+    # Число, возвращённое в документ и не совпадающее с файлом (F-DOC-1, gate_docs).
+    # gate_docs читает ROOT модуля, поэтому проба — IN_PLACE на настоящем docs/CONTINUE.md.
+    path = root / "docs" / "CONTINUE.md"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        text.rstrip("\n") + "\n\n`CLAIMS.md` — 999 записей\n",
+        encoding="utf-8",
+    )
+
+
 PROBES = {
     "секреты": (hs.gate_secrets, probe_secrets),
     "утверждения": (hs.gate_claims, probe_claims),
@@ -439,6 +465,8 @@ PROBES = {
     "утверждения-проверка": (hs.gate_claims_run, probe_claims_run),
     "журналы": (hs.gate_journals, probe_journals),
     "индекс прогонов": (hs.gate_runs_index, probe_runs_index),
+    "требования": (hs.gate_requirements, probe_requirements),
+    "документы": (hs.gate_docs, probe_docs),
 }
 
 
@@ -450,6 +478,9 @@ IN_PLACE = {
     # rust читает настоящий target/: в песочнице артефактов нет, и проба
     # подложила бы «нет артефактов» вместо нужного дефекта. Откат — по mtime.
     "rust": "core-rs/src/loopmod.rs",
+    # gate_docs импортирует bin.gate_docs.main, чей ROOT — путь модуля (настоящий репо),
+    # не переданный root: проба подкладывает дефект в настоящий docs/CONTINUE.md и откатывает.
+    "документы": "docs/CONTINUE.md",
 }
 
 

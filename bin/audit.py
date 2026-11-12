@@ -61,12 +61,17 @@ def main(argv: list[str] | None = None) -> int:
     gates = re.findall(r'\("([^"]+)", gate_[a-z_]+\)', gates_text)
     # Контроль гейта — это проба, которая подкладывает дефект и требует находки. Считаем по отчёту
     # проб, а не по старому списку двух скриптов: иначе аудит показывает устаревшую картину (F-0055).
+    # Имя пробы — все токены кроме трёх последних (до, после, поймал), а не parts[0]: колонка имени
+    # фиксированной ширины, parts[0] обрезает составные имена («ядро утверждений»→«ядро») и гейт
+    # ложно числится без пробы (F-0088, ADR-0057). Покрытие — РАЗНЫЕ гейты: суб-проба одного гейта
+    # («утверждения-колонки») не увеличивает покрытие.
     probes = []
     probe_report = read(ROOT / "research" / "outputs" / "gate-probes.txt")
     for line in probe_report.splitlines():
         parts = line.split()
         if len(parts) >= 4 and parts[-1] == "да":
-            probes.append(parts[0])
+            probes.append(" ".join(parts[:-3]))
+    covered = set(gates) & set(probes)
 
     coverage = {}
     try:
@@ -113,9 +118,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if uncited:
         warns.append(f"артефактов без ссылок в утверждениях: {len(uncited)} ({', '.join(uncited[:5])})")
-    if len(probes) < len(gates):
-        missing = sorted(set(gates) - set(probes))
-        warns.append(f"гейтов с пробой: {len(probes)} из {len(gates)}; без пробы: {', '.join(missing[:5])}")
+    if len(covered) < len(gates):
+        missing = sorted(set(gates) - covered)
+        warns.append(f"гейтов с пробой: {len(covered)} из {len(gates)}; без пробы: {', '.join(missing)}")
     if not (ROOT / "runs" / "index.json").exists():
         warns.append("нет runs/index.json: метрики определяют задачу по имени журнала (план P0.2)")
     if without_guard:
@@ -136,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
         "",
         f"утверждений: {len(claims)} (дублей {len(duplicates)}) · ядро: {core_count()}",
         f"покрытие: {coverage.get('coverage')} · вердикт: {coverage.get('verdict')}",
-        f"отказов: {len(failures)} · гейтов: {len(gates)} · гейтов с контролем: {len(probes)}",
+        f"отказов: {len(failures)} · гейтов: {len(gates)} · проб: {len(probes)} · гейтов с контролем: {len(covered)}",
         f"артефактов: {len(outputs)} · без ссылок: {len(uncited)}",
         f"решений в складе: {len(ledger)}",
         "",
