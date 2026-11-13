@@ -67,6 +67,61 @@ ID из очереди: <H-… / N… / этап …>   Статус: DONE | PAR
 
 ---
 
+<!-- HANDOFF-A-START: CONTINUITY-R1 заполненный handoff агента A (ветвь G). Ветвь D: содержимое между маркерами stripped, шаблон и инфраструктура остаются. -->
+## Передача смены — CONTINUITY-R1 (агент A, 13.11.2026)
+
+Verified HEAD: `28e1134` (до коммита A; коммит A смещает HEAD — сверить `git rev-parse HEAD`, шаг RECONCILE)
+Ветка / дерево: main / clean (синхронно с origin)
+
+### Задача
+ID из очереди: **N4** (host-side; `docs/AUDIT-PLAN.md` §4, таблица «Открытые находки» ниже). Статус: PARTIAL (A сделал половину).
+Цель: убрать хардкод путей Lean в 5 скриптах — перевести на резолвер `bin/lean_paths.py`.
+
+### Что сделал A
+- Резолвер `bin/lean_paths.py`: `proofs_dir()` (репо `proofs/`, env `HERNESS_PROOFS`, fail-closed exit 3), `lean_bin()` (toolchain из `proofs/lean-toolchain` = rc2, не rc1).
+- Замороженный прибор `bin/check_lean_paths.py` (0 хардкодов в `bin/*.py`, все 5 импортируют резолвер, fail-closed NC, позитивный контроль).
+- Скорер `bin/check_continuity.py` (независимый: перезапускает команды B сам, не верит прозе).
+- Мигрированы **2 из 5**: `bin/lean_check.py`, `bin/policy_diff.py`.
+
+### Проверено (команда → exit code → артефакт)
+- `python bin/check_lean_paths.py` → **1 (КРАСНЫЙ)** → `research/outputs/continuity-red-before.txt` (3 немигрированных: `bridge_lean.py`, `bridge_parts.py`, `session_types.py`; fail-closed NC exit 3, позитивный контроль exit 0)
+- `python bin/gate_docs.py` → **0** → вывод команды
+- `python bin/seal.py verify-all` → **0** (16 печатей) → вывод команды
+- `python bin/lab.py validate` → **0** (22 эксперимента) → вывод команды
+- `python bin/check_continuity.py --selftest` → **0** (ПРИБОР ЧЕСТЕН) → `research/outputs/continuity-red-before.txt`
+
+### Не проверено (явно)
+- **Lean на хосте не вызывается** (`~/.elan/toolchains` может отсутствовать, `lean`/`lake` не на PATH). N4 проверяется СТАТИЧЕСКИ (разрешение путей + fail-closed), не сборкой доказательств. **N4 как proof-вопрос остаётся открытым.**
+- Полная сборка `Proofs` красная (F-0080, namespace `Effect`) — отдельный дефект, не N4.
+
+### Не повторять
+- crash-resume и HSJ2-kind DONE (F-0087/F-0086) — не «чинить» закрытое.
+- Приборы `check_lean_paths.py`, `check_continuity.py`, `lean_paths.py` ЗАМОРОЖЕНЫ (хеш в ключе ответа) — **не редактировать**.
+
+### Изменённые файлы (A)
+- `bin/lean_paths.py`, `bin/check_lean_paths.py`, `bin/check_continuity.py` (новые); `bin/lean_check.py`, `bin/policy_diff.py` (миграция)
+- `docs/ADR-0059-continuity-test.md`, `lab/prereg/CONTINUITY-R1.json` (+`.sha256`), `lab/registry.json` (E-0022)
+- `research/outputs/continuity-red-before.txt`, `research/outputs/continuity-record.template.json`
+
+### Точное следующее действие
+1. **N4**: мигрировать 3 оставшихся скрипта на резолвер — `bin/bridge_lean.py:23`, `bin/bridge_parts.py:23`, `bin/session_types.py:23`. Заменить двухстрочный блок `PROOFS = Path(...)` / `BIN = Path.home()...rc1...` на тот же, что в `lean_check.py`/`policy_diff.py`:
+   ```python
+   if str(ROOT) not in sys.path:
+       sys.path.insert(0, str(ROOT))
+   from bin.lean_paths import proofs_dir, lean_bin  # noqa: E402
+   PROOFS = proofs_dir()
+   BIN = lean_bin()
+   ```
+   Строка `MODEL = PROOFS / "Proofs" / ...` ниже остаётся без изменений.
+2. Проверить (команды K): `python bin/check_lean_paths.py` → **0 (ЗЕЛЁНЫЙ)**; `python bin/gate_docs.py` → 0; `python bin/seal.py verify-all` → 0; `python bin/lab.py validate` → 0.
+3. Записать `research/outputs/continuity-record.json` по шаблону `research/outputs/continuity-record.template.json` (arm, base_head, head, next_action_id, commands[cmd,rc], files_changed, status, notes с разделом «не проверено»). Закоммитить.
+
+### Бюджет / правило остановки
+- Одна задача (N4 host-side: миграция 3 скриптов). Не трогать гейты/CLAIMS/prereg/приборы/handoff. Остановиться после записи+коммита; Lean не собирать (не вызывается).
+<!-- HANDOFF-A-END -->
+
+---
+
 ## Что сделано за день (по коммитам, время — локальное)
 
 ### Утро: шлифовка VecDHT-контура и старт аудита изоляции

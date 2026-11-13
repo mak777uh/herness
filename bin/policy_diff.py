@@ -20,8 +20,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "lab" / "tools" / "policy.json"
 OUT = ROOT / "research" / "outputs" / "policy-diff.txt"
-PROOFS = Path("C:/111/env/lean/proofs")
-BIN = Path.home() / ".elan" / "toolchains" / "leanprover--lean4---v4.36.0-rc1" / "bin"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from bin.lean_paths import proofs_dir, lean_bin  # noqa: E402
+PROOFS = proofs_dir()
+BIN = lean_bin()
 
 SCHEMES = ("file:", "dir:", "net:")
 

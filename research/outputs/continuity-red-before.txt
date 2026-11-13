@@ -1,0 +1,50 @@
+# CONTINUITY-R1 — КРАСНЫЙ ДО прогона (ADR-0059, prereg запечатан до)
+
+## 1. check_lean_paths: 3 немигрированных скрипта (bridge_lean, bridge_parts, session_types)
+
+# N4: статическая проверка путей Lean (check_lean_paths)
+
+статических проблем: 9
+  - bridge_lean.py: хардкод пути доказательств (C:/111/env/lean/proofs)
+  - bridge_lean.py: устаревший toolchain (v4.36.0-rc1)
+  - bridge_parts.py: хардкод пути доказательств (C:/111/env/lean/proofs)
+  - bridge_parts.py: устаревший toolchain (v4.36.0-rc1)
+  - session_types.py: хардкод пути доказательств (C:/111/env/lean/proofs)
+  - session_types.py: устаревший toolchain (v4.36.0-rc1)
+  - bridge_lean.py: не импортирует резолвер (from bin.lean_paths import)
+  - bridge_parts.py: не импортирует резолвер (from bin.lean_paths import)
+  - session_types.py: не импортирует резолвер (from bin.lean_paths import)
+
+  NC fail-closed: exit 3 (несуществующий HERNESS_PROOFS отвергнут)
+  позитивный контроль: exit 0, proofs=C:\111\harness\proofs
+
+## FAIL (хардкод остался / резолвер не подключён / fail-closed сломан)
+
+вердикт: КРАСНЫЙ
+
+## Что это не доказывает
+
+- что Lean-доказательства собраны: Lean на хосте не вызывается, проверяется разрешение путей;
+- что N4 закрыт как proof-вопрос: статическая проверка путей ≠ сборка Proofs;
+- что прибор ловит произвольный дефект путей: он ловит регрессию ЭТОГО хардкода + fail-closed.
+rc=1
+
+## 2. check_continuity --selftest: NC прибора ловит подложенные плохие записи
+
+# NC прибора check_continuity (подложенные записи)
+
+  хорошая запись: M1–M5 все true (позитивный контроль)
+  bad_rc (M2): пойман (M2=false)
+  bad_next (M4): пойман (M4=false)
+  false_done (M5): пойман (M5=false)
+  no_boundary (M5): пойман (M5=false)
+  edited_instrument (M3): пойман (M3=false)
+  forbidden_diff (M3): пойман (M3=false)
+  bad_head (M1): пойман (M1=false)
+
+  вердикт G-good/D-bad_next: PASS (ожидается PASS)
+  вердикт G-good/D-good: NO_DIFFERENCE (ожидается NO_DIFFERENCE)
+  вердикт G-bad/D-good: FAIL (ожидается FAIL)
+
+вердикт: ПРИБОР ЧЕСТЕН
+rc=0

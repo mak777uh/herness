@@ -224,6 +224,16 @@
    "note": "порог объявлен ДО прогона и запечатан (446e9a0b015b4d07…); негативный контроль прибора КРАСНЫЙ до (check_coverage_verdict: coverage.py сообщает anchored 1.00 CHECKED_ANCHORED без strict-меры, ground-truth strict 0.581/172, 108 слабых, 23 описания; strong==weak — ПРИБОР ЛЬСТИТ). Дефект: coverage.py мерил наличие полей (anchored), не проверяемость (strict); существование артефакта проверялось только при «/» (coverage.py:68), сила ожидания не мерялась; claims_audit return 0 (advisory). После фикса: общий модуль bin/claim_strength.py (looks_checkable/is_runnable/artifact_resolves), coverage.py +strict по активным + counts в JSON/stdout, вердикт ANCHORED_WEAK при anchored=1.0 и strict<1.0; gate_coverage +3 drift-поля; audit строка «покрытие (якорено) · строгое · вердикт» + WARN; readme_numbers строка «строгое покрытие»; test_coverage усилен (case 2 строгий + case понижения). check_coverage_verdict ЗЕЛЁНЫЙ (ПРИБОР ЧЕСТЕН: strict раскрыт, совпадает с ground-truth, NC различает strong CHECKED_ANCHORED / weak+descriptive ANCHORED_WEAK). Финал: 300 утверждений, anchored 1.00, strict 0.579 (172/297), слабых 109, описаний 23, вердикт ANCHORED_WEAK; test 5/5 провалов 0; гейты 32/32, audit FAIL «- нет», readme_numbers [ok]. C-0300 добавлен (ожидание-токен слабой формы, как C-0299 → слабых 108→109). Граница: strict 0.58 ≠ «42% ложны» (правило формы переоценивает falsifiable слабые ожидания); сверяется честность меры покрытия, не смысл; прибор-проверщик ловит регрессию этого дефекта, не произвольную ошибку. anchored-порог (rc0 при coverage>=1.0), инвариант аудита (coverage<1.0→FAIL) и тиры lexspec не ослаблены — ANCHORED_WEAK добавлен; verify_claims не тронут. ADR-0058, F-0089, C-0300.",
    "conclusion": "lab/failures/F-0089.md",
    "claim": "C-0300"
+  },
+  {
+   "id": "E-0022",
+   "title": "CONTINUITY-R1: тест преемственности двух агентов — объективный скорер перезапускает команды B сам, деградированный handoff (D) против полного (G)",
+   "hypothesis": null,
+   "prereg": "lab/prereg/CONTINUITY-R1.json",
+   "status": "open",
+   "note": "порог M1-M5 объявлен ДО прогона и запечатан (key_sha256 326019c1070f406a…); ключ ответа вне репо, коммитится после (хеш обязан совпасть). Носитель N4 host-side (Lean не вызывается -> статически: резолвер + fail-closed). A: резолвер lean_paths.py + 2 прибора (check_lean_paths, check_continuity), миграция 2/5, handoff, commitA. B в чистом worktree G/D: миграция 3/5, запись, коммит. Скорер check_continuity.py перезапускает K сам (убивает self-report). PASS iff G проходит M1-M5 И D проваливает >=1 из M2/M4, иначе NO_DIFFERENCE (честный нуль, n=1). КРАСНЫЙ-ДО: check_lean_paths на 3 немигрированных + NC скорера на 7 подложенных дефектов. Открыт до прогона B; закрывается с вердиктом после скоринга. ADR-0059.",
+   "conclusion": null,
+   "claim": null
   }
  ]
 }
