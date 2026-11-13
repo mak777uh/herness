@@ -24,8 +24,10 @@
                                                    # read-only, без spawn (ADR-0055).
     python bin/check_continuity.py --selftest      # только NC прибора (подложенные записи)
     python bin/check_continuity.py --score --g <worktree> --d <worktree> \
-        --base <commitA> --key <key.json>          # live: перезапуск K в worktree,
-                                                   # пишет артефакты + вердикт (тяжёлый).
+        --base-g <setupG> --base-d <setupD> --key <key.json>  # live: перезапуск K в
+                                                   # worktree, пишет артефакты + вердикт.
+                                                   # База per-arm (setup-коммиты G/D
+                                                   # различаются); --base задаёт обе.
 
 Выход 0 — вердикт вычислен и прибор честен (NC ловит подложенные плохие записи);
 1 — прибор льстит (NC не ловит) или артефакты не готовы / вердикт FAIL.
@@ -262,10 +264,13 @@ def measure(worktree: Path, base: str, key: dict, arm: str) -> tuple[dict, dict,
     return record, rerun, full_diff
 
 
-def live_score(g_path: Path, d_path: Path, base: str, key: dict) -> int:
+def live_score(g_path: Path, d_path: Path, base_g: str, base_d: str, key: dict) -> int:
+    # База у ветвей разная: setup-коммит G (слепая аппаратура) и setup-коммит D
+    # (та же аппаратура + stripped handoff). M1 сверяет head_parent с базой СВОЕЙ
+    # ветви, поэтому base передаётся per-arm, а не один на обе.
     OUT.mkdir(parents=True, exist_ok=True)
     metrics = {}
-    for arm, wt in (("G", g_path), ("D", d_path)):
+    for arm, wt, base in (("G", g_path, base_g), ("D", d_path, base_d)):
         record, rerun, full_diff = measure(wt, base, key, arm)
         (OUT / f"continuity-record-{arm}.json").write_text(
             json.dumps(record, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
@@ -366,12 +371,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if ok else 1
     if "--score" in argv:
         g = _arg(argv, "--g"); d = _arg(argv, "--d")
-        base = _arg(argv, "--base"); keypath = _arg(argv, "--key")
-        if not all([g, d, base, keypath]):
-            print("--score требует --g --d --base --key")
+        base = _arg(argv, "--base")
+        base_g = _arg(argv, "--base-g", base); base_d = _arg(argv, "--base-d", base)
+        keypath = _arg(argv, "--key")
+        if not all([g, d, base_g, base_d, keypath]):
+            print("--score требует --g --d --base-g --base-d (или общий --base) --key")
             return 2
         key = json.loads(Path(keypath).read_text(encoding="utf-8"))
-        return live_score(Path(g), Path(d), base, key)
+        return live_score(Path(g), Path(d), base_g, base_d, key)
     return replay()
 
 

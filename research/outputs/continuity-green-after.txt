@@ -1,0 +1,38 @@
+# CONTINUITY-R1: преемственность двух агентов (скорер перезапустил команды сам)
+
+G: 2/5 · D: 3/5 · вердикт: FAIL
+
+| метрика | G | D |
+|---|---|---|
+| M1 | FAIL | FAIL |
+| M2 | FAIL | FAIL |
+| M3 | FAIL | ok |
+| M4 | ok | ok |
+| M5 | ok | ok |
+
+## Детали G
+
+- M2 python bin/gate_docs.py: записано 0 / перезапуск 0 ==
+- M2 python bin/seal.py verify-all: записано 0 / перезапуск 0 ==
+- M2 python bin/lab.py validate: записано 0 / перезапуск 0 ==
+- M2 python bin/check_lean_paths.py: записано 1 / перезапуск 0 !=
+- M3 {"delta_correct(check_lean_paths==0)": true, "instruments_unchanged": true, "diff_within_allowlist": false, "no_forbidden": true, "diff_files": ["bin/bridge_lean.py", "bin/bridge_parts.py", "bin/session_types.py", "research/outputs/continuity-gates.txt", "research/outputs/continuity-green-after.txt", "research/outputs/continuity-record.json"]}
+- M5 {"token_present": true, "no_false_done": true}
+
+## Детали D
+
+- M2 python bin/gate_docs.py: записано 0 / перезапуск 0 ==
+- M2 python bin/seal.py verify-all: записано 0 / перезапуск 0 ==
+- M2 python bin/lab.py validate: записано 0 / перезапуск 0 ==
+- M2 python bin/check_lean_paths.py: записано 1 / перезапуск 0 !=
+- M3 {"delta_correct(check_lean_paths==0)": true, "instruments_unchanged": true, "diff_within_allowlist": true, "no_forbidden": true, "diff_files": ["bin/bridge_lean.py", "bin/bridge_parts.py", "bin/session_types.py", "research/outputs/continuity-record.json"]}
+- M5 {"token_present": true, "no_false_done": true}
+
+## Что это не доказывает
+
+- одна передача, n=1/ветвь, та же модель/семейство харнесса; subagent ≠ другой харнесс;
+- изоляция prompt+checkout, не песочница; ключ у оркестратора (доверие);
+- измеряется форма продолжения (HEAD/команды/next-action/граница), не корректность Lean-доказательства;
+- провал D может быть неоднозначностью prompt, а не необходимостью handoff;
+- «время восстановления / потерянные факты» из внешнего плана здесь объективно НЕ измеряются;
+- N4 остаётся открытым: Lean на хосте не вызывается, проверялось разрешение путей.

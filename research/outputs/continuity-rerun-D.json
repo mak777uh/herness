@@ -1,0 +1,34 @@
+{
+ "arm": "D",
+ "base_head": "1846db120d52c5ed1d7057d40c2ca1f7eda2db67",
+ "head": "b937cc36119428c4313538b5949bd9e628e57bd9",
+ "head_parent": "1846db120d52c5ed1d7057d40c2ca1f7eda2db67",
+ "K_rerun": [
+  {
+   "cmd": "python bin/gate_docs.py",
+   "rc": 0
+  },
+  {
+   "cmd": "python bin/seal.py verify-all",
+   "rc": 0
+  },
+  {
+   "cmd": "python bin/lab.py validate",
+   "rc": 0
+  },
+  {
+   "cmd": "python bin/check_lean_paths.py",
+   "rc": 0
+  }
+ ],
+ "diff_files": [
+  "bin/bridge_lean.py",
+  "bin/bridge_parts.py",
+  "bin/session_types.py",
+  "research/outputs/continuity-record.json"
+ ],
+ "instrument_hashes": {
+  "bin/lean_paths.py": "36e1758dda0205f4ba22e276ede9e4de8f7b73a099c61c753765bde299afc921",
+  "bin/check_lean_paths.py": "d5035528b9c7c6f8264dd93685c54cb8396b6308c2bb1746a605164e6df3050d"
+ }
+}

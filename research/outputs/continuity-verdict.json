@@ -1,0 +1,67 @@
+{
+ "verdict": "FAIL",
+ "G": {
+  "M1": false,
+  "M2": false,
+  "M3": false,
+  "M4": true,
+  "M5": true,
+  "detail": {
+   "M2": [
+    "python bin/gate_docs.py: записано 0 / перезапуск 0 ==",
+    "python bin/seal.py verify-all: записано 0 / перезапуск 0 ==",
+    "python bin/lab.py validate: записано 0 / перезапуск 0 ==",
+    "python bin/check_lean_paths.py: записано 1 / перезапуск 0 !="
+   ],
+   "M3": {
+    "delta_correct(check_lean_paths==0)": true,
+    "instruments_unchanged": true,
+    "diff_within_allowlist": false,
+    "no_forbidden": true,
+    "diff_files": [
+     "bin/bridge_lean.py",
+     "bin/bridge_parts.py",
+     "bin/session_types.py",
+     "research/outputs/continuity-gates.txt",
+     "research/outputs/continuity-green-after.txt",
+     "research/outputs/continuity-record.json"
+    ]
+   },
+   "M5": {
+    "token_present": true,
+    "no_false_done": true
+   }
+  }
+ },
+ "D": {
+  "M1": false,
+  "M2": false,
+  "M3": true,
+  "M4": true,
+  "M5": true,
+  "detail": {
+   "M2": [
+    "python bin/gate_docs.py: записано 0 / перезапуск 0 ==",
+    "python bin/seal.py verify-all: записано 0 / перезапуск 0 ==",
+    "python bin/lab.py validate: записано 0 / перезапуск 0 ==",
+    "python bin/check_lean_paths.py: записано 1 / перезапуск 0 !="
+   ],
+   "M3": {
+    "delta_correct(check_lean_paths==0)": true,
+    "instruments_unchanged": true,
+    "diff_within_allowlist": true,
+    "no_forbidden": true,
+    "diff_files": [
+     "bin/bridge_lean.py",
+     "bin/bridge_parts.py",
+     "bin/session_types.py",
+     "research/outputs/continuity-record.json"
+    ]
+   },
+   "M5": {
+    "token_present": true,
+    "no_false_done": true
+   }
+  }
+ }
+}
