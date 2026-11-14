@@ -1,0 +1,41 @@
+# CONTINUITY-R2 instrument RED-before (дефект прибора R1 F-0090 + КРАСНЫЙ задачи N4)
+
+## 1. R1 derive() на РЕАЛИСТИЧНОЙ честной записи (head устаревший + журнал before/after)
+
+R1 M1 (record.head == git HEAD): False   <- самореференция: запись внутри коммита B
+R1 M2 (first-match rc):          False   <- первый check_lean_paths rc=1 (КРАСНЫЙ-ДО) vs перезапуск 0
+R1 M3: True  M4: True  M5: True
+R1 verdict на честной записи: FAIL (G провалил M1/M2 -> FAIL)
+
+ПРИБОР ЛЖЁТ: честная запись реального паттерна (самореф head + before/after) проваливает
+M1/M2 — дефект F-0090. Исправление R2: M1' структура коммита из git, M2' пост-дельта rc.
+См. continuity-r2-instrument-green-after.txt (R2 принимает ту же запись + ловит 11 подложенных
++ валидация на реальных R1 записях G/D: M1/M2 False -> M1'/M2' True).
+
+## 2. check_lean_paths.py — КРАСНЫЙ на 3 немигрированных (носитель задачи N4)
+
+# N4: статическая проверка путей Lean (check_lean_paths)
+
+статических проблем: 9
+  - bridge_lean.py: хардкод пути доказательств (C:/111/env/lean/proofs)
+  - bridge_lean.py: устаревший toolchain (v4.36.0-rc1)
+  - bridge_parts.py: хардкод пути доказательств (C:/111/env/lean/proofs)
+  - bridge_parts.py: устаревший toolchain (v4.36.0-rc1)
+  - session_types.py: хардкод пути доказательств (C:/111/env/lean/proofs)
+  - session_types.py: устаревший toolchain (v4.36.0-rc1)
+  - bridge_lean.py: не импортирует резолвер (from bin.lean_paths import)
+  - bridge_parts.py: не импортирует резолвер (from bin.lean_paths import)
+  - session_types.py: не импортирует резолвер (from bin.lean_paths import)
+
+  NC fail-closed: exit 3 (несуществующий HERNESS_PROOFS отвергнут)
+  позитивный контроль: exit 0, proofs=C:\111\harness\proofs
+
+## FAIL (хардкод остался / резолвер не подключён / fail-closed сломан)
+
+вердикт: КРАСНЫЙ
+
+## Что это не доказывает
+
+- что Lean-доказательства собраны: Lean на хосте не вызывается, проверяется разрешение путей;
+- что N4 закрыт как proof-вопрос: статическая проверка путей ≠ сборка Proofs;
+- что прибор ловит произвольный дефект путей: он ловит регрессию ЭТОГО хардкода + fail-closed.

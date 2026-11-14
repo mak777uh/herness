@@ -67,10 +67,10 @@ ID из очереди: <H-… / N… / этап …>   Статус: DONE | PAR
 
 ---
 
-<!-- HANDOFF-A-START: CONTINUITY-R1 заполненный handoff агента A (ветвь G). Ветвь D: содержимое между маркерами stripped, шаблон и инфраструктура остаются. -->
-## Передача смены — CONTINUITY-R1 (агент A, 13.11.2026)
+<!-- HANDOFF-A-START: CONTINUITY-R2 заполненный handoff агента A (ветвь G). Ветвь D: содержимое между маркерами stripped, шаблон и инфраструктура остаются. -->
+## Передача смены — CONTINUITY-R2 (агент A, 13.11.2026)
 
-Verified HEAD: `28e1134` (до коммита A; коммит A смещает HEAD — сверить `git rev-parse HEAD`, шаг RECONCILE)
+Verified HEAD: `15bb625` (до коммита A_R2; коммит A_R2 и setup-коммит ветви смещают HEAD — сверить `git rev-parse HEAD`, шаг RECONCILE, не верить числу на слово)
 Ветка / дерево: main / clean (синхронно с origin)
 
 ### Задача
@@ -80,15 +80,16 @@ ID из очереди: **N4** (host-side; `docs/AUDIT-PLAN.md` §4, табли�
 ### Что сделал A
 - Резолвер `bin/lean_paths.py`: `proofs_dir()` (репо `proofs/`, env `HERNESS_PROOFS`, fail-closed exit 3), `lean_bin()` (toolchain из `proofs/lean-toolchain` = rc2, не rc1).
 - Замороженный прибор `bin/check_lean_paths.py` (0 хардкодов в `bin/*.py`, все 5 импортируют резолвер, fail-closed NC, позитивный контроль).
-- Скорер `bin/check_continuity.py` (независимый: перезапускает команды B сам, не верит прозе).
+- Скорер преемственности R1 `bin/check_continuity.py` ЗАМОРОЖЕН (replay воспроизводит FAIL G 2/5 D 3/5). R2 — отдельный исправленный прибор `bin/check_continuity_r2.py` (фикс дефектов F-0090: M1' структура коммита из git, M2' пост-дельта rc, M3' allowlist согласован с инструкцией B, NC' реалистичная запись) + прибор-проверщик `bin/check_continuity_r2_verdict.py`. Критерий M4/M5/вердикт НЕ ослаблены.
 - Мигрированы **2 из 5**: `bin/lean_check.py`, `bin/policy_diff.py`.
 
 ### Проверено (команда → exit code → артефакт)
 - `python bin/check_lean_paths.py` → **1 (КРАСНЫЙ)** → `research/outputs/continuity-red-before.txt` (3 немигрированных: `bridge_lean.py`, `bridge_parts.py`, `session_types.py`; fail-closed NC exit 3, позитивный контроль exit 0)
 - `python bin/gate_docs.py` → **0** → вывод команды
-- `python bin/seal.py verify-all` → **0** (16 печатей) → вывод команды
-- `python bin/lab.py validate` → **0** (22 эксперимента) → вывод команды
-- `python bin/check_continuity.py --selftest` → **0** (ПРИБОР ЧЕСТЕН) → `research/outputs/continuity-red-before.txt`
+- `python bin/seal.py verify-all` → **0** (17 печатей) → вывод команды
+- `python bin/lab.py validate` → **0** (23 эксперимента) → вывод команды
+- `python bin/check_continuity_r2.py --selftest` → **0** (ПРИБОР ЧЕСТЕН: реалистичный позитивный контроль + 11 подложенных) → `research/outputs/continuity-r2-instrument-green-after.txt`
+- `python bin/check_continuity_r2_verdict.py` → **0** (ПРИБОР ЧЕСТЕН: фикс M1'/M2' принят на РЕАЛЬНЫХ записях R1, G/D False→True) → `research/outputs/continuity-r2-instrument-green-after.txt`
 
 ### Не проверено (явно)
 - **Lean на хосте не вызывается** (`~/.elan/toolchains` может отсутствовать, `lean`/`lake` не на PATH). N4 проверяется СТАТИЧЕСКИ (разрешение путей + fail-closed), не сборкой доказательств. **N4 как proof-вопрос остаётся открытым.**
@@ -96,12 +97,12 @@ ID из очереди: **N4** (host-side; `docs/AUDIT-PLAN.md` §4, табли�
 
 ### Не повторять
 - crash-resume и HSJ2-kind DONE (F-0087/F-0086) — не «чинить» закрытое.
-- Приборы `check_lean_paths.py`, `check_continuity.py`, `lean_paths.py` ЗАМОРОЖЕНЫ (хеш в ключе ответа) — **не редактировать**.
+- Приборы `check_lean_paths.py`, `lean_paths.py`, `check_continuity.py` (R1), `check_continuity_r2.py`, `check_continuity_r2_verdict.py` ЗАМОРОЖЕНЫ (хеш в ключе ответа) — **не редактировать**. Критерий R2 не ослаблять.
 
 ### Изменённые файлы (A)
-- `bin/lean_paths.py`, `bin/check_lean_paths.py`, `bin/check_continuity.py` (новые); `bin/lean_check.py`, `bin/policy_diff.py` (миграция)
-- `docs/ADR-0059-continuity-test.md`, `lab/prereg/CONTINUITY-R1.json` (+`.sha256`), `lab/registry.json` (E-0022)
-- `research/outputs/continuity-red-before.txt`, `research/outputs/continuity-record.template.json`
+- `bin/check_continuity_r2.py`, `bin/check_continuity_r2_verdict.py` (новые, R2); резолвер/`check_lean_paths.py`/`check_continuity.py`/миграция 2 скриптов — из R1, не тронуты
+- `docs/ADR-0060-continuity-r2.md`, `lab/prereg/CONTINUITY-R2.json` (+`.sha256`), `lab/registry.json` (E-0023), `depths.json`, `.gitattributes`
+- `research/outputs/continuity-r2-instrument-red-before.txt`, `research/outputs/continuity-r2-instrument-green-after.txt`, `research/outputs/continuity-record.template.json`
 
 ### Точное следующее действие
 1. **N4**: мигрировать 3 оставшихся скрипта на резолвер — `bin/bridge_lean.py:23`, `bin/bridge_parts.py:23`, `bin/session_types.py:23`. Заменить двухстрочный блок `PROOFS = Path(...)` / `BIN = Path.home()...rc1...` на тот же, что в `lean_check.py`/`policy_diff.py`:
@@ -113,11 +114,12 @@ ID из очереди: **N4** (host-side; `docs/AUDIT-PLAN.md` §4, табли�
    BIN = lean_bin()
    ```
    Строка `MODEL = PROOFS / "Proofs" / ...` ниже остаётся без изменений.
-2. Проверить (команды K): `python bin/check_lean_paths.py` → **0 (ЗЕЛЁНЫЙ)**; `python bin/gate_docs.py` → 0; `python bin/seal.py verify-all` → 0; `python bin/lab.py validate` → 0.
-3. Записать `research/outputs/continuity-record.json` по шаблону `research/outputs/continuity-record.template.json` (arm, base_head, head, next_action_id, commands[cmd,rc], files_changed, status, notes с разделом «не проверено»). Закоммитить.
+2. Проверить (команды K): `python bin/check_lean_paths.py` → **0 (ЗЕЛЁНЫЙ)**; `python bin/gate_docs.py` → 0; `python bin/seal.py verify-all` → 0; `python bin/lab.py validate` → 0. Журнал «КРАСНЫЙ-ДО(1) → ЗЕЛЁНЫЙ-ПОСЛЕ(0)» честен: записать ОБА замера (до миграции rc=1, после rc=0), не только финальный.
+3. Записать `research/outputs/continuity-record.json` по шаблону `research/outputs/continuity-record.template.json` (arm, base_head, head, next_action_id, commands[cmd,rc], files_changed, status, notes с разделом «не проверено»). base_head/head читать из `git rev-parse HEAD` (до/после своего коммита), не из этого handoff.
+4. Закоммитить **ТОЛЬКО 4 файла**: `bin/bridge_lean.py`, `bin/bridge_parts.py`, `bin/session_types.py`, `research/outputs/continuity-record.json`. **НЕ создавать и НЕ коммитить артефакты скорера** (`continuity-green-after.txt`, `continuity-verdict.json`, `continuity-gates.txt`, `continuity-rerun-*`, `continuity-delta-*`) — их пишет оркестратор из main. Не трогать прочие файлы.
 
 ### Бюджет / правило остановки
-- Одна задача (N4 host-side: миграция 3 скриптов). Не трогать гейты/CLAIMS/prereg/приборы/handoff. Остановиться после записи+коммита; Lean не собирать (не вызывается).
+- Одна задача (N4 host-side: миграция 3 скриптов). Не трогать гейты/CLAIMS/prereg/приборы/handoff. Остановиться после записи+коммита (4 файла); Lean не собирать (не вызывается).
 <!-- HANDOFF-A-END -->
 
 ---

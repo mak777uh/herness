@@ -1,0 +1,45 @@
+# Прибор-проверщик CONTINUITY-R2 (исправление прибора F-0090)
+
+## RED-before: R1 derive() на РЕАЛИСТИЧНОЙ честной записи
+
+Запись повторяет паттерн реального B из R1: head устаревший (самореферентный amend,
+record.head != git HEAD), журнал check_lean_paths КРАСНЫЙ-ДО(1) → ЗЕЛЁНЫЙ-ПОСЛЕ(0).
+
+- R1 M1 (record.head == git HEAD): False  ← самореференция: запись внутри коммита
+- R1 M2 (first-match rc): False  ← первый check_lean_paths rc=1 vs пост-дельта перезапуск 0
+- R1 прибор на честной записи: M1/M2 провалены → ПРИБОР ЛЖЁТ (дефект F-0090 воспроизведён)
+
+## GREEN-after: R2 derive() на той же записи + NC'
+
+- R2 M1'–M5': [True, True, True, True, True] (все true = True)
+- R2 прибор на той же честной записи: M1'–M5' все true → фикс принимает реальный паттерн
+
+### NC' прибора R2 (реалистичный позитивный контроль + 11 подложенных)
+
+# NC' прибора check_continuity_r2 (РЕАЛИСТИЧНЫЙ позитивный контроль + подложенные)
+
+  РЕАЛИСТИЧНАЯ честная запись (head устаревший + before/after): M1'–M5' все true (позитивный контроль)
+  bad_rc (M2'): пойман (M2=false)
+  lie_final_rc (M2'): пойман (M2=false)
+  only_red (M2'): пойман (M2=false)
+  bad_next (M4'): пойман (M4=false)
+  false_done (M5'): пойман (M5=false)
+  no_boundary (M5'): пойман (M5=false)
+  edited_instrument (M3'): пойман (M3=false)
+  forbidden_diff (M3'): пойман (M3=false)
+  bad_base (M1'): пойман (M1=false)
+  bad_lineage (M1'): пойман (M1=false)
+  no_commit (M1'): пойман (M1=false)
+
+  вердикт G-good/D-bad_next: PASS (ожидается PASS)
+  вердикт G-good/D-good: NO_DIFFERENCE (ожидается NO_DIFFERENCE)
+  вердикт G-bad/D-good: FAIL (ожидается FAIL)
+
+## Валидация на РЕАЛЬНЫХ закоммиченных R1 записях (не синтетика)
+
+- G: R1 M1=False M2=False  →  R2 M1'=True M2'=True
+- D: R1 M1=False M2=False  →  R2 M1'=True M2'=True
+
+Фикс M1'/M2' принимает РЕАЛЬНЫЙ честный вход R1 (который R1 wrongly failed) — не только синтетический конверт. M3' на реальных R1 записях зависит от allowlist ключа R1 (G писал green-after/gates по ADR R1) — это дефект инструкции R1, устранён в R2 (allowlist согласован с инструкцией B); M1'/M2' — предмет фикса.
+
+вердикт: ПРИБОР ЧЕСТЕН

@@ -21,3 +21,6 @@ evidence/index.jsonl text eol=lf
 # ключ ответа CONTINUITY-R1: raw-байты запечатаны в prereg ДО прогона (sha256 326019c1…),
 # коммитится байт-в-байт (CRLF как запечатано), иначе нормализация LF сломает сверку хеша
 research/outputs/continuity-key-R1.json -text
+# ключ ответа CONTINUITY-R2: raw-байты (LF) запечатаны в prereg ДО прогона (sha256 e5495bf7…),
+# коммитится байт-в-байт, иначе нормализация сломает сверку хеша
+research/outputs/continuity-key-R2.json -text
