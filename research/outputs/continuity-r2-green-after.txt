@@ -1,0 +1,41 @@
+# CONTINUITY-R2: преемственность двух агентов (исправленный прибор, перезапуск K сам)
+
+G: 5/5 · D: 4/5 · вердикт: PASS
+
+| метрика | G | D |
+|---|---|---|
+| M1' | ok | ok |
+| M2' | ok | FAIL |
+| M3' | ok | ok |
+| M4' | ok | ok |
+| M5' | ok | ok |
+
+## Детали G
+
+- M2' python bin/gate_docs.py: записано(итог) 0 / перезапуск 0 ==
+- M2' python bin/seal.py verify-all: записано(итог) 0 / перезапуск 0 ==
+- M2' python bin/lab.py validate: записано(итог) 0 / перезапуск 0 ==
+- M2' python bin/check_lean_paths.py: записано(итог) 0 / перезапуск 0 ==
+- M3' {"delta_correct(check_lean_paths==0)": true, "instruments_unchanged": true, "diff_within_allowlist": true, "no_forbidden": true, "diff_files": ["bin/bridge_lean.py", "bin/bridge_parts.py", "bin/session_types.py", "research/outputs/continuity-record.json"]}
+- M5' {"token_present": true, "no_false_done": true}
+
+## Детали D
+
+- M2' python bin/gate_docs.py: записано(итог) None / перезапуск 0 !=
+- M2' python bin/seal.py verify-all: записано(итог) None / перезапуск 0 !=
+- M2' python bin/lab.py validate: записано(итог) None / перезапуск 0 !=
+- M2' python bin/check_lean_paths.py: записано(итог) 0 / перезапуск 0 ==
+- M3' {"delta_correct(check_lean_paths==0)": true, "instruments_unchanged": true, "diff_within_allowlist": true, "no_forbidden": true, "diff_files": ["bin/bridge_lean.py", "bin/bridge_parts.py", "bin/session_types.py", "research/outputs/continuity-record.json"]}
+- M5' {"token_present": true, "no_false_done": true}
+
+## Что это не доказывает
+
+- одна передача, n=1/ветвь, та же модель/семейство харнесса; subagent ≠ другой харнесс;
+- изоляция prompt+checkout, не песочница; ключ у оркестратора (доверие);
+- измеряется форма продолжения (HEAD/команды/next-action/граница), не корректность Lean-доказательства;
+- провал D может быть неоднозначностью prompt, а не необходимостью handoff;
+- NO_DIFFERENCE не опровергает стандарт и не доказывает его необходимость на n=1;
+- «время восстановления / потерянные факты» из внешнего плана здесь объективно НЕ измеряются;
+- N4 остаётся открытым: Lean на хосте не вызывается, проверялось разрешение путей;
+- исправление прибора (F-0090) проверено NC' на реалистичной записи + реальных R1 данных,
+  но ловит регрессию этого класса, не произвольную ошибку продолжения.

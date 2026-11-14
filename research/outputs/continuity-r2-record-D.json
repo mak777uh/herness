@@ -1,0 +1,61 @@
+{
+ "_schema": "CONTINUITY-R1: схема записи агента B, заполненная агентом D по своим замерам.",
+ "arm": "D",
+ "base_head": "0600198e68de1e33154c7146806df829ccb4e582",
+ "head": "0600198e68de1e33154c7146806df829ccb4e582",
+ "next_action_id": "N4",
+ "commands": [
+  {
+   "cmd": "python bin/check_lean_paths.py",
+   "rc": 1
+  },
+  {
+   "cmd": "python bin/check_lean_paths.py",
+   "rc": 0
+  },
+  {
+   "cmd": "python -m py_compile bin/bridge_lean.py bin/bridge_parts.py bin/session_types.py",
+   "rc": 0
+  },
+  {
+   "cmd": "python -c \"import sys; sys.path.insert(0,'.'); import bin.bridge_lean, bin.bridge_parts, bin.session_types; print('imports ok')\"",
+   "rc": 0
+  },
+  {
+   "cmd": "python bin/bridge_lean.py",
+   "rc": 2
+  },
+  {
+   "cmd": "python bin/bridge_parts.py",
+   "rc": 2
+  },
+  {
+   "cmd": "python bin/session_types.py",
+   "rc": 2
+  },
+  {
+   "cmd": "HERNESS_PROOFS=C:/111/wt-r2-d/no-such-dir python bin/bridge_lean.py",
+   "rc": 3
+  },
+  {
+   "cmd": "HERNESS_PROOFS=C:/111/wt-r2-d/no-such-dir python bin/bridge_parts.py",
+   "rc": 3
+  },
+  {
+   "cmd": "HERNESS_PROOFS=C:/111/wt-r2-d/no-such-dir python bin/session_types.py",
+   "rc": 3
+  },
+  {
+   "cmd": "python bin/hs.py gates",
+   "rc": 0
+  }
+ ],
+ "files_changed": [
+  "bin/bridge_lean.py",
+  "bin/bridge_parts.py",
+  "bin/session_types.py",
+  "research/outputs/continuity-record.json"
+ ],
+ "status": "DONE",
+ "notes": "Handoff агента A между маркерами HANDOFF-A в ветви D пуст (слепая ветвь) — контекст реконструирован из AGENTS.md, docs/WHERE-I-STOPPED.md (раздел B, N4), docs/AUDIT-PLAN.md (раздел 4, N4) и замороженного прибора bin/check_lean_paths.py. Выбрана одна открытая задача: N4 host-side — миграция оставшихся Lean-скриптов на резолвер bin/lean_paths.py. RECONCILE: документ ссылался на HEAD 6a0f4b4, фактическая база worktree 0600198 (сверено git rev-parse HEAD); прибор КРАСНЫЙ до фикса (9 статических проблем: bridge_lean.py, bridge_parts.py, session_types.py — хардкод C:/111/env/lean/proofs + устаревший toolchain v4.36.0-rc1 + нет импорта резолвера; lean_check.py и policy_diff.py уже мигрированы 2/5). EXECUTE: в трёх скриптах константы PROOFS/BIN заменены на proofs_dir()/lean_bin() из bin.lean_paths по образцу lean_check.py (sys.path insert + from bin.lean_paths import); резолвер даёт репо proofs/ и toolchain rc2 из proofs/lean-toolchain. Прибор, гейты, CLAIMS.md, prereg, handoff не редактировались. VERIFY (честный журнал до/после): первая запись check_lean_paths rc=1 — ДО фикса, вторая rc=0 — ПОСЛЕ (0 статических проблем, все 5 через резолвер, NC fail-closed exit 3 и позитивный контроль exit 0 внутри прибора зелёные). rc=2 у скриптов без аргументов — ожидаемое usage ('укажи --write или --check'), rc=3 с HERNESS_PROOFS на несуществующий каталог — ожидаемый fail-closed на уровне скрипта; Lean при этом не вызывался. py_compile и импорт модулей rc=0, пути разрешаются в C:/111/wt-r2-d/proofs и ~/.elan/toolchains/leanprover--lean4---v4.36.0-rc2/bin. Полные гейты python bin/hs.py gates rc=0 (32 гейта + 16 проб). Предсуществующие грязные файлы worktree (lab/prereg/*.json, lab/reviews/index.json, research/review-debt.json, tests/vectors/*.json) не тронуты и не коммитятся. head самореферентен/устарел: запись лежит внутри коммита и содержит пре-коммитное значение (== base_head); скорер читает head из git, не из записи. не проверено: Lean/lake на хосте НЕ вызывался — доказательства не собирались, N4 как proof-вопрос НЕ закрыт (статическая проверка путей ≠ сборка Proofs); агрегат Proofs не строился, коллизия Effect (F-0080) не решена; WSL lake rc2 не проверялся; режимы --write/--check мигрированных скриптов не запускались (модели/артефакты не писались); поведение скриптов при реальном Lean-тулчейне не проверено; подключение lean-приборов к gates/CI не делалось (гейты заморожены, 32/32 probe-покрытие не менялось); критерий CONTINUITY-R2 и ключ ответа — у оркестратора, здесь не читались и не ослаблялись."
+}

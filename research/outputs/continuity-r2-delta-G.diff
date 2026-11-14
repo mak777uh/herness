@@ -1,0 +1,88 @@
+diff --git a/bin/bridge_lean.py b/bin/bridge_lean.py
+index 1f4014f..6cc8f82 100644
+--- a/bin/bridge_lean.py
++++ b/bin/bridge_lean.py
+@@ -20,8 +20,11 @@ import sys
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+-PROOFS = Path("C:/111/env/lean/proofs")
+-BIN = Path.home() / ".elan" / "toolchains" / "leanprover--lean4---v4.36.0-rc1" / "bin"
++if str(ROOT) not in sys.path:
++    sys.path.insert(0, str(ROOT))
++from bin.lean_paths import proofs_dir, lean_bin  # noqa: E402
++PROOFS = proofs_dir()
++BIN = lean_bin()
+ OUT = ROOT / "research" / "outputs" / "bridge-lean.txt"
+ MODEL = PROOFS / "Proofs" / "Bridge.lean"
+ 
+diff --git a/bin/bridge_parts.py b/bin/bridge_parts.py
+index 10bc2a8..f91b3cb 100644
+--- a/bin/bridge_parts.py
++++ b/bin/bridge_parts.py
+@@ -20,8 +20,11 @@ import sys
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+-PROOFS = Path("C:/111/env/lean/proofs")
+-BIN = Path.home() / ".elan" / "toolchains" / "leanprover--lean4---v4.36.0-rc1" / "bin"
++if str(ROOT) not in sys.path:
++    sys.path.insert(0, str(ROOT))
++from bin.lean_paths import proofs_dir, lean_bin  # noqa: E402
++PROOFS = proofs_dir()
++BIN = lean_bin()
+ OUT = ROOT / "research" / "outputs" / "bridge-parts.txt"
+ MODEL = PROOFS / "Proofs" / "Parts.lean"
+ 
+diff --git a/bin/session_types.py b/bin/session_types.py
+index 04a251a..d48cd8d 100644
+--- a/bin/session_types.py
++++ b/bin/session_types.py
+@@ -20,8 +20,11 @@ import sys
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+-PROOFS = Path("C:/111/env/lean/proofs")
+-BIN = Path.home() / ".elan" / "toolchains" / "leanprover--lean4---v4.36.0-rc1" / "bin"
++if str(ROOT) not in sys.path:
++    sys.path.insert(0, str(ROOT))
++from bin.lean_paths import proofs_dir, lean_bin  # noqa: E402
++PROOFS = proofs_dir()
++BIN = lean_bin()
+ OUT = ROOT / "research" / "outputs" / "session-types.txt"
+ MODEL = PROOFS / "Proofs" / "Session.lean"
+ 
+diff --git a/research/outputs/continuity-record.json b/research/outputs/continuity-record.json
+new file mode 100644
+index 0000000..e4413a1
+--- /dev/null
++++ b/research/outputs/continuity-record.json
+@@ -0,0 +1,27 @@
++{
++ "arm": "G",
++ "base_head": "cbcc8bc63b512bd86e88e9d4d1838cb1224ffe72",
++ "head": "cbcc8bc63b512bd86e88e9d4d1838cb1224ffe72",
++ "next_action_id": "N4",
++ "commands": [
++  {"cmd": "python bin/check_lean_paths.py", "rc": 1},
++  {"cmd": "python bin/check_lean_paths.py", "rc": 0},
++  {"cmd": "python bin/gate_docs.py", "rc": 0},
++  {"cmd": "python bin/seal.py verify-all", "rc": 0},
++  {"cmd": "python bin/lab.py validate", "rc": 0},
++  {"cmd": "python bin/hs.py gates", "rc": 0},
++  {"cmd": "python bin/bridge_lean.py --help", "rc": 0},
++  {"cmd": "python bin/bridge_parts.py --help", "rc": 0},
++  {"cmd": "python bin/session_types.py --help", "rc": 0},
++  {"cmd": "python bin/lean_paths.py", "rc": 0},
++  {"cmd": "python bin/lean_paths.py --bin", "rc": 0}
++ ],
++ "files_changed": [
++  "bin/bridge_lean.py",
++  "bin/bridge_parts.py",
++  "bin/session_types.py",
++  "research/outputs/continuity-record.json"
++ ],
++ "status": "DONE",
++ "notes": "N4 (host-side): мигрированы 3 оставшихся Lean-скрипта на резолвер bin/lean_paths.py — bin/bridge_lean.py, bin/bridge_parts.py, bin/session_types.py. Двухстрочный хардкод PROOFS=Path('C:/111/env/lean/proofs') / BIN=...leanprover--lean4---v4.36.0-rc1... заменён на блок из handoff (sys.path.insert(ROOT) + from bin.lean_paths import proofs_dir, lean_bin + PROOFS=proofs_dir() + BIN=lean_bin()); строки OUT/MODEL ниже не тронуты. Дельта минимальна: 3 файла, +15/-6 (по +5/-2 на файл). Теперь 5/5 скриптов через резолвер (lean_check.py и policy_diff.py мигрированы агентом A в R1, не тронуты). Замороженные приборы (check_lean_paths.py, lean_paths.py, check_continuity*.py), гейты, CLAIMS.md, prereg, handoff НЕ редактировались. ЧЕСТНЫЙ ЖУРНАЛ ДО/ПОСЛЕ: commands[0] = КРАСНЫЙ-ДО миграции, python bin/check_lean_paths.py rc=1 (9 статических проблем: 3 скрипта x (хардкод пути + устаревший toolchain rc1 + нет импорта резолвера); NC fail-closed exit 3 и позитивный контроль exit 0 работали уже до фикса); commands[1] = ЗЕЛЁНЫЙ-ПОСЛЕ, rc=0 (статических проблем 0, NC fail-closed exit 3, позитивный контроль exit 0, вердикт ЗЕЛЁНЫЙ). Критерий/порог не ослаблялся. RECONCILE: база worktree cbcc8bc (detached HEAD, метка ветви G задана оркестратором), дерево до коммита чистое; снимок handoff (HEAD 15bb625, печати 17) устарел относительно базы — setup-коммит cbcc8bc ослепил аппаратуру и удалил артефакты R1, фактически seal.py verify-all проверяет 16 печатей, проблем 0 (rc=0); lab.py validate: 23 эксперимента, 6 следующих гипотез (rc=0); hs.py gates rc=0 (32 гейта + FAST-пробы 16/16). Резолвер фактически разрешает: python bin/lean_paths.py -> C:\\111\\wt-r2-g\\proofs (репо, не внешний каталог), python bin/lean_paths.py --bin -> C:\\Users\\Admin\\.elan\\toolchains\\leanprover--lean4---v4.36.0-rc2\\bin (toolchain rc2 из proofs/lean-toolchain, не rc1). Смоук миграции: --help каждого из 3 скриптов rc=0 — модуль импортируется, резолвер отрабатывает на уровне модуля, Lean не вызывается; запуск без аргументов даёт ожидаемый usage-exit rc=2 ('укажи --write или --check'), это не дефект. head САМОРЕФЕРЕНТЕН/УСТАРЕЛ: запись лежит внутри коммита и не может знать хеш собственного коммита, поэтому поле head содержит пре-коммитное значение (= base_head); фактический head читать из git rev-parse HEAD ПОСЛЕ коммита, не из этой записи. Артефакты скорера (continuity-green-after.txt, continuity-verdict.json, continuity-gates.txt, continuity-rerun-*, continuity-delta-*) НЕ создавались и НЕ коммитятся — их пишет оркестратор. НЕ ПРОВЕРЕНО: (1) Lean на хосте НЕ вызывается и НЕ собирается — lean/lake не на PATH, ~/.elan/toolchains может отсутствовать; N4 проверен ТОЛЬКО статически (разрешение путей + fail-closed), N4 как proof-вопрос остаётся ОТКРЫТЫМ, закрытие Lean/N4 как proof-вопроса НЕ заявляется; (2) полная сборка Proofs не запускалась — по handoff она красная (F-0080, конфликт namespace Effect), это отдельный дефект, не N4; (3) режимы --write/--check мигрированных скриптов не запускались (писали бы модели в proofs/ и вызывали Lean); (4) исполнитель WSL lake rc2 (пункт N4 в AUDIT-PLAN) не проверялся — миграция меняет только разрешение путей, не исполнитель; (5) соответствие Lean-моделей коду моста не проверялось (доказаны свойства модели, не кода); (6) скорер преемственности R2 (check_continuity_r2.py / _verdict.py) не запускался — он заморожен и ослеплён setup-коммитом, вердикт преемственности выносит оркестратор; (7) pre-commit hook прогонит полные гейты при коммите — отдельный замер hook в этой записи не отражён, замер hs.py gates выше сделан вручную до коммита."
++}
+\ No newline at end of file
