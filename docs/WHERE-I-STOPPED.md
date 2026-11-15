@@ -16,6 +16,7 @@
 | печати | `python bin/seal.py verify-all` | 17 проверено, 0 проблем |
 | реестр опытов | `python bin/lab.py validate` | связен: 25 экспериментов, 6 следующих гипотез (E-0025 — эта смена) |
 | Rust-тесты | `python bin/rust_tests.py` (WSL) | 75 lib-тестов, 0 провалов; путь берётся от `ROOT` — было: чужой чекаут (F-0092) |
+| CI на GitHub | `gh run list` | **первый зелёный прогон** `43749183429` (commit `fb9d9cb`): 4/4 job'а — гейты `auto` 27 с, Rust `cargo test --lib` 23 с, `verify_claims --fast` 17 с, selftest 12 с. До этого 383 прогона — 383 падения |
 | образ комнаты | `python bin/build_room.py --check` | **не перемерялся в этой смене**; последний замер 12.11: rc=1 (дрейф образа) |
 
 ## Смена 15.11.2026 — фаза 0: «прибор честен» (E-0025, prereg `PHASE0-CI-GREEN`)
@@ -43,7 +44,9 @@
 - `python bin/hs.py gates --profile full` → **1** (ровно 2 причины, обе «нет данных») → `research/outputs/gates-full-after-phase0.txt`
 - `python bin/hs.py selftest` → **0**; `python bin/rust_tests.py` → **0** (75 тестов, путь своего клона); `python bin/check_probe_coverage.py` → **0** (ПРИБОР ЧЕСТЕН); `python bin/readme_numbers.py` → **0**
 
-**Не проверено.** CI на ubuntu не наблюдался в этой смене — первое измерение будет на пуше; Lean не
+**Проверено на пуше.** CI на ubuntu зелёный: прогон `43749183429`, 4/4 job'а (первый успех из 384 прогонов).
+
+**Не проверено.** Lean не
 вызывался (N4 закрыт по путям, сборка `Proofs` — отдельно от этого); QEMU и комната не перемерялись;
 Rust в CI (`cargo test --lib`) — тоже первое измерение на пуше. Локально Windows-сборка Rust
 невозможна (сломан `windows-gnu` линковщик) — канонический путь `bin/rust_tests.py` в WSL.
