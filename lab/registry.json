@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-11-14",
+ "updated_at": "2026-11-15",
  "program": {
   "name": "herness",
   "phase": "M0: прибор собран, внешних задач нет; идёт проверка предпосылки ядра",
@@ -254,6 +254,14 @@
    "note": "Code-fix (не эксперимент, пре-регистрация не требуется; статус retro — запись без prereg, по дисциплине code-fix требует ADR + RED→GREEN, не prereg): F-0080 class false-green — Policy.lean и PartBridge.lean независимо объявляли Effect/Rule/hasAllow/hasDeny в корне, поодиночке каждый модуль зелёный, а корневой Proofs.lean (импортирует оба) красный «environment already contains 'Effect.rec' from Proofs.Policy»; приборы lean_check/bridge_parts собирали только свои модули и конфликт не видели. ADR-0061: namespace Policy (abbrev Policy→Rules, ссылки (p : Policy)→(p : Rules)) и namespace PartBridge; объявления стали Policy.*/PartBridge.*. Каскад: Probe.lean и THEOREMS в lean_check.py/lean_wsl.py — префикс Policy.; Negative.lean — open Policy; PartBridgeNegative.lean — open PartBridge. RED-before: lake build Proofs rc=1 (Effect.rec), каждый модуль отдельно rc=0. GREEN-after (bin/lean_wsl.py, WSL Ubuntu rc2, путь из резолвера lean_paths): агрегат lake build Proofs rc=0 «Build completed successfully (10 jobs)», контуры Proofs.Policy/Proofs.PartBridge rc=0, 11 теорем (6 Policy + 5 PartBridge) только на стандартных аксиомах (propext, Classical.choice, Quot.sound), оба NC отвергнуты (Proofs.Negative и Proofs.PartBridgeNegative — unsolved goals). Журнал research/outputs/lean-wsl-check.txt. Исполнитель lean_wsl.py расширен: агрегат — обязательная часть вердикта + контур моста + его аксиомы + второй NC. Граница: доказаны свойства моделей, не соответствие Rust-кода моделям (сверка policy_diff/PartBridgeDiff отдельно); исполнитель host-only (WSL), НЕ CI-гейт (ubuntu-latest без WSL/Lean, сборка в CI требует установки Lean rc2); прибор ловит регрессию сборки агрегата, не произвольную коллизию имён. Замороженные приборы (lean_paths, check_lean_paths, check_continuity*) не тронуты; гейты не ослаблены.",
    "conclusion": "lab/failures/F-0080.md",
    "claim": "C-0303"
+  },
+  {
+   "id": "E-0025",
+   "title": "PHASE0-CI-GREEN: профили гейтов auto/full — чистый клон получает зелёный вердикт без ослабления full",
+   "hypothesis": "Красный CI объясняется смешением классов проверок (состояние репозитория против состояния машины), а не дефектами механизма",
+   "prereg": "lab/prereg/PHASE0-CI-GREEN.json",
+   "status": "running",
+   "note": "Красных групп на HEAD 2d556ee — 6: утверждения-проверка (7 утверждений без свидетельств в клоне), журналы, rust, покрытие, индекс прогонов, пробы(rust). Порог запечатан ДО прогона: lab/prereg/PHASE0-CI-GREEN.json (sidecar .sha256)."
   }
  ]
 }

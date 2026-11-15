@@ -40,13 +40,28 @@ def wsl(script: str, timeout: int = 900) -> tuple[int, str]:
     return result.returncode, (result.stdout or "") + (result.stderr or "")
 
 
+def wsl_path(path: pathlib.Path) -> str:
+    """Windows-путь → путь WSL (/mnt/<drive>/...), без захардкоженного каталога.
+
+    Было: жёстко записанный каталог C:/111/herness/core-rs — тесты гоняли **другой чекаут** и давали зелёное
+    про тот код, которого в этом репозитории может не быть. Тот же класс, что N4.
+    """
+    text = path.resolve().as_posix()
+    if re.match(r"^[A-Za-z]:/", text):
+        return "/mnt/" + text[0].lower() + text[2:]
+    return text
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Rust-тесты ядра в WSL")
     parser.add_argument("--build", action="store_true", help="только сборка")
     args = parser.parse_args(argv)
 
     command = "cargo build --release" if args.build else "cargo test --release --lib"
-    script = (f"cd /mnt/c/111/herness/core-rs && {CLEAN} && "
+    core_wsl = wsl_path(CORE)
+    # fail-closed: нет каталога — это отказ с кодом 3, а не «0 тестов = успех».
+    guard = (f"test -d '{core_wsl}' || {{ echo \"нет каталога: {core_wsl}\" >&2; exit 3; }}; ")
+    script = (guard + f"cd '{core_wsl}' && {CLEAN} && "
               f"CARGO_NET_OFFLINE=true rustup run stable {command} 2>&1")
 
     code, out = wsl(script)

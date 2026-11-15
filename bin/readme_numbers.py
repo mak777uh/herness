@@ -54,12 +54,9 @@ def facts() -> dict[str, str]:
         found = re.search(pattern, text)
         return found.group(1) if found else "?"
 
-    runs = "?"
-    if index:
-        try:
-            runs = str(len(json.loads(index).get("runs", {})))
-        except json.JSONDecodeError:
-            runs = "?"
+    # Число журналов — из артефакта в git, а не из runs/index.json: индекс
+    # гитигнорится, и значение, зависящее от машины, расходило README с самим собой.
+    runs = (read(ROOT / "research" / "outputs" / "runs-index-count.txt") or "вне git").strip()
     decisions = "?"
     if adoptions:
         try:

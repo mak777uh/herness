@@ -19,6 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / "runs" / "index.json"
 JOURNALS = ROOT / "runs" / "accept"
+# Число журналов, которое читает README: сам индекс не в git, а число — в git.
+COUNT = ROOT / "research" / "outputs" / "runs-index-count.txt"
 SERIES = [
     "p27-", "p27r2-", "refusal-", "refusal2-", "refusal3-", "musique3-", "musique4-",
     "musique5-", "musique6-", "musique7-", "hist-", "fix-", "h2-", "h3-", "h4-", "h5-", "h6-", "long-", "beam-", "ext-", "chain-", "plan-",
@@ -73,6 +75,10 @@ def build() -> int:
     INDEX.write_text(
         json.dumps({"schema": 1, "runs": entries}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
     )
+    # Число журналов живёт в git, сам индекс — нет: README обязан брать число из
+    # артефакта, иначе он расходится сам с собой в клоне и на машине (гейт README).
+    COUNT.parent.mkdir(parents=True, exist_ok=True)
+    COUNT.write_text(f"{len(entries)}\n", encoding="utf-8")
     print(f"записано: {INDEX.relative_to(ROOT)}; журналов {len(entries)}; без задачи {len(unresolved)}")
     for name in unresolved[:10]:
         print("  без задачи:", name)

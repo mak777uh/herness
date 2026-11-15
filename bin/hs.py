@@ -28,6 +28,25 @@ RUNS = ROOT / "runs"
 IS_WIN = sys.platform == "win32"
 
 
+class MissingData(Exception):
+    """Гейт не может быть оценён в этом окружении: данных нет — это не дефект репозитория.
+
+    Отсутствие `runs/` или `core-rs/target/` — это `unknown`, а не «ноль проблем»
+    (этап 1.5: отсутствие данных не читается как ноль) и не «дефект репозитория»
+    (382 из 383 прогонов CI были красными именно из-за этой подмены класса).
+
+    Чем считать unknown, решает профиль, а не гейт:
+      auto — N/A: печатается причиной и считается отдельно, вердикт по остальным;
+      full — провал: выпускать, не прогнав тесты, нельзя.
+
+    Молчаливый пропуск запрещён: причина всегда печатается, число N/A всегда считается.
+    """
+
+    def __init__(self, reason: str):
+        super().__init__(reason)
+        self.reason = reason
+
+
 # ---------------------------------------------------------------- helpers
 
 def now_iso() -> str:
@@ -698,6 +717,8 @@ def gate_journals(root: Path) -> list[str]:
     problems = []
     # мусор негативных тестов (test-*) журналами не считается
     candidates = [p for p in (root / "runs").glob("*") if p.is_dir() and not p.name.startswith("test-")]
+    if not candidates:
+        raise MissingData("нет runs/: журналов прогонов в клоне нет (каталог не в git)")
     runs = sorted(candidates, key=lambda p: p.stat().st_mtime)[-60:]
     checked = 0
     for run_dir in runs:
@@ -710,7 +731,7 @@ def gate_journals(root: Path) -> list[str]:
         if not report.ok:
             problems.append(f"{run_dir.name}: событие {report.broken_at} — {report.reason}")
     if checked == 0:
-        problems.append("ни одного журнала с цепочкой: проверить нечего")
+        raise MissingData("журналы есть, но ни одного с цепочкой событий: проверять нечего")
     return problems
 
 
@@ -1390,7 +1411,12 @@ def gate_rust(root: Path) -> list[str]:
     """
     from bin.gate_rust import check_fresh
 
-    return check_fresh()
+    problems = check_fresh()
+    # Артефакта нет вовсе — это не дрейф, а «в этом окружении не собирали».
+    # Дрейф (артефакт есть, но старше исходника) остаётся провалом в любом профиле.
+    if problems and all("нет артефактов ядра" in p for p in problems):
+        raise MissingData("нет core-rs/target/release: Rust-тесты в этом окружении не собирались")
+    return problems
 
 
 def gate_requirements(root: Path) -> list[str]:
@@ -1671,6 +1697,12 @@ def gate_runs_index(root: Path) -> list[str]:
     """Индекс прогонов: у каждого журнала есть запись, у каждой записи — существующий критерий."""
     import subprocess
 
+    # Индексировать нечего, если журналов нет: runs/ не в git, а тесты кладут туда
+    # свой мусор (test-*, как и в гейте журналов). «Нет журналов» — это N/A, а не развал.
+    accept = root / "runs" / "accept"
+    journals = list(accept.glob("*.bin")) if accept.exists() else []
+    if not journals:
+        raise MissingData("нет runs/accept/*.bin: журналов для индекса в клоне нет")
     script = root / "bin" / "runs_index.py"
     if not script.exists():
         return ["нет bin/runs_index.py"]
@@ -1714,8 +1746,21 @@ def cmd_gates(args) -> int:
     else:
         checks = circuit_a + circuit_b
     total = 0
+    profile = getattr(args, "profile", "auto")
+    skipped: list[tuple[str, str]] = []
     for name, fn in checks:
-        problems = fn(root)
+        try:
+            problems = fn(root)
+        except MissingData as exc:
+            # Гейт не может быть оценён здесь: данных нет. Это не «ok» и не «FAIL».
+            if profile == "full":
+                total += 1
+                print(f"[FAIL] {name}: 1 проблем")
+                print(f"   - {exc.reason} (профиль full: отсутствие данных считается провалом)")
+            else:
+                skipped.append((name, exc.reason))
+                print(f"[N/A] {name}: {exc.reason}")
+            continue
         total += len(problems)
         print(f"[{'ok' if not problems else 'FAIL'}] {name}: {len(problems)} проблем")
         for p in problems[:20]:
@@ -1731,19 +1776,31 @@ def cmd_gates(args) -> int:
 
             buffer = io.StringIO()
             with redirect_stdout(buffer):
-                code = run_probes(FAST)
+                code = run_probes(FAST, profile=profile)
             missed = [line.split()[0] for line in buffer.getvalue().splitlines()
                       if line.strip().endswith("НЕТ")]
+            na_probes = [line.strip() for line in buffer.getvalue().splitlines()
+                         if line.strip().startswith("не оценено:")]
             if code != 0:
                 total += len(missed) or 1
                 print(f"[FAIL] пробы: {len(missed)} гейтов не поймали подложенный дефект")
                 for name in missed:
                     print(f"   - {name}")
             else:
-                print(f"[ok] пробы: {len(FAST)} гейтов ловят подложенный дефект")
+                caught_line = [line.strip() for line in buffer.getvalue().splitlines()
+                               if line.strip().startswith("поймали:")]
+                tail = caught_line[0] if caught_line else f"{len(FAST)} гейтов"
+                print(f"[ok] пробы: {tail}")
+            if na_probes and profile != "full":
+                print(f"   N/A: {na_probes[0].removeprefix('не оценено: ')}")
         except Exception as exc:  # noqa: BLE001
             total += 1
             print(f"[FAIL] пробы: не запустились ({type(exc).__name__}: {exc})")
+    evaluated = len(checks) - len(skipped)
+    tail = f"; N/A {len(skipped)} ({', '.join(name for name, _ in skipped)})" if skipped else ""
+    print(f"\nпрофиль {profile}: оценено {evaluated} из {len(checks)} гейтов{tail}")
+    if skipped and profile != "full":
+        print("N/A — не «зелёный»: проверка не состоялась. Полный профиль: --profile full")
     return 0 if total == 0 else 1
 
 
@@ -1996,6 +2053,9 @@ def main(argv: list[str]) -> int:
                    help="не прогонять пробы гейтов (быстрый режим)")
     p.add_argument("--circuit", choices=["a", "b", "all"], default="all",
                    help="a — механизм, b — целостность репозитория, all — оба")
+    p.add_argument("--profile", choices=["auto", "full"], default="auto",
+                   help="auto — гейты без данных на этой машине печатаются как N/A (для чистого клона и CI); "
+                        "full — отсутствие данных считается провалом (перед выпуском)")
     p.set_defaults(func=cmd_gates)
 
     p = sub.add_parser("refs", help="справочник: репозитории и внешние источники")

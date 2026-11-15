@@ -506,9 +506,11 @@ FAST = [
 ]
 
 
-def run(names: list[str]) -> int:
+def run(names: list[str], profile: str = "full") -> int:
     rows = []
+    na_rows: list[tuple[str, str]] = []
     broken = 0
+    selected = [n for n in PROBES if not names or n in names]
     for name, (gate, inject) in PROBES.items():
         if names and name not in names:
             continue
@@ -538,6 +540,10 @@ def run(names: list[str]) -> int:
             rows.append((name, len(baseline), len(after), caught))
             if not caught:
                 broken += 1
+        except hs.MissingData as exc:
+            # Гейта нечем оценить в этом окружении (нет runs/ или target/).
+            # Это не «поймал» и не «не поймал»: проба не состоялась, и это печатается.
+            na_rows.append((name, exc.reason))
         finally:
             if in_place and mtime_backup is not None:
                 # Откат по времени: содержимое исходника не менялось.
@@ -555,10 +561,14 @@ def run(names: list[str]) -> int:
                 shutil.rmtree(clean, ignore_errors=True)
 
     lines = ["# Пробы гейтов: падает ли гейт на реалистичном дефекте", ""]
+    lines.append(f"набор: {len(selected)} проб")
     lines.append(f"{'гейт':16} до  после  поймал")
     for name, before, after, caught in rows:
         lines.append(f"{name:16} {before:>2}  {after:>5}  {'да' if caught else 'НЕТ'}")
     lines += ["", f"поймали: {len(rows) - broken} из {len(rows)}"]
+    if na_rows:
+        details = "; ".join(f"{name} — {reason}" for name, reason in na_rows)
+        lines.append(f"не оценено: {len(na_rows)} ({details})")
     text = "\n".join(lines) + "\n"
     # Быстрый набор не должен затирать отчёт о полном: у них разные файлы.
     name = "gate-probes-fast.txt" if set(names) == set(FAST) else "gate-probes.txt"
@@ -571,11 +581,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="пробы гейтов")
     parser.add_argument("--only", nargs="*", default=[])
     parser.add_argument("--list", action="store_true")
+    parser.add_argument("--profile", choices=["auto", "full"], default="auto")
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
     if args.list:
         print(", ".join(PROBES))
         return 0
-    return run(args.only)
+    return run(args.only, profile=args.profile)
 
 
 if __name__ == "__main__":

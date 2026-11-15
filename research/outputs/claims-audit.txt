@@ -1,12 +1,11 @@
 # Утверждения: может ли автор подтвердить себя собой
 
-утверждений: 300
-слабых ожиданий: 112
+утверждений: 298
+слабых ожиданий: 113
 
 | утверждение | ожидание | артефакт |
 |---|---|---|
 | C-0003 | npm | docs/DECISION-0001-base-os-language.md |
-| C-0005 | host boundary | refs-cache/nearai/ironclaw/README.md |
 | C-0008 | lake | вывод команды, 29.10.2026 |
 | C-0283 | поймал | вывод команды, 08.11.2026 |
 | C-0284 | итог: PASS | вывод команды, 08.11.2026 |
@@ -16,13 +15,14 @@
 | C-0298 | итог: PASS | research/outputs/room-live-green-after.txt |
 | C-0299 | ПРИБОР ЧЕСТЕН | research/outputs/probe-coverage-green-after.txt |
 | C-0300 | ПРИБОР ЧЕСТЕН | research/outputs/coverage-verdict-green-after.txt |
-| C-0012 | MISSING_CREDENTIAL | runs/*/stderr.log |
+| C-0301 | вердикт: FAIL | research/outputs/continuity-green-after.txt |
+| C-0302 | вердикт: PASS | research/outputs/continuity-r2-green-after.txt |
+| C-0303 | агрегат собран | research/outputs/lean-wsl-check.txt |
 | C-0014 |  | — |
 | C-0016 | permission denied | lab/pilot/out/T-01-L2.evidence.txt |
 | C-0017 | SECURITY DEFINER | lab/pilot/out/T-01-L2.evidence.txt |
 | C-0018 | FreeUsageLimitError | вывод пробы, 29.10.2026 |
 | C-0023 | бюджет: | tests/test_budget.py |
-| C-0030 | done | runs/glm-failure.log |
 | C-0034 | decision=REFUSE | bin/live_cases.py |
 | C-0037 | action=ask | bin/live_cases.py |
 
