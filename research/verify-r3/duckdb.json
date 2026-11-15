@@ -1,0 +1,20 @@
+{
+ "tool": "verify_repo 0.2.0",
+ "target": "duckdb",
+ "input_sha256": "d9c2afdbd78821e5cd28731bdefa22760374c7670ef2100cd4c44e2d8ced8a8a",
+ "generated_at": "2026-11-15T23:23:29+03:00",
+ "readme": "README.md",
+ "total": 1,
+ "with_command": 1,
+ "share": 1.0,
+ "broad_total": 1,
+ "broad_with_command": 1,
+ "claims": [
+  {
+   "line": 55,
+   "text": "For development, DuckDB requires CMake, Python 3 and a `C++17` compliant compiler. In the root directory, run `make` to compile the sources. For development, use `make debug` to build a non-optimized ",
+   "has_command": true
+  }
+ ],
+ "broad_without_command": []
+}

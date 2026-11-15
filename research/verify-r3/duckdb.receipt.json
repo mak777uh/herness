@@ -1,0 +1,12 @@
+{
+ "tool": "verify_repo 0.2.0",
+ "target": "duckdb",
+ "input_sha256": "d9c2afdbd78821e5cd28731bdefa22760374c7670ef2100cd4c44e2d8ced8a8a",
+ "generated_at": "2026-11-15T23:23:29+03:00",
+ "total": 1,
+ "with_command": 1,
+ "share": 1.0,
+ "broad_total": 1,
+ "broad_with_command": 1,
+ "how_to_check": "python bin/verify_repo.py <тот же вход> — json должен совпасть, кроме generated_at"
+}

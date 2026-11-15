@@ -1,0 +1,12 @@
+{
+ "tool": "verify_repo 0.2.0",
+ "target": "simdjson",
+ "input_sha256": "a4ad9631d2d1f83d8f27502e351e218f0b86c7e8e3fa631e607f45f5c7632c80",
+ "generated_at": "2026-11-15T23:23:26+03:00",
+ "total": 11,
+ "with_command": 0,
+ "share": 0.0,
+ "broad_total": 25,
+ "broad_with_command": 1,
+ "how_to_check": "python bin/verify_repo.py <тот же вход> — json должен совпасть, кроме generated_at"
+}

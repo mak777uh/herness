@@ -16,6 +16,7 @@
 | печати | `python bin/seal.py verify-all` | 17 проверено, 0 проблем |
 | реестр опытов | `python bin/lab.py validate` | связен: 25 экспериментов, 6 следующих гипотез (E-0025 — эта смена) |
 | Rust-тесты | `python bin/rust_tests.py` (WSL) | 75 lib-тестов, 0 провалов; путь берётся от `ROOT` — было: чужой чекаут (F-0092) |
+| `verify` на бенчмарках | `python bin/verify_repo.py <readme>` | R3: 17 строгих утверждений против 2, команда рядом у 1 из 5 (duckdb); порог FAIL, данные в `research/verify-r3/INDEX.md` |
 | `herness verify` | `python bin/verify_repo.py <url>` | 5 чужих репозиториев: 5 из 5 rc=0, повтор совпал; граница — только проза README (`research/verify/INDEX.md`) |
 | CI на GitHub | `gh run list` | **первый зелёный прогон** `43749183429` (commit `fb9d9cb`): 4/4 job'а — гейты `auto` 27 с, Rust `cargo test --lib` 23 с, `verify_claims --fast` 17 с, selftest 12 с. До этого 383 прогона — 383 падения |
 | образ комнаты | `python bin/build_room.py --check` | **не перемерялся в этой смене**; последний замер 12.11: rc=1 (дрейф образа) |

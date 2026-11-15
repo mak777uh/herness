@@ -1,0 +1,12 @@
+{
+ "tool": "verify_repo 0.2.0",
+ "target": "polars",
+ "input_sha256": "8bab4356a6dbd707e456dae150901f26c376bd38ce5094c8237b881173ac5007",
+ "generated_at": "2026-11-15T23:23:27+03:00",
+ "total": 2,
+ "with_command": 0,
+ "share": 0.0,
+ "broad_total": 3,
+ "broad_with_command": 1,
+ "how_to_check": "python bin/verify_repo.py <тот же вход> — json должен совпасть, кроме generated_at"
+}

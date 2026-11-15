@@ -1,0 +1,191 @@
+{
+ "tool": "verify_repo 0.2.0",
+ "target": "simdjson",
+ "input_sha256": "a4ad9631d2d1f83d8f27502e351e218f0b86c7e8e3fa631e607f45f5c7632c80",
+ "generated_at": "2026-11-15T23:23:26+03:00",
+ "readme": "README.md",
+ "total": 11,
+ "with_command": 0,
+ "share": 0.0,
+ "broad_total": 25,
+ "broad_with_command": 1,
+ "claims": [
+  {
+   "line": 13,
+   "text": "to parse JSON 4x  faster than RapidJSON and 25x faster than JSON for Modern C++.",
+   "has_command": false
+  },
+  {
+   "line": 15,
+   "text": "* **Fast:** Over 4x faster than commonly used production-grade JSON parsers.",
+   "has_command": false
+  },
+  {
+   "line": 101,
+   "text": "environments like Visual Studio and Xcode, but different steps are needed. Users of clang++ may need to specify the C++ version (e.g., `c++ -std=c++17`) since clang++ tends to default on C++98.",
+   "has_command": false
+  },
+  {
+   "line": 147,
+   "text": "* C++26 reflection example",
+   "has_command": false
+  },
+  {
+   "line": 176,
+   "text": "The simdjson library offers high speed whether it processes tiny files (e.g., 300 bytes)",
+   "has_command": false
+  },
+  {
+   "line": 182,
+   "text": "For NDJSON files, we can exceed 3 GB/s with our  multithreaded parsing functions.",
+   "has_command": false
+  },
+  {
+   "line": 241,
+   "text": "- John Keiser, Daniel Lemire, On-Demand JSON: A Better Way to Parse Documents?, Software: Practice and Experience 54 (6), 2024.",
+   "has_command": false
+  },
+  {
+   "line": 245,
+   "text": "- Geoff Langdale, Daniel Lemire, Parsing Gigabytes of JSON per Second, VLDB Journal 28 (6), 2019.",
+   "has_command": false
+  },
+  {
+   "line": 249,
+   "text": "- John Keiser, Daniel Lemire, Validating UTF-8 In Less Than One Instruction Per Byte, Software: Practice & Experience 51 (5), 2021.",
+   "has_command": false
+  },
+  {
+   "line": 257,
+   "text": "We also had a CppCon 2025 talk. We show how C++26 reflection allows for one-line serialization (to_json(player)) or deserialization—without invasive macros or manual mapping—using nothing but the C++ ",
+   "has_command": false
+  },
+  {
+   "line": 308,
+   "text": "For efficient number serialization, we bundle Junekey Jeon's implementation of the Dragonbox algorithm for binary to decimal floating-point numbers (https://github.com/jk-jeon/dragonbox). The Dragonbo",
+   "has_command": false
+  }
+ ],
+ "broad_without_command": [
+  {
+   "line": 13,
+   "text": "to parse JSON 4x  faster than RapidJSON and 25x faster than JSON for Modern C++.",
+   "has_command": false
+  },
+  {
+   "line": 15,
+   "text": "* **Fast:** Over 4x faster than commonly used production-grade JSON parsers.",
+   "has_command": false
+  },
+  {
+   "line": 16,
+   "text": "* **Record Breaking Features:** Minify JSON  at 6 GB/s, validate UTF-8  at 13 GB/s,  NDJSON at 3.5 GB/s.",
+   "has_command": false
+  },
+  {
+   "line": 18,
+   "text": "* **Strict:** Full JSON and UTF-8 validation, lossless parsing. Performance with no compromises.",
+   "has_command": false
+  },
+  {
+   "line": 99,
+   "text": "0. Prerequisites: `g++` (version 7 or better) or `clang++` (version 6 or better), and a 64-bit",
+   "has_command": false
+  },
+  {
+   "line": 101,
+   "text": "environments like Visual Studio and Xcode, but different steps are needed. Users of clang++ may need to specify the C++ version (e.g., `c++ -std=c++17`) since clang++ tends to default on C++98.",
+   "has_command": false
+  },
+  {
+   "line": 140,
+   "text": "* Compile-Time Parsing presents our compile-time parsing function (C++26 only).",
+   "has_command": false
+  },
+  {
+   "line": 147,
+   "text": "* C++26 reflection example",
+   "has_command": false
+  },
+  {
+   "line": 158,
+   "text": "C++ structs, using C++26 static reflection with GCC 16.2 (-O3). The task is to parse",
+   "has_command": false
+  },
+  {
+   "line": 162,
+   "text": "and Serde. The simdjson library offers full unicode (UTF-8)",
+   "has_command": false
+  },
+  {
+   "line": 176,
+   "text": "The simdjson library offers high speed whether it processes tiny files (e.g., 300 bytes)",
+   "has_command": false
+  },
+  {
+   "line": 182,
+   "text": "For NDJSON files, we can exceed 3 GB/s with our  multithreaded parsing functions.",
+   "has_command": false
+  },
+  {
+   "line": 241,
+   "text": "- John Keiser, Daniel Lemire, On-Demand JSON: A Better Way to Parse Documents?, Software: Practice and Experience 54 (6), 2024.",
+   "has_command": false
+  },
+  {
+   "line": 243,
+   "text": "Some people enjoy reading the first (2019) simdjson paper: A description of the design",
+   "has_command": false
+  },
+  {
+   "line": 245,
+   "text": "- Geoff Langdale, Daniel Lemire, Parsing Gigabytes of JSON per Second, VLDB Journal 28 (6), 2019.",
+   "has_command": false
+  },
+  {
+   "line": 247,
+   "text": "We have an in-depth paper focused on the UTF-8 validation:",
+   "has_command": false
+  },
+  {
+   "line": 249,
+   "text": "- John Keiser, Daniel Lemire, Validating UTF-8 In Less Than One Instruction Per Byte, Software: Practice & Experience 51 (5), 2021.",
+   "has_command": false
+  },
+  {
+   "line": 253,
+   "text": "For the video inclined, we had a talk at QCon San Francisco 2019<br />",
+   "has_command": false
+  },
+  {
+   "line": 257,
+   "text": "We also had a CppCon 2025 talk. We show how C++26 reflection allows for one-line serialization (to_json(player)) or deserialization—without invasive macros or manual mapping—using nothing but the C++ ",
+   "has_command": false
+  },
+  {
+   "line": 282,
+   "text": "RGPIN-2017-03910 and RGPIN-2024-03787.",
+   "has_command": false
+  },
+  {
+   "line": 302,
+   "text": "This code is made available under the Apache License 2.0 as well as under the MIT License. As a user, you can pick the license you prefer.",
+   "has_command": false
+  },
+  {
+   "line": 306,
+   "text": "For compilers that do not support C++17, we bundle the string-view library which is published under the Boost license. Like the Apache license, the Boost license is a permissive license allowing comme",
+   "has_command": false
+  },
+  {
+   "line": 308,
+   "text": "For efficient number serialization, we bundle Junekey Jeon's implementation of the Dragonbox algorithm for binary to decimal floating-point numbers (https://github.com/jk-jeon/dragonbox). The Dragonbo",
+   "has_command": false
+  },
+  {
+   "line": 310,
+   "text": "For runtime dispatching, we use some code from the PyTorch project licensed under 3-clause BSD.",
+   "has_command": false
+  }
+ ]
+}

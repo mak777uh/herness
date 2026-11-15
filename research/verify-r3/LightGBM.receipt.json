@@ -1,0 +1,12 @@
+{
+ "tool": "verify_repo 0.2.0",
+ "target": "LightGBM",
+ "input_sha256": "799982daa89a30b8d0af069cc250c0e448149835105b406ad4c23e3f0aee84e1",
+ "generated_at": "2026-11-15T23:23:27+03:00",
+ "total": 3,
+ "with_command": 0,
+ "share": 0.0,
+ "broad_total": 3,
+ "broad_with_command": 0,
+ "how_to_check": "python bin/verify_repo.py <тот же вход> — json должен совпасть, кроме generated_at"
+}

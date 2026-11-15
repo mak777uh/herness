@@ -1,0 +1,12 @@
+{
+ "tool": "verify_repo 0.2.0",
+ "target": "llama.cpp",
+ "input_sha256": "7ebe6e34cda1bd10c6bd2d9512675afb5631f96064054cbdab79f5e208ae827f",
+ "generated_at": "2026-11-15T23:23:28+03:00",
+ "total": 0,
+ "with_command": 0,
+ "share": null,
+ "broad_total": 1,
+ "broad_with_command": 0,
+ "how_to_check": "python bin/verify_repo.py <тот же вход> — json должен совпасть, кроме generated_at"
+}
