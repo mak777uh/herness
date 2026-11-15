@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(r"C:\111\herness")
+ROOT = Path(__file__).resolve().parents[1]
 H2 = Path(os.environ.get("H2_DIR", str(ROOT / "lab" / "h2")))
 SOURCES = ["P16-RESULTS.md", "P17-RESULTS.md", "P18-RESULTS.md", "SELF-WORK.md", "CYCLE.md"]
 
