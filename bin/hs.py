@@ -1302,8 +1302,17 @@ def gate_claims_run(root: Path) -> list[str]:
                           encoding="utf-8", errors="replace")
     if proc.returncode == 0:
         return []
-    tail = " ".join((proc.stdout or "").strip().splitlines()[-2:])
-    return [f"verify_claims --fast: {tail[:200]}"]
+    # Число без имени — не результат: гейт обязан назвать упавшее утверждение,
+    # иначе в CI видно «провалено: 1» и непонятно, что именно чинить.
+    lines = (proc.stdout or "").splitlines()
+    failed: list[str] = []
+    for index, line in enumerate(lines):
+        if line.startswith("[FAIL] C-"):
+            claim_id = line[len("[FAIL] "):].split()[0]
+            detail = lines[index + 1].strip() if index + 1 < len(lines) else ""
+            failed.append(f"{claim_id}: {detail[:180]}")
+    tail = " ".join(lines[-2:])
+    return failed[:6] + [f"verify_claims --fast: {tail[:180]}"]
 
 
 def gate_harnesses(root: Path) -> list[str]:
