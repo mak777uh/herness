@@ -1,0 +1,12 @@
+{
+ "tool": "verify_repo 0.1.0",
+ "target": "openai-agents-python",
+ "input_sha256": "cf68cb43182d6ea4f79a32421f6723e8ee2cc0f68f97524da7f300e9fc77940b",
+ "generated_at": "2026-11-15T22:30:07+03:00",
+ "total": 1,
+ "with_command": 0,
+ "share": 0.0,
+ "broad_total": 4,
+ "broad_with_command": 1,
+ "how_to_check": "python bin/verify_repo.py <тот же вход> — json должен совпасть, кроме generated_at"
+}

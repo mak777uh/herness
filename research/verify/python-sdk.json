@@ -1,0 +1,35 @@
+{
+ "tool": "verify_repo 0.1.0",
+ "target": "python-sdk",
+ "input_sha256": "72c9e5917309590494e29ed7b305b133163e9a2f0dcd6ddbc51593440fdcfe02",
+ "generated_at": "2026-11-15T22:30:14+03:00",
+ "readme": "README.md",
+ "total": 0,
+ "with_command": 0,
+ "share": null,
+ "broad_total": 5,
+ "broad_with_command": 1,
+ "claims": [],
+ "broad_without_command": [
+  {
+   "line": 32,
+   "text": "Python 3.11+.",
+   "has_command": false
+  },
+  {
+   "line": 97,
+   "text": "async with Client(\"http://localhost:8000/mcp\") as client:",
+   "has_command": false
+  },
+  {
+   "line": 98,
+   "text": "result = await client.call_tool(\"add\", {\"a\": 1, \"b\": 2})",
+   "has_command": false
+  },
+  {
+   "line": 99,
+   "text": "print(result.structured_content)  # {'result': 3}",
+   "has_command": false
+  }
+ ]
+}

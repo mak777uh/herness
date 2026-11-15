@@ -1,0 +1,25 @@
+{
+ "tool": "verify_repo 0.1.0",
+ "target": "ironclaw",
+ "input_sha256": "8db61d12d9d1c512819d28d0fe7e8107bc2170afbf857e94ff533204dc887e0a",
+ "generated_at": "2026-11-15T22:29:07+03:00",
+ "readme": "README.md",
+ "total": 0,
+ "with_command": 0,
+ "share": null,
+ "broad_total": 4,
+ "broad_with_command": 2,
+ "claims": [],
+ "broad_without_command": [
+  {
+   "line": 234,
+   "text": "- Secrets encrypted with AES-256-GCM",
+   "has_command": false
+  },
+  {
+   "line": 340,
+   "text": "- Apache License, Version 2.0 (LICENSE-APACHE)",
+   "has_command": false
+  }
+ ]
+}

@@ -271,6 +271,15 @@
    "status": "retro",
    "note": "Code-fix (не эксперимент): пре-регистрация не требуется, статус retro по прецеденту E-0024. RED-before: rg находит 30 файлов / 35 совпадений с 111/herness; в чужом клоне rust_tests собирал /mnt/c/111/harness (чужой каталог). GREEN-after: rg даёт 0 в коде; bin/check_abs_paths.py → ok; gate_compile включает проверку; проба «переносимость» 0 → 1 (поймал).",
    "conclusion": "lab/failures/F-0093.md"
+  },
+  {
+   "id": "E-0027",
+   "title": "VERIFY-REPO-R1: herness verify — проверяемость утверждений чужого README",
+   "hypothesis": "Доля чисел README с командой воспроизведения измерима автоматически и воспроизводимо",
+   "prereg": "lab/prereg/VERIFY-REPO-R1.json",
+   "status": "closed",
+   "conclusion": "research/verify/INDEX.md",
+   "note": "5 чужих репозиториев, rc=0 у всех; повтор совпал; негативный контроль назвал 3 числа; пустой вход не дал 100 %."
   }
  ]
 }
