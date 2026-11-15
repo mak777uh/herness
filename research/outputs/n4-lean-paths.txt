@@ -1,0 +1,61 @@
+# N4 (host-side): миграция 3 оставшихся Lean-скриптов на резолвер — журнал КРАСНЫЙ-ДО → ЗЕЛЁНЫЙ-ПОСЛЕ
+
+Дата: 2026-11-14. Ветка: main. Задача: docs/AUDIT-PLAN.md §4, N4.
+Смежное: F-0080 (доказательства перенесены в репо proofs/).
+Прибор: bin/check_lean_paths.py — ЗАМОРОЖЕН (хеш в ключе ответа), НЕ редактировался.
+Резолвер: bin/lean_paths.py — ЗАМОРОЖЕН, НЕ редактировался.
+
+## Что сделано
+
+Мигрированы 3 из 5 скриптов (2 уже мигрированы ранее: lean_check.py, policy_diff.py):
+  - bin/bridge_lean.py
+  - bin/bridge_parts.py
+  - bin/session_types.py
+
+Двухстрочный хардкод PROOFS/BIN заменён на блок резолвера (точно как в lean_check.py):
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from bin.lean_paths import proofs_dir, lean_bin  # noqa: E402
+    PROOFS = proofs_dir()
+    BIN = lean_bin()
+
+Строка MODEL = PROOFS / "Proofs" / ... ниже не менялась.
+Дельта: 3 файла, +15/−6 (по 5 добавленных / 2 удалённых строки на файл).
+
+## Замер ДО (КРАСНЫЙ)
+
+Команда: python bin/check_lean_paths.py
+RC = 1, вердикт КРАСНЫЙ, статических проблем: 9
+  (3 скрипта × {хардкод пути C:/111/env/lean/proofs, устаревший toolchain rc1, нет импорта резолвера})
+  NC fail-closed: exit 3 (несуществующий HERNESS_PROOFS отвергнут)
+  позитивный контроль: exit 0, proofs=C:\111\harness\proofs
+
+## Замер ПОСЛЕ (ЗЕЛЁНЫЙ)
+
+Команда: python bin/check_lean_paths.py
+RC = 0, вердикт ЗЕЛЁНЫЙ, статических проблем: 0
+  «PASS (все 5 через резолвер, fail-closed работает)»
+  NC fail-closed: exit 3; позитивный контроль: exit 0
+
+## Импорт-смоук (резолвер работает в рантайме, не только статически)
+
+bin.bridge_lean / bin.bridge_parts / bin.session_types:
+  PROOFS = C:\111\harness\proofs                                   (репо, не внешний env)
+  BIN    = ...\.elan\toolchains\leanprover--lean4---v4.36.0-rc2\bin (rc2, не rc1)
+
+## Остальные K-команды (все 0)
+
+python bin/gate_docs.py        RC=0
+python bin/seal.py verify-all  RC=0
+python bin/lab.py validate     RC=0
+
+## Что это НЕ доказывает
+
+- Что Lean-доказательства собраны: Lean на хосте не вызывается (~/.elan/toolchains может
+  отсутствовать, lean/lake не на PATH). N4 проверяется СТАТИЧЕСКИ (разрешение путей +
+  fail-closed), не сборкой Proofs.
+- Что N4 закрыт как proof-вопрос: остаётся ОТКРЫТЫМ — исполнитель WSL lake rc2, вызвать
+  из гейтов/CI (AUDIT-PLAN §4). Закрыта только host-side часть (разрешение путей).
+- Что полная сборка Proofs зелёная: F-0080 (namespace Effect) — отдельный дефект, не N4.
+- Что прибор ловит произвольный дефект путей: он ловит регрессию ЭТОГО хардкода + fail-closed.

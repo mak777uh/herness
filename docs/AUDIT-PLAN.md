@@ -100,7 +100,7 @@ commit отделяет «заявлено» от «подтверждено» �
 | # | что | статус | что нужно |
 |---|---|---|---|
 | `F-0080` | Lean: `Effect` в корне у `Policy.lean` и `PartBridge.lean` | агрегат `Proofs` красный | ADR на namespace (`Policy.Effect`/`PartBridge.Effect`); контур политики зелёный уже сейчас |
-| N4 | пять Lean-скриптов смотрят в `C:/111/env/lean/proofs` + Windows elan rc1 | прибор не вызывается | PROOFS → `proofs/`, исполнитель WSL lake rc2, вызвать из гейтов/CI |
+| N4 | пять Lean-скриптов смотрят в `C:/111/env/lean/proofs` + Windows elan rc1 | host-side закрыт 14.11.2026: все 5 через резолвер `bin/lean_paths.py`, `check_lean_paths` КРАСНЫЙ(1)→ЗЕЛЁНЫЙ(0), журнал `research/outputs/n4-lean-paths.txt`; proof-вопрос открыт | исполнитель WSL lake rc2, вызвать из гейтов/CI (Lean на хосте не вызывается) |
 | `F-0084` | QEMU `guestfwd` на Windows | отложено | альтернатива virtio-serial, отдельный цикл |
 | `F-0074` | флаки N04 | не исправлен | шаг 1: улики при FAIL (`new10_run.py`), потом 3×N04, потом гипотеза fsync |
 | `H-0180` | мост Lean→C→Rust | пре-регистрация есть, оракула нет | создать `lab/e0180-run.sh`, затем прогон; коллизия id E-0180 → переименовать |
