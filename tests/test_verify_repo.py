@@ -94,7 +94,7 @@ def main() -> int:
         code, _ = run(bare, "--json")
         check(code == 2, f"без README rc=2 (получено {code})")
 
-        code, _ = run(repo, "--fail-under", "0.9")
+        code, _ = run(repo, "--fail-under", "0.9", "--out", str(Path(tmp) / "threshold"))
         check(code == 1, f"--fail-under 0.9 даёт rc=1 при доле 0.25 (получено {code})")
 
         # Квитанции: файл пишется и содержит digest входа.
@@ -106,6 +106,9 @@ def main() -> int:
             payload = json.loads(receipt.read_text(encoding="utf-8"))
             check(len(payload.get("input_sha256", "")) == 64, "в квитанции sha256 входа")
             check(payload.get("total") == 4, "в квитанции то же число утверждений")
+        # Тест не должен оставлять следов в репозитории: всё пишется во временный каталог.
+        check(not (ROOT / "research" / "verify" / "sample.md").exists(),
+              "тест не пишет в research/verify")
 
     for ok, message in RESULTS:
         print(f"[{'ok' if ok else 'FAIL'}] {message}")
