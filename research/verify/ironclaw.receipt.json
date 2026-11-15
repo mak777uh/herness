@@ -1,8 +1,8 @@
 {
- "tool": "verify_repo 0.1.0",
+ "tool": "verify_repo 0.2.0",
  "target": "ironclaw",
  "input_sha256": "8db61d12d9d1c512819d28d0fe7e8107bc2170afbf857e94ff533204dc887e0a",
- "generated_at": "2026-11-15T22:29:07+03:00",
+ "generated_at": "2026-11-15T22:53:40+03:00",
  "total": 0,
  "with_command": 0,
  "share": null,

@@ -1,8 +1,8 @@
 {
- "tool": "verify_repo 0.1.0",
+ "tool": "verify_repo 0.2.0",
  "target": "humanlayer",
  "input_sha256": "d964f4983895f3d15d9059f08de08efae548cd22b5aff482c9e927c81cde8816",
- "generated_at": "2026-11-15T22:30:25+03:00",
+ "generated_at": "2026-11-15T22:54:45+03:00",
  "total": 0,
  "with_command": 0,
  "share": null,

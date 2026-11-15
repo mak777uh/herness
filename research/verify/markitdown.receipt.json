@@ -1,8 +1,8 @@
 {
- "tool": "verify_repo 0.1.0",
+ "tool": "verify_repo 0.2.0",
  "target": "markitdown",
  "input_sha256": "a537c61458d1f73abcbf932fe563cebc7d7dfbb49012d43d5b509fbf2e664137",
- "generated_at": "2026-11-15T22:30:01+03:00",
+ "generated_at": "2026-11-15T22:54:14+03:00",
  "total": 2,
  "with_command": 1,
  "share": 0.5,

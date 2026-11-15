@@ -10,7 +10,7 @@
 | ironclaw | 4 | 0 | 2 | — |
 | markitdown | 5 | 2 | 3 | 0.5 |
 | openai-agents-python | 4 | 1 | 1 | 0.0 |
-| python-sdk | 5 | 0 | 1 | — |
+| python-sdk | 4 | 0 | 1 | — |
 | humanlayer | 0 | 0 | 0 | — |
 
 Воспроизводимость: повторный прогон на `markitdown` дал тот же json (кроме `generated_at`) — да.

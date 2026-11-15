@@ -7,7 +7,7 @@
 решений в складе: 45
 
 ## FAIL (инварианты)
-- гейты не зелёные
+- нет
 
 ## WARN (долги, вычисляются каждый запуск)
 - артефактов без ссылок в утверждениях: 59 (anchor-probe.txt, bridge-diff.txt, bridge-lean.txt, bridge-parts.txt, bridge-verify.txt)

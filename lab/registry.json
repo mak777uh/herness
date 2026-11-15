@@ -280,6 +280,15 @@
    "status": "closed",
    "conclusion": "research/verify/INDEX.md",
    "note": "5 чужих репозиториев, rc=0 у всех; повтор совпал; негативный контроль назвал 3 числа; пустой вход не дал 100 %."
+  },
+  {
+   "id": "E-0028",
+   "title": "VERIFY-REPO-R2: таблицы как класс утверждений — проверено и отменено",
+   "hypothesis": "В таблицах README чисел больше, чем в прозе",
+   "prereg": "lab/prereg/VERIFY-REPO-R2.json",
+   "status": "closed",
+   "conclusion": "research/verify/INDEX.md",
+   "note": "FAIL: table_total = 0 на пяти репозиториях; расширение отменено по критерию (2). Побочный результат: найден и исправлен дефект — числа в URL-кодировке давали ложные утверждения."
   }
  ]
 }

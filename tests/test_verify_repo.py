@@ -47,6 +47,8 @@ README = """# sample
 |---|---|
 | тесты | 99 |
 | скорость | 5 ms |
+
+Ссылки не числа: [issues](https://example.com/issues?q=is%3Aissue+2024) и [PRs](https://example.com/pulls?q=is%3Apr).
 """
 
 
@@ -61,14 +63,22 @@ def main() -> int:
             print("[FAIL] json не разобран:", data)
             return 1
         check(code == 0, f"rc=0 на валидном входе (получено {code})")
+        # Проза: 412K downloads, 300 stars, 12 ms — без команд; 48 tests — с командой.
+        # Таблицы пробовали в R2 и отменили: на пяти репозиториях табличных чисел не было.
         check(data.get("total") == 4, f"всего утверждений 4 (получено {data.get('total')})")
         check(data.get("with_command") == 1, f"с командой 1 (получено {data.get('with_command')})")
         missing = [c for c in data.get("claims", []) if not c["has_command"]]
         check(len(missing) == 3, f"без команды названы 3 (получено {len(missing)})")
+        check(all("where" not in c for c in data.get("claims", [])),
+              "табличного класса больше нет (R2 отменён)")
         check(data.get("broad_total", 0) >= data.get("total", 0),
               "широкий счёт не меньше строгого")
+        # Числа внутри ссылок и URL — не утверждения (ловушка is%3Aissue+2024).
+        check(all("%3A" not in c["text"] and "example.com" not in c["text"]
+                  for c in data.get("claims", [])),
+              "URL не цитируются как утверждения")
         check(all(not c["text"].startswith("|") for c in data.get("claims", [])),
-              "строки таблицы не считаются утверждениями")
+              "строки таблицы не попадают в отчёт")
 
         _code, second = run(repo, "--json")
         if isinstance(second, dict):

@@ -5,6 +5,10 @@
 «412K downloads» — а чем это проверить? Инструмент не судит истинность числа: он измеряет
 **наличие способа его воспроизвести** и честно называет долю.
 
+Что читается: проза и строки markdown-таблиц. Заголовок, разделитель, блоки кода, бейджи
+и HTML — не читаются. Команда ищется в той же строке и в соседних строках того же блока;
+за пределы блока поиск не выходит, иначе число получило бы чужую команду.
+
     python bin/verify_repo.py path/or/url                  # отчёт в research/verify/
     python bin/verify_repo.py https://github.com/x/y --out /tmp/rep
     python bin/verify_repo.py path --json                  # только json в stdout
@@ -14,7 +18,7 @@
 (нет README, нет каталога, клон не удался).
 
 Что НЕ делает: не проверяет, правда ли число; не отличает маркетинг от ошибки; не судит
-репозиторий. Отчёт — про форму утверждения, а не про его содержание.
+репозиторий; не запускает чужой код. Отчёт — про форму утверждения, а не про его содержание.
 """
 
 from __future__ import annotations
@@ -30,7 +34,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = ROOT / "research" / "verify"
 
@@ -39,10 +43,10 @@ README_NAMES = ("README.md", "README.rst", "README.txt", "readme.md", "Readme.md
 # Число рядом с единицей, которую можно посчитать. Список намеренно короткий: лучше меньше
 # классов и честнее доля, чем широкий охват с ложными срабатываниями.
 UNITS = (
-    "тест", "теста", "тестов", "test", "tests", "проб", "пробa", "gates", "gate",
+    "тест", "теста", "тестов", "test", "tests", "проб", "gates", "gate",
     "звезд", "звёзд", "stars", "скачиван", "downloads", "загруз", "польз", "users",
     "строк", "lines", "мс", "ms", "сек", "seconds", "байт", "bytes", "kb", "mb", "гб",
-    "%", "x", "×", "раз", "раза", "коммит", "commits", "релиз", "releases", "звёзд",
+    "%", "x", "×", "раз", "раза", "коммит", "commits", "релиз", "releases",
 )
 NUMBER = re.compile(r"(?<![\w.])(\d{1,4}(?:[.,]\d+)?\s*(?:k|K|M|млн|тыс|%|x|×)?)(?![\w.])")
 COMMAND = re.compile(
@@ -50,7 +54,8 @@ COMMAND = re.compile(
     r"|\b(?:python3?|pip|npm|npx|make|cargo|go|bash|sh|docker|curl|pytest|gh|just)\s+\S+"
     r"|(?:^|\s)\$\s+\S+)"
 )
-WORDISH = re.compile(r"[A-Za-zА-Яа-яЁё]{2,}")
+FLAT_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+URL = re.compile(r"https?://\S+")
 
 
 def _read(path: Path) -> str:
@@ -85,17 +90,25 @@ def fetch(target: str, workdir: Path) -> tuple[Path, str | None]:
     return path, None
 
 
-def is_number_claim(line: str) -> bool:
-    if not NUMBER.search(line):
+def is_number_claim(text: str) -> bool:
+    if not NUMBER.search(text):
         return False
-    lowered = line.lower()
+    lowered = text.lower()
     return any(unit in lowered for unit in UNITS)
 
 
-def has_command(line: str, neighbours: list[str]) -> bool:
-    if COMMAND.search(line):
+def has_command(text: str, neighbours: list[str]) -> bool:
+    if COMMAND.search(text):
         return True
     return any(COMMAND.search(item) for item in neighbours)
+
+
+def clean(text: str, limit: int = 200) -> str:
+    flat = FLAT_LINK.sub(r"\1", text.strip())
+    if flat.startswith("|"):
+        cells = [cell.strip() for cell in flat.strip("|").split("|")]
+        flat = " · ".join(cell for cell in cells if cell)
+    return flat[:limit]
 
 
 def analyse(base: Path) -> dict:
@@ -111,18 +124,19 @@ def analyse(base: Path) -> dict:
         if not stripped or stripped.startswith(("#", "!", "[", "|", "```", "<", "![")):
             # заголовки, таблицы, код и бейджи не судим: там число часто не утверждение
             continue
-        if not NUMBER.search(stripped):
+        # Числа и единицы ищутся в тексте без ссылок и URL: иначе «%3A» в адресе
+        # становится процентом, а номер issue — числом утверждения.
+        scan_text = URL.sub("", FLAT_LINK.sub(r"\1", stripped))
+        if not NUMBER.search(scan_text):
             continue
         neighbours = [n.strip() for n in lines[max(0, index - 2):index] + lines[index + 1:index + 3]]
         item = {
             "line": index + 1,
-            # ссылки разворачиваются в текст: иначе отчёт цитирует чужие относительные пути
-            # и ломает проверку ссылок в нашем репозитории.
-            "text": re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", stripped)[:200],
+            "text": clean(stripped),
             "has_command": has_command(stripped, neighbours),
         }
         broad.append(item)
-        if is_number_claim(stripped):
+        if is_number_claim(scan_text):
             claims.append(dict(item))
 
     total = len(claims)
@@ -150,18 +164,18 @@ def render_markdown(name: str, data: dict, digest: str, when: str) -> str:
         f"- строк с числами (широкий счёт): **{data.get('broad_total', 0)}**, из них с командой рядом: "
         f"**{data.get('broad_with_command', 0)}**\n"
         f"- чисел с единицей измерения (строгий счёт): **{total}**, из них с командой: "
-        f"**{data['with_command']}**, доля проверяемых: **{'—' if share is None else share}**\n\n"
+        f"**{data['with_command']}**, доля проверяемых: **{'—' if share is None else share}**\n"
         f"Квитанция: вход `{digest[:16]}…` · инструмент `verify_repo {VERSION}` · {when}\n\n"
-        "Строгий счёт — только те строки, где рядом с числом есть единица, которую можно посчитать "
-        "(тесты, звёзды, загрузки, мс, проценты). Широкий — любая строка с числом. Разница между ними "
-        "и есть цена осторожности: строгий счёт не ловит «в 3 раза быстрее» без числа-знаменателя.\n\n"
+        "Строгий счёт — только строки, где рядом с числом есть единица, которую можно посчитать "
+        "(тесты, звёзды, загрузки, мс, проценты). Широкий — любая строка с числом. Команда ищется "
+        "в тексте той же строки и в соседних двух строках.\n\n"
     )
     if total == 0 and not data.get("broad_total"):
         return head + "чисел в тексте не найдено: измерять нечего (это не «100 % проверяемо»).\n"
     rows = ["| строка | число в тексте | команда рядом |", "|---|---|---|"]
     for item in data["claims"][:40]:
-        text = item["text"].replace("|", "\\|")
-        rows.append(f"| {item['line']} | {text} | {'да' if item['has_command'] else '**нет**'} |")
+        rows.append(f"| {item['line']} | {item['text'].replace('|', '\\\\|')} | "
+                    f"{'да' if item['has_command'] else '**нет**'} |")
     wide = data.get("broad_without_command", [])[:20]
     wide_block = ""
     if wide:
@@ -173,7 +187,7 @@ def render_markdown(name: str, data: dict, digest: str, when: str) -> str:
         "- Число без команды не значит «ложь»: оно значит «его нельзя воспроизвести из репозитория».\n"
         "- Наличие команды не значит, что она проверяет именно это число.\n"
         "- Отчёт читает только README: `docs/`, `CLAIMS.md`, бенчмарки и CI не разбираются.\n"
-        "- Строгий счёт неполон по устройству: рекламные формулировки без единицы в него не попадают.\n"
+        "- Строгий счёт неполон по устройству: формулировки без единицы в него не попадают.\n"
     )
     return head + "\n".join(rows) + "\n" + wide_block + tail
 

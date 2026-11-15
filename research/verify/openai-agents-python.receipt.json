@@ -1,8 +1,8 @@
 {
- "tool": "verify_repo 0.1.0",
+ "tool": "verify_repo 0.2.0",
  "target": "openai-agents-python",
  "input_sha256": "cf68cb43182d6ea4f79a32421f6723e8ee2cc0f68f97524da7f300e9fc77940b",
- "generated_at": "2026-11-15T22:30:07+03:00",
+ "generated_at": "2026-11-15T22:54:24+03:00",
  "total": 1,
  "with_command": 0,
  "share": 0.0,
