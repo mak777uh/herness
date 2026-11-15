@@ -1,0 +1,30 @@
+# Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side)
+
+proofs (резолвер): `C:\111\harness\proofs`
+WSL: `/mnt/c/111/harness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
+
+## Контур политики: СОБРАН (rc=0)
+   Build completed successfully (3 jobs).
+
+## Аксиомы каждой теоремы
+- `deny_beats_allow`: Classical.choice, Quot.sound, propext
+- `deny_means_not_allowed`: Classical.choice, Quot.sound, propext
+- `no_allow_means_denied`: Classical.choice, Quot.sound, propext
+- `empty_policy_denies`: Classical.choice, Quot.sound, propext
+- `mediator_refuses`: Classical.choice, Quot.sound, propext
+- `mediator_performs`: Classical.choice, Quot.sound, propext
+
+## Отрицательный контроль: отвергнут (rc≠0)
+   error: Proofs/Negative.lean:17:79: unsolved goals
+   error: Proofs/Negative.lean:23:62: unsolved goals
+
+## Агрегат Proofs (информационно): rc=1 (F-0080 — отдельный дефект)
+   error: Proofs.lean:1:0: import Proofs.PartBridge failed, environment already contains 'Effect.rec' from Proofs.Policy
+   error: build failed
+
+## Итог: доказательства приняты, ложь отвергнута, аксиомы стандартные
+
+Граница: доказано свойство модели политики, не соответствие Rust-кода модели.
+N4 proof-side: путь резолвера динамически проверен сборкой rc2 в WSL (не только статика).
+Агрегат красный на F-0080 (Effect/Rule в корне у Policy и PartBridge) — отдельный дефект.
+Исполнитель host-only: в CI (ubuntu-latest) WSL нет; сборка в CI требует установки Lean rc2.
