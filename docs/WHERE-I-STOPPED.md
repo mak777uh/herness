@@ -34,7 +34,7 @@
 - `bin/rust_tests.py`: путь от `ROOT` + fail-closed guard (`exit 3`) — F-0092, C-0304.
 - `bin/readme_numbers.py` + `bin/runs_index.py`: число журналов берётся из артефакта `research/outputs/runs-index-count.txt` (в git), а не из gitignored `runs/index.json` — README больше не расходится между клоном и машиной.
 - `CLAIMS.md`: 303 → 297 строк (6 машинно-локальных вынесены в `lab/observations-local.md` с причиной и способом вернуть), C-0243 приведён к реальному отчёту, добавлен C-0304.
-- `ci/gates.yml`: четыре job'а — гейты (`auto`), утверждения (`verify_claims --fast`), selftest, Rust (`cargo test --lib`). **Не включён:** у токена gh нет scope `workflow`, GitHub не даёт OAuth-токену менять `.github/workflows/`. Включение — переименовать файл в `gates.yml` токеном со scope `workflow` (или руками через веб-интерфейс). Раньше был один job: он падал на 4-м шаге, остальные шаги не запускались.
+- `.github/workflows/gates.yml`: четыре job'а — гейты (`auto`), утверждения (`verify_claims --fast`), selftest, Rust (`cargo test --lib`). Включён 15.11.2026 после того, как у токена gh появился scope `workflow`
 - `LICENSE` (MIT) + тег `v0.1.0`.
 
 **Проверено (команда → rc → артефакт).**

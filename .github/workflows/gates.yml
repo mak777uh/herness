@@ -6,19 +6,61 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: gates-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  verify:
+  gates:
+    name: гейты (профиль auto)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      # Профиль auto: гейты, которым нужны runs/ или core-rs/target/, печатаются как N/A
+      # с причиной (этих каталогов нет в git). Профиль full считает их провалом и
+      # запускается на машине, где есть журналы и сборка: python bin/hs.py gates --profile full
       - name: Гейты
-        run: python bin/hs.py gates
-      - name: Негативные тесты инструмента
-        run: python bin/hs.py selftest
-      - name: Утверждения и их ожидания
-        run: python bin/verify_claims.py
+        run: python bin/hs.py gates --profile auto
       - name: Свидетельства утверждений
-        run: python bin/check_artifacts.py C-0016 && python bin/check_artifacts.py C-0029
+        run: |
+          python bin/check_artifacts.py C-0016
+          python bin/check_artifacts.py C-0029
+
+  claims:
+    name: утверждения и их ожидания
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # Быстрый режим: без сетевых и живых команд. Полный набор — на машине с сетью и ключом.
+      - name: Проверка команд утверждений
+        run: python bin/verify_claims.py --fast
+
+  selftest:
+    name: негативные тесты инструмента
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Selftest
+        run: python bin/hs.py selftest
+
+  rust:
+    name: Rust-тесты ядра
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo test --lib
+        working-directory: core-rs
+        run: cargo test --lib

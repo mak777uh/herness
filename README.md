@@ -191,11 +191,9 @@ python bin/refusal_codes.py --list # коды отказа
 python bin/hs.py gates --profile full  # перед выпуском: N/A не допускается
 ```
 
-Новый CI (четыре job'а: гейты `auto`, `verify_claims --fast`, selftest, `cargo test --lib`)
-лежит в `ci/gates.yml`: включить его можно только токеном со scope
-`workflow` — GitHub не даёт OAuth-токену без него менять `.github/workflows/`. Пока он не
-включён, работает прежний workflow. Что CI не проверяет и после включения: живые прогоны,
-Lean, QEMU-комнату и сам Rust-бинарь (только тесты крейта).
+CI гоняет четыре job'а: гейты (`auto`), `verify_claims --fast`, selftest и `cargo test --lib`.
+Что CI не проверяет: живые прогоны (нужны VPN, ключи и Chrome), Lean, QEMU-комнату и сам
+Rust-бинарь (только тесты крейта).
 
 Прогон в своём ядре (закалённом, `hardened2`) и живая приёмка комнаты:
 
