@@ -13,6 +13,8 @@ module
 объявление помечено `public`.
 -/
 
+namespace Policy
+
 public inductive Effect where
   | allow
   | deny
@@ -32,25 +34,25 @@ public def ruleMatches (rule : Rule) (tool action resource : String) : Bool :=
   rule.tool == tool && rule.action == action && rule.resource == resource
 
 /-- Политика — список правил. -/
-public abbrev Policy := List Rule
+public abbrev Rules := List Rule
 
 /-- Подходит ли под запрос хоть одно правило с эффектом `allow`. -/
-public def hasAllow (p : Policy) (tool action resource : String) : Bool :=
+public def hasAllow (p : Rules) (tool action resource : String) : Bool :=
   p.any (fun r => ruleMatches r tool action resource && r.effect == Effect.allow)
 
 /-- Подходит ли под запрос хоть одно правило с эффектом `deny`. -/
-public def hasDeny (p : Policy) (tool action resource : String) : Bool :=
+public def hasDeny (p : Rules) (tool action resource : String) : Bool :=
   p.any (fun r => ruleMatches r tool action resource && r.effect == Effect.deny)
 
 /-- Посредник: разрешено тогда и только тогда, когда есть allow и нет deny.
     Дословная модель `policy_allows` из core-rs/src/loopmod.rs. -/
-public def policyAllows (p : Policy) (tool action resource : String) : Bool :=
+public def policyAllows (p : Rules) (tool action resource : String) : Bool :=
   hasAllow p tool action resource && !hasDeny p tool action resource
 
 /-! ## T1. Запрет сильнее разрешения -/
 
 /-- Если есть подходящее правило `deny`, посредник отказывает — сколько бы ни было `allow`. -/
-public theorem deny_beats_allow (p : Policy) (tool action resource : String)
+public theorem deny_beats_allow (p : Rules) (tool action resource : String)
     (h : hasDeny p tool action resource = true) :
     policyAllows p tool action resource = false := by
   unfold policyAllows
@@ -58,7 +60,7 @@ public theorem deny_beats_allow (p : Policy) (tool action resource : String)
   simp
 
 /-- Тот же факт в форме отрицания. -/
-public theorem deny_means_not_allowed (p : Policy) (tool action resource : String)
+public theorem deny_means_not_allowed (p : Rules) (tool action resource : String)
     (h : hasDeny p tool action resource = true) :
     ¬ (policyAllows p tool action resource = true) := by
   rw [deny_beats_allow p tool action resource h]
@@ -67,7 +69,7 @@ public theorem deny_means_not_allowed (p : Policy) (tool action resource : Strin
 /-! ## T2. Нет неявных разрешений -/
 
 /-- Если ни одно правило не разрешает запрос, посредник отказывает. -/
-public theorem no_allow_means_denied (p : Policy) (tool action resource : String)
+public theorem no_allow_means_denied (p : Rules) (tool action resource : String)
     (h : hasAllow p tool action resource = false) :
     policyAllows p tool action resource = false := by
   unfold policyAllows
@@ -89,11 +91,11 @@ public inductive Outcome where
   deriving DecidableEq, Repr
 
 /-- Модель инструмента: он выполняет действие только если политика разрешает. -/
-public def runTool (p : Policy) (tool action resource : String) : Outcome :=
+public def runTool (p : Rules) (tool action resource : String) : Outcome :=
   if policyAllows p tool action resource then Outcome.performed else Outcome.refused
 
 /-- Если политика не разрешает, инструмент отказывает и действие не выполняется. -/
-public theorem mediator_refuses (p : Policy) (tool action resource : String)
+public theorem mediator_refuses (p : Rules) (tool action resource : String)
     (h : policyAllows p tool action resource = false) :
     runTool p tool action resource = Outcome.refused := by
   unfold runTool
@@ -101,7 +103,7 @@ public theorem mediator_refuses (p : Policy) (tool action resource : String)
   rfl
 
 /-- Если политика разрешает, инструмент выполняет действие. -/
-public theorem mediator_performs (p : Policy) (tool action resource : String)
+public theorem mediator_performs (p : Rules) (tool action resource : String)
     (h : policyAllows p tool action resource = true) :
     runTool p tool action resource = Outcome.performed := by
   unfold runTool
@@ -111,7 +113,7 @@ public theorem mediator_performs (p : Policy) (tool action resource : String)
 /-! ## Примеры на настоящей форме политики -/
 
 /-- Фрагмент политики: чтение разрешено, запись запрещена на том же ресурсе. -/
-public def examplePolicy : Policy :=
+public def examplePolicy : Rules :=
   [ ⟨"read", "read", "file:/mnt/a.md", Effect.allow⟩
   , ⟨"read", "write", "file:/mnt/a.md", Effect.deny⟩ ]
 
@@ -134,3 +136,5 @@ example : runTool examplePolicy "read" "write" "file:/mnt/a.md" = Outcome.refuse
   apply mediator_refuses
   apply deny_beats_allow
   decide
+
+end Policy

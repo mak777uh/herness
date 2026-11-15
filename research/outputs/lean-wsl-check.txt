@@ -1,30 +1,38 @@
-# Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side)
+# Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side, F-0080)
 
 proofs (резолвер): `C:\111\harness\proofs`
 WSL: `/mnt/c/111/harness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
 
+## Агрегат Proofs: СОБРАН (rc=0)
+   Build completed successfully (10 jobs).
+
 ## Контур политики: СОБРАН (rc=0)
-   Build completed successfully (3 jobs).
+
+## Контур моста частей: СОБРАН (rc=0)
 
 ## Аксиомы каждой теоремы
-- `deny_beats_allow`: Classical.choice, Quot.sound, propext
-- `deny_means_not_allowed`: Classical.choice, Quot.sound, propext
-- `no_allow_means_denied`: Classical.choice, Quot.sound, propext
-- `empty_policy_denies`: Classical.choice, Quot.sound, propext
-- `mediator_refuses`: Classical.choice, Quot.sound, propext
-- `mediator_performs`: Classical.choice, Quot.sound, propext
+- `Policy.deny_beats_allow`: Classical.choice, Quot.sound, propext
+- `Policy.deny_means_not_allowed`: Classical.choice, Quot.sound, propext
+- `Policy.no_allow_means_denied`: Classical.choice, Quot.sound, propext
+- `Policy.empty_policy_denies`: Classical.choice, Quot.sound, propext
+- `Policy.mediator_refuses`: Classical.choice, Quot.sound, propext
+- `Policy.mediator_performs`: Classical.choice, Quot.sound, propext
+- `PartBridge.no_bridge_of_incompatible`: Classical.choice, Quot.sound, propext
+- `PartBridge.hasDeny_append_left`: Classical.choice, Quot.sound, propext
+- `PartBridge.hasDeny_append_right`: Classical.choice, Quot.sound, propext
+- `PartBridge.deny_survives`: Classical.choice, Quot.sound, propext
+- `PartBridge.bridge_allow_no_deny`: Classical.choice, Quot.sound, propext
 
-## Отрицательный контроль: отвергнут (rc≠0)
-   error: Proofs/Negative.lean:17:79: unsolved goals
-   error: Proofs/Negative.lean:23:62: unsolved goals
+## NC политики (Proofs.Negative): отвергнут (rc≠0)
+   error: Proofs/Negative.lean:19:79: unsolved goals
+   error: Proofs/Negative.lean:25:62: unsolved goals
 
-## Агрегат Proofs (информационно): rc=1 (F-0080 — отдельный дефект)
-   error: Proofs.lean:1:0: import Proofs.PartBridge failed, environment already contains 'Effect.rec' from Proofs.Policy
-   error: build failed
+## NC моста (Proofs.PartBridgeNegative): отвергнут (rc≠0)
+   error: Proofs/PartBridgeNegative.lean:24:47: unsolved goals
 
-## Итог: доказательства приняты, ложь отвергнута, аксиомы стандартные
+## Итог: агрегат собран, доказательства приняты, ложь отвергнута, аксиомы стандартные
 
-Граница: доказано свойство модели политики, не соответствие Rust-кода модели.
+Граница: доказаны свойства моделей, не соответствие Rust-кода моделям.
+F-0080 закрыт (ADR-0061): namespace Policy/PartBridge, агрегат Proofs собирается.
 N4 proof-side: путь резолвера динамически проверен сборкой rc2 в WSL (не только статика).
-Агрегат красный на F-0080 (Effect/Rule в корне у Policy и PartBridge) — отдельный дефект.
 Исполнитель host-only: в CI (ubuntu-latest) WSL нет; сборка в CI требует установки Lean rc2.

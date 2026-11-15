@@ -1,7 +1,7 @@
 import Proofs.Policy
-#print axioms deny_beats_allow
-#print axioms deny_means_not_allowed
-#print axioms no_allow_means_denied
-#print axioms empty_policy_denies
-#print axioms mediator_refuses
-#print axioms mediator_performs
+#print axioms Policy.deny_beats_allow
+#print axioms Policy.deny_means_not_allowed
+#print axioms Policy.no_allow_means_denied
+#print axioms Policy.empty_policy_denies
+#print axioms Policy.mediator_refuses
+#print axioms Policy.mediator_performs

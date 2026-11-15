@@ -1,5 +1,7 @@
 import Proofs.PartBridge
 
+open PartBridge
+
 /-!
 # Отрицательный контроль моста частей
 

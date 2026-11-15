@@ -20,12 +20,12 @@ BIN = lean_bin()
 OUT = ROOT / "research" / "outputs" / "lean-check.txt"
 
 THEOREMS = [
-    "deny_beats_allow",
-    "deny_means_not_allowed",
-    "no_allow_means_denied",
-    "empty_policy_denies",
-    "mediator_refuses",
-    "mediator_performs",
+    "Policy.deny_beats_allow",
+    "Policy.deny_means_not_allowed",
+    "Policy.no_allow_means_denied",
+    "Policy.empty_policy_denies",
+    "Policy.mediator_refuses",
+    "Policy.mediator_performs",
 ]
 
 

@@ -16,6 +16,8 @@ module
 проверяется сверкой (PartBridgeDiff), как policy_diff для политики.
 -/
 
+namespace PartBridge
+
 /-- Эффект правила пула: разрешено, запрещено, обязан. -/
 public inductive Effect where
   | allow
@@ -157,3 +159,5 @@ public theorem bridge_allow_no_deny (a b : Part) (subject action resource : Stri
       have hf : hasDeny (a.pool.rules ++ b.pool.rules) subject action resource = false := hunion
       rw [hf] at ht
       exact Bool.noConfusion ht
+
+end PartBridge

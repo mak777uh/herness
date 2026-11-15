@@ -1,5 +1,7 @@
 import Proofs.Policy
 
+open Policy
+
 /-!
 # Отрицательный контроль: Lean действительно проверяет
 

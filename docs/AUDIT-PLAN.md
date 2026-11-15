@@ -99,8 +99,8 @@ commit отделяет «заявлено» от «подтверждено» �
 
 | # | что | статус | что нужно |
 |---|---|---|---|
-| `F-0080` | Lean: `Effect` в корне у `Policy.lean` и `PartBridge.lean` | агрегат `Proofs` красный | ADR на namespace (`Policy.Effect`/`PartBridge.Effect`); контур политики зелёный уже сейчас |
-| N4 | пять Lean-скриптов смотрят в `C:/111/env/lean/proofs` + Windows elan rc1 | host-side закрыт 14.11.2026 (все 5 через резолвер, `check_lean_paths` 1→0); proof-side: исполнитель `bin/lean_wsl.py` (WSL rc2) — контур политики СОБРАН, аксиомы стандартные, NC отвергнут (`research/outputs/lean-wsl-check.txt`); агрегат красен на F-0080 | F-0080 (namespace `Effect`/`Rule`) для агрегата; сборку в CI (ubuntu-latest, нужен Lean rc2); исполнитель host-only (в CI WSL нет) |
+| `F-0080` | Lean: `Effect` в корне у `Policy.lean` и `PartBridge.lean` | закрыт 15.11.2026 (ADR-0061, E-0024, C-0303) | namespace `Policy`/`PartBridge` применён; агрегат `Proofs` rc=0 (10 jobs), оба контура зелёные, 11 теорем на стандартных аксиомах, оба NC отвергнуты (`bin/lean_wsl.py`, WSL rc2) |
+| N4 | пять Lean-скриптов смотрят в `C:/111/env/lean/proofs` + Windows elan rc1 | host-side закрыт 14.11.2026 (все 5 через резолвер, `check_lean_paths` 1→0); proof-side: исполнитель `bin/lean_wsl.py` (WSL rc2) — агрегат Proofs СОБРАН (F-0080 закрыт 15.11.2026), оба контура зелёные, 11 теорем стандартные аксиомы, оба NC отвергнуты (`research/outputs/lean-wsl-check.txt`) | сборку в CI (ubuntu-latest, нужен Lean rc2); исполнитель host-only (в CI WSL нет) |
 | `F-0084` | QEMU `guestfwd` на Windows | отложено | альтернатива virtio-serial, отдельный цикл |
 | `F-0074` | флаки N04 | не исправлен | шаг 1: улики при FAIL (`new10_run.py`), потом 3×N04, потом гипотеза fsync |
 | `H-0180` | мост Lean→C→Rust | пре-регистрация есть, оракула нет | создать `lab/e0180-run.sh`, затем прогон; коллизия id E-0180 → переименовать |

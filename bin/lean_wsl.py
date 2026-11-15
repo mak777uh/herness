@@ -6,8 +6,7 @@ WSL Ubuntu (`/root/.elan`). Этот исполнитель вызывает WSL
 `proofs/` (путь берётся из резолвера `bin/lean_paths.py`), превращая N4 из статической
 проверки путей (`check_lean_paths`) в динамическую сборку доказательств.
 
-    python bin/lean_wsl.py              # контур политики + аксиомы + отрицательный контроль
-    python bin/lean_wsl.py --aggregate  # дополнительно агрегат Proofs (красен на F-0080)
+    python bin/lean_wsl.py   # агрегат Proofs + контуры + аксиомы + оба отрицательных контроля
 
 Зеркалит `lean_check.py`: `lake build Proofs.Policy` обязан собраться; аксиомы теорем —
 только три стандартные; `lake build Proofs.Negative` обязан УПАСТЬ (иначе проверка пуста).
@@ -16,8 +15,8 @@ Fail-closed: нет WSL / нет toolchain rc2 / нет proofs → exit 2/3, н�
 Артефакт: `research/outputs/lean-wsl-check.txt`. Scratch-проба пишется в /tmp WSL,
 отслеживаемый `proofs/Probe.lean` НЕ трогается.
 
-Граница: доказывается свойство модели политики, а не соответствие Rust-кода модели.
-Агрегат `Proofs` красный на F-0080 (коллизия `Effect`/`Rule` в корне) — отдельный дефект.
+Граница: доказывается свойство моделей, а не соответствие Rust-кода моделям.
+F-0080 закрыт (ADR-0061): модели разведены по namespace Policy/PartBridge, агрегат собирается.
 Исполнитель host-only: в CI (ubuntu-latest) WSL нет, поэтому это НЕ CI-гейт.
 """
 
@@ -36,14 +35,21 @@ PROOFS = proofs_dir()
 OUT = ROOT / "research" / "outputs" / "lean-wsl-check.txt"
 DISTRO = "Ubuntu"
 THEOREMS = [
-    "deny_beats_allow",
-    "deny_means_not_allowed",
-    "no_allow_means_denied",
-    "empty_policy_denies",
-    "mediator_refuses",
-    "mediator_performs",
+    "Policy.deny_beats_allow",
+    "Policy.deny_means_not_allowed",
+    "Policy.no_allow_means_denied",
+    "Policy.empty_policy_denies",
+    "Policy.mediator_refuses",
+    "Policy.mediator_performs",
 ]
 STANDARD_AXIOMS = {"propext", "Classical.choice", "Quot.sound"}
+BRIDGE_THEOREMS = [
+    "PartBridge.no_bridge_of_incompatible",
+    "PartBridge.hasDeny_append_left",
+    "PartBridge.hasDeny_append_right",
+    "PartBridge.deny_survives",
+    "PartBridge.bridge_allow_no_deny",
+]
 
 
 def to_wsl(p: Path) -> str:
@@ -69,8 +75,7 @@ def run_wsl(bash_cmd: str, timeout: int = 600) -> tuple[int, str]:
 
 
 def main() -> int:
-    aggregate = "--aggregate" in sys.argv[1:]
-    lines = ["# Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side)", ""]
+    lines = ["# Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side, F-0080)", ""]
 
     # 1. WSL доступен?
     rc, out = run_wsl("echo wsl-ok", timeout=90)
@@ -91,17 +96,29 @@ def main() -> int:
             f'&& export LEAN_PATH="{wsl_proofs}/.lake/build/lib/lean"')
     lines += [f"proofs (резолвер): `{PROOFS}`", f"WSL: `{wsl_proofs}`, toolchain: `{tc}`", ""]
 
-    # 3. контур политики обязан собраться
-    rc, text = run_wsl(f"{base} && lake build Proofs.Policy")
-    ok_proof = rc == 0
-    lines.append(f"## Контур политики: {'СОБРАН (rc=0)' if ok_proof else f'НЕ СОБРАН (rc={rc})'}")
+    # 3. агрегат Proofs обязан собраться (F-0080: коллизия имён видна только здесь)
+    rc, text = run_wsl(f"{base} && lake build")
+    ok_aggregate = rc == 0
+    lines.append(f"## Агрегат Proofs: {'СОБРАН (rc=0)' if ok_aggregate else f'НЕ СОБРАН (rc={rc})'}")
     for ln in text.splitlines():
-        if "error" in ln.lower() or "Build completed" in ln:
+        if "error" in ln.lower() or "already contains" in ln or "Build completed" in ln:
             lines.append(f"   {ln.strip()}")
     lines.append("")
 
-    # 4. аксиомы теорем — только стандартные (scratch в /tmp, репо Probe.lean не трогаем)
-    probe_body = "import Proofs.Policy\n" + "\n".join(f"#print axioms {t}" for t in THEOREMS) + "\n"
+    # 4. контуры поодиночке (зеркало lean_check / bridge_parts)
+    rc, _ = run_wsl(f"{base} && lake build Proofs.Policy")
+    ok_proof = rc == 0
+    lines.append(f"## Контур политики: {'СОБРАН (rc=0)' if ok_proof else f'НЕ СОБРАН (rc={rc})'}")
+    lines.append("")
+    rc, _ = run_wsl(f"{base} && lake build Proofs.PartBridge")
+    ok_bridge = rc == 0
+    lines.append(f"## Контур моста частей: {'СОБРАН (rc=0)' if ok_bridge else f'НЕ СОБРАН (rc={rc})'}")
+    lines.append("")
+
+    # 5. аксиомы теорем — только стандартные (scratch в /tmp, репо Probe.lean не трогаем)
+    all_theorems = THEOREMS + BRIDGE_THEOREMS
+    probe_body = ("import Proofs.Policy\nimport Proofs.PartBridge\n"
+                  + "\n".join(f"#print axioms {t}" for t in all_theorems) + "\n")
     ax_cmd = (f"{base} && cat > /tmp/ProbeWsl.lean <<'EOF'\n{probe_body}EOF\n"
               f"lean /tmp/ProbeWsl.lean\nrc=$?\nrm -f /tmp/ProbeWsl.lean\nexit $rc")
     rc, axioms = run_wsl(ax_cmd)
@@ -122,30 +139,28 @@ def main() -> int:
         lines.append(f"   проба аксиом не выполнилась (rc={rc})")
     lines.append("")
 
-    # 5. отрицательный контроль обязан УПАСТЬ
+    # 6. отрицательные контроли обязаны УПАСТЬ (оба)
     rc, text = run_wsl(f"{base} && lake build Proofs.Negative")
-    rejected = rc != 0
-    lines.append(f"## Отрицательный контроль: {'отвергнут (rc≠0)' if rejected else 'ПРИНЯТ — ПРОВЕРКА НЕ РАБОТАЕТ'}")
+    rejected_policy = rc != 0
+    lines.append(f"## NC политики (Proofs.Negative): {'отвергнут (rc≠0)' if rejected_policy else 'ПРИНЯТ — ПРОВЕРКА НЕ РАБОТАЕТ'}")
+    for ln in text.splitlines():
+        if "unsolved goals" in ln:
+            lines.append(f"   {ln.strip()}")
+    lines.append("")
+    rc, text = run_wsl(f"{base} && lake build Proofs.PartBridgeNegative")
+    rejected_bridge = rc != 0
+    lines.append(f"## NC моста (Proofs.PartBridgeNegative): {'отвергнут (rc≠0)' if rejected_bridge else 'ПРИНЯТ — ПРОВЕРКА НЕ РАБОТАЕТ'}")
     for ln in text.splitlines():
         if "unsolved goals" in ln:
             lines.append(f"   {ln.strip()}")
     lines.append("")
 
-    # 6. агрегат (информационно): красный на F-0080 — отдельный дефект, не часть вердикта
-    if aggregate:
-        rc, text = run_wsl(f"{base} && lake build")
-        lines.append(f"## Агрегат Proofs (информационно): rc={rc} (F-0080 — отдельный дефект)")
-        for ln in text.splitlines():
-            if "error:" in ln or "already contains" in ln:
-                lines.append(f"   {ln.strip()}")
-        lines.append("")
-
-    verdict = ok_proof and rejected and clean
-    lines.append(f"## Итог: {'доказательства приняты, ложь отвергнута, аксиомы стандартные' if verdict else 'ЕСТЬ ПРОБЛЕМА'}")
+    verdict = ok_aggregate and ok_proof and ok_bridge and clean and rejected_policy and rejected_bridge
+    lines.append(f"## Итог: {'агрегат собран, доказательства приняты, ложь отвергнута, аксиомы стандартные' if verdict else 'ЕСТЬ ПРОБЛЕМА'}")
     lines.append("")
-    lines.append("Граница: доказано свойство модели политики, не соответствие Rust-кода модели.")
+    lines.append("Граница: доказаны свойства моделей, не соответствие Rust-кода моделям.")
+    lines.append("F-0080 закрыт (ADR-0061): namespace Policy/PartBridge, агрегат Proofs собирается.")
     lines.append("N4 proof-side: путь резолвера динамически проверен сборкой rc2 в WSL (не только статика).")
-    lines.append("Агрегат красный на F-0080 (Effect/Rule в корне у Policy и PartBridge) — отдельный дефект.")
     lines.append("Исполнитель host-only: в CI (ubuntu-latest) WSL нет; сборка в CI требует установки Lean rc2.")
 
     text_out = "\n".join(lines) + "\n"
