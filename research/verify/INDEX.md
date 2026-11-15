@@ -7,10 +7,10 @@
 
 | репозиторий | строк с числами | из них строгих | с командой рядом | доля строгих |
 |---|---|---|---|---|
-| ironclaw | 4 | 0 | 2 | — |
-| markitdown | 5 | 2 | 3 | 0.5 |
-| openai-agents-python | 4 | 1 | 1 | 0.0 |
-| python-sdk | 4 | 0 | 1 | — |
+| ironclaw | 3 | 0 | 0 | — |
+| markitdown | 2 | 1 | 0 | 0.0 |
+| openai-agents-python | 3 | 1 | 0 | 0.0 |
+| python-sdk | 2 | 0 | 0 | — |
 | humanlayer | 0 | 0 | 0 | — |
 
 Воспроизводимость: повторный прогон на `markitdown` дал тот же json (кроме `generated_at`) — да.

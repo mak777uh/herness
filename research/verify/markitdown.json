@@ -2,23 +2,18 @@
  "tool": "verify_repo 0.2.0",
  "target": "markitdown",
  "input_sha256": "a537c61458d1f73abcbf932fe563cebc7d7dfbb49012d43d5b509fbf2e664137",
- "generated_at": "2026-11-15T22:54:14+03:00",
+ "generated_at": "2026-11-15T23:12:07+03:00",
  "readme": "README.md",
- "total": 2,
- "with_command": 1,
- "share": 0.5,
- "broad_total": 5,
- "broad_with_command": 3,
+ "total": 1,
+ "with_command": 0,
+ "share": 0.0,
+ "broad_total": 2,
+ "broad_with_command": 0,
  "claims": [
-  {
-   "line": 355,
-   "text": "client = OpenAI(max_retries=5)",
-   "has_command": false
-  },
   {
    "line": 361,
    "text": "`max_retries` controls the OpenAI client's automatic retries for retryable errors (the default is 2); `5` allows up to six attempts with backoff. See the OpenAI SDK retry documentation.",
-   "has_command": true
+   "has_command": false
   }
  ],
  "broad_without_command": [
@@ -28,8 +23,8 @@
    "has_command": false
   },
   {
-   "line": 355,
-   "text": "client = OpenAI(max_retries=5)",
+   "line": 361,
+   "text": "`max_retries` controls the OpenAI client's automatic retries for retryable errors (the default is 2); `5` allows up to six attempts with backoff. See the OpenAI SDK retry documentation.",
    "has_command": false
   }
  ]

@@ -2,15 +2,20 @@
  "tool": "verify_repo 0.2.0",
  "target": "ironclaw",
  "input_sha256": "8db61d12d9d1c512819d28d0fe7e8107bc2170afbf857e94ff533204dc887e0a",
- "generated_at": "2026-11-15T22:53:40+03:00",
+ "generated_at": "2026-11-15T23:11:25+03:00",
  "readme": "README.md",
  "total": 0,
  "with_command": 0,
  "share": null,
- "broad_total": 4,
- "broad_with_command": 2,
+ "broad_total": 3,
+ "broad_with_command": 0,
  "claims": [],
  "broad_without_command": [
+  {
+   "line": 149,
+   "text": "Source builds require Rust 1.96+ and Node.js 22+ with Corepack/pnpm.",
+   "has_command": false
+  },
   {
    "line": 234,
    "text": "- Secrets encrypted with AES-256-GCM",

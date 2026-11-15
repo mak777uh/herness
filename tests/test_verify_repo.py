@@ -49,6 +49,11 @@ README = """# sample
 | скорость | 5 ms |
 
 Ссылки не числа: [issues](https://example.com/issues?q=is%3Aissue+2024) и [PRs](https://example.com/pulls?q=is%3Apr).
+
+```python
+# 42 tests в комментарии и retries=5 в коде — не утверждения о работе
+client = OpenAI(max_retries=5)
+```
 """
 
 
@@ -77,6 +82,9 @@ def main() -> int:
         check(all("%3A" not in c["text"] and "example.com" not in c["text"]
                   for c in data.get("claims", [])),
               "URL не цитируются как утверждения")
+        # Блок кода не читается: «max_retries=5» — пример, а не утверждение о работе.
+        check(all("max_retries" not in c["text"] for c in data.get("claims", [])),
+              "блоки кода не считаются утверждениями")
         check(all(not c["text"].startswith("|") for c in data.get("claims", [])),
               "строки таблицы не попадают в отчёт")
 

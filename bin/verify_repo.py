@@ -49,11 +49,14 @@ UNITS = (
     "%", "x", "×", "раз", "раза", "коммит", "commits", "релиз", "releases",
 )
 NUMBER = re.compile(r"(?<![\w.])(\d{1,4}(?:[.,]\d+)?\s*(?:k|K|M|млн|тыс|%|x|×)?)(?![\w.])")
-COMMAND = re.compile(
-    r"(`[^`]*`"                       # инлайн-команда
-    r"|\b(?:python3?|pip|npm|npx|make|cargo|go|bash|sh|docker|curl|pytest|gh|just)\s+\S+"
-    r"|(?:^|\s)\$\s+\S+)"
-)
+# Команда — это исполняемое имя плюс аргумент, а не любая строка в бэктиках:
+# `max_retries` — параметр, а не команда, и раньше он засчитывался как способ проверки.
+TOOLS = ("python", "python3", "pip", "pip3", "npm", "npx", "pnpm", "yarn", "make", "cargo",
+         "rustc", "go", "bash", "sh", "zsh", "docker", "podman", "curl", "wget", "pytest",
+         "gh", "just", "git", "uv", "poetry", "ruff", "mypy", "black", "node", "deno", "bun",
+         "java", "mvn", "gradle", "dotnet", "cargo-nextest", "pre-commit")
+TOOLS_RE = re.compile(r"\b(?:" + "|".join(TOOLS) + r")\s+\S+")
+BACKTICK = re.compile(r"`([^`]+)`")
 FLAT_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 URL = re.compile(r"https?://\S+")
 
@@ -98,9 +101,15 @@ def is_number_claim(text: str) -> bool:
 
 
 def has_command(text: str, neighbours: list[str]) -> bool:
-    if COMMAND.search(text):
-        return True
-    return any(COMMAND.search(item) for item in neighbours)
+    """Есть ли рядом исполняемая команда: имя инструмента + аргумент, или строка вида `$ …`."""
+    for chunk in [text, *neighbours]:
+        if TOOLS_RE.search(chunk) or re.search(r"(?:^|\s)\$\s+\S+", chunk):
+            return True
+        for span in BACKTICK.findall(chunk):
+            tokens = span.strip().split()
+            if len(tokens) >= 2 and tokens[0].lower() in TOOLS:
+                return True
+    return False
 
 
 def clean(text: str, limit: int = 200) -> str:
@@ -119,9 +128,16 @@ def analyse(base: Path) -> dict:
     lines = _read(readme).splitlines()
     claims: list[dict] = []
     broad: list[dict] = []
+    in_code = False
     for index, line in enumerate(lines):
         stripped = line.strip()
-        if not stripped or stripped.startswith(("#", "!", "[", "|", "```", "<", "![")):
+        # Блоки кода не читаются: число в примере кода — не утверждение о работе.
+        if stripped.startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if not stripped or stripped.startswith(("#", "!", "[", "|", "<", "![")):
             # заголовки, таблицы, код и бейджи не судим: там число часто не утверждение
             continue
         # Числа и единицы ищутся в тексте без ссылок и URL: иначе «%3A» в адресе

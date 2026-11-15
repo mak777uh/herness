@@ -2,11 +2,11 @@
  "tool": "verify_repo 0.2.0",
  "target": "python-sdk",
  "input_sha256": "72c9e5917309590494e29ed7b305b133163e9a2f0dcd6ddbc51593440fdcfe02",
- "generated_at": "2026-11-15T22:54:38+03:00",
+ "generated_at": "2026-11-15T23:12:18+03:00",
  "total": 0,
  "with_command": 0,
  "share": null,
- "broad_total": 4,
- "broad_with_command": 1,
+ "broad_total": 2,
+ "broad_with_command": 0,
  "how_to_check": "python bin/verify_repo.py <тот же вход> — json должен совпасть, кроме generated_at"
 }
