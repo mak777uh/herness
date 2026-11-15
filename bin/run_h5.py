@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(r"C:\111\herness")
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from core.http_provider import OpenAICompatProvider  # noqa: E402

@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(r"C:\111\herness")
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from core.browser_search import ensure_chrome

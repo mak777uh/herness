@@ -1585,7 +1585,11 @@ def gate_absence(root: Path) -> list[str]:
 
 
 def gate_compile(root: Path) -> list[str]:
-    """Все скрипты bin/ и core/ должны компилироваться: синтаксис ломается незаметно."""
+    """Все скрипты bin/ и core/ должны компилироваться и не ссылаться на чужой чекаут.
+
+    Синтаксис ломается незаметно, а абсолютный путь к своему каталогу ломает тише:
+    код зелёный, но проверяет другой репозиторий (F-0092, F-0093).
+    """
     import py_compile
 
     problems = []
@@ -1594,6 +1598,10 @@ def gate_compile(root: Path) -> list[str]:
             py_compile.compile(str(path), doraise=True)
         except py_compile.PyCompileError as exc:
             problems.append(f"{path.name}: {str(exc.msg).splitlines()[-1][:90]}")
+    sys.path.insert(0, str(ROOT))
+    from bin.check_abs_paths import problems as abs_path_problems
+
+    problems += abs_path_problems(root)
     return problems
 
 

@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+WSL_ROOT = "/mnt/" + ROOT.drive[0].lower() + ROOT.as_posix()[2:]
 TASKS = ROOT / "lab" / "p27" / "musique" / "tasks.json"
 DEV = ROOT / "lab" / "p27" / "musique" / "dev.jsonl"
 STAGING = ROOT / "runs" / "musique-staging"
@@ -59,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     if image.exists():
         image.unlink()
     wsl = (
-        f"cd /mnt/c/111/herness && rm -f {args.image} && "
+        f"cd {WSL_ROOT} && rm -f {args.image} && "
         f"dd if=/dev/zero of={args.image} bs=1M count={args.size_mb} status=none && "
         f"mkfs.ext4 -q -F {args.image} && rm -rf /tmp/mq && mkdir -p /tmp/mq && "
         f"mount -o loop {args.image} /tmp/mq && cp runs/musique-staging/* /tmp/mq/ && "

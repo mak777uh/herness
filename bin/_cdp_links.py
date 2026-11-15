@@ -2,9 +2,10 @@
 
 import json
 import sys
+from pathlib import Path
 import time
 
-sys.path.insert(0, r"C:\111\herness")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from core.mcp_client import MCPClient
 

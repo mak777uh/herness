@@ -20,7 +20,9 @@ def cargo_test(filter_word: str) -> tuple[int, str]:
     if sys.platform == "win32":
         if shutil.which("wsl") is None:
             return 2, "нет wsl: Rust-тесты не запустить на Windows"
-        command = ("cd /mnt/c/111/herness/core-rs && CARGO_NET_OFFLINE=true "
+        root = pathlib.Path(__file__).resolve().parents[1]
+        wsl_root = "/mnt/" + root.drive[0].lower() + root.as_posix()[2:]
+        command = (f"cd {wsl_root}/core-rs && CARGO_NET_OFFLINE=true "
                    f"rustup run stable cargo test --release --lib {filter_word} 2>&1")
         result = subprocess.run(["wsl", "-d", "Ubuntu", "--exec", "bash", "-lc", command],
                                 capture_output=True, text=True, encoding="utf-8",

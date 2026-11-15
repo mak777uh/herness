@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-WSL_ROOT = "/mnt/c/111/herness"
+WSL_ROOT = "/mnt/" + ROOT.drive[0].lower() + ROOT.as_posix()[2:]
 
 
 def sha256(path: Path) -> str:

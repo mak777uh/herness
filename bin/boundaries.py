@@ -4,7 +4,7 @@ import json
 import pathlib
 import sys
 
-sys.path.insert(0, str(pathlib.Path(r"C:\111\herness")))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 from core import reply, routing
 

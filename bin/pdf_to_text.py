@@ -15,8 +15,8 @@ from pathlib import Path
 from pypdf import PdfReader
 
 PDF = Path("C:/Users/Admin/Downloads/Krishnamurti - The Awakening of Intelligence.pdf")
-OUT = Path("C:/111/herness/research/book/krishnamurti.md")
-PAGES_DIR = Path("C:/111/herness/research/book/pages")
+OUT = Path(__file__).resolve().parents[1] / "research" / "book" / "krishnamurti.md"
+PAGES_DIR = Path(__file__).resolve().parents[1] / "research" / "book" / "pages"
 
 
 def clean(text: str) -> str:

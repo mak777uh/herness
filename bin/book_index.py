@@ -11,8 +11,8 @@ import re
 import sys
 from pathlib import Path
 
-PAGES = Path("C:/111/herness/research/book/pages")
-OUT = Path("C:/111/herness/research/book/INDEX.md")
+PAGES = Path(__file__).resolve().parents[1] / "research" / "book" / "pages"
+OUT = Path(__file__).resolve().parents[1] / "research" / "book" / "INDEX.md"
 
 # Заголовки, которые ищем в тексте: части и главы.
 PART = re.compile(r"^\s*(PART\s+[IVX]+)\s*$", re.MULTILINE)

@@ -21,7 +21,7 @@ import re
 import sys
 from pathlib import Path
 
-TARGET = Path("C:/111/herness/research/book/INSIGHTS.md")
+TARGET = Path(__file__).resolve().parents[1] / "research" / "book" / "INSIGHTS.md"
 
 # Границы блоков по 5 страниц: от 13 до 409.
 START = 13

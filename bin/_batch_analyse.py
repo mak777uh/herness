@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(r"C:\111\herness")
+ROOT = Path(__file__).resolve().parents[1]
 rows = json.loads((ROOT / "lab" / "journal-batch" / "results.json").read_text(encoding="utf-8"))
 
 print("=== ответы и факты ===")

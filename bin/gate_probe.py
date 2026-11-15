@@ -283,6 +283,11 @@ def probe_compile(root: Path) -> None:
     (root / "bin" / "PROBE-broken.py").write_text("def f(:\n    return 1\n", encoding="utf-8")
 
 
+def probe_abs_paths(root: Path) -> None:
+    # Путь к своему чекауту в литерале: код зелёный, а проверяет другой репозиторий (F-0092).
+    (root / "bin" / "PROBE-abs.py").write_text('ROOT = r"C:\\111\\herness"\n', encoding="utf-8")
+
+
 def probe_rust(root: Path) -> None:
     """Подложить «правку без пересборки»: исходник новее артефакта.
 
@@ -456,6 +461,7 @@ PROBES = {
     "модели": (hs.gate_models, probe_models),
     "самоссылка": (hs.gate_selfref, probe_selfref),
     "компиляция": (hs.gate_compile, probe_compile),
+    "переносимость": (hs.gate_compile, probe_abs_paths),
     "rust": (hs.gate_rust, probe_rust),
     "лаборатория": (hs.gate_lab, probe_lab),
     "способности": (hs.gate_capabilities, probe_capabilities),
@@ -501,6 +507,7 @@ FAST = [
     "README",
     "самоссылка",
     "компиляция",
+    "переносимость",
     "rust",
     "лаборатория",
 ]

@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, ".")
 
 ROOT = Path(__file__).resolve().parents[1]
+WSL_ROOT = "/mnt/" + ROOT.drive[0].lower() + ROOT.as_posix()[2:]
 MANIFEST = ROOT / "lab" / "room.json"
 
 
@@ -50,7 +51,7 @@ def build(manifest: dict) -> int:
     size = manifest.get("size_mb", 160)
     copies = manifest["copy"]
     script = [
-        f"cd /mnt/c/111/herness && rm -f {staging} &&",
+        f"cd {WSL_ROOT} && rm -f {staging} &&",
         f"dd if=/dev/zero of={staging} bs=1M count={size} status=none &&",
         f"mkfs.ext4 -q -F {staging} && mkdir -p /tmp/room && mount -o loop {staging} /tmp/room &&",
     ]
@@ -66,7 +67,7 @@ def build(manifest: dict) -> int:
     print(tail)
     if code != 0:
         # Неудачный staging не должен остаться мусором рядом с образом.
-        wsl(f"cd /mnt/c/111/herness && rm -f {staging} && umount /tmp/room 2>/dev/null; true")
+        wsl(f"cd {WSL_ROOT} && rm -f {staging} && umount /tmp/room 2>/dev/null; true")
         print("сборка не удалась — прежний образ оставлен как был")
     return 0 if code == 0 else 1
 
@@ -84,7 +85,7 @@ def check(manifest: dict) -> int:
     """
     image = manifest["image"]
     script = (
-        f"cd /mnt/c/111/herness && mkdir -p /tmp/room && mount -o loop {image} /tmp/room && "
+        f"cd {WSL_ROOT} && mkdir -p /tmp/room && mount -o loop {image} /tmp/room && "
         "cd /tmp/room && find . -type f | sed 's|^\\./||' | sort && "
         "echo '---файлы-конец---' && "
         "find . -type f -print0 | sort -z | xargs -0 -r sha256sum && "

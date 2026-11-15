@@ -8,7 +8,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-ROOT = Path(r"C:\111\herness")
+ROOT = Path(__file__).resolve().parents[1]
 BOOT = ROOT / "core-rs" / "boot"
 KERNEL_URL = "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/netboot/vmlinuz-lts"
 BINARY = ROOT / "core-rs" / "target" / "x86_64-unknown-linux-musl" / "release" / "hs-core"
