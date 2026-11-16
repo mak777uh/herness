@@ -353,3 +353,5 @@ python bin/build_room.py --build
 - не трогать установленный DeepSeek Harness;
 - всегда deepseek-v4.1-flash;
 - требования — с якорями; требование без инварианта — пожелание.
+
+Справочник: добавлен внешний источник `unharnessed-agent/Unharnessed` — разбор в `research/ADOPTION-unharnessed.md` (4 механизма к переносу).
