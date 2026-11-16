@@ -3,9 +3,9 @@
 **Статус:** документ для следующего агента. Не отчёт о завершённой работе: часть проверок —
 исторические снимки, часть — проектные решения, часть — открытые вопросы.
 **Каноническая линия:** GitHub `main`; снимок этой смены — коммит
-[`c2fc552736eb5eb5421b8e55a32ca407014670c5`](https://github.com/mak777uh/herness/tree/c2fc552736eb5eb5421b8e55a32ca407014670c5)
-(R5 — `c2fc552`, R4 — `4d1fae5`, evidence — `ded2cf2`).
-**Предыдущая точка:** `647adae` (handoff от 16.11.2026, 13:48 MSK).
+[`ef3828871f1c25e093cce7b80ec22e0928a0660e`](https://github.com/mak777uh/herness/tree/ef3828871f1c25e093cce7b80ec22e0928a0660e)
+(handoff; R5 — `c2fc552`, R4 — `4d1fae5`, evidence — `ded2cf2`).
+**Предыдущая точка:** `c2fc552` (R5 от 16.11.2026).
 **Главные артефакты:** [`docs/EXTERNAL-QUESTIONS-R5.md`](EXTERNAL-QUESTIONS-R5.md) — 24 вопроса
 следующего круга; [`docs/EXTERNAL-QUESTIONS-R4.md`](EXTERNAL-QUESTIONS-R4.md) — 45 вопросов
 предыдущего круга.
@@ -157,8 +157,9 @@ git ls-remote --heads origin main
 git status --short
 ```
 
-Ожидание: HEAD и `origin/main` — `c2fc552`; в status только pre-existing CRLF-модификации,
-которых мы не трогали. **Не делать `git add -A`.** Добавлять только конкретные новые файлы.
+Ожидание: HEAD и `origin/main` — `ef38288` (handoff) или следующий docs-коммит; R5 — `c2fc552`;
+в status только pre-existing CRLF-модификации, которых мы не трогали. **Не делать `git add -A`.**
+Добавлять только конкретные новые файлы.
 
 ### 4.2. Документы
 
