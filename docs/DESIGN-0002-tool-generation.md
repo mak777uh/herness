@@ -51,11 +51,11 @@
   "inputs":  {"path": "файл внутри /mnt", "n": "целое 1..200, по умолчанию 10"},
   "outputs": {"lines": "строки с номерами", "truncated": "файл длиннее выдачи"},
   "closure": {"fs": {"read": ["/mnt/**"], "write": []}, "net": [], "time_ms": 100, "memory_mb": 4, "output_bytes": 8192},
-  "refusals": ["PATH_OUTSIDE_ROOM", "INVALID_ARGUMENT"],
+  "refusals": ["S6_CLOSURE_BREACH", "S1_SCHEMA"],
   "examples": [
     {"args": {"path": "/mnt/CLAIMS.md", "n": 3}, "expect": "первая строка содержит «1: »"},
-    {"args": {"path": "/mnt/CLAIMS.md", "n": 0}, "expect": "отказ INVALID_ARGUMENT"},
-    {"args": {"path": "/etc/passwd", "n": 3}, "expect": "отказ PATH_OUTSIDE_ROOM"}
+    {"args": {"path": "/mnt/CLAIMS.md", "n": 0}, "expect": "отказ S1_SCHEMA: n вне диапазона"},
+    {"args": {"path": "/etc/passwd", "n": 3}, "expect": "отказ S6_CLOSURE_BREACH: путь вне комнаты"}
   ]
 }
 ```
