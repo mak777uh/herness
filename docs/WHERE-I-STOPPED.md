@@ -16,6 +16,7 @@
 | печати | `python bin/seal.py verify-all` | 17 проверено, 0 проблем |
 | реестр опытов | `python bin/lab.py validate` | связен: 25 экспериментов, 6 следующих гипотез (E-0025 — эта смена) |
 | Плагин: кадры журнала | `node plugin/test/journal.test.js` | 9 проверок: CRC, версия, непрерывность seq; битый журнал не даёт ответа (`C-0309`, F-ROOM-4) |
+| Lean: достижимость модулей | `python bin/check_lean_imports.py` | 8 модулей, 5 корней, 0 сирот; урок marfagenez применён (`C-0310`) |
 | Версия формата в бинарнике | `python bin/binary_version.py --check` | совпадает: HSJ2 (исходник и `hs-core`); встроено в гейт `rust`, проба — тест `C-0308` |
 | Rust-тесты | `python bin/rust_tests.py` (WSL) | 75 lib-тестов, 0 провалов; путь берётся от `ROOT` — было: чужой чекаут (F-0092) |
 | `verify` на бенчмарках | `python bin/verify_repo.py <readme>` | R3: 17 строгих утверждений против 2, команда рядом у 1 из 5 (duckdb); порог FAIL, данные в `research/verify-r3/INDEX.md` |

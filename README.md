@@ -89,7 +89,7 @@ python bin/verify_repo.py https://github.com/microsoft/markitdown --out research
 <!-- numbers:begin -->
 | показатель | значение |
 |---|---|
-| утверждений | 302 |
+| утверждений | 303 |
 | ядро | 17 |
 | покрытие | 1.0 |
 | строгое покрытие | 0.56 |
