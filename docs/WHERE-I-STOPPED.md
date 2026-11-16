@@ -16,6 +16,7 @@
 | печати | `python bin/seal.py verify-all` | 17 проверено, 0 проблем |
 | реестр опытов | `python bin/lab.py validate` | связен: 25 экспериментов, 6 следующих гипотез (E-0025 — эта смена) |
 | Плагин: кадры журнала | `node plugin/test/journal.test.js` | 9 проверок: CRC, версия, непрерывность seq; битый журнал не даёт ответа (`C-0309`, F-ROOM-4) |
+| Карточка → атомы | `python bin/card_atoms.py --check lab/tools/cards/head.json` | 5 атомов, 5 пробелов у нового инструмента, противоречия ловятся (`C-0312`) |
 | Карточка инструмента | `python bin/tool_card.py --render lab/tools/cards/head.json` | валидатор: замыкание/отказы/примеры; рендер ≈149 токенов (`C-0311`, DESIGN-0002) |
 | Lean: достижимость модулей | `python bin/check_lean_imports.py` | 8 модулей, 5 корней, 0 сирот; урок marfagenez применён (`C-0310`) |
 | Версия формата в бинарнике | `python bin/binary_version.py --check` | совпадает: HSJ2 (исходник и `hs-core`); встроено в гейт `rust`, проба — тест `C-0308` |
