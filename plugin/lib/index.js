@@ -25,6 +25,8 @@ import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSyn
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
+import { eventText, verifyJournal } from "./journal.js";
+
 export const name = "dsh-herness-room";
 
 // Обязательных зависимостей нет: без webServer плагин просто не регистрирует
@@ -49,6 +51,9 @@ const CRITERIA = {
 };
 
 const VERDICTS = new Set(["PASS", "FAIL", "UNKNOWN"]);
+
+/** Почему последний раз журнал не принят (пусто — принят). */
+export let lastJournalError = "";
 
 function now() {
   const d = new Date();
@@ -82,30 +87,34 @@ export function answerFromJournal(journalPath, task = "", startedAt = 0) {
   // Журнал старше прогона — это журнал другого прогона.
   if (startedAt && stat.mtimeMs < startedAt) return "";
 
-  let raw;
+  let buffer;
   try {
-    raw = readFileSync(journalPath, "latin1");
+    buffer = readFileSync(journalPath);
   } catch {
     return "";
   }
+  // F-ROOM-4: журнал читается не «как текст», а как кадры HSJ2. Пока CRC не сходится,
+  // ответа нет: подделанный или испорченный кадр иначе прошёл бы как обычная строка.
+  const checked = verifyJournal(buffer);
+  if (!checked.ok) {
+    lastJournalError = checked.reason;
+    return "";
+  }
+  lastJournalError = "";
+
+  const texts = checked.records.map((record) => eventText(record));
   // Задача должна совпасть с той, что записана в run/start этого журнала.
-  // Сравниваем по вхождению, а не по равенству: запись журнала приписывает
-  // к тексту служебный байт (в замере 08.11.2026 — «…числом.5»), и строгое
-  // равенство отвергало бы СВОЙ журнал. Задача длинная, случайного
-  // совпадения с чужой не будет.
   if (task) {
-    const starts = [...raw.matchAll(/run\/start task: ([^\x00\x06\n]+)/g)];
-    if (!starts.length) return "";
     const needle = task.trim();
-    const recorded = starts.map((m) =>
-      Buffer.from(m[1], "latin1").toString("utf8"));
+    const starts = texts.filter((text) => text.startsWith("run/start task: "));
+    if (!starts.length) return "";
+    const recorded = starts.map((text) => text.slice("run/start task: ".length));
     if (!recorded.some((text) => text.includes(needle))) return "";
   }
 
-  const matches = [...raw.matchAll(/run\/end ([^\x00\x06\n]+)/g)];
-  if (!matches.length) return "";
-  const bytes = Buffer.from(matches[matches.length - 1][1], "latin1");
-  return bytes.toString("utf8").trim();
+  const ends = texts.filter((text) => text.startsWith("run/end "));
+  if (!ends.length) return "";
+  return ends[ends.length - 1].slice("run/end ".length).trim();
 }
 
 /**

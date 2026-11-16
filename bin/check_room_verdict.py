@@ -21,6 +21,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "plugin" / "lib" / "index.js"
+
+sys.path.insert(0, str(ROOT))
+
+from bin import hsj2  # noqa: E402
 NODE = "node"
 
 
@@ -68,10 +72,11 @@ def check_journal() -> tuple[bool, list[str]]:
         # Два прогона в одном журнале: ответ первой задачи не должен победить.
         first = "Первый ответ".encode("utf-8")
         second = "Второй ответ — 29 строк".encode("utf-8")
-        journal.write_bytes(
-            b"HSJ1\x01\x00\x00\x00" + b"run/end " + first + b"\x00"
-            + b"run/end " + second + b"\x00"
-        )
+        journal.write_bytes(hsj2.journal([
+            hsj2.run_start("найди все текстовые файлы"),
+            (hsj2.DATA, b"run/end " + first),
+            (hsj2.COMMIT, b"run/end " + second),
+        ]))
         script = f"""
 import {{ answerFromJournal }} from {json.dumps(PLUGIN.as_uri())};
 console.log(JSON.stringify(answerFromJournal({json.dumps(str(journal))})));
@@ -102,11 +107,10 @@ console.log(JSON.stringify(answerFromJournal({json.dumps(str(missing))})));
 
         # F-ROOM-3: журнал от ДРУГОЙ задачи не должен отдавать свой ответ.
         foreign = Path(tmp) / "чужой.bin"
-        foreign.write_bytes(
-            b"HSJ1\x01\x00\x00\x00"
-            + b"run/start task: \xd0\xbf\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82\x00"
-            + b"run/end " + "ответ на привет".encode("utf-8") + b"\x00"
-        )
+        foreign.write_bytes(hsj2.journal([
+            hsj2.run_start("привет"),
+            hsj2.run_end("ответ на привет"),
+        ]))
         script = f"""
 import {{ answerFromJournal }} from {json.dumps(PLUGIN.as_uri())};
 console.log(JSON.stringify(answerFromJournal(
@@ -136,11 +140,10 @@ console.log(JSON.stringify(answerFromJournal(
 
         # Журнал старше прогона — не принимается, даже если задача совпала.
         old = Path(tmp) / "старый.bin"
-        old.write_bytes(
-            b"HSJ1\x01\x00\x00\x00"
-            + b"run/start task: \xd0\xbf\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82\x00"
-            + b"run/end " + "старый ответ".encode("utf-8") + b"\x00"
-        )
+        old.write_bytes(hsj2.journal([
+            hsj2.run_start("привет"),
+            hsj2.run_end("старый ответ"),
+        ]))
         future = int(old.stat().st_mtime * 1000) + 60000
         script = f"""
 import {{ answerFromJournal }} from {json.dumps(PLUGIN.as_uri())};

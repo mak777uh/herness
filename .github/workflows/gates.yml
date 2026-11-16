@@ -64,3 +64,14 @@ jobs:
       - name: cargo test --lib
         working-directory: core-rs
         run: cargo test --lib
+
+  plugin:
+    name: плагин (кадры HSJ2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Кадры журнала: CRC, версия, непрерывность
+        run: node plugin/test/journal.test.js
