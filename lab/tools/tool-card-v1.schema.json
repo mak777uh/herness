@@ -1,0 +1,280 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://herness.invalid/schema/tool-card-v1.json",
+ "title": "tool-card-v1 (draft)",
+ "description": "Черновик карточки инструмента после решений владельца Q1-Q10 16.11.2026. Схема проверяет форму, не поведение. Не подключена к bin/tool_card.py и не даёт прав.",
+ "$comment": "draft; owner approved 2026-11-16 as draft only. refusal enum must equal lab/refusal-codes.json v2; the semantic validator is the source of truth for kind/template/effects binding.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema_version",
+  "id",
+  "kind",
+  "purpose",
+  "template",
+  "inputs",
+  "outputs",
+  "effects",
+  "preconditions",
+  "postconditions",
+  "frame_conditions",
+  "refusals",
+  "limits",
+  "determinism",
+  "data_classes",
+  "secret_refs",
+  "examples",
+  "provenance"
+ ],
+ "properties": {
+  "schema_version": {"const": "tool-card-v1"},
+  "id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+  "kind": {"enum": ["file_read", "directory_read", "file_write", "digest", "bridge_request"]},
+  "purpose": {"type": "string", "minLength": 1, "maxLength": 240},
+  "template": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": ["id", "version", "slots"],
+   "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "slots": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "path_ref",
+       "line_count",
+       "max_bytes_read",
+       "max_entries",
+       "staging_path",
+       "bridge_id",
+       "object_ref",
+       "algorithm"
+      ]
+     },
+     "uniqueItems": true
+    }
+   }
+  },
+  "inputs": {"$ref": "#/$defs/fields"},
+  "outputs": {"$ref": "#/$defs/fields"},
+  "effects": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "fs_read",
+    "fs_list",
+    "fs_write",
+    "bridges",
+    "process_spawn",
+    "secret_ops",
+    "output_channels"
+   ],
+   "properties": {
+    "fs_read": {"type": "array", "items": {"$ref": "#/$defs/pathScope"}},
+    "fs_list": {"type": "array", "items": {"$ref": "#/$defs/pathScope"}},
+    "fs_write": {"type": "array", "items": {"$ref": "#/$defs/pathScope"}},
+    "bridges": {
+     "type": "array",
+     "items": {"type": "string", "pattern": "^bridge:[a-z0-9_-]+$"},
+     "uniqueItems": true
+    },
+    "process_spawn": {"const": false},
+    "secret_ops": {"type": "array", "maxItems": 0},
+    "output_channels": {
+     "type": "array",
+     "items": {"enum": ["stdout", "stderr", "journal", "staging"]},
+     "uniqueItems": true
+    }
+   }
+  },
+  "preconditions": {"$ref": "#/$defs/predicates"},
+  "postconditions": {"$ref": "#/$defs/predicates"},
+  "frame_conditions": {"$ref": "#/$defs/predicates"},
+  "refusals": {
+   "type": "array",
+   "items": {
+    "enum": [
+     "C0_CANON",
+     "S1_SCHEMA",
+     "S2_ARTIFACT_MISSING",
+     "S2_EXPECT_MISSING",
+     "S2_EXPECT_UNDECIDABLE",
+     "S3_ANCHOR_STALE",
+     "S3_ANCHOR_ABSENT",
+     "S4_POLICY_CONFLICT",
+     "S4_POLICY_IMPLICIT",
+     "S4_POLICY_CYCLE",
+     "S4_POLICY_NOLEVEL",
+     "S5_POLICY_DRIFT",
+     "S5_IMPL_DIVERGES",
+     "S6_CLOSURE_BREACH",
+     "S7_GATE_BLIND",
+     "S8_WALL_MISSING",
+     "S9_PROOF_FAILED",
+     "S9_PROOF_AXIOM",
+     "S9_NEGATIVE_ACCEPTED",
+     "K4_RESOURCE_LIMIT",
+     "K6_DATA_CLASS_UNKNOWN",
+     "K6_SECRET_EGRESS",
+     "K11_ADMISSION_REQUIRED"
+    ]
+   },
+   "uniqueItems": true
+  },
+  "limits": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "wall_ms",
+    "cpu_ms",
+    "memory_bytes",
+    "output_bytes",
+    "max_bytes_read",
+    "max_files",
+    "max_depth",
+    "max_open_fds",
+    "max_processes",
+    "write_bytes",
+    "broker_requests"
+   ],
+   "properties": {
+    "wall_ms": {"type": "integer", "minimum": 1},
+    "cpu_ms": {"type": "integer", "minimum": 1},
+    "memory_bytes": {"type": "integer", "minimum": 1},
+    "output_bytes": {"type": "integer", "minimum": 0},
+    "max_bytes_read": {"type": "integer", "minimum": 0},
+    "max_files": {"type": "integer", "minimum": 0},
+    "max_depth": {"type": "integer", "minimum": 0},
+    "max_open_fds": {"type": "integer", "minimum": 3},
+    "max_processes": {"const": 1},
+    "write_bytes": {"type": "integer", "minimum": 0},
+    "broker_requests": {"type": "integer", "minimum": 0}
+   }
+  },
+  "determinism": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": ["output", "ordering", "clock", "randomness"],
+   "properties": {
+    "output": {"enum": ["deterministic", "declared_nondeterministic"]},
+    "ordering": {"enum": ["lexicographic", "input_order", "not_applicable"]},
+    "clock": {"enum": ["none", "fixed_input", "waived"]},
+    "randomness": {"enum": ["none", "fixed_seed", "waived"]}
+   }
+  },
+  "data_classes": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": ["accepted_inputs", "max_output_class"],
+   "properties": {
+    "accepted_inputs": {
+     "type": "array",
+     "items": {"enum": ["public", "model_visible"]},
+     "uniqueItems": true
+    },
+    "max_output_class": {"enum": ["public", "model_visible"]}
+   }
+  },
+  "secret_refs": {"type": "array", "maxItems": 0},
+  "examples": {
+   "type": "array",
+   "minItems": 3,
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "args", "expected"],
+    "properties": {
+     "id": {"type": "string", "minLength": 1},
+     "args": {"type": "object"},
+     "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome"],
+      "properties": {
+       "outcome": {"enum": ["ok", "refusal"]},
+       "refusal": {"type": "string"},
+       "assertions": {"type": "array", "items": {"type": "string"}}
+      }
+     }
+    }
+   }
+  },
+  "provenance": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": ["lawset_digest", "policy_digest", "room_profile_digest", "schema_digest"],
+   "properties": {
+    "lawset_digest": {"$ref": "#/$defs/digest"},
+    "policy_digest": {"$ref": "#/$defs/digest"},
+    "room_profile_digest": {"$ref": "#/$defs/digest"},
+    "schema_digest": {"$ref": "#/$defs/digest"}
+   }
+  }
+ },
+ "$defs": {
+  "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+  "pathScope": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": ["root_ref", "segments"],
+   "properties": {
+    "root_ref": {"type": "string", "minLength": 1},
+    "segments": {"type": "array", "items": {"type": "string", "minLength": 1}}
+   }
+  },
+  "fields": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["name", "type", "required"],
+    "properties": {
+     "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+     "type": {
+      "enum": [
+       "bool",
+       "bounded_int",
+       "bounded_text",
+       "bytes",
+       "enum",
+       "relative_path",
+       "line_range",
+       "digest",
+       "bounded_list",
+       "bridge_ref",
+       "truncated"
+      ]
+     },
+     "required": {"type": "boolean"},
+     "min": {"type": "integer"},
+     "max": {"type": "integer"},
+     "max_bytes": {"type": "integer"},
+     "values": {"type": "array", "items": {"type": "string"}}
+    }
+   }
+  },
+  "predicates": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["op"],
+    "properties": {
+     "op": {
+      "enum": [
+       "path_within_root",
+       "is_regular_file",
+       "data_class_in",
+       "bytes_le",
+       "fd_open",
+       "no_side_effects",
+       "output_truncated_if_more"
+      ]
+     },
+     "arg": {"type": ["string", "integer", "array", "boolean"]}
+    }
+   }
+  }
+ }
+}

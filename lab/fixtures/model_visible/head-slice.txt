@@ -1,0 +1,10 @@
+line 01: synthetic model_visible fixture
+line 02: no secret, no owner data, no network
+line 03: the first slice may read at most max_bytes_read
+line 04: line_count is an upper bound, not a promise
+line 05: bytes_read is measured, not inferred
+line 06: truncated means more content exists beyond the cap
+line 07: an outside-root path must be refused before open
+line 08: a symlink must not be followed
+line 09: the fixture is immutable for the run
+line 10: end of fixture

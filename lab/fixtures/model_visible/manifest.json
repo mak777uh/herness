@@ -1,0 +1,17 @@
+{
+ "schema_version": "fixture-manifest-v1",
+ "note": "Синтетическая доверенная метка для первого среза. Это не классификатор секретов и не доказательство K6. Метка в файле, доступном агенту на запись, не считается доверенной.",
+ "root_ref": "room:input",
+ "fixture_root": "fixtures",
+ "immutable": true,
+ "accepted_classes": ["model_visible"],
+ "files": [
+  {
+   "path": "head-slice.txt",
+   "bytes": 471,
+   "lines": 10,
+   "sha256": "sha256:b5157f948c0833f80ac96ad64916c93d747e07df253801dfcd5674e59ce76850",
+   "data_class": "model_visible"
+  }
+ ]
+}

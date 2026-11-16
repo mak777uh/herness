@@ -62,7 +62,21 @@ VOCABULARY = {
                        "убрать аксиому"),
     "S9_NEGATIVE_ACCEPTED": ("ложное утверждение принято — проверка не работает",
                              "чинить проверку"),
+    # Поправка v2, утверждена владельцем 16.11.2026 (Q3): точные коды для K4/K6/K11.
+    # Не переиспользовать S1_SCHEMA или S6_CLOSURE_BREACH для этих ситуаций.
+    "K4_RESOURCE_LIMIT": ("инструмент превысил объявленный лимит K4",
+                          "остановить, вернуть отказ, сохранить измерение"),
+    "K6_DATA_CLASS_UNKNOWN": ("класс данных входа неизвестен или недопустим (K6 fail-closed)",
+                              "отказать, не выдавать содержимое, добавить фикстуру в доверенный манифест"),
+    "K6_SECRET_EGRESS": ("секрет или производное секрета пытается пересечь границу",
+                         "остановить канал, сделать redaction или отказать"),
+    "K11_ADMISSION_REQUIRED": ("артефакт не допущен: admission-манифеста нет, он просрочен или отозван",
+                               "получить подписанный admission либо отказать"),
 }
+
+VERSION = 2
+AMENDMENT = ("v2, 16.11.2026, владелец: коды K4_RESOURCE_LIMIT, K6_DATA_CLASS_UNKNOWN, "
+             "K6_SECRET_EGRESS, K11_ADMISSION_REQUIRED; прежние коды не переиспользованы")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -73,8 +87,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
     if args.build:
-        data = {"version": 1,
+        data = {"version": VERSION,
                 "rule": "код не переиспользуется и не перенумеровывается; отказ — о входе, а не о настроении",
+                "amendment": AMENDMENT,
                 "codes": [{"code": k, "means": v[0], "remedy": v[1]}
                           for k, v in VOCABULARY.items()]}
         CODES.parent.mkdir(parents=True, exist_ok=True)

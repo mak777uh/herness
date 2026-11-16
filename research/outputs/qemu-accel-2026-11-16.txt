@@ -1,0 +1,26 @@
+# QEMU accelerator measurement — 2026-11-16
+
+QEMU emulator version 11.1.0 (v11.1.0-12130-ge470268ff4)
+binary: C:/Program Files/qemu/qemu-system-x86_64.exe
+
+## accel help
+Accelerators supported in QEMU binary:
+tcg
+whpx
+
+## microvm machine
+microvm              microvm (i386)
+
+## startup probe: -S, no disk, no net, timeout 3s
+--- accel=whpx
+C:\Program Files\qemu\qemu-system-x86_64.exe: warning: host doesn't support requested feature: CPUID[eax=80000001h].ECX.svm [bit 2]
+rc=124
+verdict=STARTED_AND_PAUSED
+--- accel=tcg
+rc=124
+verdict=STARTED_AND_PAUSED
+
+## WSL
+kernel=6.6.114.1-microsoft-standard-WSL2
+KVM_PRESENT
+QEMU_ABSENT_WSL

@@ -1,0 +1,128 @@
+{
+ "schema_version": "tool-card-v1",
+ "id": "head",
+ "kind": "file_read",
+ "purpose": "Прочитать не больше N строк и не больше объявленного числа байт из синтетического файла класса model_visible.",
+ "template": {
+  "id": "file_read_stream",
+  "version": 1,
+  "slots": ["path_ref", "line_count", "max_bytes_read"]
+ },
+ "inputs": [
+  {"name": "path_ref", "type": "relative_path", "required": true},
+  {"name": "line_count", "type": "bounded_int", "required": true, "min": 1, "max": 200},
+  {"name": "max_bytes_read", "type": "bounded_int", "required": true, "min": 1, "max": 65536}
+ ],
+ "outputs": [
+  {"name": "lines", "type": "bounded_list", "required": true, "max": 200},
+  {"name": "truncated", "type": "truncated", "required": true},
+  {"name": "bytes_read", "type": "bounded_int", "required": true, "min": 0, "max": 65536}
+ ],
+ "effects": {
+  "fs_read": [{"root_ref": "room:input", "segments": ["fixtures"]}],
+  "fs_list": [],
+  "fs_write": [],
+  "bridges": [],
+  "process_spawn": false,
+  "secret_ops": [],
+  "output_channels": ["stdout"]
+ },
+ "preconditions": [
+  {"op": "path_within_root"},
+  {"op": "is_regular_file"},
+  {"op": "data_class_in", "arg": ["model_visible"]}
+ ],
+ "postconditions": [
+  {"op": "output_truncated_if_more"},
+  {"op": "bytes_le", "arg": 65536}
+ ],
+ "frame_conditions": [{"op": "no_side_effects"}],
+ "refusals": [
+  "S1_SCHEMA",
+  "S6_CLOSURE_BREACH",
+  "K4_RESOURCE_LIMIT",
+  "K6_DATA_CLASS_UNKNOWN",
+  "K6_SECRET_EGRESS",
+  "K11_ADMISSION_REQUIRED"
+ ],
+ "limits": {
+  "wall_ms": 2000,
+  "cpu_ms": 1000,
+  "memory_bytes": 67108864,
+  "output_bytes": 8192,
+  "max_bytes_read": 65536,
+  "max_files": 1,
+  "max_depth": 0,
+  "max_open_fds": 16,
+  "max_processes": 1,
+  "write_bytes": 0,
+  "broker_requests": 0
+ },
+ "determinism": {
+  "output": "deterministic",
+  "ordering": "input_order",
+  "clock": "none",
+  "randomness": "none"
+ },
+ "data_classes": {
+  "accepted_inputs": ["model_visible"],
+  "max_output_class": "model_visible"
+ },
+ "secret_refs": [],
+ "examples": [
+  {
+   "id": "normal",
+   "args": {
+    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "head-slice.txt"]},
+    "line_count": 3,
+    "max_bytes_read": 4096
+   },
+   "expected": {
+    "outcome": "ok",
+    "assertions": ["bytes_read <= 4096", "emitted at most three lines"]
+   }
+  },
+  {
+   "id": "outside-root",
+   "args": {
+    "path_ref": {"root_ref": "host:/", "segments": ["etc", "passwd"]},
+    "line_count": 3,
+    "max_bytes_read": 4096
+   },
+   "expected": {"outcome": "refusal", "refusal": "S6_CLOSURE_BREACH"}
+  },
+  {
+   "id": "bad-count",
+   "args": {
+    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "head-slice.txt"]},
+    "line_count": 0,
+    "max_bytes_read": 4096
+   },
+   "expected": {"outcome": "refusal", "refusal": "S1_SCHEMA"}
+  },
+  {
+   "id": "unknown-class",
+   "args": {
+    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "unclassified.txt"]},
+    "line_count": 3,
+    "max_bytes_read": 4096
+   },
+   "expected": {"outcome": "refusal", "refusal": "K6_DATA_CLASS_UNKNOWN"}
+  },
+  {
+   "id": "byte-cap",
+   "args": {
+    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "head-slice.txt"]},
+    "line_count": 200,
+    "max_bytes_read": 64
+   },
+   "expected": {"outcome": "ok", "assertions": ["bytes_read <= 64", "truncated is true or the file ended"]}
+  }
+ ],
+ "provenance": {
+  "lawset_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "policy_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "room_profile_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+ }
+}

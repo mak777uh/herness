@@ -18,6 +18,9 @@
 # тела свидетельств — байт-в-байт, без нормализации переводов строк
 evidence/objects/** -text
 evidence/index.jsonl text eol=lf
+# фикстура среза: sha256 в manifest/пре-регистрации считается по байтам,
+# нормализация LF на checkout сломает сверку
+lab/fixtures/model_visible/head-slice.txt -text -eol
 # ключ ответа CONTINUITY-R1: raw-байты запечатаны в prereg ДО прогона (sha256 326019c1…),
 # коммитится байт-в-байт (CRLF как запечатано), иначе нормализация LF сломает сверку хеша
 research/outputs/continuity-key-R1.json -text

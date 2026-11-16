@@ -1,0 +1,29 @@
+{
+ "schema": 2,
+ "id": "HEAD-SLICE-R1",
+ "date": "2026-11-16",
+ "question": "Может ли один read-only инструмент file_read_stream вернуть не больше N строк и не больше max_bytes_read из синтетического model_visible fixture, не прочитав ни одного байта вне корня и не обойдя admission",
+ "hypothesis": "Ограниченное потоковое чтение от root FD через openat2 с RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_MAGICLINKS | RESOLVE_NO_XDEV, с измеряемым bytes_read и отдельным truncated, отклоняет все критические негативные контроли и не читает больше объявленного лимита; текущая пара resolve_in + read_to_string этого не обеспечивает",
+ "criterion": "Подтверждение: все 8 критических негативных контролей отвергнуты с точным кодом; нормальный fixture даёт ровно первые 3 строки; bytes_read <= max_bytes_read во всех прогонах; при файле больше лимита не выдано ни одного байта сверх лимита; три повтора детерминированы; в QEMU нет сети, записи и host mounts; evidence связывает card/source/binary/fixture/policy/room. Опровержение: хотя бы один контроль принят, bytes_read > лимита, байты вне корня попали в вывод или TCG выдан за границу безопасности. Неопределённость: нет QEMU с аппаратным ускорителем или нет admission-проверки — срез не закрыт",
+ "arms": [
+  "A: текущий путь resolve_in (canonicalize + проверка), затем std::fs::read_to_string",
+  "B: file_read_stream: openat2 от root FD, потоковый цикл с жёстким max_bytes_read, bytes_read и truncated"
+ ],
+ "sensitivity": "Класс различается одним фактом: появились ли в выводе байты вне корня или сверх лимита. Положительный контроль обязателен: обычное чтение внутри fixture должно работать, иначе отказ «на всякий случай» ничего не доказывает. Отдельно проверяется, что B не ломает нормальный файл и не путает max_bytes_read с output_bytes",
+ "unit_of_analysis": "один вызов инструмента над одним входным fixture при фиксированной карточке, политике и комнате",
+ "primary_metric": "доля отвергнутых критических контролей (порог 8/8) и максимум наблюдаемого bytes_read относительно max_bytes_read",
+ "test": "детерминированный harness: нормальный fixture, outside-root, ../, symlink наружу, symlink внутрь, max_bytes_read меньше строки, line_count 0, unknown data class, отсутствие/просрочка admission; каждый негативный контроль ожидает точный код отказа",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при первом принятом критическом контроле, bytes_read > лимита или отсутствии admission-проверки; не менять порог после первого прогона",
+ "fixture": "lab/fixtures/model_visible/head-slice.txt (471 B, 10 строк, sha256 b5157f948c0833f80ac96ad64916c93d747e07df253801dfcd5674e59ce76850) + manifest.json",
+ "runs": ["runs/accept/"],
+ "closed": false,
+ "owner_decision": "docs/DECISIONS-R5-2026-11-16.md",
+ "kill_criteria": [
+  "любой критический негативный контроль принят",
+  "bytes_read больше max_bytes_read",
+  "в вывод попали байты вне корня",
+  "сеть, запись или host mount присутствуют в комнате",
+  "TCG выдан за границу безопасности",
+  "evidence не связывает точные card/source/binary/fixture/policy/room"
+ ]
+}
