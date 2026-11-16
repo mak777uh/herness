@@ -355,3 +355,5 @@ python bin/build_room.py --build
 - требования — с якорями; требование без инварианта — пожелание.
 
 Справочник: добавлен внешний источник `unharnessed-agent/Unharnessed` — разбор в `research/ADOPTION-unharnessed.md` (4 механизма к переносу).
+
+Предложение: харнесс пишет мосты под задачи — `docs/PROPOSAL-0001-task-written-bridges.md`.
