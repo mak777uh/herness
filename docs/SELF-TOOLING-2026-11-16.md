@@ -2,8 +2,9 @@
 
 **Статус:** документ для следующего агента. Не отчёт о завершённой работе: часть проверок —
 исторические снимки, часть — проектные решения, часть — открытые вопросы.
-**Каноническая линия:** GitHub `main`,
-коммит [`4d1fae5de4abceab0b6412ef02df69555367177b`](https://github.com/mak777uh/herness/tree/4d1fae5de4abceab0b6412ef02df69555367177b).
+**Каноническая линия:** GitHub `main`; снимок этой смены — коммит
+[`2d67702f6e7d777738f58148eda36ad82d28fdb2`](https://github.com/mak777uh/herness/tree/2d67702f6e7d777738f58148eda36ad82d28fdb2)
+(R4 — `4d1fae5`, evidence — `ded2cf2`).
 **Предыдущая точка:** `647adae` (handoff от 16.11.2026, 13:48 MSK).
 **Главный артефакт:** [`docs/EXTERNAL-QUESTIONS-R4.md`](EXTERNAL-QUESTIONS-R4.md) — бриф на 45
 вопросов для внешних моделей.
