@@ -1425,6 +1425,16 @@ def gate_rust(root: Path) -> list[str]:
     # Дрейф (артефакт есть, но старше исходника) остаётся провалом в любом профиле.
     if problems and all("нет артефактов ядра" in p for p in problems):
         raise MissingData("нет core-rs/target/release: Rust-тесты в этом окружении не собирались")
+
+    # F-0087: свежести мало. Бинарник мог быть собран из кода, где формат журнала ещё старый.
+    sys.path.insert(0, str(ROOT))
+    from bin.binary_version import problems as binary_problems
+
+    try:
+        problems += binary_problems(ROOT)
+    except MissingData as exc:
+        # Артефакты ядра есть, а писателя журнала нет: сборка неполная.
+        problems.append(str(exc))
     return problems
 
 
