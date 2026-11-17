@@ -1,4 +1,4 @@
-"""build_registry — реестр инструментов: контракт, замыкание, происхождение, хеш среды.
+"""build_registry — замороженный genesis-снимок контрактов инструментов.
 
 Эксперимент E1 плана P33 + A-0042 (контракт с примерами) + замыкание (flowguard-spec).
 
@@ -11,8 +11,14 @@
 проверяется код: если инструмент не получает доступа к записи, он не может писать
 структурно, а не «по дисциплине».
 
-    python bin/build_registry.py --build     # собрать из текущего набора инструментов
-    python bin/build_registry.py --check     # проверить структуру
+R8/Q18: `registry.jsonl` — genesis-снимок, а не таблица полномочий. В нём нет `status`;
+состояние (`quarantined`, `rejected`, `candidate`, `active`) выводится из
+`registry.events.jsonl` через `bin/registry_state.py`. `--build` больше не переписывает
+существующий снимок: изменение описания требует отдельного события, а не молчаливой
+перезаписи.
+
+    python bin/build_registry.py --build     # только если снимка ещё нет
+    python bin/build_registry.py --check     # структура + цепочка событий + state.json
 """
 
 from __future__ import annotations
@@ -145,13 +151,24 @@ def entry(name: str, spec: dict, version: int = 3, previous: str | None = None) 
         "examples": spec["examples"],
         "environment": environment_hash(),
         "provenance": "встроен в цикл, core-rs/src/loopmod.rs",
-        "status": "active",
         "previous": previous,
         "at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
     }
 
 
 def build() -> int:
+    """Записать genesis-снимок только один раз.
+
+    R8/Q18: существующий снимок не переписывается. Иначе `build_registry --build` тихо
+    менял бы описания, против которых уже выпущены события допуска/карантина.
+    """
+    if REGISTRY.exists():
+        print(
+            f"registry.jsonl заморожен: {REGISTRY.relative_to(ROOT)} уже существует; "
+            "изменение описания — отдельное событие в registry.events.jsonl, "
+            "а не перезапись снимка"
+        )
+        return 1
     REGISTRY.parent.mkdir(parents=True, exist_ok=True)
     lines = [json.dumps(entry(name, spec), ensure_ascii=False) for name, spec in TOOLS.items()]
     REGISTRY.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -160,7 +177,7 @@ def build() -> int:
 
 
 REQUIRED = ("id", "version", "contract", "input", "returns", "output", "semantics",
-            "closure", "examples", "environment", "provenance", "status")
+            "closure", "examples", "environment", "provenance")
 CLOSURE_KEYS = ("fs", "net", "time_ms", "memory_mb", "output_bytes")
 
 
@@ -171,6 +188,11 @@ def problems(rows: list[dict]) -> list[str]:
         for field in REQUIRED:
             if not row.get(field):
                 out.append(f"строка {index}: нет поля {field}")
+        if "status" in row:
+            out.append(
+                f"строка {index}: status={row.get('status')!r} хранится в снимке; "
+                "полномочие выводится из registry.events.jsonl, а не из JSON"
+            )
         closure = row.get("closure") or {}
         if closure:
             for key in CLOSURE_KEYS:
@@ -200,12 +222,22 @@ def check() -> int:
         return 1
     rows = [json.loads(line) for line in REGISTRY.read_text(encoding="utf-8").splitlines() if line.strip()]
     found = problems(rows)
+    try:
+        sys.path.insert(0, str(ROOT))
+        from bin import registry_state
+
+        found += registry_state.check_files()
+    except Exception as exc:  # noqa: BLE001
+        found.append(f"registry_state недоступен: {type(exc).__name__}: {exc}")
     if found:
         print("ПРОБЛЕМЫ:")
         for item in found:
             print("  -", item)
         return 1
-    print(f"[ok] реестр: {len(rows)} записей, у всех есть контракт, замыкание и примеры вызова")
+    print(
+        f"[ok] реестр: {len(rows)} записей; описания заморожены, "
+        "полномочие выводится из событий"
+    )
     return 0
 
 

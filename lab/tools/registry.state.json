@@ -1,0 +1,75 @@
+{
+ "active": [],
+ "epoch": 1,
+ "events_digest": "sha256:6d0bf3f1fb96e1388359e7fc3652b35145a4784066d1e96264154383504aa18c",
+ "head_seq": 8,
+ "schema": "herness-registry-state-v1",
+ "snapshot_digest": "sha256:0afc75ec3bf277ba4d48336c75368d2f7382d0963aa0b42c929472715de9b008",
+ "tools": {
+  "head": {
+   "card": "lab/tools/drafts/head-v1.draft.json",
+   "history": [
+    "unreviewed",
+    "candidate"
+   ],
+   "reason": "Stage 7: ручной срез HEAD-SLICE-R1 PASS; owner admission ещё не подписан",
+   "seq": 8,
+   "state": "candidate"
+  },
+  "list": {
+   "history": [
+    "unreviewed",
+    "quarantined"
+   ],
+   "reason": "R8/Q18: legacy native; admission не подписан, допуск не выдан",
+   "seq": 2,
+   "state": "quarantined"
+  },
+  "netprobe": {
+   "history": [
+    "unreviewed",
+    "quarantined"
+   ],
+   "reason": "R8/Q18: legacy native; admission не подписан, допуск не выдан",
+   "seq": 6,
+   "state": "quarantined"
+  },
+  "read": {
+   "history": [
+    "unreviewed",
+    "quarantined"
+   ],
+   "reason": "R8/Q18: legacy native; admission не подписан, допуск не выдан",
+   "seq": 3,
+   "state": "quarantined"
+  },
+  "seal": {
+   "history": [
+    "unreviewed",
+    "quarantined"
+   ],
+   "reason": "R8/Q18: legacy native; admission не подписан, допуск не выдан",
+   "seq": 5,
+   "state": "quarantined"
+  },
+  "search": {
+   "history": [
+    "unreviewed",
+    "quarantined",
+    "rejected"
+   ],
+   "reason": "R8/Q18: search исключён из первого среза; agent-событие не воскрешает",
+   "seq": 7,
+   "state": "rejected"
+  },
+  "write": {
+   "history": [
+    "unreviewed",
+    "quarantined"
+   ],
+   "reason": "R8/Q18: legacy native; admission не подписан, допуск не выдан",
+   "seq": 4,
+   "state": "quarantined"
+  }
+ }
+}

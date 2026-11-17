@@ -28,6 +28,8 @@ def main() -> int:
 
     # 1. Вытеснение: первые LIMIT остаются, остальные уходят в архив (не удаляются).
     workset = [dict(row) for row in rows]
+    for row in workset[:LIMIT]:
+        row["status"] = "active"
     for row in workset[LIMIT:]:
         row["status"] = "archived"
     active = [row["id"] for row in workset if row["status"] == "active"]

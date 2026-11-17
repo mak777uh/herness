@@ -34,7 +34,7 @@ def check(flag: bool, message: str) -> None:
 
 
 def rule(rule_id: str, action: str, effect: str, resource: str) -> dict:
-    return {"id": rule_id, "tool": "head", "action": action, "effect": effect, "resource": resource}
+    return {"id": rule_id, "tool": CARD["id"], "action": action, "effect": effect, "resource": resource}
 
 
 def main() -> int:
@@ -150,12 +150,12 @@ def main() -> int:
     except card_atoms.CardShapeError:
         check(True, "отсутствующий fs.read отвергнут как S1_SCHEMA")
 
-    # CLI: legacy-карточка head с реальной политикой не «зелёная». Её право /mnt/**
-    # конфликтует с head-deny-outside (только fixtures): это конфликт (rc=1), а не
-    # покрытие. Карточка будет переименована при миграции реестра.
+    # CLI: legacy-карточка `head_legacy` с реальной политикой не «зелёная». Право /mnt/**
+    # не покрыто правилами нового `head` (только fixtures), поэтому это rc=3
+    # (`uncovered`), а не допуск. Карточка помечена superseded_by=head.
     rc = card_atoms.main(["--check", str(ROOT / "lab" / "tools" / "cards" / "head.json"),
                           "--policy", str(ROOT / "lab" / "tools" / "policy.json")])
-    check(rc != 0, f"head с реальной политикой не «зелёный», получено rc={rc}")
+    check(rc != 0, f"head_legacy с реальной политикой не «зелёный», получено rc={rc}")
 
     # CLI: синтетическая карточка + policy во временном каталоге.
     with tempfile.TemporaryDirectory() as tmp:

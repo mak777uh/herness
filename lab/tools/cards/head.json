@@ -1,5 +1,7 @@
 {
- "id": "head",
+ "id": "head_legacy",
+ "status": "superseded",
+ "superseded_by": "head",
  "purpose": "вернуть первые N строк файла, не давая прочитать файл целиком.",
  "inputs": {
   "path": "файл внутри /mnt",

@@ -4,6 +4,9 @@
 *.md text eol=lf
 *.py text eol=lf
 *.json text eol=lf
+# JSONL реестра: genesis-событие связывает точные байты registry.jsonl; CRLF на checkout
+# сломал бы snapshot_digest и prev цепочки
+*.jsonl text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.cmd text eol=crlf

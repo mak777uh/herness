@@ -1291,32 +1291,67 @@ pub fn derive_status(events: &[Event]) -> &'static str {
     "done-без-опоры"
 }
 
-/// Единая точка полномочий: можно ли запускать инструмент в этом прогоне.
+/// Единая точка гранта прогона: что не выдано задачей, то отказ, а не тихий вызов.
 ///
-/// Сейчас состояние ещё не выводится из реестра (этап 8): действуют только грант прогона
-/// и запрет `head`. Функция существует, чтобы этап 8 заменил ОДНО тело, а не разбросанные
-/// проверки; тестового флага, обходящего её, нет.
+/// Это не допуск инструмента: допуск выводится из `registry.state.json` ниже. Грант может
+/// только сузить набор, но не расширить его. Тестового флага, обходящего обе проверки, нет.
 fn tool_authority(name: &str, granted: Option<&[String]>) -> Result<(), String> {
     if let Some(list) = granted {
         if !list.iter().any(|tool| tool == name) {
             return Err(format!("инструмент {name} не выдан в этом прогоне"));
         }
     }
-    if name == "head" {
-        // head существует как candidate-шаблон, но не допущен: без admission и derived right
-        // запуск обязан отказать. Это не «выключенный флаг», а состояние допуска (R8/Q18).
-        return Err("S13_TOOL_INACTIVE: head не допущен в этом прогоне".to_string());
-    }
     Ok(())
 }
 
-/// Инструмент с проверкой выдачи: что не выдано в этом прогоне, то отказ, а не тихий вызов.
+/// Состояние инструмента из производного реестра (R8/Q18).
+///
+/// `active` не хранится ни в `registry.jsonl`, ни здесь: файл — снимок состояния, который
+/// `bin/registry_state.py` пересобирает из append-only событий. Неизвестное имя и битый JSON
+/// дают `unreviewed`/пустое состояние, то есть отказ, а не «наверное, можно».
+fn registry_state_for(name: &str) -> &'static str {
+    static STATES: OnceLock<Vec<(String, String)>> = OnceLock::new();
+    let states = STATES.get_or_init(|| {
+        let value: serde_json::Value =
+            serde_json::from_str(include_str!("../../lab/tools/registry.state.json"))
+                .unwrap_or(serde_json::Value::Null);
+        let mut out = Vec::new();
+        if let Some(tools) = value.get("tools").and_then(serde_json::Value::as_object) {
+            for (key, record) in tools {
+                if let Some(state) = record.get("state").and_then(serde_json::Value::as_str) {
+                    out.push((key.clone(), state.to_string()));
+                }
+            }
+        }
+        out
+    });
+    states
+        .iter()
+        .find(|(key, _)| key == name)
+        .map(|(_, state)| state.as_str())
+        .unwrap_or("unreviewed")
+}
+
+/// `net` — отдельный bridge path вне реестра инструментов: у него своя политика.
+fn registry_allows(name: &str) -> bool {
+    name == "net" || registry_state_for(name) == "active"
+}
+
+/// Инструмент с проверкой выдачи и derived authority.
 ///
 /// Зачем: набор инструментов — это полномочие, а не удобство. Прогону, который должен только
 /// читать, незачем держать `write` и `seal` включёнными «на всякий случай»: модель может ими
 /// воспользоваться, и тогда граница прогона определяется её настроением, а не объявлением.
+/// В R8 все шесть legacy переведены в `quarantined`, `search` — в `rejected`, `head` остаётся
+/// `candidate`; поэтому запуск каждого из них обязан вернуть `S13_TOOL_INACTIVE`.
 fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<String, String> {
     tool_authority(name, granted)?;
+    if !registry_allows(name) {
+        return Err(format!(
+            "S13_TOOL_INACTIVE: {name} в состоянии {}; допуска нет",
+            registry_state_for(name)
+        ));
+    }
     match name {
         "seal" => tool_seal(arg),
         "netprobe" => tool_netprobe(arg),
@@ -2166,6 +2201,22 @@ mod tests {
         assert!(KNOWN_TOOLS.contains(&"net"));
         // netprobe остаётся: он диагностика сети, а не выход в сеть.
         assert!(KNOWN_TOOLS.contains(&"netprobe"));
+    }
+
+    #[test]
+    fn legacy_и_head_не_запускаются_без_допуска() {
+        for name in ["seal", "netprobe", "search", "list", "read", "write", "head"] {
+            let error = run_tool_g(name, "", None).unwrap_err();
+            assert!(
+                error.contains("S13_TOOL_INACTIVE"),
+                "{name}: ожидался S13_TOOL_INACTIVE, получено {error}"
+            );
+        }
+        // net — отдельный bridge path: реестр его не блокирует.
+        assert!(registry_allows("net"));
+        // Состояние берётся из производного файла, а не из JSON-флага в снимке.
+        assert_eq!(registry_state_for("search"), "rejected");
+        assert_eq!(registry_state_for("head"), "candidate");
     }
 
     #[test]

@@ -184,6 +184,16 @@ def check() -> list[str]:
     for code in ("S13_TOOL_INACTIVE", "S14_ALREADY_EXISTS"):
         if code not in codes:
             problems.append(f"словарь отказов без {code}")
+
+    # Полномочие — тоже один источник: снимок описаний + события + производный state.
+    # Если state.json отстал или в registry.jsonl появился status, гейт обязан это увидеть.
+    sys.path.insert(0, str(ROOT))
+    try:
+        from bin import registry_state
+
+        problems += registry_state.check_files()
+    except Exception as exc:  # noqa: BLE001
+        problems.append(f"registry_state недоступен: {type(exc).__name__}: {exc}")
     return problems
 
 

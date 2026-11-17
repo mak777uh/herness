@@ -22,20 +22,42 @@ STOP = {"нужно", "надо", "хочу", "может", "этот", "что�
 
 
 def load() -> list[dict]:
+    """Снимок контрактов + производное состояние из событий.
+
+    `status` в `registry.jsonl` не читается: даже подложенный `"status": "active"` не делает
+    инструмент доступным. Если вывод состояния невозможен, все записи получают `unreviewed`
+    (fail-closed), а не прежний статус.
+    """
     if not REGISTRY.exists():
         return []
-    return [json.loads(line) for line in REGISTRY.read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows = [json.loads(line) for line in REGISTRY.read_text(encoding="utf-8").splitlines() if line.strip()]
+    try:
+        sys.path.insert(0, str(ROOT))
+        from bin import registry_state
+
+        state = registry_state.computed_state()
+    except Exception:  # noqa: BLE001
+        for row in rows:
+            row["state"] = "unreviewed"
+            row["reason"] = "registry_state недоступен"
+        return rows
+    for row in rows:
+        record = state["tools"].get(row["id"], {"state": "unreviewed", "reason": "нет события"})
+        row["state"] = record["state"]
+        row["reason"] = record.get("reason", "")
+    return rows
 
 
 def words(text: str) -> set[str]:
     return {w.lower() for w in re.findall(r"[A-Za-zА-Яа-я]{3,}", text) if w.lower() not in STOP}
 
 
-def find(query: str, rows: list[dict], statuses=("active",)) -> list[dict]:
+def find(query: str, rows: list[dict], states=("active",)) -> list[dict]:
     wanted = words(query)
     scored = []
     for row in rows:
-        if row.get("status") not in statuses:
+        current = row.get("state", row.get("status"))
+        if current not in states:
             continue
         name_hit = row["id"].lower() in query.lower()
         contract_words = words(row["contract"] + " " + row["returns"])
@@ -60,22 +82,33 @@ def self_test() -> int:
     if not rows:
         print("нет реестра")
         return 2
+    # R8/Q18: по умолчанию нет ни одного admitted-инструмента. Legacy видны только в
+    # диагностическом режиме; `search` отклонён и не находится даже там.
     cases = [
-        ("найти подстроку в файлах", "search", True),
-        ("перечислить содержимое каталога", "list", True),
-        ("запечатать файл отпечатком", "seal", True),
-        ("проверить доступность адреса", "netprobe", True),
-        ("отправить письмо по почте", None, False),
+        ("найти подстроку в файлах", None, ("active",)),
+        ("перечислить содержимое каталога", None, ("active",)),
+        ("запечатать файл отпечатком", None, ("active",)),
+        ("проверить доступность адреса", None, ("active",)),
+        ("перечислить содержимое каталога", "list", ("quarantined",)),
+        ("запечатать файл отпечатком", "seal", ("quarantined",)),
+        ("найти подстроку в файлах", None, ("quarantined",)),
+        ("отправить письмо по почте", None, ("quarantined",)),
     ]
     lines = ["# Pre-flight: поиск по имени и контракту", ""]
     ok_count = 0
-    for query, expected, should_find in cases:
-        found = find(query, rows)
+    for query, expected, states in cases:
+        found = find(query, rows, states)
         top = found[0]["id"] if found else None
-        ok = (top == expected) if should_find else (top is None)
+        ok = (top == expected) if expected else (top is None)
         ok_count += 1 if ok else 0
-        lines.append(f"{query:34} → {top or 'ничего':10} {'ok' if ok else 'ПРОВАЛ'}")
-    lines += ["", f"верно: {ok_count} из {len(cases)}"]
+        lines.append(
+            f"{query:34} [{states[0]:11}] → {top or 'ничего':10} {'ok' if ok else 'ПРОВАЛ'}"
+        )
+    lines += [
+        "",
+        f"верно: {ok_count} из {len(cases)}",
+        "# active пуст: ни один legacy не допущен; quarantined находится только для диагностики.",
+    ]
     text = "\n".join(lines) + "\n"
     (ROOT / "research" / "outputs" / "preflight-check.txt").write_text(text, encoding="utf-8")
     print(text)
@@ -87,14 +120,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("query", nargs="?", default=None)
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--include-archived", action="store_true")
+    parser.add_argument("--include-quarantined", action="store_true",
+                        help="диагностика: показать quarantined; не делает их доступными")
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
     if args.self_test:
         return self_test()
     if not args.query:
         print("нужно: bin/preflight.py \"<что нужно сделать>\"", file=sys.stderr)
         return 2
-    statuses = ("active", "archived") if args.include_archived else ("active",)
-    for item in find(args.query, load(), statuses):
+    states: tuple[str, ...] = ("active",)
+    if args.include_archived:
+        states += ("archived",)
+    if args.include_quarantined:
+        states += ("quarantined",)
+    for item in find(args.query, load(), states):
         print(f"{item['id']:10} {item['score']:>2}  по {item['by']}")
     return 0
 

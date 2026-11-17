@@ -19,32 +19,48 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from bin import build_registry as reg  # noqa: E402
+from bin import registry_state  # noqa: E402
 
 OUT = ROOT / "research" / "outputs" / "canary-check.txt"
 
 
-def statuses(rows: list[dict], current: str) -> list[tuple[str, str]]:
-    return [(row["id"], "active" if row["environment"] == current else "stale") for row in rows]
+def statuses(rows: list[dict], current: str, state: dict | None = None) -> list[tuple[str, str]]:
+    """Состояние берётся из событий, среда проверяется только у active.
+
+    R8/Q18: quarantined/rejected/candidate не становятся active от совпадения хеша среды.
+    Иначе канарейка сама была бы способом обойти производный допуск.
+    """
+    if state is None:
+        state = registry_state.computed_state()
+    out = []
+    for row in rows:
+        record = state["tools"].get(row["id"], {"state": "unreviewed"})
+        current_state = record["state"]
+        if current_state != "active":
+            out.append((row["id"], current_state))
+        elif row["environment"] == current:
+            out.append((row["id"], "active"))
+        else:
+            out.append((row["id"], "stale"))
+    return out
 
 
 def probe() -> int:
     rows = [json.loads(line) for line in reg.REGISTRY.read_text(encoding="utf-8").splitlines() if line.strip()]
     current = reg.environment_hash()
+    state = registry_state.computed_state()
     lines = ["# Canary: протухание по событию", ""]
 
-    # 1. Текущая среда: всё активно.
-    now = statuses(rows, current)
-    ok_now = all(state == "active" for _, state in now)
-    lines.append(f"{'текущая среда':34} {'active у всех' if ok_now else 'ЕСТЬ stale'}")
+    # 1. Текущая среда: active нет, legacy остаются quarantined/rejected.
+    now = statuses(rows, current, state)
+    ok_now = not any(item == "active" for _, item in now)
+    lines.append(f"{'текущая среда':34} {now if ok_now else 'ЕСТЬ ЛОЖНЫЙ active'}")
 
-    # 2. Среда изменилась (другой хеш): все становятся stale.
-    changed = statuses(rows, "deadbeefdeadbeef")
-    ok_changed = all(state == "stale" for _, state in changed)
-    lines.append(f"{'среда изменилась':34} {'все stale' if ok_changed else 'НЕ ВСЕ stale'}")
+    # 2. Смена среды не воскрешает quarantined/rejected.
+    changed = statuses(rows, "deadbeefdeadbeef", state)
+    ok_changed = not any(item == "active" for _, item in changed)
+    lines.append(f"{'среда изменилась':34} {'active не появился' if ok_changed else 'ПОЯВИЛСЯ active'}")
 
-    # 3. Нерелевантное изменение: манифест тот же, добавили неиспользуемый файл в комнату.
-    #    Хеш среды считается по манифесту, а не по содержимому образа, поэтому статус не меняется —
-    #    и это надо назвать честно: такой канарейкой нерелевантное изменение не отличить.
     lines.append(
         f"{'нерелевантное изменение':34} не отличается: хеш считается по манифесту, "
         "а не по содержимому образа"
@@ -52,9 +68,9 @@ def probe() -> int:
 
     lines += [
         "",
-        "# Что это доказывает: смена манифеста комнаты переводит все инструменты в stale.",
+        "# Что это доказывает: состояние инструмента выводится из событий, а смена среды не делает",
+        "# quarantined инструмент доступным.",
         "# Что это НЕ доказывает: изменение содержимого образа при том же манифесте не видно.",
-        "# Для второго нужен хеш содержимого (build_room --check уже сверяет число файлов).",
     ]
     text = "\n".join(lines) + "\n"
     OUT.write_text(text, encoding="utf-8")
@@ -65,11 +81,11 @@ def probe() -> int:
 def check() -> int:
     rows = [json.loads(line) for line in reg.REGISTRY.read_text(encoding="utf-8").splitlines() if line.strip()]
     current = reg.environment_hash()
-    stale = [name for name, state in statuses(rows, current) if state == "stale"]
+    stale = [name for name, item in statuses(rows, current) if item == "stale"]
     if stale:
         print(f"stale: {', '.join(stale)} — среда изменилась, нужна канарейка")
         return 1
-    print(f"[ok] все {len(rows)} инструментов проверены против среды {current}")
+    print(f"[ok] {len(rows)} записей: active нет, quarantined/rejected не выдают допуск")
     return 0
 
 

@@ -72,3 +72,35 @@ self-exec `seal`/`netprobe`.
 Гейты: `python bin/hs.py gates` → оценено 31 из 33, N/A 2 (журналы, индекс прогонов);
 пробы поймали 17 из 17; политика — один источник, 23 правила.
 
+## После этапа 8 (registry events и производный active)
+
+Команда: `python tests/test_r8_repros.py`
+rc: 0
+
+```
+[ok]   REPRO-ADMISSION: authority проверяется
+[ok]   REPRO-HEAD-CARD: id карточек различаются
+...
+проверок: 18, провалов: 0
+```
+
+Что изменилось:
+- `lab/tools/registry.jsonl` — замороженный genesis-снимок без `status`; `build_registry
+  --build` отказывается переписывать существующий снимок.
+- `lab/tools/registry.events.jsonl` — genesis + quarantine для шести legacy + rejected
+  для `search` + candidate для `head`; `prev`/`seq`/JCS/хеши.
+- `bin/registry_state.py` выводит `active`; `registry.state.json` — производный артефакт.
+- все шесть legacy: `quarantined`, `search` — `rejected`; `head` — `candidate`; `active` пуст.
+- `run_tool_g` проверяет derived authority и возвращает `S13_TOOL_INACTIVE`; `net` остаётся
+  отдельным bridge path.
+- legacy-карточка `head_legacy` помечена `superseded_by=head`; рабочая карточка — draft `head`.
+
+Поведенческая проверка: `python bin/rust_tests.py` → `120 passed; 0 failed`
+(114 lib + 3 head_slice + 3 vectors).
+
+Гейты: `python bin/hs.py gates` → оценено 31 из 33, N/A 2 (журналы, индекс прогонов);
+пробы поймали 17 из 17.
+
+Что это НЕ доказывает: настоящего owner-ключа нет; `active` пуст; `head` не допущен;
+`net` не проверялся в этом прогоне; `K9_proven` не выдан.
+
