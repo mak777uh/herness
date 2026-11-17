@@ -44,6 +44,49 @@
    "why": "чтение файла не требует сети"
   },
   {
+   "id": "head-allow",
+   "tool": "head",
+   "subject": "agent",
+   "action": "read",
+   "resource": "file:/mnt/fixtures/**",
+   "effect": "allow",
+   "level": "A",
+   "why": "первый срез читает только синтетический fixture класса model_visible"
+  },
+  {
+   "id": "head-deny-outside",
+   "tool": "head",
+   "subject": "agent",
+   "action": "read",
+   "resource": "file:!/mnt/fixtures/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "замыкание первого среза — только fixtures",
+   "implied": true
+  },
+  {
+   "id": "head-deny-write",
+   "tool": "head",
+   "subject": "agent",
+   "action": "write",
+   "resource": "file:/mnt/**",
+   "effect": "deny",
+   "level": "A",
+   "why": "чтение не пишет",
+   "implied": true
+  },
+  {
+   "id": "head-deny-net",
+   "tool": "head",
+   "subject": "agent",
+   "action": "net",
+   "resource": "net:**",
+   "effect": "deny",
+   "level": "A",
+   "why": "чтение fixture не требует сети",
+   "implied": true
+  },
+  {
    "id": "search-allow",
    "tool": "search",
    "subject": "agent",

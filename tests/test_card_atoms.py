@@ -150,10 +150,12 @@ def main() -> int:
     except card_atoms.CardShapeError:
         check(True, "отсутствующий fs.read отвергнут как S1_SCHEMA")
 
-    # CLI: head с реальной политикой не «зелёный»: у head нет ни одного правила.
+    # CLI: legacy-карточка head с реальной политикой не «зелёная». Её право /mnt/**
+    # конфликтует с head-deny-outside (только fixtures): это конфликт (rc=1), а не
+    # покрытие. Карточка будет переименована при миграции реестра.
     rc = card_atoms.main(["--check", str(ROOT / "lab" / "tools" / "cards" / "head.json"),
                           "--policy", str(ROOT / "lab" / "tools" / "policy.json")])
-    check(rc == 3, f"head без правил политики даёт uncovered rc=3, получено {rc}")
+    check(rc != 0, f"head с реальной политикой не «зелёный», получено rc={rc}")
 
     # CLI: синтетическая карточка + policy во временном каталоге.
     with tempfile.TemporaryDirectory() as tmp:

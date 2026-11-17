@@ -4,9 +4,9 @@
  "malformed": 0,
  "coverage": 1.0,
  "verdict": "ANCHORED_WEAK",
- "strict_closed": 169,
- "strict_coverage": 0.558,
- "weak_expects": 111,
+ "strict_closed": 167,
+ "strict_coverage": 0.551,
+ "weak_expects": 113,
  "descriptive_artifacts": 32,
  "open": []
 }

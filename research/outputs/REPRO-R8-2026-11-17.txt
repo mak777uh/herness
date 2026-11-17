@@ -1,0 +1,33 @@
+# REPRO-R8-2026-11-17 — красный прогон до патчей
+
+Команда: `python tests/test_r8_repros.py`
+Ветка/коммит: `main` / `e82dc22`
+rc: 1
+
+```
+[FAIL] REPRO-POLICY-COUNT: policy.json: 19 правил, Rust POLICY: 14
+[FAIL] REPRO-POLICY-BANG: resource_matches не понимает `!` (дополнение): file:!/mnt/** и net:!10.0.2.2:8790 не работают
+[FAIL] REPRO-RESOLVE-READ: resolve_in всегда проверяет read/read: write/list/search проверяют чужое действие
+[FAIL] REPRO-WRITE-TRUNC: write_beneath использует O_TRUNC: существующий файл перезаписывается
+[FAIL] REPRO-WRITE-XDEV: write_beneath не запрещает переход на другую ФС
+[FAIL] REPRO-WRITE-POLICY-BEFORE-OPEN: tool_write_in проверяет policy над ненормализованным путём: work/../work2 проходит
+[FAIL] REPRO-READ-WHOLE: tool_read_in читает весь файл до лимита выдачи
+[FAIL] REPRO-READ-CAP: у read нет отдельного потолка выдачи 8192 B: одна строка может переполнить ответ
+[FAIL] REPRO-SEARCH-SILENT: search молча пропускает ошибки metadata/read: «0 найдено» врёт
+[FAIL] REPRO-SEARCH-UNICODE: позиция в lowercased строке используется как байтовый индекс исходной: паника на İ€
+[FAIL] REPRO-LIST-FLATTEN: list молча глотает ошибки read_dir
+[FAIL] REPRO-LIST-DOUBLE: list делает resolve_in дважды: TOCTOU между проверкой и чтением
+[FAIL] REPRO-SELF-EXEC: tool_seal запускает сам себя через current_exe
+[FAIL] REPRO-ADMISSION: run_tool_g не проверяет admission/derived active: любой инструмент запускается по имени
+[FAIL] REPRO-HEAD-CARD: две карточки с одним id='head' в разных форматах: неизвестно, какая закон
+[ok]   REPRO-REFUSAL-V3: v3, 28 кодов
+[ok]   REPRO-SCHEMA-ENUM: enum == словарь
+[ok]   REPRO-DRAFT-ENUM: карточка использует только словарь
+
+проверок: 18, провалов: 15
+```
+
+Что это показывает: перечисленные дефекты присутствуют в коде на момент коммита `e82dc22`.
+Что это НЕ показывает: что после патчей поведение безопасно. Это доказывают Rust-тесты
+этапов 2–4 и `HEAD-SLICE-R1` с восемью критическими контролями; здесь — только факт
+исходного состояния и граница «до/после».

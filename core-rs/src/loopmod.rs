@@ -15,6 +15,7 @@
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::OnceLock;
 
 use crate::journal::{Journal, Kind};
 
@@ -286,9 +287,10 @@ fn tool_seal(arg: &str) -> Result<String, String> {
     // Посредник: политика решает, можно ли запечатать этот файл.
     {
         let target = resolve_in(arg, &workspace_root())?;
-        let resource = resource_of(&target, &workspace_root());
+        let resource = resource_of(&target, &workspace_root(), "file")
+            .ok_or_else(|| "S6_CLOSURE_BREACH: путь вне корня".to_string())?;
         if !policy_allows("seal", "seal", &resource) {
-            return Err(format!("политика не разрешает запечатать: {resource}"));
+            return Err(format!("S6_CLOSURE_BREACH: политика не разрешает запечатать: {resource}"));
         }
     }
     let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
@@ -470,9 +472,9 @@ fn plain(path: &Path) -> PathBuf {
 
 /// Политика: что инструменту разрешено. Данные, а не код — поэтому её можно проверить отдельно.
 ///
-/// Зачем отдельная структура: раньше граница была размазана по функциям («здесь проверяем,
-/// здесь не забыли»). Теперь она объявлена один раз и проверяется в одном месте — это посредник
-/// из flowguard-spec: не «система безопасна», а «мимо этой точки значение не пройдёт».
+/// Источник один: `lab/tools/policy.json` встроен в бинарь на этапе компиляции. Ручной копии
+/// в коде больше нет (S5_POLICY_DRIFT): расхождение JSON↔Rust невозможно по построению, а
+/// гейт `check_policy_parity.py` проверяет смысл правил и связь с карточкой.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Effect {
     Allow,
@@ -481,37 +483,55 @@ pub enum Effect {
 
 #[derive(Debug, Clone)]
 pub struct Rule {
-    pub tool: &'static str,
-    pub action: &'static str,
-    pub resource: &'static str,
+    pub tool: String,
+    pub action: String,
+    pub resource: String,
     pub effect: Effect,
 }
 
-/// Политика инструментов. Совпадает с lab/tools/policy.json; расхождение ловит гейт.
-pub const POLICY: &[Rule] = &[
-    Rule { tool: "read", action: "read", resource: "file:/mnt/**", effect: Effect::Allow },
-    Rule { tool: "read", action: "write", resource: "file:/mnt/**", effect: Effect::Deny },
-    Rule { tool: "read", action: "net", resource: "net:**", effect: Effect::Deny },
-    Rule { tool: "search", action: "read", resource: "file:/mnt/**", effect: Effect::Allow },
-    Rule { tool: "search", action: "write", resource: "file:/mnt/**", effect: Effect::Deny },
-    Rule { tool: "search", action: "net", resource: "net:**", effect: Effect::Deny },
-    Rule { tool: "list", action: "list", resource: "dir:/mnt/**", effect: Effect::Allow },
-    Rule { tool: "list", action: "write", resource: "file:/mnt/**", effect: Effect::Deny },
-    Rule { tool: "write", action: "write", resource: "file:/mnt/work/**", effect: Effect::Allow },
-    Rule { tool: "write", action: "net", resource: "net:**", effect: Effect::Deny },
-    Rule { tool: "seal", action: "seal", resource: "file:/mnt/work/**", effect: Effect::Allow },
-    Rule { tool: "netprobe", action: "net", resource: "net:10.0.2.2:8790", effect: Effect::Allow },
-    // net — выход в сеть для агента (ADR-0054). Разрешён ТОЛЬКО к мосту: комната
-    // не имеет прямого выхода, адреса и ключи остаются на хосте (ADR-0046).
-    //
-    // Общего запрета `net:**` здесь НЕТ намеренно: он совпадал бы и с адресом
-    // моста (`**` берёт любой хвост), а запрет сильнее разрешения — тогда net
-    // не работал бы вовсе. Ненужен он и по принципу политики: «неявных
-    // разрешений нет», кто не назван — тот не может. Разрешён один адрес,
-    // всё остальное запрещено по умолчанию.
-    Rule { tool: "net", action: "net", resource: "net:10.0.2.2:8790", effect: Effect::Allow },
-    Rule { tool: "net", action: "write", resource: "file:/mnt/**", effect: Effect::Deny },
-];
+const POLICY_JSON: &str = include_str!("../../lab/tools/policy.json");
+
+/// Политика, разобранная один раз. Ошибка разбора — пустой список, то есть тотальный отказ:
+/// сломанная политика обязана закрывать, а не открывать.
+fn policy_rules() -> &'static [Rule] {
+    static RULES: OnceLock<Vec<Rule>> = OnceLock::new();
+    RULES.get_or_init(|| parse_policy(POLICY_JSON))
+}
+
+fn parse_policy(text: &str) -> Vec<Rule> {
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(text) else {
+        return Vec::new();
+    };
+    let Some(items) = value.get("rules").and_then(|rules| rules.as_array()) else {
+        return Vec::new();
+    };
+    let mut rules = Vec::with_capacity(items.len());
+    for item in items {
+        // Любое битое правило закрывает всю политику. Иначе выпавшее deny-правило
+        // превратилось бы в разрешение — сломанная политика обязана закрывать.
+        let Some(effect) = (match item.get("effect").and_then(|effect| effect.as_str()) {
+            Some("allow") => Some(Effect::Allow),
+            Some("deny") => Some(Effect::Deny),
+            _ => None,
+        }) else {
+            return Vec::new();
+        };
+        let (Some(tool), Some(action), Some(resource)) = (
+            item.get("tool").and_then(|value| value.as_str()),
+            item.get("action").and_then(|value| value.as_str()),
+            item.get("resource").and_then(|value| value.as_str()),
+        ) else {
+            return Vec::new();
+        };
+        rules.push(Rule {
+            tool: tool.to_string(),
+            action: action.to_string(),
+            resource: resource.to_string(),
+            effect,
+        });
+    }
+    rules
+}
 
 /// Проверить политику: разрешено ли инструменту действие над ресурсом.
 ///
@@ -519,11 +539,11 @@ pub const POLICY: &[Rule] = &[
 /// Это и есть «неявных разрешений нет»: кто не назван, тот не может.
 pub fn policy_allows(tool: &str, action: &str, resource: &str) -> bool {
     let mut allowed = false;
-    for rule in POLICY {
+    for rule in policy_rules() {
         if rule.tool != tool || rule.action != action {
             continue;
         }
-        if !resource_matches(rule.resource, resource) {
+        if !resource_matches(&rule.resource, resource) {
             continue;
         }
         if rule.effect == Effect::Deny {
@@ -534,60 +554,115 @@ pub fn policy_allows(tool: &str, action: &str, resource: &str) -> bool {
     allowed
 }
 
-/// Совпадает ли ресурс с шаблоном политики. `**` — любой хвост, `*` — один сегмент.
+/// Схема ресурса: `file:`, `dir:`, `net:`. Схемы не смешиваются.
+fn split_scheme(text: &str) -> (&str, &str) {
+    for scheme in ["file:", "dir:", "net:"] {
+        if let Some(rest) = text.strip_prefix(scheme) {
+            return (scheme, rest);
+        }
+    }
+    ("", text)
+}
+
+/// Совпадает ли ресурс с шаблоном политики.
 ///
-/// `/mnt` в шаблоне означает «внутри корня», а не буквально путь: корень бывает разным
-/// (комната `/mnt`, тесты — временный каталог, хостовый прогон — свой). Поэтому шаблон
-/// сравнивается по хвосту после `/mnt`.
+/// `!` перед путём — дополнение (deny «всё, кроме»): шаблон совпадает тогда и только тогда,
+/// когда путь НЕ совпадает с остатком. `*` — ровно один сегмент, `**` — любой хвост,
+/// включая пустой. Схема шаблона и ресурса обязана совпадать: `file:` не матчится с `net:`.
+fn resource_matches(pattern: &str, resource: &str) -> bool {
+    let (pattern_scheme, pattern_path) = split_scheme(pattern);
+    let (resource_scheme, resource_path) = split_scheme(resource);
+    if pattern_scheme != resource_scheme {
+        return false;
+    }
+    // Ресурс для политики обязан быть нормализованным. Если в нём остались `.`/`..`,
+    // это не «путь с хитростью», а вход, которого политика не видела: отказ.
+    if resource_path.split('/').any(|segment| segment == "." || segment == "..") {
+        return false;
+    }
+    let (negated, pattern_path) = match pattern_path.strip_prefix('!') {
+        Some(rest) => (true, rest),
+        None => (false, pattern_path),
+    };
+    let matched = glob_path(pattern_path, resource_path);
+    if negated {
+        !matched
+    } else {
+        matched
+    }
+}
+
+fn glob_path(pattern: &str, resource: &str) -> bool {
+    let pattern: Vec<&str> = pattern.split('/').collect();
+    let resource: Vec<&str> = resource.split('/').collect();
+    glob_segments(&pattern, &resource)
+}
+
+fn glob_segments(pattern: &[&str], resource: &[&str]) -> bool {
+    match pattern.split_first() {
+        None => resource.is_empty(),
+        Some((&"**", rest)) => {
+            if glob_segments(rest, resource) {
+                return true;
+            }
+            match resource.split_first() {
+                Some((_, tail)) => glob_segments(pattern, tail),
+                None => false,
+            }
+        }
+        Some((&"*", rest)) => match resource.split_first() {
+            Some((segment, tail)) if !segment.is_empty() => glob_segments(rest, tail),
+            _ => false,
+        },
+        Some((segment, rest)) => match resource.split_first() {
+            Some((actual, tail)) if actual == segment => glob_segments(rest, tail),
+            _ => false,
+        },
+    }
+}
+
 /// Ресурс для политики: путь ОТНОСИТЕЛЬНО корня, с префиксом `/mnt`.
 ///
 /// Зачем так: политика объявлена для комнаты (`/mnt`), а корень бывает разным — комната,
 /// тесты, хостовый прогон. Ресурс строится от корня, поэтому шаблон `/mnt/**` совпадает
 /// буквально и при этом не зависит от того, где физически лежит корень (F-0072).
-fn resource_of(path: &Path, root: &Path) -> String {
-    let path = plain(path);
-    let root = plain(&root.canonicalize().unwrap_or_else(|_| root.to_path_buf()));
-    let relative = path.strip_prefix(&root).map(|tail| tail.to_path_buf()).unwrap_or(path);
-    let tail = relative.display().to_string().replace('\\', "/");
-    if tail.is_empty() {
-        "file:/mnt".to_string()
+///
+/// Путь нормализуется ДО сравнения: иначе `work/../work2/x` выглядит как `work/**` и
+/// проходит разрешение, а ядро пишет в `work2`. Вне корня ресурса нет — `None`, а не
+/// замаскированный `/mnt/...`.
+fn resource_of(path: &Path, root: &Path, scheme: &str) -> Option<String> {
+    let root = normalize(&plain(&root.canonicalize().unwrap_or_else(|_| root.to_path_buf())));
+    let path = if path.is_absolute() {
+        normalize(&plain(path))
     } else {
-        format!("file:/mnt/{}", tail.trim_start_matches('/'))
+        normalize(&plain(&root.join(path)))
+    };
+    let relative = path.strip_prefix(&root).ok()?;
+    let tail = relative.to_string_lossy().replace('\\', "/");
+    if tail.is_empty() {
+        Some(format!("{scheme}:/mnt"))
+    } else {
+        Some(format!("{scheme}:/mnt/{}", tail.trim_start_matches('/')))
     }
 }
 
-/// Снять схему ресурса: file:, dir:, net: говорят, что это, а не где.
-fn strip_scheme(text: &str) -> &str {
-    for scheme in ["file:", "dir:", "net:"] {
-        if let Some(rest) = text.strip_prefix(scheme) {
-            return rest;
-        }
-    }
-    text
-}
-
-fn resource_matches(pattern: &str, resource: &str) -> bool {
-    // Схема ресурса (file:, dir:, net:) не участвует в сравнении: она говорит, что это,
-    // а не где. Иначе dir:/mnt/** и file:/mnt/** считались бы разными шаблонами.
-    let pattern = strip_scheme(pattern);
-    let resource = strip_scheme(resource);
-    // Шаблон проверяется БУКВАЛЬНО (F-0072). Раньше `/mnt/**` совпадал с любым ресурсом,
-    // потому что «внутри корня» проверялось отдельно в resolve_in. Но `policy_allows` —
-    // публичная функция: с `file:/etc/passwd` она отвечала «разрешено». Сверка с моделью
-    // в Lean показала 10 расхождений из 18, все в сторону разрешения.
-    if let Some(prefix) = pattern.strip_suffix("/**") {
-        return resource == prefix || resource.starts_with(&format!("{prefix}/"));
-    }
-    if let Some(prefix) = pattern.strip_suffix("**") {
-        return resource.starts_with(prefix);
-    }
-    pattern == resource
-}
-
+/// Привести путь инструмента к рабочему каталогу и запретить выход наружу.
+///
+/// Зачем: первый живой прогон показал, что `list .` в комнате печатает `/` — вместе с
+/// `bridge-token`. Токен моста — не «файл рядом», а удостоверение комнаты перед хостом; если
+/// модель может его прочитать, ограничение «ключ провайдера вне комнаты» остаётся верным, а
+/// «комната не может выдать себя за другую» — уже нет (F-0025).
+///
+/// Политика здесь НЕ проверяется: у каждого инструмента своё действие (`read`, `list`,
+/// `search`, `write`), и решать за него — значит проверять чужое правило.
 fn resolve_in(arg: &str, root: &Path) -> Result<PathBuf, String> {
     let root = normalize(&plain(&root.canonicalize().unwrap_or_else(|_| root.to_path_buf())));
     let raw = Path::new(arg.trim());
-    let joined = if raw.is_absolute() { raw.to_path_buf() } else { root.join(raw) };
+    let joined = if raw.is_absolute() {
+        raw.to_path_buf()
+    } else {
+        root.join(raw)
+    };
     // Существующий путь приводим к канонической форме (это же ловит симлинк наружу),
     // несуществующий — сравниваем по нормализованной записи.
     let path = match joined.canonicalize() {
@@ -598,14 +673,10 @@ fn resolve_in(arg: &str, root: &Path) -> Result<PathBuf, String> {
     // как дополнительная стена, но отказ формулирует политика — так граница одна.
     if !path.starts_with(&root) {
         return Err(format!(
-            "путь вне рабочего каталога {}: {}",
+            "S6_CLOSURE_BREACH: путь вне рабочего каталога {}: {}",
             root.display(),
             arg.trim()
         ));
-    }
-    let resource = resource_of(&path, &root);
-    if !policy_allows("read", "read", &resource) {
-        return Err(format!("политика не разрешает чтение: {resource}"));
     }
     Ok(path)
 }
@@ -626,13 +697,12 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     let (dir, needle) = arg
         .split_once(' ')
         .ok_or_else(|| "нужно: search <путь> <подстрока>".to_string())?;
-    // Посредник: политика решает, можно ли искать в этом каталоге.
-    {
-        let target = resolve_in(dir, workspace)?;
-        let resource = resource_of(&target, workspace);
-        if !policy_allows("search", "read", &resource) {
-            return Err(format!("политика не разрешает поиск: {resource}"));
-        }
+    // Один resolve: проверка и чтение смотрят на один и тот же путь (TOCTOU между ними сужается).
+    let root = resolve_in(dir, workspace)?;
+    let resource = resource_of(&root, workspace, "file")
+        .ok_or_else(|| "S6_CLOSURE_BREACH: путь вне корня".to_string())?;
+    if !policy_allows("search", "read", &resource) {
+        return Err(format!("S6_CLOSURE_BREACH: политика не разрешает поиск: {resource}"));
     }
     // Кавычки модель ставит вокруг подстроки, и они уходили в поиск как символы: запрос
     // «"tool/call"» давал 0 совпадений на тексте, где эта строка есть (F-0044).
@@ -640,7 +710,6 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     if needle.chars().count() < 2 {
         return Err("подстрока короче двух символов: слишком много совпадений".to_string());
     }
-    let root = resolve_in(dir, workspace)?;
     let mut files = Vec::new();
     if root.is_dir() {
         collect_files(&root, 0, &mut files);
@@ -774,15 +843,13 @@ fn tool_list(arg: &str) -> Result<String, String> {
 }
 
 fn tool_list_in(arg: &str, workspace: &Path) -> Result<String, String> {
-    // Посредник: политика решает, можно ли смотреть этот каталог.
-    {
-        let target = resolve_in(arg, workspace)?;
-        let resource = resource_of(&target, workspace).replace("file:", "dir:");
-        if !policy_allows("list", "list", &resource) {
-            return Err(format!("политика не разрешает просмотр: {resource}"));
-        }
-    }
+    // Один resolve: решение и чтение каталога смотрят на один путь, без второго окна.
     let root = resolve_in(arg, workspace)?;
+    let resource = resource_of(&root, workspace, "dir")
+        .ok_or_else(|| "S6_CLOSURE_BREACH: путь вне корня".to_string())?;
+    if !policy_allows("list", "list", &resource) {
+        return Err(format!("S6_CLOSURE_BREACH: политика не разрешает просмотр: {resource}"));
+    }
     let entries = std::fs::read_dir(&root)
         .map_err(|error| format!("не прочитать {}: {error}", root.display()))?;
     // Каталоги идут первыми и с косой чертой: раньше список сортировался по алфавиту вместе с
@@ -830,6 +897,11 @@ fn tool_read_in(arg: &str, workspace: &Path) -> Result<String, String> {
         return Err("нужно: read <файл> [с_строки]".to_string());
     }
     let path = resolve_in(name, workspace)?;
+    let resource = resource_of(&path, workspace, "file")
+        .ok_or_else(|| "S6_CLOSURE_BREACH: путь вне корня".to_string())?;
+    if !policy_allows("read", "read", &resource) {
+        return Err(format!("S6_CLOSURE_BREACH: политика не разрешает чтение: {resource}"));
+    }
     let meta = std::fs::metadata(&path).map_err(|error| format!("нет файла: {error}"))?;
     if meta.len() > MAX_FILE {
         return Err(format!("файл больше {MAX_FILE} байт"));
@@ -880,16 +952,23 @@ pub fn tool_write_in(arg: &str, root: &Path) -> Result<String, String> {
         .ok_or_else(|| "нужно: write <путь> <текст>".to_string())?;
     let target = Path::new(path.trim());
     let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    // Путь нормализуется ДО policy: `work/../work2/x` иначе выглядит как `work/**`.
+    let target = if target.is_absolute() {
+        normalize(target)
+    } else {
+        normalize(&root.join(target))
+    };
     // Посредник: решение принимает политика, а не эта функция.
-    let resource = resource_of(target, &root);
+    let resource = resource_of(&target, &root, "file")
+        .ok_or_else(|| "S6_CLOSURE_BREACH: путь вне корня".to_string())?;
     if !policy_allows("write", "write", &resource) {
-        return Err(format!("политика не разрешает запись: {resource}"));
+        return Err(format!("S6_CLOSURE_BREACH: политика не разрешает запись: {resource}"));
     }
     let bytes = text.as_bytes().len();
     // Запись через openat2 (WRITE-SYMLINK-R1): путь разрешается ядром ОТНОСИТЕЛЬНО открытого
     // корня, с запретом симлинков и выхода за корень. Проверка и открытие — одна операция,
     // поэтому окна между «проверили» и «записали» нет.
-    write_beneath(&root, target, text.as_bytes())
+    write_beneath(&root, &target, text.as_bytes())
         .map_err(|error| format!("не записать: {error}"))?;
     Ok(format!("записано {bytes} байт в {}", target.display()))
 }
@@ -1871,13 +1950,68 @@ mod tests {
         // совпадал и с адресом моста, а запрет сильнее разрешения — net не
         // работал вовсе. Тест держит это исправление: если кто-то вернёт
         // общий запрет, он покраснеет.
-        let blanket: Vec<&str> = POLICY
+        let blanket: Vec<&str> = policy_rules()
             .iter()
             .filter(|rule| rule.tool == "net" && rule.action == "net"
                     && rule.effect == Effect::Deny)
-            .map(|rule| rule.resource)
+            .map(|rule| rule.resource.as_str())
             .collect();
         assert!(blanket.is_empty(), "общий запрет для net вернулся: {blanket:?}");
+    }
+
+    #[test]
+    fn policy_разбирается_целиком() {
+        // Если include_str или разбор сломались, policy_rules пуста, и всё закрыто.
+        // Пустая политика — отказ, но это не «норма»: правило проверяется числом.
+        assert_eq!(policy_rules().len(), 23, "policy.json: 23 правила");
+    }
+
+    #[test]
+    fn policy_с_битым_правилом_закрывает_всё() {
+        // Одно битое правило — пустая политика, а не «остальные правила в силе»:
+        // выпавшее deny не должно стать разрешением.
+        let broken = r#"{"rules":[
+            {"tool":"read","action":"read","resource":"file:/mnt/**","effect":"allow"},
+            {"tool":"read","action":"write","resource":"file:/mnt/**","effect":"maybe"}
+        ]}"#;
+        assert!(parse_policy(broken).is_empty());
+        let missing = r#"{"rules":[{"tool":"read","action":"read","effect":"deny"}]}"#;
+        assert!(parse_policy(missing).is_empty());
+    }
+
+    #[test]
+    fn policy_запрещает_вне_корня_и_похожий_префикс() {
+        assert!(policy_allows("read", "read", "file:/mnt/a.md"));
+        assert!(!policy_allows("read", "read", "file:/etc/passwd"));
+        // `/mntx` не внутри `/mnt`: граница сегментная, а не префикс строки.
+        assert!(!policy_allows("read", "read", "file:/mntx/a.md"));
+        assert!(!policy_allows("write", "write", "file:/mnt/work2/x"));
+        assert!(!policy_allows("write", "write", "file:/mnt/work/../work2/x"));
+    }
+
+    #[test]
+    fn policy_понимает_дополнение() {
+        // `!` — дополнение: deny «всё, кроме разрешённого».
+        assert!(resource_matches("file:!/mnt/**", "file:/etc/passwd"));
+        assert!(!resource_matches("file:!/mnt/**", "file:/mnt/a"));
+        assert!(resource_matches("net:!10.0.2.2:8790", "net:1.1.1.1:53"));
+        assert!(!resource_matches("net:!10.0.2.2:8790", "net:10.0.2.2:8790"));
+    }
+
+    #[test]
+    fn policy_не_смешивает_схемы() {
+        assert!(resource_matches("dir:/mnt/**", "dir:/mnt/a"));
+        assert!(!resource_matches("dir:/mnt/**", "file:/mnt/a"));
+        assert!(!resource_matches("file:/mnt/**", "net:/mnt/a"));
+    }
+
+    #[test]
+    fn head_разрешён_только_в_fixtures() {
+        assert!(policy_allows("head", "read", "file:/mnt/fixtures/head-slice.txt"));
+        assert!(!policy_allows("head", "read", "file:/mnt/work/x"));
+        assert!(!policy_allows("head", "read", "file:/etc/passwd"));
+        assert!(!policy_allows("head", "write", "file:/mnt/fixtures/x"));
+        assert!(!policy_allows("head", "net", "net:10.0.2.2:8790"));
     }
 
     #[test]

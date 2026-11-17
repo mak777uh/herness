@@ -1438,6 +1438,24 @@ def gate_rust(root: Path) -> list[str]:
     return problems
 
 
+def gate_policy_parity(root: Path) -> list[str]:
+    """Политика: один источник, карточка не шире правил, provenance не устарел.
+
+    Отдельный гейт, потому что до R8 `policy_sync.py` игнорировал `implied`-правила:
+    сравнивал 14 из 19 и был зелёным, пока пять запретов не проверялись.
+    """
+    result = subprocess.run(
+        [sys.executable, str(root / "bin" / "check_policy_parity.py"), "--check"],
+        cwd=str(root), capture_output=True, text=True, encoding="utf-8",
+        errors="replace", timeout=120,
+    )
+    if result.returncode == 0:
+        return []
+    lines = [line.strip() for line in (result.stdout or "").splitlines()
+             if line.strip().startswith("[FAIL]")]
+    return lines or [f"проверка политики завершилась с кодом {result.returncode}"]
+
+
 def gate_requirements(root: Path) -> list[str]:
     """У каждого принятого требования есть инвариант или явное «не проверяется»."""
     import subprocess
@@ -1751,6 +1769,7 @@ def cmd_gates(args) -> int:
     # Контур A — механизм: политика, посредник, журнал, опора, модели, компиляция.
     # Контур B — целостность: ссылки, печати, README, формулировки, структура, индексы.
     circuit_a = [("секреты", gate_secrets), ("критерии", gate_criteria), ("отказы", gate_failures),
+                 ("политика", gate_policy_parity),
                  ("модели", gate_models), ("утверждения-проверка", gate_claims_run),
                  ("самоссылка", gate_selfref), ("журналы", gate_journals),
                  ("автономия", gate_autonomy), ("способности", gate_capabilities),
