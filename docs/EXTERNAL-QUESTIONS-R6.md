@@ -3,9 +3,11 @@
 **Дата:** 16.11.2026.
 **Кому:** внешней модели или человеку, который готов дать независимый инженерный разбор.
 **Что это:** бриф, а неapproval. Ответы — рекомендации; решения принимает владелец.
+**Канон:** [mak777uh/herness](https://github.com/mak777uh/herness), ветка `main`.
 **Базовая линия кода:** `9c8af80` (R5-синтез, сырые ответы, починенный checker).
-**Решения владельца Q1–Q10:** [`DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md)
-(в текущем `main`; если ссылка на GitHub не открывается, коммит с решениями ещё не запушен).
+**Снимок ссылок:** [`004249a`](https://github.com/mak777uh/herness/tree/004249a8d0943479d19948c7f9522ef29c23930d) — коммит с артефактами Q1–Q10.
+**Решения владельца Q1–Q10:** [`DECISIONS-R5-2026-11-16.md`](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/DECISIONS-R5-2026-11-16.md).
+Все локальные ссылки в файле заменены на GitHub-ссылки этого снимка.
 
 ---
 
@@ -65,7 +67,7 @@ provenance, не нарушать композицию, не менять себ
 
 - шесть текущих инструментов измерены бумажно; карточка не выражает главное право 5/6,
   типизированных I/O 0/6;
-- R5-ответы A и B сохранены с SHA-256; синтез — [`R5-SYNTHESIS.md`](R5-SYNTHESIS.md);
+- R5-ответы A и B сохранены с SHA-256; синтез — [`R5-SYNTHESIS.md`](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/R5-SYNTHESIS.md);
 - `card_atoms` починен: пустой `fs.read` больше не синтезирует `/mnt/**`, конфликты
   двусторонние, `uncovered` даёт `rc=3`; 31 проверка;
 - владелец принял Q1–Q10: пять файловых `kind`, `tool-card-v1` как draft, словарь отказов v2,
@@ -82,16 +84,16 @@ owner-ключ, QEMU-комната, ограниченное чтение в Ru
 
 | id | решение | артефакт |
 |---|---|---|
-| Q1 | `file_read`, `directory_read`, `file_write`, `digest`, `bridge_request` | [схема](../lab/tools/tool-card-v1.schema.json) |
-| Q2 | `tool-card-v1` — draft, не действующий закон | [пример](../lab/tools/drafts/head-v1.draft.json) |
-| Q3 | коды `K4_RESOURCE_LIMIT`, `K6_DATA_CLASS_UNKNOWN`, `K6_SECRET_EGRESS`, `K11_ADMISSION_REQUIRED` | [словарь v2](../lab/refusal-codes.json) |
-| Q4 | первый срез — только синтетический `model_visible` fixture | [фикстура](../lab/fixtures/model_visible/manifest.json) |
-| Q5 | TCG — симуляция; security-утверждение требует аппаратной виртуализации | [замер](../research/outputs/qemu-accel-2026-11-16.txt) |
-| Q6 | K6 v0 — fail-closed классы `public`/`model_visible`; `unknown`/`secret` — отказ | [решения](DECISIONS-R5-2026-11-16.md) |
-| Q7 | генератор отделён от promoter; owner-подпись + host-side promoter | [решения](DECISIONS-R5-2026-11-16.md) |
-| Q8 | `search` в первом срезе отвергнут | [пре-регистрация](../lab/prereg/HEAD-SLICE-R1.json) |
-| Q9 | scorecard B — черновик пре-регистрации | [scorecard](PILOT-SCORECARD-2026-11-16.md) |
-| Q10 | сырые ответы A/B остаются в репозитории | [README](research/external/README.md) |
+| Q1 | `file_read`, `directory_read`, `file_write`, `digest`, `bridge_request` | [схема](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/tools/tool-card-v1.schema.json) |
+| Q2 | `tool-card-v1` — draft, не действующий закон | [пример](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/tools/drafts/head-v1.draft.json) |
+| Q3 | коды `K4_RESOURCE_LIMIT`, `K6_DATA_CLASS_UNKNOWN`, `K6_SECRET_EGRESS`, `K11_ADMISSION_REQUIRED` | [словарь v2](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/refusal-codes.json) |
+| Q4 | первый срез — только синтетический `model_visible` fixture | [фикстура](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/fixtures/model_visible/manifest.json) |
+| Q5 | TCG — симуляция; security-утверждение требует аппаратной виртуализации | [замер](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/research/outputs/qemu-accel-2026-11-16.txt) |
+| Q6 | K6 v0 — fail-closed классы `public`/`model_visible`; `unknown`/`secret` — отказ | [решения](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/DECISIONS-R5-2026-11-16.md) |
+| Q7 | генератор отделён от promoter; owner-подпись + host-side promoter | [решения](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/DECISIONS-R5-2026-11-16.md) |
+| Q8 | `search` в первом срезе отвергнут | [пре-регистрация](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/prereg/HEAD-SLICE-R1.json) |
+| Q9 | scorecard B — черновик пре-регистрации | [scorecard](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/PILOT-SCORECARD-2026-11-16.md) |
+| Q10 | сырые ответы A/B остаются в репозитории | [README](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/research/external/README.md) |
 
 ### 1.2. Что измерено, а что нет
 
@@ -394,7 +396,7 @@ K6/K9 ещё не обеспечены; реальные секреты влад
 1. Сырые ответы сохраняются с SHA-256, как R5 A/B; они не становятся решением.
 2. Синтез фиксирует согласия и расхождения; противоречие не усредняется.
 3. Владелец принимает решения; принятые пункты становятся записью в
-   [`decision-log.md`](decision-log.md), пре-регистрацией, тестом или ADR.
+   [`decision-log.md`](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/decision-log.md), пре-регистрацией, тестом или ADR.
 4. Только после этого меняются код, схема или runtime. Не наоборот.
 
 ## 4. Что R6 не решает
@@ -408,31 +410,31 @@ K6/K9 ещё не обеспечены; реальные секреты влад
 
 ### 5.1. Решения и синтез
 
-- [Решения Q1–Q10](DECISIONS-R5-2026-11-16.md)
-- [Синтез R5](R5-SYNTHESIS.md)
-- [Сырые ответы R5](research/external/README.md)
-- [Scorecard](PILOT-SCORECARD-2026-11-16.md)
+- [Решения Q1–Q10](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/DECISIONS-R5-2026-11-16.md)
+- [Синтез R5](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/R5-SYNTHESIS.md)
+- [Сырые ответы R5](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/research/external/README.md)
+- [Scorecard](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/PILOT-SCORECARD-2026-11-16.md)
 
 ### 5.2. Схемы и данные
 
-- [tool-card-v1 (draft)](../lab/tools/tool-card-v1.schema.json)
-- [head-v1.draft.json](../lab/tools/drafts/head-v1.draft.json)
-- [Словарь отказов v2](../lab/refusal-codes.json)
-- [Fixture](../lab/fixtures/model_visible/manifest.json)
-- [Пре-регистрация HEAD-SLICE-R1](../lab/prereg/HEAD-SLICE-R1.json)
-- [Замер QEMU](../research/outputs/qemu-accel-2026-11-16.txt)
+- [tool-card-v1 (draft)](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/tools/tool-card-v1.schema.json)
+- [head-v1.draft.json](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/tools/drafts/head-v1.draft.json)
+- [Словарь отказов v2](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/refusal-codes.json)
+- [Fixture](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/fixtures/model_visible/manifest.json)
+- [Пре-регистрация HEAD-SLICE-R1](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/lab/prereg/HEAD-SLICE-R1.json)
+- [Замер QEMU](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/research/outputs/qemu-accel-2026-11-16.txt)
 
 ### 5.3. Контекст и код
 
-- [Конституция v0](CONSTITUTION-v0-2026-11-16.md)
-- [DESIGN-0002](DESIGN-0002-tool-generation.md)
-- [SELF-TOOLING](SELF-TOOLING-2026-11-16.md)
-- [R5 brief](EXTERNAL-QUESTIONS-R5.md)
+- [Конституция v0](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/CONSTITUTION-v0-2026-11-16.md)
+- [DESIGN-0002](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/DESIGN-0002-tool-generation.md)
+- [SELF-TOOLING](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/SELF-TOOLING-2026-11-16.md)
+- [R5 brief](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/docs/EXTERNAL-QUESTIONS-R5.md)
 - [`core-rs/src/loopmod.rs`](https://github.com/mak777uh/herness/blob/9c8af80/core-rs/src/loopmod.rs) — `resolve_in` ~587, `tool_read_in` ~821,
   `tool_search_in` ~621, `write_beneath` ~899
-- [`bin/tool_card.py`](../bin/tool_card.py) — старый валидатор
-- [`bin/card_atoms.py`](../bin/card_atoms.py) — починенный checker
-- [`tests/test_card_atoms.py`](../tests/test_card_atoms.py) — 31 проверка
+- [`bin/tool_card.py`](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/bin/tool_card.py) — старый валидатор
+- [`bin/card_atoms.py`](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/bin/card_atoms.py) — починенный checker
+- [`tests/test_card_atoms.py`](https://github.com/mak777uh/herness/blob/004249a8d0943479d19948c7f9522ef29c23930d/tests/test_card_atoms.py) — 31 проверка
 
 ### 5.4. Внешние первичные источники
 
