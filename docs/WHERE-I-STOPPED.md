@@ -1,15 +1,20 @@
-# ГДЕ ОСТАНОВИЛСЯ — 16.11.2026 (rolling-карта смены)
+# ГДЕ ОСТАНОВИЛСЯ — 17.11.2026 (rolling-карта смены)
 
-> **Обновление 16.11.2026, после решений Q1–Q10.** Актуальный handoff —
+> **Обновление 17.11.2026, после R6.** Актуальный handoff —
 > [`docs/SELF-TOOLING-2026-11-16.md`](SELF-TOOLING-2026-11-16.md).
-> HEAD на момент обновления `9c8af80` (или следующий коммит с решениями Q1–Q10); R5 —
-> [`docs/EXTERNAL-QUESTIONS-R5.md`](EXTERNAL-QUESTIONS-R5.md) (`c2fc552`);
+> HEAD на момент обновления `3d988f8` (плюс следующий коммит с R7); R6-бриф — `09a6acf`;
+> R5 — [`docs/EXTERNAL-QUESTIONS-R5.md`](EXTERNAL-QUESTIONS-R5.md) (`c2fc552`);
 > R4 — [`docs/EXTERNAL-QUESTIONS-R4.md`](EXTERNAL-QUESTIONS-R4.md) (`4d1fae5`).
-> Ответы R5 получены; сырые тексты — [`docs/research/external/`](research/external/README.md),
-> синтез — [`docs/R5-SYNTHESIS.md`](R5-SYNTHESIS.md). `card_atoms` починен (C-0313).
-> Владелец принял Q1–Q10: [`docs/DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md).
-> Оставшиеся вопросы — [`docs/EXTERNAL-QUESTIONS-R6.md`](EXTERNAL-QUESTIONS-R6.md).
-> Следующее действие — Rust-срез `head` и прогон `HEAD-SLICE-R1`; генератор не писать.
+> Шесть сырых ответов R6 сохранены байт-в-байт —
+> [`docs/research/external/`](research/external/README.md); синтез —
+> [`docs/R6-SYNTHESIS.md`](R6-SYNTHESIS.md); следующий бриф —
+> [`docs/EXTERNAL-QUESTIONS-R7.md`](EXTERNAL-QUESTIONS-R7.md).
+> Q1–Q10 приняты: [`docs/DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md).
+> R6 не даёт approval: шесть ответов расходятся по валидатору, S02, комнате, наблюдению,
+> ключам, реестру, генератору и порядку отказов. Решения Q11–Q18 — за владельцем.
+> Код не менялся: Rust-срез `head`, admission, ключ, комната и генератор не начаты.
+> Следующее действие — получить ответы R7, проверить их по коду и зафиксировать решения
+> владельца; до этого не реализовывать.
 > Разделы ниже — предыдущий снимок `ec07951`; они сохранены как история, а не текущее состояние.
 
 **HEAD предыдущего снимка:** `ec07951` — на входе было `2d556ee` (15.11); за ту смену 6 коммитов.
@@ -115,16 +120,21 @@ a9bec06 docs: анкета владельцу + отдельный бриф дл
 | O10 | публиковать разборы — да, если нет ключей | зона A расширена |
 | O11 | части публиковать — да, дорабатывать и там, и там | синхронизация контекстов между машинами |
 
-## Текущее следующее действие (16.11.2026, после решений)
+## Текущее следующее действие (17.11.2026, после R6)
 
 1. `python bin/hs.py gates` — rc=0, 30/32, N/A 2 (журналы/индекс прогонов); `N/A` не «зелёный».
 2. Q1–Q10 приняты владельцем; запись — [`docs/DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md).
    Словарь отказов v2, черновик схемы, scorecard, фикстура и `HEAD-SLICE-R1` созданы.
-3. Rust-срез `head`: `openat2` от root FD, ограниченное потоковое чтение, `max_bytes_read`,
-   `bytes_read`, `truncated`, evidence; без сети/записи/секретов; только синтетический fixture.
-4. Прогон `HEAD-SLICE-R1` по запечатанному порогу; FAIL сохраняется, порог не ослабляется.
-5. Только после зелёного среза — `bin/new_tool.py`; R6-ответы, semantic validator, admission,
-   ключ и promotion — отдельными решениями.
+3. R6: шесть сырых ответов, синтез и бриф R7 в репозитории. Код не менялся. Владелец читает
+   [`docs/EXTERNAL-QUESTIONS-R7.md`](EXTERNAL-QUESTIONS-R7.md) и решает Q11–Q18; ответы R7 —
+   рекомендации, не approval. Перед принятием утверждения проверяются по коду.
+4. До решений не реализовывать `head`, admission, комнату, promoter и генератор; не менять
+   policy/registry/схему/конституцию. Допустимы документы, failing-репро тесты и сохранение улик.
+5. После Q11 (валидатор), Q12 (S02) и Q13 (комната) — Rust-срез `head`: `openat2` от root FD,
+   ограниченное потоковое чтение, `max_bytes_read`, `bytes_read`, `truncated`, evidence; только
+   синтетический fixture. Затем прогон `HEAD-SLICE-R1` по запечатанному порогу; FAIL сохраняется.
+6. После Q15 и R7-A01 — admission к promoter'у; после Q18 — миграция stored `active` и `search`;
+   после Q16 — пилот генератора. `K9_proven` не выдавать ни на одной ступени.
 
 Актуальный handoff с деталями — [`docs/SELF-TOOLING-2026-11-16.md`](SELF-TOOLING-2026-11-16.md).
 
@@ -144,14 +154,15 @@ a9bec06 docs: анкета владельцу + отдельный бриф дл
 2. `docs/SELF-TOOLING-2026-11-16.md` — актуальный handoff: что сделано, где остановились.
 3. Этот файл — текущая шапка и история предыдущего снимка.
 4. `docs/DECISIONS-R5-2026-11-16.md` — принятые Q1–Q10 и что они не доказывают.
-5. `docs/EXTERNAL-QUESTIONS-R6.md` — оставшиеся вопросы и контекст для внешней модели.
-6. `docs/R5-SYNTHESIS.md` — синтез ответов R5, расхождения и Q1–Q10.
-7. `docs/research/external/` — сырые ответы A и B с печатями; не решения.
-8. `docs/EXTERNAL-QUESTIONS-R5.md` — 24 вопроса предыдущего круга.
-9. `docs/EXTERNAL-QUESTIONS-R4.md` — 45 вопросов круга до него.
-10. `docs/CONSTITUTION-v0-2026-11-16.md` — K1–K11 и юрисдикция.
-11. `research/RESEARCH-NOTE.md` — исследования R1–R3.
-12. `docs/DESIGN-0002-tool-generation.md` и `docs/PROPOSAL-0001-task-written-bridges.md` — карточка,
+5. `docs/EXTERNAL-QUESTIONS-R7.md` — оставшиеся развилки Q11–Q18 и контекст.
+6. `docs/R6-SYNTHESIS.md` — синтез шести ответов R6, расхождения и проверенные факты.
+7. `docs/research/external/` — сырые ответы R5 и R6 с печатями; не решения.
+8. `docs/EXTERNAL-QUESTIONS-R6.md` — 22 вопроса предыдущего круга.
+9. `docs/EXTERNAL-QUESTIONS-R5.md` — 24 вопроса круга до него.
+10. `docs/EXTERNAL-QUESTIONS-R4.md` — 45 вопросов круга до него.
+11. `docs/CONSTITUTION-v0-2026-11-16.md` — K1–K11 и юрисдикция.
+12. `research/RESEARCH-NOTE.md` — исследования R1–R3.
+13. `docs/DESIGN-0002-tool-generation.md` и `docs/PROPOSAL-0001-task-written-bridges.md` — карточка,
     генератор и мосты.
 
 ## Стоячие правила
