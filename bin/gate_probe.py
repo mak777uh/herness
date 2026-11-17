@@ -62,6 +62,22 @@ def sandbox() -> Path:
     return target
 
 
+def backup_exact(source: Path) -> dict[str, bytes] | bytes:
+    """Снимок in-place файла/каталога в байтах: текстовая нормализация меняет CRLF на LF."""
+    if source.is_dir():
+        return {item.name: item.read_bytes() for item in source.glob("*.json")}
+    return source.read_bytes()
+
+
+def restore_exact(source: Path, backup: dict[str, bytes] | bytes) -> None:
+    """Вернуть ровно те байты, что были до пробы (включая CRLF запечатанных файлов)."""
+    if isinstance(backup, dict):
+        for name, content in backup.items():
+            (source / name).write_bytes(content)
+    else:
+        source.write_bytes(backup)
+
+
 def probe_secrets(root: Path) -> None:
     # Ключ собирается из частей: иначе сам файл пробы становится находкой гейта секретов.
     key = "-".join(["sk", "proj", "0123456789abcdefghijklmnopqrstuv"])
@@ -531,14 +547,13 @@ def run(names: list[str], profile: str = "full") -> int:
             if in_place:
                 # Резервная копия — каталог целиком (пре-регистрации), один файл
                 # (реестр) или только время изменения (rust: содержимое не
-                # меняется, меняется mtime).
+                # меняется, меняется mtime). Байты, не текст: read_text/write_text
+                # нормализует CRLF в LF и меняет digest замороженных файлов.
                 source = clean / IN_PLACE[name]
                 if name == "rust":
                     mtime_backup = source.stat().st_mtime
-                elif source.is_dir():
-                    backup = {item.name: item.read_text(encoding="utf-8") for item in source.glob("*.json")}
                 else:
-                    backup = source.read_text(encoding="utf-8")
+                    backup = backup_exact(source)
             baseline = gate(clean)
             inject(clean)
             after = gate(clean)
@@ -558,12 +573,7 @@ def run(names: list[str], profile: str = "full") -> int:
                 source = clean / IN_PLACE[name]
                 os.utime(source, (mtime_backup, mtime_backup))
             elif in_place and backup is not None:
-                source = clean / IN_PLACE[name]
-                if isinstance(backup, dict):
-                    for name_file, content in backup.items():
-                        (source / name_file).write_text(content, encoding="utf-8")
-                else:
-                    source.write_text(backup, encoding="utf-8")
+                restore_exact(clean / IN_PLACE[name], backup)
             if not in_place:
                 shutil.rmtree(clean, ignore_errors=True)
 

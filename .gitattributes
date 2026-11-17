@@ -30,6 +30,11 @@ docs/CONSTITUTION-v0-2026-11-16.md text eol=crlf
 # по CRLF-байтам (sha256:4522784c…). Пиннинг сохраняет --verify на чистом клоне.
 lab/prereg/HEAD-SLICE-R1.json text eol=crlf
 
+# Карточка head запечатана в HEAD-SLICE-R1 по CRLF-байтам (sha256:361ad2ec…):
+# promoter и репетиция сверяют её точные байты с digest карточки. Общий *.json
+# даёт LF, поэтому представление фиксируется отдельно; при смене — перепечатать.
+lab/tools/drafts/head-v1.draft.json text eol=crlf
+
 # бинарь
 *.zstd binary
 *.png binary

@@ -1872,6 +1872,29 @@ def cmd_selftest(args) -> int:
         hits = [p for p in gate_links(tmpdir) if "nope.md" in p]
         results.append((len(hits) == 1, "проверка ссылок ловит битую"))
 
+    # Проба гейта правит настоящий файл и откатывает. Текстовый откат нормализует CRLF в LF
+    # и меняет digest замороженного файла — возврат обязан быть байт-в-байт.
+    with tempfile.TemporaryDirectory() as tmp4:
+        sys.path.insert(0, str(ROOT))
+        from bin.gate_probe import backup_exact, restore_exact
+
+        original = b'{\r\n "closed": true\r\n}\r\n'
+        probe_dir = Path(tmp4) / "prereg"
+        probe_dir.mkdir()
+        target = probe_dir / "P.json"
+        target.write_bytes(original)
+        backup = backup_exact(probe_dir)
+        target.write_bytes(b'{"closed": false}\n')
+        restore_exact(probe_dir, backup)
+        results.append((target.read_bytes() == original, "проба гейта возвращает точные байты каталога (CRLF)"))
+
+        single = Path(tmp4) / "one.json"
+        single.write_bytes(original)
+        backup = backup_exact(single)
+        single.write_bytes(b'{"x": 1}\n')
+        restore_exact(single, backup)
+        results.append((single.read_bytes() == original, "проба гейта возвращает точные байты файла (CRLF)"))
+
     old = os.environ.get("DSH_CLI")
     os.environ["DSH_CLI"] = str(ROOT / "definitely-not-here.cmd")
     try:
