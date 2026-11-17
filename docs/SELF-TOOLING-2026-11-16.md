@@ -3,7 +3,7 @@
 > **Обновление 17.11.2026, R8 реализован.** Владелец делегировал выбор рекомендаций R8
 > («делай сам все поочерёдно»); решения Q11–Q18, F04 и A01 записаны агентом в
 > [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md) с явной пометкой, что
-> это не approval внешних моделей и не изменение конституции. Пройдены этапы 0–9 плана:
+> это не approval внешних моделей и не изменение конституции. Пройдены этапы 0–11 плана:
 > policy — один источник с `!`, сегментами и parity-гейтом; write — create-new через
 > `O_EXCL` и `NO_XDEV`; legacy `read`/`search`/`list` починены; KVM_RUN измерен в WSL2
 > (`-M microvm -accel kvm`, QMP, tracepoint `kvm:kvm_entry`, отрицательный контроль без
@@ -11,11 +11,14 @@
 > HEAD-SLICE-R1 — **PASS** (8/8 критических контролей, host + QEMU/KVM); реестр — genesis
 > events и производный `active` (шесть legacy `quarantined`, `search` rejected, `active`
 > пуст); пилот PILOT-GENERATOR-R1 — **PASS** (20/20 спецификаций, 16/16 критических и 8/8
-> функциональных мутантов, 3/3 детерминированных повтора). `head` остаётся candidate:
-> настоящий owner-ключ не создан, admission не выдан, ни один инструмент не `active`,
-> `K9_proven` нет. Следующий шаг — владелец читает evidence и, если согласен, проводит
-> церемонию ключа и подписывает admission; только после этого возможна активация.
-> Детали — §1.11 и [`docs/WHERE-I-STOPPED.md`](WHERE-I-STOPPED.md).
+> функциональных мутантов, 3/3 детерминированных повтора); этап 11 — test-only
+> активационная репетиция **33/33 PASS** (guard явного `test_only:false`, песочный
+> `admitted_inactive`, promoter verify/store и launch через memfd/execveat в WSL).
+> `head` остаётся candidate: настоящий owner-ключ не создан, admission не выдан, ни один
+> инструмент не `active`, `K9_proven` нет. Следующий шаг — владелец читает evidence и
+> [`docs/OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md) и, если согласен,
+> проводит церемонию ключа и подписывает admission; только после этого возможна активация.
+> Детали — §1.11, §1.12 и [`docs/WHERE-I-STOPPED.md`](WHERE-I-STOPPED.md).
 
 **Статус:** документ для следующего агента. Не отчёт о завершённой работе: часть проверок —
 исторические снимки, часть — проектные решения, часть — открытые вопросы.
@@ -350,6 +353,7 @@ Q2 S1 до I/O, `K4` раньше ошибок объекта, осторожн�
 | 8 | `a6e7292` | реестр: genesis events, JCS/prev/seq, производный `active`; legacy quarantined, search rejected | `lab/tools/registry.events.jsonl`, `registry.state.json` |
 | 9 | `92963cf` | генератор одного шаблона и пилот: 20 спецификаций, 24 мутанта, 3 повтора — PASS | `lab/pilot/`, `lab/candidates/`, `research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt` |
 | 10 | `fe27d07`, `edbf085` | handoff, claims, push; после первого LF-CI — CRLF-пиннинг запечатанных digest | `docs/`, `CLAIMS.md`, `.gitattributes` |
+| 11 | эта смена | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
 
 CI на чистом LF checkout поймал то, чего CRLF-дерево не показывало: `lawset_digest`
 в provenance карточки head и 20 карточек кандидатов, а также SHA-256
@@ -380,6 +384,29 @@ digest привязан к представлению, объявленному 
 чтения и допуска, не поведение всех инструментов; promoter v0 не видел настоящей
 owner-подписи; пилот — инженерный scorecard одного шаблона, не статистическое
 доказательство. `K9_proven` не выдан ни на одном этапе.
+
+### 1.12. Test-only активационная репетиция (этап 11)
+
+Владелец сказал «делай пока с тестовой подписью все». Это разрешило прогнать цепочку
+допуска на эфемерном ключе, но не создавать настоящий owner-ключ и не активировать
+production. Найден и закрыт дефект: `admitted` с `test_only:true` и `owner_signed:true`
+мог стать `active`. Теперь `active` требует **явного** `test_only:false`; test-only,
+отсутствие поля и не-bool дают `admitted_inactive`. Это объявленное поле, а не подпись:
+подпись проверяет promoter.
+
+`bin/activation_rehearsal.py` создаёт ключ и рабочий каталог вне репозитория, подписывает
+манифест, проверяет отказ без `--allow-test-only` и приём с ним, ловит изменённый байт,
+выполняет `promoter verify/store`, строит временный registry-песочный журнал и запускает
+`head_slice_host` через `memfd + F_SEAL_* + execveat` на Linux. В WSL: **33/33 PASS**,
+normal — 3 строки/144 B/`line_cap`, outside-root — `S6_CLOSURE_BREACH`; production
+`registry.jsonl`, `registry.events.jsonl`, `registry.state.json` не изменены, `head`
+остаётся `candidate`, `active` пуст. Evidence:
+[`research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`](../research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt).
+Runbook владельца: [`OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md).
+
+Граница: test-only ключ не является owner-ключом; реестр не проверяет подпись;
+`run_tool_g` по-прежнему не имеет ветки `head`, поэтому conversational loop не запускает
+head даже после активации — запуск идёт через promoter. `K9_proven` нет.
 
 ---
 
@@ -439,7 +466,7 @@ owner-подписи; пилот — инженерный scorecard одного
 
 ## 3. Где именно остановились
 
-Все этапы 0–9 плана исполнены и закоммичены; рабочее дерево, кроме pre-existing
+Все этапы 0–11 плана исполнены и закоммичены; рабочее дерево, кроме pre-existing
 CRLF-шумов, чистое. `head` остаётся **candidate**: настоящий owner-ключ не создавался и
 не читался, admission не подписан, `registry.state.json` даёт пустой `active`, ни один
 инструмент не активирован, `K9_proven` не выдан. Кандидаты пилота лежат в

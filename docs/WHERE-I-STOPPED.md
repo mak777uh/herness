@@ -1,12 +1,16 @@
 # ГДЕ ОСТАНОВИЛСЯ — 17.11.2026 (rolling-карта смены)
 
 > **Обновление 17.11.2026, R8 реализован.** Актуальный handoff —
-> [`docs/SELF-TOOLING-2026-11-16.md`](SELF-TOOLING-2026-11-16.md), §1.11.
+> [`docs/SELF-TOOLING-2026-11-16.md`](SELF-TOOLING-2026-11-16.md), §1.11–1.12.
 > **Последний evidence-коммит:** `92963cf` (пилот генератора); handoff — `fe27d07`,
 > затем `edbf085` (CRLF-пиннинг запечатанных digest после первого LF-CI; CI
-> `44149087189` — success). Реализация R8 — этапы 0–9: `e82dc22` (решения и словарь v3), `d95c533`
+> `44149087189` — success). Реализация R8 — этапы 0–10: `e82dc22` (решения и словарь v3), `d95c533`
 > (репро и policy), `96470e9` (write), `318eb9e` (legacy), `729fee8` (KVM_RUN), `f790ef5`
 > (admission/promoter), `8d1f542` (head slice), `a6e7292` (реестр), `92963cf` (пилот).
+> Этап 11 — test-only активационная репетиция: **33/33 PASS**, guard явного
+> `test_only:false`, песочный `admitted_inactive`, promoter launch в WSL; evidence —
+> `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317; runbook —
+> [`docs/OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md).
 > Решения Q11–Q18/F04/A01 — [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md);
 > выбраны агентом по делегированию владельца «делай сам все поочерёдно», не approval и не
 > изменение конституции. Q1–Q10 не переоткрывались:
