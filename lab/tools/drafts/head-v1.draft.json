@@ -6,40 +6,117 @@
  "template": {
   "id": "file_read_stream",
   "version": 1,
-  "slots": ["path_ref", "line_count", "max_bytes_read"]
+  "slots": [
+   "path_ref",
+   "line_count",
+   "max_bytes_read"
+  ]
  },
  "inputs": [
-  {"name": "path_ref", "type": "relative_path", "required": true},
-  {"name": "line_count", "type": "bounded_int", "required": true, "min": 1, "max": 200},
-  {"name": "max_bytes_read", "type": "bounded_int", "required": true, "min": 1, "max": 65536}
+  {
+   "name": "path_ref",
+   "type": "relative_path",
+   "required": true
+  },
+  {
+   "name": "line_count",
+   "type": "bounded_int",
+   "required": true,
+   "min": 1,
+   "max": 200
+  },
+  {
+   "name": "max_bytes_read",
+   "type": "bounded_int",
+   "required": true,
+   "min": 1,
+   "max": 65536
+  }
  ],
  "outputs": [
-  {"name": "lines", "type": "bounded_list", "required": true, "max": 200},
-  {"name": "truncated", "type": "truncated", "required": true},
-  {"name": "bytes_read", "type": "bounded_int", "required": true, "min": 0, "max": 65536}
+  {
+   "name": "lines",
+   "type": "bounded_list",
+   "required": true,
+   "max": 200
+  },
+  {
+   "name": "truncated",
+   "type": "truncated",
+   "required": true
+  },
+  {
+   "name": "bytes_read",
+   "type": "bounded_int",
+   "required": true,
+   "min": 0,
+   "max": 65536
+  },
+  {
+   "name": "stop_reason",
+   "type": "enum",
+   "required": true,
+   "values": [
+    "eof",
+    "line_cap",
+    "byte_cap",
+    "output_cap"
+   ]
+  }
  ],
  "effects": {
-  "fs_read": [{"root_ref": "room:input", "segments": ["fixtures"]}],
+  "fs_read": [
+   {
+    "root_ref": "room:input",
+    "segments": [
+     "fixtures"
+    ]
+   }
+  ],
   "fs_list": [],
   "fs_write": [],
   "bridges": [],
   "process_spawn": false,
   "secret_ops": [],
-  "output_channels": ["stdout"]
+  "output_channels": [
+   "stdout"
+  ]
  },
  "preconditions": [
-  {"op": "path_within_root"},
-  {"op": "is_regular_file"},
-  {"op": "data_class_in", "arg": ["model_visible"]}
+  {
+   "op": "path_within_root"
+  },
+  {
+   "op": "is_regular_file"
+  },
+  {
+   "op": "data_class_in",
+   "arg": [
+    "model_visible"
+   ]
+  }
  ],
  "postconditions": [
-  {"op": "output_truncated_if_more"},
-  {"op": "bytes_le", "arg": 65536}
+  {
+   "op": "output_truncated_if_more"
+  },
+  {
+   "op": "bytes_le",
+   "arg": 65536
+  }
  ],
- "frame_conditions": [{"op": "no_side_effects"}],
+ "frame_conditions": [
+  {
+   "op": "no_side_effects"
+  }
+ ],
  "refusals": [
   "S1_SCHEMA",
   "S6_CLOSURE_BREACH",
+  "S10_NOT_FOUND",
+  "S11_NOT_REGULAR",
+  "S12_ENCODING",
+  "S13_TOOL_INACTIVE",
   "K4_RESOURCE_LIMIT",
   "K6_DATA_CLASS_UNKNOWN",
   "K6_SECRET_EGRESS",
@@ -65,7 +142,9 @@
   "randomness": "none"
  },
  "data_classes": {
-  "accepted_inputs": ["model_visible"],
+  "accepted_inputs": [
+   "model_visible"
+  ],
   "max_output_class": "model_visible"
  },
  "secret_refs": [],
@@ -73,56 +152,162 @@
   {
    "id": "normal",
    "args": {
-    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "head-slice.txt"]},
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "head-slice.txt"
+     ]
+    },
     "line_count": 3,
     "max_bytes_read": 4096
    },
    "expected": {
     "outcome": "ok",
-    "assertions": ["bytes_read <= 4096", "emitted at most three lines"]
+    "assertions": [
+     "lines == 3",
+     "bytes_read == 144",
+     "truncated == true",
+     "stop_reason == line_cap"
+    ]
    }
   },
   {
    "id": "outside-root",
    "args": {
-    "path_ref": {"root_ref": "host:/", "segments": ["etc", "passwd"]},
+    "path_ref": {
+     "root_ref": "host:/",
+     "segments": [
+      "etc",
+      "passwd"
+     ]
+    },
     "line_count": 3,
     "max_bytes_read": 4096
    },
-   "expected": {"outcome": "refusal", "refusal": "S6_CLOSURE_BREACH"}
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "S6_CLOSURE_BREACH"
+   }
+  },
+  {
+   "id": "dotdot-traversal",
+   "args": {
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "..",
+      "secret.txt"
+     ]
+    },
+    "line_count": 3,
+    "max_bytes_read": 4096
+   },
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "S6_CLOSURE_BREACH"
+   }
   },
   {
    "id": "bad-count",
    "args": {
-    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "head-slice.txt"]},
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "head-slice.txt"
+     ]
+    },
     "line_count": 0,
     "max_bytes_read": 4096
    },
-   "expected": {"outcome": "refusal", "refusal": "S1_SCHEMA"}
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "S1_SCHEMA"
+   }
   },
   {
    "id": "unknown-class",
    "args": {
-    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "unclassified.txt"]},
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "unclassified.txt"
+     ]
+    },
     "line_count": 3,
     "max_bytes_read": 4096
    },
-   "expected": {"outcome": "refusal", "refusal": "K6_DATA_CLASS_UNKNOWN"}
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "K6_DATA_CLASS_UNKNOWN"
+   }
+  },
+  {
+   "id": "missing-file",
+   "args": {
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "absent.txt"
+     ]
+    },
+    "line_count": 3,
+    "max_bytes_read": 4096
+   },
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "S10_NOT_FOUND"
+   }
+  },
+  {
+   "id": "not-regular",
+   "args": {
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures"
+     ]
+    },
+    "line_count": 3,
+    "max_bytes_read": 4096
+   },
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "S11_NOT_REGULAR"
+   }
   },
   {
    "id": "byte-cap",
    "args": {
-    "path_ref": {"root_ref": "room:input", "segments": ["fixtures", "head-slice.txt"]},
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "head-slice.txt"
+     ]
+    },
     "line_count": 200,
     "max_bytes_read": 64
    },
-   "expected": {"outcome": "ok", "assertions": ["bytes_read <= 64", "truncated is true or the file ended"]}
+   "expected": {
+    "outcome": "ok",
+    "assertions": [
+     "lines == 1",
+     "bytes_read == 41",
+     "truncated == true",
+     "stop_reason == byte_cap"
+    ]
+   }
   }
  ],
  "provenance": {
-  "lawset_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "policy_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "room_profile_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  "lawset_digest": "sha256:e9d6f90404c5cde3acbec145f780b2e7f2d054d484fb74269ca1e76334216fb5",
+  "policy_digest": "sha256:1f1750011678029585ee532f88233cd2a6b146387fbf5eb2390bfa574a730150",
+  "room_profile_digest": "sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6",
+  "schema_digest": "sha256:77195fbe464257d2d029a858853b7372f6c27337739c4da0f61466d4df920d70"
  }
 }

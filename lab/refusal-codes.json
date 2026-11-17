@@ -1,7 +1,7 @@
 {
- "version": 2,
+ "version": 3,
  "rule": "код не переиспользуется и не перенумеровывается; отказ — о входе, а не о настроении",
- "amendment": "v2, 16.11.2026, владелец: коды K4_RESOURCE_LIMIT, K6_DATA_CLASS_UNKNOWN, K6_SECRET_EGRESS, K11_ADMISSION_REQUIRED; прежние коды не переиспользованы",
+ "amendment": "v3, 17.11.2026, R8/Q17: коды S10_NOT_FOUND, S11_NOT_REGULAR, S12_ENCODING, S13_TOOL_INACTIVE, S14_ALREADY_EXISTS добавлены аддитивно; v2, 16.11.2026, владелец: коды K4_RESOURCE_LIMIT, K6_DATA_CLASS_UNKNOWN, K6_SECRET_EGRESS, K11_ADMISSION_REQUIRED; прежние коды не переиспользованы",
  "codes": [
   {
    "code": "C0_CANON",
@@ -117,6 +117,31 @@
    "code": "K11_ADMISSION_REQUIRED",
    "means": "артефакт не допущен: admission-манифеста нет, он просрочен или отозван",
    "remedy": "получить подписанный admission либо отказать"
+  },
+  {
+   "code": "S10_NOT_FOUND",
+   "means": "объект объявлен, но его нет по указанному пути",
+   "remedy": "создать объект или отказать"
+  },
+  {
+   "code": "S11_NOT_REGULAR",
+   "means": "объект существует, но не является regular file (каталог, устройство, FIFO)",
+   "remedy": "отказать, не открывать как файл"
+  },
+  {
+   "code": "S12_ENCODING",
+   "means": "выданные байты не являются допустимым UTF-8",
+   "remedy": "отказать, не выдавать содержимое"
+  },
+  {
+   "code": "S13_TOOL_INACTIVE",
+   "means": "инструмент не активен по производному допуску",
+   "remedy": "не запускать; нужен admission и текущее evidence права запуска"
+  },
+  {
+   "code": "S14_ALREADY_EXISTS",
+   "means": "create-new не может перезаписать существующий объект",
+   "remedy": "выбрать новый путь или отказать"
   }
  ]
 }

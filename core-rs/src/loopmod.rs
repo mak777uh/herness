@@ -97,8 +97,8 @@ pub fn parse_step(reply: &str) -> Result<Step, String> {
 }
 
 /// Имена, которые цикл принимает как инструменты. Список нужен и разбору шага, и подсказке.
-pub const KNOWN_TOOLS: [&str; 7] =
-    ["seal", "netprobe", "net", "search", "list", "read", "write"];
+pub const KNOWN_TOOLS: [&str; 8] =
+    ["seal", "netprobe", "net", "search", "list", "read", "write", "head"];
 
 /// Сколько знаков из результата попадает в строку истории.
 const HISTORY_BRIEF: usize = 120;
@@ -1096,6 +1096,9 @@ fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<Strin
         "list" => tool_list(arg),
         "read" => tool_read(arg),
         "write" => tool_write(arg),
+        // head существует как candidate-шаблон, но не допущен: без admission и derived right
+        // запуск обязан отказать. Это не «выключенный флаг», а состояние допуска (R8/Q18).
+        "head" => Err("S13_TOOL_INACTIVE: head не допущен в этом прогоне".to_string()),
         other => Err(format!("неизвестный инструмент: {other}")),
     }
 }

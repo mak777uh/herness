@@ -1,0 +1,22 @@
+{
+ "schema": "room-profile-v0",
+ "id": "room:wsl2-kvm-microvm",
+ "description": "Первая комната v0 для read-only среза: WSL2 + KVM, QEMU microvm, без сети, диска и host mounts.",
+ "accelerator": "kvm",
+ "machine": "microvm",
+ "accel_fallback": "forbidden",
+ "network": false,
+ "disk": false,
+ "host_mounts": [],
+ "shared_fs": [],
+ "write_allowed": false,
+ "input_root": "room:input",
+ "input_root_ref": "/mnt",
+ "max_processes": 1,
+ "tcg": "simulation only; not a security boundary",
+ "kvm_run_proof": [
+  "QMP query-kvm present=true enabled=true",
+  "tracepoint kvm:kvm_entry counter > 0",
+  "negative control without /dev/kvm refuses instead of falling back"
+ ]
+}

@@ -3,7 +3,7 @@
  "$id": "https://herness.invalid/schema/tool-card-v1.json",
  "title": "tool-card-v1 (draft)",
  "description": "Черновик карточки инструмента после решений владельца Q1-Q10 16.11.2026. Схема проверяет форму, не поведение. Не подключена к bin/tool_card.py и не даёт прав.",
- "$comment": "draft; owner approved 2026-11-16 as draft only. refusal enum must equal lab/refusal-codes.json v2; the semantic validator is the source of truth for kind/template/effects binding.",
+ "$comment": "draft; owner approved 2026-11-16 as draft only. refusal enum must equal lab/refusal-codes.json v3; the semantic validator is the source of truth for kind/template/effects binding.",
  "type": "object",
  "additionalProperties": false,
  "required": [
@@ -117,7 +117,12 @@
      "K4_RESOURCE_LIMIT",
      "K6_DATA_CLASS_UNKNOWN",
      "K6_SECRET_EGRESS",
-     "K11_ADMISSION_REQUIRED"
+     "K11_ADMISSION_REQUIRED",
+     "S10_NOT_FOUND",
+     "S11_NOT_REGULAR",
+     "S12_ENCODING",
+     "S13_TOOL_INACTIVE",
+     "S14_ALREADY_EXISTS"
     ]
    },
    "uniqueItems": true

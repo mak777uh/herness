@@ -15,7 +15,9 @@
  "test": "детерминированный harness: нормальный fixture, outside-root, ../, symlink наружу, symlink внутрь, max_bytes_read меньше строки, line_count 0, unknown data class, отсутствие/просрочка admission; каждый негативный контроль ожидает точный код отказа",
  "stopping_rule": "один пре-регистрированный batch; остановиться при первом принятом критическом контроле, bytes_read > лимита или отсутствии admission-проверки; не менять порог после первого прогона",
  "fixture": "lab/fixtures/model_visible/head-slice.txt (471 B, 10 строк, sha256 b5157f948c0833f80ac96ad64916c93d747e07df253801dfcd5674e59ce76850) + manifest.json",
- "runs": ["runs/accept/"],
+ "runs": [
+  "runs/accept/"
+ ],
  "closed": false,
  "owner_decision": "docs/DECISIONS-R5-2026-11-16.md",
  "kill_criteria": [
@@ -25,5 +27,124 @@
   "сеть, запись или host mount присутствуют в комнате",
   "TCG выдан за границу безопасности",
   "evidence не связывает точные card/source/binary/fixture/policy/room"
- ]
+ ],
+ "updated": "2026-11-17",
+ "decisions": "docs/DECISIONS-R8-2026-11-17.md",
+ "environment": {
+  "room": "WSL2 Ubuntu on Windows 11",
+  "accelerator": "kvm",
+  "machine": "microvm",
+  "accel_fallback": "forbidden",
+  "network": false,
+  "disk": false,
+  "host_mounts": [],
+  "kvm_run_proof": [
+   "QMP query-kvm present=true enabled=true",
+   "tracepoint kvm:kvm_entry counter > 0"
+  ],
+  "negative_control": "same launch without /dev/kvm access must refuse, not fall back to TCG",
+  "tcg": "simulation only; not a security boundary"
+ },
+ "s02": {
+  "chunk_bytes": 4096,
+  "bytes_read": "sum of bytes of emitted lines; end of the last emitted line",
+  "bytes_received": "diagnostic only, recorded in evidence, never in tool output",
+  "eof": "only read() == 0",
+  "truncated": "true on line, byte or output limit; false only on proven EOF",
+  "cap_below_first_line": "K4_RESOURCE_LIMIT",
+  "output_overflow": "stop_reason=output_cap with outcome ok, not K4",
+  "cr": "preserved as a byte; lines split on \n only",
+  "utf8": "checked only for emitted lines; failure is S12_ENCODING",
+  "partial_line": "never emitted",
+  "line_count_range": [
+   1,
+   200
+  ],
+  "max_bytes_read_range": [
+   1,
+   65536
+  ],
+  "output_bytes_cap": 8192
+ },
+ "critical_controls": [
+  {
+   "id": "outside-root",
+   "input": "root_ref host:/ segments [etc, passwd]",
+   "expect": "S6_CLOSURE_BREACH"
+  },
+  {
+   "id": "dotdot-traversal",
+   "input": "room:input segments [fixtures, .., secret.txt]",
+   "expect": "S6_CLOSURE_BREACH"
+  },
+  {
+   "id": "symlink-outside",
+   "input": "room:input fixtures/escape -> host /etc/passwd",
+   "expect": "S6_CLOSURE_BREACH"
+  },
+  {
+   "id": "symlink-inside",
+   "input": "room:input fixtures/alias -> head-slice.txt",
+   "expect": "S6_CLOSURE_BREACH"
+  },
+  {
+   "id": "cap-below-first-line",
+   "input": "max_bytes_read=32, first line is 41 bytes",
+   "expect": "K4_RESOURCE_LIMIT"
+  },
+  {
+   "id": "zero-line-count",
+   "input": "line_count=0",
+   "expect": "S1_SCHEMA"
+  },
+  {
+   "id": "unknown-data-class",
+   "input": "fixtures/unclassified.txt",
+   "expect": "K6_DATA_CLASS_UNKNOWN"
+  },
+  {
+   "id": "admission-missing-or-expired",
+   "input": "no admission / not_after in the past",
+   "expect": "K11_ADMISSION_REQUIRED"
+  }
+ ],
+ "additional_controls": [
+  {
+   "id": "missing-file",
+   "input": "declared but absent fixture",
+   "expect": "S10_NOT_FOUND"
+  },
+  {
+   "id": "not-regular",
+   "input": "directory or device",
+   "expect": "S11_NOT_REGULAR"
+  },
+  {
+   "id": "invalid-utf8",
+   "input": "emitted bytes are not valid UTF-8",
+   "expect": "S12_ENCODING"
+  },
+  {
+   "id": "tampered-admission",
+   "input": "one byte changed in admitted card or fixture",
+   "expect": "K11_ADMISSION_REQUIRED"
+  },
+  {
+   "id": "outside-canary",
+   "input": "canary file outside root",
+   "expect": "no output byte and no open success"
+  }
+ ],
+ "positive_control": {
+  "fixture": "lab/fixtures/model_visible/head-slice.txt",
+  "line_count": 3,
+  "max_bytes_read": 4096,
+  "expect": {
+   "outcome": "ok",
+   "lines": 3,
+   "bytes_read": 144,
+   "truncated": true
+  }
+ },
+ "repeats": 3
 }
