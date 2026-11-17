@@ -349,6 +349,16 @@ Q2 S1 до I/O, `K4` раньше ошибок объекта, осторожн�
 | 7 | `8d1f542` | `file_read_stream`, HEAD-SLICE-R1 — PASS | `research/outputs/HEAD-SLICE-R1-2026-11-17.txt` |
 | 8 | `a6e7292` | реестр: genesis events, JCS/prev/seq, производный `active`; legacy quarantined, search rejected | `lab/tools/registry.events.jsonl`, `registry.state.json` |
 | 9 | `92963cf` | генератор одного шаблона и пилот: 20 спецификаций, 24 мутанта, 3 повтора — PASS | `lab/pilot/`, `lab/candidates/`, `research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt` |
+| 10 | `fe27d07`, `edbf085` | handoff, claims, push; после первого LF-CI — CRLF-пиннинг запечатанных digest | `docs/`, `CLAIMS.md`, `.gitattributes` |
+
+CI на чистом LF checkout поймал то, чего CRLF-дерево не показывало: `lawset_digest`
+в provenance карточки head и 20 карточек кандидатов, а также SHA-256
+`HEAD-SLICE-R1` prereg, замороженный в `PILOT-GENERATOR-R1`, были измерены на
+CRLF-байтах. `edbf085` пиннит эти два запечатанных входа через `eol=crlf`;
+карточки, evidence и пороги не менялись. CI `44149087189` — success. Граница:
+digest привязан к представлению, объявленному в `.gitattributes`; смена
+представления требует перепечатки карточек и нового прогона, а не тихого
+пересчёта.
 
 Точные результаты:
 
@@ -473,7 +483,8 @@ git status --short
 
 Ожидание: HEAD и `origin/main` — docs-коммит после `92963cf` (R8 реализован этапами
 0–9: `e82dc22`, `d95c533`, `96470e9`, `318eb9e`, `729fee8`, `f790ef5`, `8d1f542`,
-`a6e7292`, `92963cf`). R8 evidence — `384d804`; R7 — `c63f3b8`; R8-бриф — `e5182b7`;
+`a6e7292`, `92963cf`), плюс `fe27d07` (handoff) и `edbf085` (CRLF-пиннинг
+запечатанных digest). R8 evidence — `384d804`; R7 — `c63f3b8`; R8-бриф — `e5182b7`;
 R6-бриф — `09a6acf`; R5 — `c2fc552`; R4 — `4d1fae5`. В status только pre-existing
 CRLF-модификации, которых мы не трогали. **Не делать `git add -A`.** Добавлять только
 конкретные пути.
