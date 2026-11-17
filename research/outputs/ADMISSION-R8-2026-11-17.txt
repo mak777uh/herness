@@ -1,0 +1,45 @@
+# Admission и promoter v0 — evidence
+
+Дата: 2026-11-17. Хост: Windows 10.0.26300 x64; WSL2 Linux 6.6.114.1-microsoft-standard-WSL2 (x86_64).
+Репозиторий: `C:\Users\Admin\Documents\Qoder\2026-11-16\7e4ba6fe\herness`.
+
+## Что проверено
+
+| проверка | команда | rc | результат |
+|---|---|---|---|
+| Rust-ядро и parity-вектор Python↔Rust | `python bin/rust_tests.py` | 0 | `100 passed; 0 failed` |
+| admission self-test (Windows) | `python bin/admission.py --self-test` | 0 | `PASS admission self-test: 23 проверок` |
+| admission self-test (WSL) | `wsl.exe bash -lc '... python3 bin/admission.py --self-test'` | 0 | `PASS admission self-test: 23 проверок` |
+| promoter self-test (Windows) | `python bin/promoter.py --self-test` | 0 | `PASS promoter self-test: 9 проверок`; verify/store; запуск отказом |
+| promoter self-test (WSL) | `wsl.exe bash -lc '... python3 bin/promoter.py --self-test'` | 0 | `PASS promoter self-test: 9 проверок`; launch через memfd + `execveat(AT_EMPTY_PATH)` |
+| CLI manifest/sign/verify | `python bin/admission.py keygen ... && ... manifest ... && ... sign ... && ... verify ...` | 0 | подпись, срок и шесть digest приняты |
+| мутация card на один байт | `... verify --check card_digest=...` | 2 | `K11_ADMISSION_REQUIRED: ... не совпадает с допущенными байтами` |
+| Rust parity-вектор | тест `python_generated_vector_verifies_in_rust` | 0 | Python-канонизация и Ed25519-подпись проверены Rust-кодом |
+
+Версии: Windows Python — `cryptography 46.0.3`; WSL Python — `cryptography 46.0.5`;
+Rust-зависимость `ed25519-dalek 2.2.0` из офлайн-кэша. QEMU/KVM на этом этапе не
+использовались (KVM_RUN — этап 5).
+
+## Границы и что это не доказывает
+
+- `test_only=true` не даёт права запуска без `--allow-test-only`; ни один инструмент не
+  становится `active`, registry не меняется.
+- Настоящий owner-ключ не создавался и не читался. `keygen` требует `--test-only` и
+  отказывается писать ключ внутрь репозитория; seed в отчёты и git не попадает.
+- Windows: исполнение не проверялось — только verify/store и отказ запуска. Linux-запуск
+  проверен в WSL на `/usr/bin/true`; это доказывает механизм memfd/`execveat`, но не
+  безопасность произвольного бинарника.
+- Полная семантика карточки (`tool-card-v1`) на promoter ещё не реализована: v0 проверяет
+  подпись, срок, epoch/seq/prev и точные байты шести артефактов. Это не заменяет
+  runtime-проверку `file_read_stream` (этап 7).
+- `seal`/`netprobe` вне v0; promoter отказывает им до запуска.
+- Rust parity-вектор доказывает совпадение канонизации и подписи для одного фиксированного
+  манифеста; он не доказывает полноту JCS за пределами подмножества v0 (без float,
+  ASCII-ключи, UTF-8-строки).
+
+## Ссылки на артефакты
+
+- `core-rs/src/admission.rs`
+- `bin/admission.py`
+- `bin/promoter.py`
+- `core-rs/Cargo.toml`, `core-rs/Cargo.lock` (`ed25519-dalek 2.2.0`)

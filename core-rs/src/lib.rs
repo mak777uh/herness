@@ -3,6 +3,7 @@
 //! Контракт с эталонной реализацией на Python заморожен в `tests/vectors/*.json`.
 //! Расхождение — дефект одной из реализаций, а не «другая трактовка».
 
+pub mod admission;
 pub mod clock;
 pub mod journal;
 pub mod loopmod;
