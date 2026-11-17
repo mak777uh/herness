@@ -27,6 +27,8 @@ jobs:
       # запускается на машине, где есть журналы и сборка: python bin/hs.py gates --profile full
       - name: Гейты
         run: python bin/hs.py gates --profile auto
+      - name: Пре-регистрация пилота
+        run: python bin/pilot_generator.py --verify
       - name: Свидетельства утверждений
         run: |
           python bin/check_artifacts.py C-0016
@@ -54,6 +56,33 @@ jobs:
           python-version: "3.13"
       - name: Selftest
         run: python bin/hs.py selftest
+
+  admission:
+    name: допуск и test-only репетиция
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Зависимости Ed25519
+        run: python -m pip install cryptography==46.0.5
+      - name: Self-tests admission и promoter
+        run: |
+          python bin/admission.py --self-test
+          python bin/promoter.py --self-test
+      - name: Сборка head_slice_host
+        working-directory: core-rs
+        run: cargo build --release --bin head_slice_host
+      # Launch идёт только через memfd/execveat. Если среда запретит syscall,
+      # это будет видно как FAIL, а не заменено путём/TCG; локальное WSL-evidence
+      # остаётся отдельным источником.
+      - name: Test-only активационная репетиция
+        run: python bin/activation_rehearsal.py --quiet --evidence /tmp/activation-rehearsal.txt
+      - name: Показать evidence при сбое
+        if: failure()
+        run: cat /tmp/activation-rehearsal.txt 2>/dev/null || true
 
   rust:
     name: Rust-тесты ядра
