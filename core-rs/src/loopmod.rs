@@ -1333,8 +1333,15 @@ fn registry_state_for(name: &str) -> &'static str {
 }
 
 /// `net` — отдельный bridge path вне реестра инструментов: у него своя политика.
+///
+/// Отдельная функция от состояния нужна, чтобы предикат `active` проверялся
+/// тестом на синтетическом состоянии, не подменяя production `registry.state.json`.
+fn registry_allows_state(state: &str, name: &str) -> bool {
+    name == "net" || state == "active"
+}
+
 fn registry_allows(name: &str) -> bool {
-    name == "net" || registry_state_for(name) == "active"
+    registry_allows_state(registry_state_for(name), name)
 }
 
 /// Инструмент с проверкой выдачи и derived authority.
@@ -2216,6 +2223,20 @@ mod tests {
         assert!(registry_allows("net"));
         // Состояние берётся из производного файла, а не из JSON-флага в снимке.
         assert_eq!(registry_state_for("search"), "rejected");
+        assert_eq!(registry_state_for("head"), "candidate");
+    }
+
+    #[test]
+    fn только_active_даёт_допуск_предикату() {
+        // Предикат допускает только derived `active`; test-only событие в реестре
+        // обязано остаться `admitted_inactive` и сюда не попасть.
+        assert!(registry_allows_state("active", "head"));
+        assert!(!registry_allows_state("admitted_inactive", "head"));
+        assert!(!registry_allows_state("candidate", "head"));
+        assert!(!registry_allows_state("unreviewed", "head"));
+        // `net` — отдельный bridge path, но не инструмент реестра.
+        assert!(registry_allows_state("unreviewed", "net"));
+        // Production-файл не подменяется этим тестом.
         assert_eq!(registry_state_for("head"), "candidate");
     }
 

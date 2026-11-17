@@ -11,8 +11,10 @@
     python bin/registry_state.py --authorize search   # S13_TOOL_INACTIVE, если не active
 
 Границы v0:
-- `active` требует события `admitted` с owner-подписью, admission- и evidence-digest;
-  поля проверяются, но сама подпись здесь не верифицируется — это делает promoter;
+- `active` требует события `admitted` с owner-подписью, admission- и evidence-digest
+  и **явным** `test_only:false`; test-only событие, отсутствие поля или не-bool значение
+  дают только `admitted_inactive`;
+- поля проверяются, но сама подпись здесь не верифицируется — это делает promoter;
 - настоящий owner-ключ не создаётся, ни один legacy-инструмент не делается active;
 - `net` — отдельный bridge path вне реестра: у него своя политика, не событие реестра.
 """
@@ -189,8 +191,14 @@ def validate_events(
 
 
 def _activation_problem(event: dict[str, Any]) -> str | None:
-    """Допуск без доказательств — только `admitted_inactive`, не `active`."""
+    """Допуск без доказательств — только `admitted_inactive`, не `active`.
+
+    `test_only` обязан быть явным `false`: молчание не означает owner-подпись,
+    а тестовое событие не должно становиться допуском даже с `owner_signed:true`.
+    """
     body = event.get("body") or {}
+    if body.get("test_only") is not False:
+        return "admitted без явного test_only=false"
     if body.get("owner_signed") is not True:
         return "admitted без owner-подписи"
     for field in ("admission_digest", "evidence_digest"):
@@ -326,16 +334,20 @@ def check_files() -> list[str]:
     return problems
 
 
-def authorize(tool: str) -> tuple[bool, str]:
+def authorize_state(state: dict[str, Any], tool: str) -> tuple[bool, str]:
+    """Проверить допуск по уже выведенному состоянию (в т.ч. песочному)."""
     if tool == "net":
         return True, "net: отдельный bridge path вне реестра"
-    state = computed_state()
-    record = state["tools"].get(tool)
+    record = (state.get("tools") or {}).get(tool)
     if record is None:
         return False, f"S13_TOOL_INACTIVE: {tool} отсутствует в реестре"
     if record["state"] != "active":
         return False, f"S13_TOOL_INACTIVE: {tool} в состоянии {record['state']}"
     return True, tool
+
+
+def authorize(tool: str) -> tuple[bool, str]:
+    return authorize_state(computed_state(), tool)
 
 
 def main(argv: list[str] | None = None) -> int:

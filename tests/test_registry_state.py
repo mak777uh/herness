@@ -107,16 +107,46 @@ def main() -> int:
     check(unsigned_state["active"] == [], "admitted без evidence не попадает в active")
 
     # Полный синтетический admitted (in-memory) показывает, что active выводится.
+    # `test_only:false` обязателен: молчание не считается owner-подписью.
     signed = appended(events, "head", {
         "reason": "selftest",
+        "test_only": False,
         "owner_signed": True,
         "admission_digest": "sha256:" + "0" * 64,
         "evidence_digest": "sha256:" + "1" * 64,
     })
     signed_state = rs.derive(rows, signed, snapshot_digest, policy_digest)
     check(signed_state["tools"]["head"]["state"] == "active",
-          "полное admitted-событие даёт active только через вывод")
+          "полное admitted-событие с test_only=false даёт active только через вывод")
     check(signed_state["active"] == ["head"], "active содержит head только в синтетике")
+
+    # test-only событие не активирует даже при owner_signed:true.
+    test_only = appended(events, "head", {
+        "reason": "test-only rehearsal",
+        "test_only": True,
+        "owner_signed": True,
+        "admission_digest": "sha256:" + "2" * 64,
+        "evidence_digest": "sha256:" + "3" * 64,
+    })
+    test_only_state = rs.derive(rows, test_only, snapshot_digest, policy_digest)
+    check(test_only_state["tools"]["head"]["state"] == "admitted_inactive",
+          "test-only admitted не становится active даже с owner_signed")
+    check(test_only_state["active"] == [], "test-only admitted не попадает в active")
+    ok, message = rs.authorize_state(test_only_state, "head")
+    check(not ok and "admitted_inactive" in message,
+          "authorize_state(test-only head) — S13 admitted_inactive")
+
+    # Отсутствие test_only — тоже не допуск: молчание не означает owner-подпись.
+    omitted = appended(events, "head", {
+        "reason": "no test_only",
+        "owner_signed": True,
+        "admission_digest": "sha256:" + "4" * 64,
+        "evidence_digest": "sha256:" + "5" * 64,
+    })
+    omitted_state = rs.derive(rows, omitted, snapshot_digest, policy_digest)
+    check(omitted_state["tools"]["head"]["state"] == "admitted_inactive",
+          "admitted без test_only не становится active")
+    check(omitted_state["active"] == [], "admitted без test_only не попадает в active")
 
     # Цепочка: правка body с пересчётом JCS ломает prev следующего события.
     tampered = list(events)
