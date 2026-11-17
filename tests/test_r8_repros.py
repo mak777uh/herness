@@ -91,7 +91,7 @@ def resolve_read() -> str:
 
 @check("REPRO-WRITE-TRUNC")
 def write_trunc() -> str:
-    fn = body(source(), "write_beneath")
+    fn = code_only(body(source(), "write_beneath"))
     assert "O_TRUNC" not in fn, "write_beneath использует O_TRUNC: существующий файл перезаписывается"
     assert "O_EXCL" in fn, "write_beneath не использует O_EXCL: create-new не обеспечен"
     return "create-new через O_EXCL"
@@ -99,7 +99,7 @@ def write_trunc() -> str:
 
 @check("REPRO-WRITE-XDEV")
 def write_xdev() -> str:
-    fn = body(source(), "write_beneath")
+    fn = code_only(body(source(), "write_beneath"))
     assert "RESOLVE_NO_XDEV" in fn, "write_beneath не запрещает переход на другую ФС"
     assert "RESOLVE_NO_MAGICLINKS" in fn, "write_beneath не запрещает magic links"
     return "NO_XDEV и NO_MAGICLINKS стоят"

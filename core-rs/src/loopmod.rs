@@ -969,8 +969,36 @@ pub fn tool_write_in(arg: &str, root: &Path) -> Result<String, String> {
     // корня, с запретом симлинков и выхода за корень. Проверка и открытие — одна операция,
     // поэтому окна между «проверили» и «записали» нет.
     write_beneath(&root, &target, text.as_bytes())
-        .map_err(|error| format!("не записать: {error}"))?;
+        .map_err(|error| write_refusal(error, &resource))?;
     Ok(format!("записано {bytes} байт в {}", target.display()))
+}
+
+/// Отказ записи с кодом из словаря. `EEXIST` — это create-new, а не ошибка ввода:
+/// существующий файл не перезаписывается. Переход ФС и симлинк — граница замыкания.
+fn write_refusal(error: std::io::Error, resource: &str) -> String {
+    #[cfg(unix)]
+    match error.raw_os_error() {
+        Some(libc::EEXIST) => {
+            return format!("S14_ALREADY_EXISTS: {resource} уже существует; create-new не перезаписывает")
+        }
+        Some(libc::EXDEV) => {
+            return format!("S6_CLOSURE_BREACH: запись пересекает границу ФС: {resource}")
+        }
+        Some(libc::ELOOP) => {
+            return format!("S6_CLOSURE_BREACH: симлинк запрещён: {resource}")
+        }
+        Some(libc::ENOTDIR) => {
+            return format!("S6_CLOSURE_BREACH: компонент пути не каталог: {resource}")
+        }
+        Some(libc::ENOSPC) => {
+            return format!("K4_RESOURCE_LIMIT: нет места для записи: {resource}")
+        }
+        Some(libc::EDQUOT) => {
+            return format!("K4_RESOURCE_LIMIT: превышена квота записи: {resource}")
+        }
+        _ => {}
+    }
+    format!("S6_CLOSURE_BREACH: не записать {resource}: {error}")
 }
 
 /// Записать файл, не выходя за `root` и не следуя симлинкам.
@@ -1010,9 +1038,14 @@ fn write_beneath(root: &Path, target: &Path, bytes: &[u8]) -> std::io::Result<()
     let mut how = std::mem::MaybeUninit::<libc::open_how>::zeroed();
     unsafe {
         let ptr = how.as_mut_ptr();
-        (*ptr).flags = (libc::O_WRONLY | libc::O_CREAT | libc::O_TRUNC | libc::O_CLOEXEC) as u64;
+        // CREATE-NEW: O_EXCL запрещает перезапись существующего файла; O_TRUNC здесь был бы
+        // «запись как перезапись» и молча стирал бы чужой результат.
+        (*ptr).flags = (libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC) as u64;
         (*ptr).mode = 0o644;
-        (*ptr).resolve = libc::RESOLVE_BENEATH | libc::RESOLVE_NO_SYMLINKS;
+        (*ptr).resolve = libc::RESOLVE_BENEATH
+            | libc::RESOLVE_NO_SYMLINKS
+            | libc::RESOLVE_NO_MAGICLINKS
+            | libc::RESOLVE_NO_XDEV;
     }
     let how = unsafe { how.assume_init() };
     let fd = unsafe {
@@ -1069,7 +1102,13 @@ fn write_beneath(root: &Path, target: &Path, bytes: &[u8]) -> std::io::Result<()
             ));
         }
     }
-    std::fs::write(target, bytes)
+    // create-new и здесь: существующий файл не перезаписывается.
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(target)?;
+    file.write_all(bytes)
 }
 
 fn tool_write(arg: &str) -> Result<String, String> {
@@ -2403,12 +2442,28 @@ mod tests {
     }
 
     #[test]
-    fn перезапись_существующего_файла_проходит() {
+    fn перезапись_существующего_файла_отклонена() {
+        // CREATE-NEW: write не перезаписывает. Существующий файл — отказ S14, а не «новое».
         let (root, _outside) = write_fixture("overwrite");
         std::fs::write(root.join("work/a.md"), "старое").unwrap();
         let arg = format!("{} новое", root.join("work/a.md").display());
-        tool_write_in(&arg, &root).expect("перезапись внутри корня обязана проходить");
-        assert_eq!(read(&root.join("work/a.md")), "новое");
+        let result = tool_write_in(&arg, &root);
+        assert!(result.is_err(), "перезапись обязана быть отклонена: {result:?}");
+        assert!(result.unwrap_err().starts_with("S14_ALREADY_EXISTS"), "нужен S14");
+        assert_eq!(read(&root.join("work/a.md")), "старое", "файл перезаписан или обрезан");
+        std::fs::remove_dir_all(root.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn повторная_запись_после_создания_отклонена() {
+        let (root, _outside) = write_fixture("twice");
+        let arg = format!("{} первое", root.join("work/new.md").display());
+        tool_write_in(&arg, &root).expect("первая запись CREATE-NEW проходит");
+        let again = format!("{} второе", root.join("work/new.md").display());
+        let result = tool_write_in(&again, &root);
+        assert!(result.is_err(), "вторая запись обязана быть отклонена: {result:?}");
+        assert!(result.unwrap_err().starts_with("S14_ALREADY_EXISTS"));
+        assert_eq!(read(&root.join("work/new.md")), "первое");
         std::fs::remove_dir_all(root.parent().unwrap()).ok();
     }
 
