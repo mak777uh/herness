@@ -2,25 +2,32 @@
 
 > **Обновление 17.11.2026, R8 реализован.** Актуальный handoff —
 > [`docs/SELF-TOOLING-2026-11-16.md`](SELF-TOOLING-2026-11-16.md), §1.11–1.12.
-> **Последняя точка:** `700d516` (байтовый откат проб и CRLF-пин карточки); CI
-> `44159576484` — **success**, все 6 job'ов, включая `admission`. Перед ним: `8c30f27`
-> (CI-гейты), `c063ded` (репетиция и evidence), `a95fe58` (guard `test_only:false`);
-> ранее `edbf085` (CRLF-пиннинг) и `fe27d07` (handoff). Реализация R8 — этапы 0–11:
+> **Последняя точка:** `fe143b6` (сухая owner-церемония в песочнице); CI
+> `44163715508` — **success**, все 6 job'ов, включая новый шаг `admission`. Перед ним:
+> `700d516` (байтовый откат проб и CRLF-пин карточки), `8c30f27` (CI-гейты),
+> `c063ded` (test-only репетиция и evidence), `a95fe58` (guard `test_only:false`);
+> ранее `edbf085` (CRLF-пиннинг) и `fe27d07` (handoff). Реализация R8 — этапы 0–12:
 > `e82dc22` (решения и словарь v3), `d95c533` (репро и policy), `96470e9` (write),
 > `318eb9e` (legacy), `729fee8` (KVM_RUN), `f790ef5` (admission/promoter), `8d1f542`
 > (head slice), `a6e7292` (реестр), `92963cf` (пилот), `a95fe58` (guard test-only),
 > `c063ded` (репетиция), `8c30f27` (CI), `700d516` (байтовый откат проб и CRLF-пин
-> карточки). Этап 11 — test-only активационная репетиция: **33/33 PASS** в WSL,
+> карточки), `fe143b6` (сухая owner-церемония).
+> Этап 11 — test-only активационная репетиция: **33/33 PASS** в WSL,
 > guard явного `test_only:false`, песочный `admitted_inactive`, promoter launch;
 > CI job `admission` — **31/31** без `--build` (бинарь собирается отдельным шагом);
-> evidence — `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317; runbook —
-> [`docs/OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md).
+> evidence — `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317.
+> Этап 12 — положительная ветка в песочнице: эфемерный ключ с anchor `test_only:false`,
+> promoter без `--allow-test-only`, песочный `active=[head]`; **30/30 PASS** в WSL,
+> **28/28** в CI без `--build`, **19/19** на Windows без launch; production `head` —
+> `candidate`, `active` пуст; evidence —
+> `research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt`.
+> Runbook — [`docs/OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md).
 > Первый CI `44155903515` был красным только по представлению: проба гейта откатывала
 > `HEAD-SLICE-R1.json` текстом и нормализовала CRLF→LF, а карточка head не была
 > запиннена и получала LF. `700d516` вернул байтовый откат и запиннил карточку CRLF,
 > не ослабляя exact-byte сверку и не меняя запечатанные digest'ы.
-> **Проверенный handoff-коммит:** `89751ed`, CI `44160753778` — success; дальнейшие
-> docs-правки не меняют код и проходят тот же workflow.
+> **Проверенный handoff-коммит:** `fe143b6`, CI `44163715508` — success; docs-правки
+> после него не меняют код и проходят тот же workflow.
 > Решения Q11–Q18/F04/A01 — [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md);
 > выбраны агентом по делегированию владельца «делай сам все поочерёдно», не approval и не
 > изменение конституции. Q1–Q10 не переоткрывались:
@@ -36,7 +43,8 @@
 > **Что НЕ сделано:** настоящий owner-ключ не создан и не читался; admission не подписан;
 > `head` остаётся candidate и отвечает `S13_TOOL_INACTIVE`; `registry.state.json` —
 > `active` пуст; ни один инструмент не активирован; `K9_proven` не выдан; наружу ничего
-> не публиковалось.
+> не публиковалось. Положительная ветка этапа 12 проверена только эфемерным ключом:
+> это не approval и не замена церемонии.
 >
 > **Следующее действие — владелец:** прочитать evidence и решения, провести церемонию
 > ключа и подписать admission (или отказать). После подписи — registry event и отдельный

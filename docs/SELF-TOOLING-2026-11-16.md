@@ -19,6 +19,11 @@
 > представление: проба гейта теперь откатывает байты, карточка head запиннена CRLF
 > (`700d516`); запечатанные digest'ы и пороги не менялись. Проверенный handoff-коммит —
 > `89751ed`, CI `44160753778` — success; дальнейшие docs-правки не меняют код.
+> Этап 12 — сухая owner-церемония в песочнице (`fe143b6`): эфемерный ключ с anchor
+> `test_only:false`, **30/30 PASS** в WSL (28/28 в CI без `--build`, 19/19 на Windows без
+> launch), promoter без `--allow-test-only`, песочный `active=[head]`; production `head`
+> остаётся `candidate`, production `active` пуст. CI `44163715508` — success, все 6 job'ов.
+> Это проверка положительной ветки, **не** owner approval: настоящий ключ не создавался.
 > `head` остаётся candidate: настоящий owner-ключ не создан, admission не выдан, ни один
 > инструмент не `active`, `K9_proven` нет. Следующий шаг — владелец читает evidence и
 > [`docs/OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md) и, если согласен,
@@ -36,8 +41,8 @@
 словарь v3), `d95c533` (policy и репро), `96470e9` (write), `318eb9e` (legacy), `729fee8`
 (KVM_RUN), `f790ef5` (admission/promoter), `8d1f542` (head slice), `a6e7292` (реестр),
 `92963cf` (пилот генератора), `a95fe58` (guard `test_only:false`), `c063ded` (test-only
-репетиция), `8c30f27` (CI-гейты), `700d516` (байтовый откат проб и CRLF-пин карточки);
-CI `44159576484` — success).
+репетиция), `8c30f27` (CI-гейты), `700d516` (байтовый откат проб и CRLF-пин карточки),
+`fe143b6` (сухая owner-церемония в песочнице); CI `44159576484` — success).
 **Предыдущая точка:** `b22eaec` (rolling-карта).
 **Главные артефакты:** [`docs/DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md) —
 решения владельца Q1–Q10; [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md) —
@@ -361,6 +366,7 @@ Q2 S1 до I/O, `K4` раньше ошибок объекта, осторожн�
 | 9 | `92963cf` | генератор одного шаблона и пилот: 20 спецификаций, 24 мутанта, 3 повтора — PASS | `lab/pilot/`, `lab/candidates/`, `research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt` |
 | 10 | `fe27d07`, `edbf085` | handoff, claims, push; после первого LF-CI — CRLF-пиннинг запечатанных digest | `docs/`, `CLAIMS.md`, `.gitattributes` |
 | 11 | `a95fe58`, `c063ded`, `8c30f27`, `700d516` | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS (CI 31/31 без сборки); байтовый откат проб и CRLF-пин карточки; CI `44159576484` — success | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
+| 12 | `fe143b6` | сухая owner-церемония: эфемерный ключ с anchor `test_only:false`, promoter без `--allow-test-only`, песочный `active=[head]`; production не изменён; 30/30 WSL, 28/28 CI без `--build`, 19/19 Windows без launch; CI `44163715508` — success | `bin/owner_ceremony_dry_run.py`, `research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt` |
 
 CI на чистом LF checkout поймал то, чего CRLF-дерево не показывало: `lawset_digest`
 в provenance карточки head и 20 карточек кандидатов, а также SHA-256
@@ -427,6 +433,32 @@ Runbook владельца: [`OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-1
 `run_tool_g` по-прежнему не имеет ветки `head`, поэтому conversational loop не запускает
 head даже после активации — запуск идёт через promoter. `K9_proven` нет.
 
+### 1.13. Сухая owner-церемония в песочнице (этап 12)
+
+Test-only репетиция доказывает отказ, но не проверяла положительную ветку: манифест с
+`test_only:false` и promoter **без** `--allow-test-only`. Этот разрыв закрыт песочным
+прибором [`bin/owner_ceremony_dry_run.py`](../bin/owner_ceremony_dry_run.py). Он создаёт
+эфемерный ключ вне репозитория с anchor `test_only:false`, подписывает манифест из точных
+байтов, проверяет `admission.verify` без разрешения, выполняет `promoter verify/store` без
+разрешения, строит временный registry-песочный журнал с событием `admitted` и запускает
+`head_slice_host` через promoter на Linux. Seed не печатается; CLI `keygen` по-прежнему
+отказывается создавать что-либо, кроме test-only, — новый помощник вызывается только
+прибором, не пользовательской командой.
+
+Результаты: в WSL **30/30 PASS**, включая `memfd/execveat`, normal 3 строки/144 B/
+`line_cap` и outside-root `S6_CLOSURE_BREACH`; в CI без `--build` — **28/28**; на Windows
+без launch — **19/19**. В песочном реестре `head` = `active`, `active=[head]`;
+production-файлы реестра до и после совпали, production `head` остаётся `candidate`,
+production `active` пуст. CI job `admission` запускает прибор после test-only репетиции,
+без `--build` (бинарь уже собран); CI `44163715508` — success. Evidence:
+[`research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt`](../research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt).
+
+Границы. Эфемерный ключ — не owner-ключ; anchor `test_only:false` — объявление для
+песочницы, а не approval. Реестр не верифицирует подпись. Событие связывает
+`admission_digest`, а манифест содержит `key_fingerprint`, но **allowlist owner-anchor в
+реестре отсутствует**: владелец обязан сверить fingerprint и anchor вне канала до
+добавления события. `run_tool_g` по-прежнему не имеет ветки `head`; `K9_proven` не выдан.
+
 ---
 
 ## 2. Что именно показали замеры (и что они не доказывают)
@@ -485,8 +517,9 @@ head даже после активации — запуск идёт через
 
 ## 3. Где именно остановились
 
-Все этапы 0–11 плана исполнены и закоммичены; рабочее дерево, кроме pre-existing
-CRLF-шумов, чистое. `head` остаётся **candidate**: настоящий owner-ключ не создавался и
+Все этапы 0–12 исполнены и закоммичены; рабочее дерево, кроме pre-existing
+CRLF-шумов, чистое. Положительная ветка проверена в песочнице (этап 12), но это не
+настоящая церемония: `head` остаётся **candidate**, настоящий owner-ключ не создавался и
 не читался, admission не подписан, `registry.state.json` даёт пустой `active`, ни один
 инструмент не активирован, `K9_proven` не выдан. Кандидаты пилота лежат в
 `lab/candidates/` как артефакты, а не как допущенные инструменты.
@@ -527,13 +560,13 @@ git ls-remote --heads origin main
 git status --short
 ```
 
-Ожидание: HEAD и `origin/main` — docs-коммит после `92963cf` (R8 реализован этапами
-0–9: `e82dc22`, `d95c533`, `96470e9`, `318eb9e`, `729fee8`, `f790ef5`, `8d1f542`,
-`a6e7292`, `92963cf`), плюс `fe27d07` (handoff) и `edbf085` (CRLF-пиннинг
-запечатанных digest). R8 evidence — `384d804`; R7 — `c63f3b8`; R8-бриф — `e5182b7`;
-R6-бриф — `09a6acf`; R5 — `c2fc552`; R4 — `4d1fae5`. В status только pre-existing
-CRLF-модификации, которых мы не трогали. **Не делать `git add -A`.** Добавлять только
-конкретные пути.
+Ожидание: HEAD и `origin/main` включают R8-этапы `e82dc22`, `d95c533`, `96470e9`,
+`318eb9e`, `729fee8`, `f790ef5`, `8d1f542`, `a6e7292`, `92963cf`, guard `a95fe58`,
+репетицию `c063ded`, CI `8c30f27`, байтовый откат проб `700d516` и сухую церемонию
+`fe143b6`, плюс docs-handoff после них. R8 evidence — `384d804`; R7 — `c63f3b8`;
+R8-бриф — `e5182b7`; R6-бриф — `09a6acf`; R5 — `c2fc552`; R4 — `4d1fae5`. В status
+только pre-existing CRLF-модификации, которых мы не трогали. **Не делать `git add -A`.**
+Добавлять только конкретные пути.
 
 ### 4.2. Документы
 
@@ -598,7 +631,7 @@ R6 — 45 918, 68 106, 49 539, 52 252, 123 014, 81 488 Б; R7 — 68 505, 47 167
 - не считать пилот генератора разрешением на активацию: кандидаты в `lab/candidates/`
   не допущены и не являются `active`;
 - не создавать настоящий owner-ключ, не читать его в контекст и не подписывать admission
-  без владельца; тестовый admission не выдавать за approval;
+  без владельца; тестовый admission и песочную owner-церемонию не выдавать за approval;
 - не менять конституцию K1–K11: это право владельца, агент может только просить.
 
 ---
@@ -628,7 +661,8 @@ Q1–Q10 приняты владельцем и не переоткрывали�
 
 1. Прочитать evidence и решения; сказать «да»/«нет» по каждому пункту.
 2. Провести церемонию настоящего owner-ключа; приватный ключ не должен попасть в
-   контекст агента или git. В отчётах — только fingerprint.
+   контекст агента или git. В отчётах — только fingerprint. Реестр не содержит allowlist
+   owner-anchor: fingerprint и anchor нужно сверить вне канала до добавления события.
 3. Подписать admission для `head` (или отказать). Только после этого возможна активация
    через registry event; `K9_proven` не выдаётся.
 4. Решить, публиковать ли что-либо наружу; без «да» публикации нет.

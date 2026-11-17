@@ -12,7 +12,7 @@
 - Настоящий owner-ключ не создавался; owner-подпись не выдавалась.
 - `K9_proven` не выдан.
 - Production-файлы `lab/tools/registry.jsonl`, `registry.events.jsonl`,
-  `registry.state.json` не переписывались test-only репетицией.
+  `registry.state.json` не переписывались test-only репетицией и сухой owner-церемонией.
 - Известный разрыв: `run_tool_g` не имеет ветки `head`. Даже после активации conversational
   loop не запустит `head`; запуск идёт через promoter. Это отдельная работа, не часть
   церемонии ключа.
@@ -41,6 +41,21 @@ outside-root — `S6_CLOSURE_BREACH`. В CI та же цепочка идёт б
 `--allow-test-only` отвергается; promoter verify/store работает; test-only `admitted`
 остаётся `admitted_inactive`; launch идёт без path fallback. Она **не** доказывает, что
 владелец согласен, что ключ настоящий или что комната изолирует произвольный код.
+
+Положительная ветка отдельно проверена песочным прибором (этап 12):
+
+```text
+python bin/owner_ceremony_dry_run.py --no-launch
+wsl.exe -e sh -lc 'cd /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness && python3 bin/owner_ceremony_dry_run.py --build --evidence research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt'
+```
+
+Ожидание: `19/19` на Windows без launch, `30/30` в WSL, `28/28` в CI без `--build`
+(бинарь собирается отдельным шагом). Прибор создаёт **эфемерный** ключ
+с anchor `test_only:false` вне репозитория, проверяет манифест без `--allow-test-only`,
+выполняет promoter verify/store и даёт песочный `head=active`, `active=[head]`; production
+`head` остаётся `candidate`, production `active` пуст. Это проверка положительной ветки,
+**не** approval и не настоящая церемония: эфемерный ключ не является owner-ключом, а
+CLI `keygen` намеренно не умеет создавать `test_only:false`.
 
 ## 3. Что уже закрыто в реестре
 
@@ -82,8 +97,11 @@ outside-root — `S6_CLOSURE_BREACH`. В CI та же цепочка идёт б
 9. **Добавить событие `admitted`.** Append-only событие в `registry.events.jsonl`:
    `schema=herness-registry-event-v1`, `seq`, `prev`, `type=admitted`, `tool_id=head`,
    `body.owner_signed=true`, `body.test_only=false`, `body.admission_digest`,
-   `body.evidence_digest`. Отдельного CLI append сейчас нет: это отдельный проверяемый шаг,
-   а не рекомендация править журнал вручную без проверки `seq`/`prev`.
+   `body.evidence_digest`. Перед append владелец **вне канала** сверяет `key_fingerprint`
+   и anchor: реестр не проверяет подпись и не содержит allowlist owner-anchor, поэтому
+   событие само по себе не доказывает, что ключ — owner-ключ. Отдельного CLI append сейчас
+   нет: это отдельный проверяемый шаг, а не рекомендация править журнал вручную без
+   проверки `seq`/`prev`.
 10. **Вывести и проверить состояние.**
     `python bin/registry_state.py --write`, затем `--check`, `--show`, `--authorize head`.
     Только после этого `head` может стать `active`; `registry.state.json` в Rust
@@ -97,10 +115,11 @@ outside-root — `S6_CLOSURE_BREACH`. В CI та же цепочка идёт б
 
 ## 5. Стоп-условия
 
-Остановиться, если: требуется передать seed агенту или в контекст; тестовая подпись
-выдаётся за owner-подпись; событие `admitted` имеет `test_only:true` или не имеет поля;
-кто-то предлагает ослабить гейт/порог; launch подменяется путём или TCG; в evidence
-попадает приватный ключ; production-файлы реестра меняются без события и проверки.
+Остановиться, если: требуется передать seed агенту или в контекст; тестовая подпись или
+песочная owner-церемония выдаётся за owner-подпись/approval; событие `admitted` имеет
+`test_only:true` или не имеет поля; кто-то предлагает ослабить гейт/порог; launch
+подменяется путём или TCG; в evidence попадает приватный ключ; production-файлы реестра
+меняются без события и проверки.
 
 Границы: этот runbook не является approval, не создаёт ключ и не доказывает изоляцию
 комнаты. `K9_proven` остаётся невыданным.
