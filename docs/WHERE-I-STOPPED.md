@@ -2,15 +2,23 @@
 
 > **Обновление 17.11.2026, R8 реализован.** Актуальный handoff —
 > [`docs/SELF-TOOLING-2026-11-16.md`](SELF-TOOLING-2026-11-16.md), §1.11–1.12.
-> **Последний evidence-коммит:** `92963cf` (пилот генератора); handoff — `fe27d07`,
-> затем `edbf085` (CRLF-пиннинг запечатанных digest после первого LF-CI; CI
-> `44149087189` — success). Реализация R8 — этапы 0–10: `e82dc22` (решения и словарь v3), `d95c533`
-> (репро и policy), `96470e9` (write), `318eb9e` (legacy), `729fee8` (KVM_RUN), `f790ef5`
-> (admission/promoter), `8d1f542` (head slice), `a6e7292` (реестр), `92963cf` (пилот).
-> Этап 11 — test-only активационная репетиция: **33/33 PASS**, guard явного
-> `test_only:false`, песочный `admitted_inactive`, promoter launch в WSL; evidence —
-> `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317; runbook —
+> **Последняя точка:** `700d516` (байтовый откат проб и CRLF-пин карточки); CI
+> `44159576484` — **success**, все 6 job'ов, включая `admission`. Перед ним: `8c30f27`
+> (CI-гейты), `c063ded` (репетиция и evidence), `a95fe58` (guard `test_only:false`);
+> ранее `edbf085` (CRLF-пиннинг) и `fe27d07` (handoff). Реализация R8 — этапы 0–11:
+> `e82dc22` (решения и словарь v3), `d95c533` (репро и policy), `96470e9` (write),
+> `318eb9e` (legacy), `729fee8` (KVM_RUN), `f790ef5` (admission/promoter), `8d1f542`
+> (head slice), `a6e7292` (реестр), `92963cf` (пилот), `a95fe58` (guard test-only),
+> `c063ded` (репетиция), `8c30f27` (CI), `700d516` (байтовый откат проб и CRLF-пин
+> карточки). Этап 11 — test-only активационная репетиция: **33/33 PASS** в WSL,
+> guard явного `test_only:false`, песочный `admitted_inactive`, promoter launch;
+> CI job `admission` — **31/31** без `--build` (бинарь собирается отдельным шагом);
+> evidence — `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317; runbook —
 > [`docs/OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md).
+> Первый CI `44155903515` был красным только по представлению: проба гейта откатывала
+> `HEAD-SLICE-R1.json` текстом и нормализовала CRLF→LF, а карточка head не была
+> запиннена и получала LF. `700d516` вернул байтовый откат и запиннил карточку CRLF,
+> не ослабляя exact-byte сверку и не меняя запечатанные digest'ы.
 > Решения Q11–Q18/F04/A01 — [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md);
 > выбраны агентом по делегированию владельца «делай сам все поочерёдно», не approval и не
 > изменение конституции. Q1–Q10 не переоткрывались:

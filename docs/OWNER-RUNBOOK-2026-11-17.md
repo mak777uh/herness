@@ -32,7 +32,9 @@ wsl.exe -e sh -lc 'cd /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/her
 ```
 
 Ожидание: `PASS activation rehearsal: 33/33`; normal — 3 строки/144 B/`line_cap`;
-outside-root — `S6_CLOSURE_BREACH`. Рабочий каталог и ключ создаются вне репозитория и
+outside-root — `S6_CLOSURE_BREACH`. В CI та же цепочка идёт без `--build` (бинарь
+собирается отдельным шагом) и даёт `31/31`; это не другой порог, а отсутствие двух
+проверок сборки. Рабочий каталог и ключ создаются вне репозитория и
 удаляются, если не указан `--keep`; в evidence попадает только fingerprint, не seed.
 
 Репетиция доказывает: подпись и шесть exact-byte digest проверяются; test-only без

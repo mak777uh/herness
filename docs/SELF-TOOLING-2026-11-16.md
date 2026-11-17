@@ -13,7 +13,11 @@
 > пуст); пилот PILOT-GENERATOR-R1 — **PASS** (20/20 спецификаций, 16/16 критических и 8/8
 > функциональных мутантов, 3/3 детерминированных повтора); этап 11 — test-only
 > активационная репетиция **33/33 PASS** (guard явного `test_only:false`, песочный
-> `admitted_inactive`, promoter verify/store и launch через memfd/execveat в WSL).
+> `admitted_inactive`, promoter verify/store и launch через memfd/execveat в WSL);
+> CI job `admission` — **31/31** без `--build` (бинарь собирается отдельным шагом),
+> CI `44159576484` — success. После красного `44155903515` исправлено только
+> представление: проба гейта теперь откатывает байты, карточка head запиннена CRLF
+> (`700d516`); запечатанные digest'ы и пороги не менялись.
 > `head` остаётся candidate: настоящий owner-ключ не создан, admission не выдан, ни один
 > инструмент не `active`, `K9_proven` нет. Следующий шаг — владелец читает evidence и
 > [`docs/OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md) и, если согласен,
@@ -27,10 +31,12 @@
 (handoff; R5 — `c2fc552`, R4 — `4d1fae5`, evidence — `ded2cf2`, починенный checker — `ae926ef`,
 сырые ответы R5 байт-в-байт — `9c8af80`, R6-бриф — `09a6acf`, сырые ответы R6 и синтез — `3d988f8`,
 сырые ответы R7 и синтез — `c63f3b8`, бриф R8 и handoff — `e5182b7`, handoff R8 — `04e8b31`,
-сырые ответы R8 и синтез — `384d804`; R8 реализован этапами 0–9: `e82dc22` (решения и
+сырые ответы R8 и синтез — `384d804`; R8 реализован этапами 0–11: `e82dc22` (решения и
 словарь v3), `d95c533` (policy и репро), `96470e9` (write), `318eb9e` (legacy), `729fee8`
 (KVM_RUN), `f790ef5` (admission/promoter), `8d1f542` (head slice), `a6e7292` (реестр),
-`92963cf` (пилот генератора); handoff — коммит после `92963cf`).
+`92963cf` (пилот генератора), `a95fe58` (guard `test_only:false`), `c063ded` (test-only
+репетиция), `8c30f27` (CI-гейты), `700d516` (байтовый откат проб и CRLF-пин карточки);
+CI `44159576484` — success).
 **Предыдущая точка:** `b22eaec` (rolling-карта).
 **Главные артефакты:** [`docs/DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md) —
 решения владельца Q1–Q10; [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md) —
@@ -353,15 +359,23 @@ Q2 S1 до I/O, `K4` раньше ошибок объекта, осторожн�
 | 8 | `a6e7292` | реестр: genesis events, JCS/prev/seq, производный `active`; legacy quarantined, search rejected | `lab/tools/registry.events.jsonl`, `registry.state.json` |
 | 9 | `92963cf` | генератор одного шаблона и пилот: 20 спецификаций, 24 мутанта, 3 повтора — PASS | `lab/pilot/`, `lab/candidates/`, `research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt` |
 | 10 | `fe27d07`, `edbf085` | handoff, claims, push; после первого LF-CI — CRLF-пиннинг запечатанных digest | `docs/`, `CLAIMS.md`, `.gitattributes` |
-| 11 | эта смена | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
+| 11 | `a95fe58`, `c063ded`, `8c30f27`, `700d516` | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS (CI 31/31 без сборки); байтовый откат проб и CRLF-пин карточки; CI `44159576484` — success | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
 
 CI на чистом LF checkout поймал то, чего CRLF-дерево не показывало: `lawset_digest`
 в provenance карточки head и 20 карточек кандидатов, а также SHA-256
 `HEAD-SLICE-R1` prereg, замороженный в `PILOT-GENERATOR-R1`, были измерены на
 CRLF-байтах. `edbf085` пиннит эти два запечатанных входа через `eol=crlf`;
-карточки, evidence и пороги не менялись. CI `44149087189` — success. Граница:
-digest привязан к представлению, объявленному в `.gitattributes`; смена
-представления требует перепечатки карточек и нового прогона, а не тихого
+карточки, evidence и пороги не менялись. CI `44149087189` — success.
+
+Первый прогон этапа 11 (`44155903515`) показал ещё два места, которые не были
+представлением на бумаге, а становились им во время прогона: проба гейта
+«пре-регистрация» откатывала in-place правки через `read_text/write_text` и тем
+самым нормализовала CRLF→LF у `HEAD-SLICE-R1.json`, а карточка head не имела
+CRLF-пина и получала LF от общего `*.json`. `700d516` вернул откат проб
+байт-в-байт, добавил CRLF-пин карточки и selftest, проверяющий точные байты;
+запечатанные digest'ы и пороги не менялись. CI `44159576484` — **success**.
+Граница: digest привязан к представлению, объявленному в `.gitattributes`;
+смена представления требует перепечатки карточек и нового прогона, а не тихого
 пересчёта.
 
 Точные результаты:
@@ -400,7 +414,11 @@ production. Найден и закрыт дефект: `admitted` с `test_only:
 `head_slice_host` через `memfd + F_SEAL_* + execveat` на Linux. В WSL: **33/33 PASS**,
 normal — 3 строки/144 B/`line_cap`, outside-root — `S6_CLOSURE_BREACH`; production
 `registry.jsonl`, `registry.events.jsonl`, `registry.state.json` не изменены, `head`
-остаётся `candidate`, `active` пуст. Evidence:
+остаётся `candidate`, `active` пуст. CI job `admission` проходит ту же цепочку без
+`--build` (бинарь собирается отдельным шагом) — **31/31 PASS**; CI `44159576484` —
+success. Красный `44155903515` был только расхождением представления: проба гейта
+нормализовала CRLF у prereg, а карточка не была запиннена; `700d516` исправил откат
+проб на байты и добавил CRLF-пин, digest'ы не менялись. Evidence:
 [`research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`](../research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt).
 Runbook владельца: [`OWNER-RUNBOOK-2026-11-17.md`](OWNER-RUNBOOK-2026-11-17.md).
 
