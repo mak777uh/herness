@@ -57,7 +57,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--build", action="store_true", help="только сборка")
     args = parser.parse_args(argv)
 
-    command = "cargo build --release" if args.build else "cargo test --release --lib"
+    command = "cargo build --release" if args.build else "cargo test --release --lib --tests"
     core_wsl = wsl_path(CORE)
     # fail-closed: нет каталога — это отказ с кодом 3, а не «0 тестов = успех».
     guard = (f"test -d '{core_wsl}' || {{ echo \"нет каталога: {core_wsl}\" >&2; exit 3; }}; ")
@@ -70,9 +70,9 @@ def main(argv: list[str]) -> int:
     for line in tail[-12:]:
         print(line.strip())
 
-    passed = re.search(r"test result: ok\. (\d+) passed; 0 failed", out)
+    passed = re.findall(r"test result: ok\. (\d+) passed; 0 failed", out)
     if passed and code == 0:
-        print(f"\n[ok] тестов пройдено: {passed.group(1)}, провалов 0")
+        print(f"\n[ok] тестов пройдено: {sum(int(value) for value in passed)}, провалов 0")
         return 0
     failed = re.search(r"(\d+) failed", out)
     print(f"\n[FAIL] провалов: {failed.group(1) if failed else 'неизвестно'}")

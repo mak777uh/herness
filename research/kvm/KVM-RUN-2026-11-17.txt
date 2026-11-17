@@ -18,42 +18,42 @@
 ## Положительная проба
 
 ```text
-qemu-system-x86_64 -M microvm -accel kvm -m 256 -smp 1 -kernel /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/boot/vmlinuz-lts -initrd /tmp/herness-kvm-h2q0vf6f/initramfs.cpio.gz -append console=ttyS0 rdinit=/init panic=-1 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -nic none -no-user-config -nographic -no-reboot -qmp unix:/tmp/herness-kvm-h2q0vf6f/qmp.sock,server=on,wait=off
+qemu-system-x86_64 -M microvm -accel kvm -m 256 -smp 1 -kernel /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/boot/vmlinuz-lts -initrd /tmp/herness-kvm-ntfrvyu4/initramfs.cpio.gz -append console=ttyS0 rdinit=/init panic=-1 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -nic none -no-user-config -nographic -no-reboot -qmp unix:/tmp/herness-kvm-ntfrvyu4/qmp.sock,server=on,wait=off
 ```
 rc: 33 (ожидается 33)
-время: 4.903 с
+время: 4.951 с
 QMP query-kvm: {"return": {"enabled": true, "present": true}}
-kvm:kvm_entry: 46263
+kvm:kvm_entry: 63898
 маркер гостя: найден
 
 stdout (хвост):
 ```text
-[    2.097528] gre: GRE over IPv4 demultiplexor driver
-[    2.100954] NET: Registered PF_INET6 protocol family
-[    2.105369] Segment Routing with IPv6
-[    2.107377] In-situ OAM (IOAM) with IPv6
-[    2.109960] can: controller area network core
-[    2.112545] NET: Registered PF_CAN protocol family
-[    2.115548] Key type dns_resolver registered
-[    2.118966] IPI shorthand broadcast: enabled
-[    2.136371] sched_clock: Marking stable (1838530594, 297282064)->(2341174037, -205361379)
-[    2.141991] registered taskstats version 1
-[    2.144734] Loading compiled-in X.509 certificates
-[    2.148588] Loaded X.509 cert 'alpinelinux.org: Alpine Linux kernel key: d76a695f66ad9cd28f5c22a8508f36e91f521f7a'
-[    2.157424] Key type .fscrypt registered
-[    2.159805] Key type fscrypt-provisioning registered
-[    2.162674] clk: Disabling unused clocks
-[    2.167180] Freeing unused kernel image (initmem) memory: 3516K
-[    2.168710] Write protecting the kernel read-only data: 20480k
-[    2.170455] Freeing unused kernel image (rodata/data gap) memory: 1092K
-[    2.172176] Run /init as init process
+[    2.122220] gre: GRE over IPv4 demultiplexor driver
+[    2.124986] NET: Registered PF_INET6 protocol family
+[    2.128036] Segment Routing with IPv6
+[    2.129930] In-situ OAM (IOAM) with IPv6
+[    2.131858] can: controller area network core
+[    2.133824] NET: Registered PF_CAN protocol family
+[    2.136144] Key type dns_resolver registered
+[    2.138597] IPI shorthand broadcast: enabled
+[    2.150805] sched_clock: Marking stable (1825385350, 324726527)->(2351229501, -201117624)
+[    2.155325] registered taskstats version 1
+[    2.157680] Loading compiled-in X.509 certificates
+[    2.160771] Loaded X.509 cert 'alpinelinux.org: Alpine Linux kernel key: d76a695f66ad9cd28f5c22a8508f36e91f521f7a'
+[    2.167412] Key type .fscrypt registered
+[    2.169265] Key type fscrypt-provisioning registered
+[    2.172059] clk: Disabling unused clocks
+[    2.177097] Freeing unused kernel image (initmem) memory: 3516K
+[    2.178458] Write protecting the kernel read-only data: 20480k
+[    2.180180] Freeing unused kernel image (rodata/data gap) memory: 1092K
+[    2.181743] Run /init as init process
 KVM-PROBE-GUEST-OK
 ```
 
 ## Отрицательный контроль
 
 ```text
-setpriv --reuid=65534 --regid=65534 --clear-groups qemu-system-x86_64 -M microvm -accel kvm -m 256 -smp 1 -kernel /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/boot/vmlinuz-lts -initrd /tmp/herness-kvm-h2q0vf6f/initramfs.cpio.gz -append console=ttyS0 rdinit=/init panic=-1 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -nic none -no-user-config -nographic -no-reboot
+setpriv --reuid=65534 --regid=65534 --clear-groups qemu-system-x86_64 -M microvm -accel kvm -m 256 -smp 1 -kernel /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/boot/vmlinuz-lts -initrd /tmp/herness-kvm-ntfrvyu4/initramfs.cpio.gz -append console=ttyS0 rdinit=/init panic=-1 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -nic none -no-user-config -nographic -no-reboot
 ```
 rc: 1
 маркер гостя: не найден

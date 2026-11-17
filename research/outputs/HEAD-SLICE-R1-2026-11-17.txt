@@ -1,0 +1,467 @@
+# HEAD-SLICE-R1 — ограниченное чтение и admission
+
+Режим: host + QEMU/KVM
+Вердикт: PASS
+Пре-регистрация: `lab/prereg/HEAD-SLICE-R1.json`; решения: `docs/DECISIONS-R8-2026-11-17.md`.
+
+## Точные байты
+
+- card_digest: `sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97` (`/tmp/herness-head-slice-drx43r0j/artifacts/card.json`)
+- source_digest: `sha256:c53841b0b17bb992d57c7860a57ded969a8aeb19fe5eae6fac6be6b7f8df1d16` (`/tmp/herness-head-slice-drx43r0j/artifacts/head.rs`)
+- binary_digest: `sha256:7137a2caa120cbef7002f8591801dab7829f5a7fe47e3d089d94ddccf5b402e7` (`/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/target/release/head_slice_host`)
+- fixture_digest: `sha256:6e06e6b985535fab391b258833dfecb70d371b1dd108da85675cf62fbf34a617` (`/tmp/herness-head-slice-drx43r0j/room/fixtures/manifest.json`)
+- policy_digest: `sha256:2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802` (`/tmp/herness-head-slice-drx43r0j/artifacts/policy.json`)
+- room_digest: `sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6` (`/tmp/herness-head-slice-drx43r0j/artifacts/room.json`)
+- fixture: `sha256:b5157f948c0833f80ac96ad64916c93d747e07df253801dfcd5674e59ce76850` (471 B, 10 строк, синтетический model_visible)
+- test-only key fingerprint: `sha256:6862426bf890b270064756fe20e356927e6307a1363786cc0b317310ca3b4644` (seed не печатается)
+
+## Среда
+
+- host: Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.43
+- kernel: Linux DESKTOP-PE9BOJ5 6.6.114.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Mon Dec  1 20:46:23 UTC 2025 x86_64 GNU/Linux
+- qemu: QEMU emulator version 10.2.1 (Debian 1:10.2.1+ds-1ubuntu3.3)
+- rustc: rustc 1.100.0-nightly (8925ea358 2026-08-20)
+- cargo: cargo 1.100.0-nightly (514c56dd7 2026-08-19)
+- binary_static: True
+- build_static: True
+- guest_kvm_entry: 57923
+- guest_qmp: {"return": {"enabled": true, "present": true}}
+
+## Сборка
+
+```text
+cargo clean -p hs-core  # rc=0
+cargo build --release --bin head_slice_host  # rc=0
+cargo rustc --release --bin head_slice_host -- -C target-feature=+crt-static  # rc=0
+```
+
+## Хост
+
+Команда: `/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/target/release/head_slice_host --job /tmp/herness-head-slice-drx43r0j/job-host.json`
+rc: 0
+время: 0.497 с
+```json
+[
+ {
+  "bytes_read": 144,
+  "bytes_received": 471,
+  "code": "",
+  "id": "positive-1",
+  "lines": [
+   "line 01: synthetic model_visible fixture",
+   "line 02: no secret, no owner data, no network",
+   "line 03: the first slice may read at most max_bytes_read"
+  ],
+  "outcome": "ok",
+  "stop_reason": "line_cap",
+  "truncated": true
+ },
+ {
+  "bytes_read": 144,
+  "bytes_received": 471,
+  "code": "",
+  "id": "positive-2",
+  "lines": [
+   "line 01: synthetic model_visible fixture",
+   "line 02: no secret, no owner data, no network",
+   "line 03: the first slice may read at most max_bytes_read"
+  ],
+  "outcome": "ok",
+  "stop_reason": "line_cap",
+  "truncated": true
+ },
+ {
+  "bytes_read": 144,
+  "bytes_received": 471,
+  "code": "",
+  "id": "positive-3",
+  "lines": [
+   "line 01: synthetic model_visible fixture",
+   "line 02: no secret, no owner data, no network",
+   "line 03: the first slice may read at most max_bytes_read"
+  ],
+  "outcome": "ok",
+  "stop_reason": "line_cap",
+  "truncated": true
+ },
+ {
+  "code": "S6_CLOSURE_BREACH",
+  "error": "S6_CLOSURE_BREACH: root_ref host:/ не входит в комнату room:input",
+  "id": "outside-root",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S6_CLOSURE_BREACH",
+  "error": "S6_CLOSURE_BREACH: небезопасный сегмент \"..\"",
+  "id": "dotdot-traversal",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S6_CLOSURE_BREACH",
+  "error": "S6_CLOSURE_BREACH: openat2 отказал fixtures/escape: Too many levels of symbolic links (os error 40)",
+  "id": "symlink-outside",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S6_CLOSURE_BREACH",
+  "error": "S6_CLOSURE_BREACH: openat2 отказал fixtures/alias: Too many levels of symbolic links (os error 40)",
+  "id": "symlink-inside",
+  "outcome": "refusal"
+ },
+ {
+  "code": "K4_RESOURCE_LIMIT",
+  "error": "K4_RESOURCE_LIMIT: max_bytes_read=32 меньше первой строки",
+  "id": "cap-below-first-line",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S1_SCHEMA",
+  "error": "S1_SCHEMA: line_count=0 вне [1, 200]",
+  "id": "zero-line-count",
+  "outcome": "refusal"
+ },
+ {
+  "code": "K6_DATA_CLASS_UNKNOWN",
+  "error": "K6_DATA_CLASS_UNKNOWN: класс unknown не допущен для head",
+  "id": "unknown-data-class",
+  "outcome": "refusal"
+ },
+ {
+  "code": "K11_ADMISSION_REQUIRED",
+  "error": "K11_ADMISSION_REQUIRED: admission отсутствует",
+  "id": "admission-missing",
+  "outcome": "refusal"
+ },
+ {
+  "code": "K11_ADMISSION_REQUIRED",
+  "error": "K11_ADMISSION_REQUIRED: manifest: admission просрочен",
+  "id": "admission-expired",
+  "outcome": "refusal"
+ },
+ {
+  "code": "K11_ADMISSION_REQUIRED",
+  "error": "K11_ADMISSION_REQUIRED: подпись не соответствует манифесту и anchor",
+  "id": "admission-corrupt-signature",
+  "outcome": "refusal"
+ },
+ {
+  "code": "K11_ADMISSION_REQUIRED",
+  "error": "K11_ADMISSION_REQUIRED: /tmp/herness-head-slice-drx43r0j/artifacts/tampered-card.json не совпадает с допущенными байтами: ожидалось sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, получено sha256:78974b82c691f2c1aeb8d1e38321bfb157b92c17d00c04ef9cdecc86a5de7543",
+  "id": "tampered-card",
+  "outcome": "refusal"
+ },
+ {
+  "code": "K11_ADMISSION_REQUIRED",
+  "error": "K11_ADMISSION_REQUIRED: fixture manifest не совпадает с допущенными байтами",
+  "id": "tampered-fixture-manifest",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S10_NOT_FOUND",
+  "error": "S10_NOT_FOUND: нет объекта fixtures/absent.txt",
+  "id": "missing-file",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S11_NOT_REGULAR",
+  "error": "S11_NOT_REGULAR: fixtures/dir не regular file",
+  "id": "not-regular",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S12_ENCODING",
+  "error": "S12_ENCODING: выданная строка не UTF-8: invalid utf-8 sequence of 1 bytes from index 0",
+  "id": "invalid-utf8",
+  "outcome": "refusal"
+ },
+ {
+  "code": "S6_CLOSURE_BREACH",
+  "error": "S6_CLOSURE_BREACH: openat2 отказал fixtures/escape: Too many levels of symbolic links (os error 40)",
+  "id": "outside-canary",
+  "outcome": "refusal"
+ },
+ {
+  "bytes_read": 41,
+  "bytes_received": 64,
+  "code": "",
+  "id": "byte-cap",
+  "lines": [
+   "line 01: synthetic model_visible fixture"
+  ],
+  "outcome": "ok",
+  "stop_reason": "byte_cap",
+  "truncated": true
+ },
+ {
+  "bytes_read": 8188,
+  "bytes_received": 9200,
+  "code": "",
+  "id": "output-cap",
+  "lines": [
+   "line 000 012345678901234567890123456789012345",
+   "line 001 012345678901234567890123456789012345",
+   "line 002 012345678901234567890123456789012345",
+   "line 003 012345678901234567890123456789012345",
+   "line 004 012345678901234567890123456789012345",
+   "line 005 012345678901234567890123456789012345",
+   "line 006 012345678901234567890123456789012345",
+   "line 007 012345678901234567890123456789012345",
+   "line 008 012345678901234567890123456789012345",
+   "line 009 012345678901234567890123456789012345",
+   "line 010 012345678901234567890123456789012345",
+   "line 011 012345678901234567890123456789012345",
+   "line 012 012345678901234567890123456789012345",
+   "line 013 012345678901234567890123456789012345",
+   "line 014 012345678901234567890123456789012345",
+   "line 015 012345678901234567890123456789012345",
+   "line 016 012345678901234567890123456789012345",
+   "line 017 012345678901234567890123456789012345",
+   "line 018 012345678901234567890123456789012345",
+   "line 019 012345678901234567890123456789012345",
+   "line 020 012345678901234567890123456789012345",
+   "line 021 012345678901234567890123456789012345",
+   "line 022 012345678901234567890123456789012345",
+   "line 023 012345678901234567890123456789012345",
+   "line 024 012345678901234567890123456789012345",
+   "line 025 012345678901234567890123456789012345",
+   "line 026 012345678901234567890123456789012345",
+   "line 027 012345678901234567890123456789012345",
+   "line 028 012345678901234567890123456789012345",
+   "line 029 012345678901234567890123456789012345",
+   "line 030 012345678901234567890123456789012345",
+   "line 031 012345678901234567890123456789012345",
+   "line 032 012345678901234567890123456789012345",
+   "line 033 012345678901234567890123456789012345",
+   "line 034 012345678901234567890123456789012345",
+   "line 035 012345678901234567890123456789012345",
+   "line 036 012345678901234567890123456789012345",
+   "line 037 012345678901234567890123456789012345",
+   "line 038 012345678901234567890123456789012345",
+   "line 039 012345678901234567890123456789012345",
+   "line 040 012345678901234567890123456789012345",
+   "line 041 012345678901234567890123456789012345",
+   "line 042 012345678901234567890123456789012345",
+   "line 043 012345678901234567890123456789012345",
+   "line 044 012345678901234567890123456789012345",
+   "line 045 012345678901234567890123456789012345",
+   "line 046 012345678901234567890123456789012345",
+   "line 047 012345678901234567890123456789012345",
+   "line 048 012345678901234567890123456789012345",
+   "line 049 012345678901234567890123456789012345",
+   "line 050 012345678901234567890123456789012345",
+   "line 051 012345678901234567890123456789012345",
+   "line 052 012345678901234567890123456789012345",
+   "line 053 012345678901234567890123456789012345",
+   "line 054 012345678901234567890123456789012345",
+   "line 055 012345678901234567890123456789012345",
+   "line 056 012345678901234567890123456789012345",
+   "line 057 012345678901234567890123456789012345",
+   "line 058 012345678901234567890123456789012345",
+   "line 059 012345678901234567890123456789012345",
+   "line 060 012345678901234567890123456789012345",
+   "line 061 012345678901234567890123456789012345",
+   "line 062 012345678901234567890123456789012345",
+   "line 063 012345678901234567890123456789012345",
+   "line 064 012345678901234567890123456789012345",
+   "line 065 012345678901234567890123456789012345",
+   "line 066 012345678901234567890123456789012345",
+   "line 067 012345678901234567890123456789012345",
+   "line 068 012345678901234567890123456789012345",
+   "line 069 012345678901234567890123456789012345",
+   "line 070 012345678901234567890123456789012345",
+   "line 071 012345678901234567890123456789012345",
+   "line 072 012345678901234567890123456789012345",
+   "line 073 012345678901234567890123456789012345",
+   "line 074 012345678901234567890123456789012345",
+   "line 075 012345678901234567890123456789012345",
+   "line 076 012345678901234567890123456789012345",
+   "line 077 012345678901234567890123456789012345",
+   "line 078 012345678901234567890123456789012345",
+   "line 079 012345678901234567890123456789012345",
+   "line 080 012345678901234567890123456789012345",
+   "line 081 012345678901234567890123456789012345",
+   "line 082 012345678901234567890123456789012345",
+   "line 083 012345678901234567890123456789012345",
+   "line 084 012345678901234567890123456789012345",
+   "line 085 012345678901234567890123456789012345",
+   "line 086 012345678901234567890123456789012345",
+   "line 087 012345678901234567890123456789012345",
+   "line 088 012345678901234567890123456789012345",
+   "line 089 012345678901234567890123456789012345",
+   "line 090 012345678901234567890123456789012345",
+   "line 091 012345678901234567890123456789012345",
+   "line 092 012345678901234567890123456789012345",
+   "line 093 012345678901234567890123456789012345",
+   "line 094 012345678901234567890123456789012345",
+   "line 095 012345678901234567890123456789012345",
+   "line 096 012345678901234567890123456789012345",
+   "line 097 012345678901234567890123456789012345",
+   "line 098 012345678901234567890123456789012345",
+   "line 099 012345678901234567890123456789012345",
+   "line 100 012345678901234567890123456789012345",
+   "line 101 012345678901234567890123456789012345",
+   "line 102 012345678901234567890123456789012345",
+   "line 103 012345678901234567890123456789012345",
+   "line 104 012345678901234567890123456789012345",
+   "line 105 012345678901234567890123456789012345",
+   "line 106 012345678901234567890123456789012345",
+   "line 107 012345678901234567890123456789012345",
+   "line 108 012345678901234567890123456789012345",
+   "line 109 012345678901234567890123456789012345",
+   "line 110 012345678901234567890123456789012345",
+   "line 111 012345678901234567890123456789012345",
+   "line 112 012345678901234567890123456789012345",
+   "line 113 012345678901234567890123456789012345",
+   "line 114 012345678901234567890123456789012345",
+   "line 115 012345678901234567890123456789012345",
+   "line 116 012345678901234567890123456789012345",
+   "line 117 012345678901234567890123456789012345",
+   "line 118 012345678901234567890123456789012345",
+   "line 119 012345678901234567890123456789012345",
+   "line 120 012345678901234567890123456789012345",
+   "line 121 012345678901234567890123456789012345",
+   "line 122 012345678901234567890123456789012345",
+   "line 123 012345678901234567890123456789012345",
+   "line 124 012345678901234567890123456789012345",
+   "line 125 012345678901234567890123456789012345",
+   "line 126 012345678901234567890123456789012345",
+   "line 127 012345678901234567890123456789012345",
+   "line 128 012345678901234567890123456789012345",
+   "line 129 012345678901234567890123456789012345",
+   "line 130 012345678901234567890123456789012345",
+   "line 131 012345678901234567890123456789012345",
+   "line 132 012345678901234567890123456789012345",
+   "line 133 012345678901234567890123456789012345",
+   "line 134 012345678901234567890123456789012345",
+   "line 135 012345678901234567890123456789012345",
+   "line 136 012345678901234567890123456789012345",
+   "line 137 012345678901234567890123456789012345",
+   "line 138 012345678901234567890123456789012345",
+   "line 139 012345678901234567890123456789012345",
+   "line 140 012345678901234567890123456789012345",
+   "line 141 012345678901234567890123456789012345",
+   "line 142 012345678901234567890123456789012345",
+   "line 143 012345678901234567890123456789012345",
+   "line 144 012345678901234567890123456789012345",
+   "line 145 012345678901234567890123456789012345",
+   "line 146 012345678901234567890123456789012345",
+   "line 147 012345678901234567890123456789012345",
+   "line 148 012345678901234567890123456789012345",
+   "line 149 012345678901234567890123456789012345",
+   "line 150 012345678901234567890123456789012345",
+   "line 151 012345678901234567890123456789012345",
+   "line 152 012345678901234567890123456789012345",
+   "line 153 012345678901234567890123456789012345",
+   "line 154 012345678901234567890123456789012345",
+   "line 155 012345678901234567890123456789012345",
+   "line 156 012345678901234567890123456789012345",
+   "line 157 012345678901234567890123456789012345",
+   "line 158 012345678901234567890123456789012345",
+   "line 159 012345678901234567890123456789012345",
+   "line 160 012345678901234567890123456789012345",
+   "line 161 012345678901234567890123456789012345",
+   "line 162 012345678901234567890123456789012345",
+   "line 163 012345678901234567890123456789012345",
+   "line 164 012345678901234567890123456789012345",
+   "line 165 012345678901234567890123456789012345",
+   "line 166 012345678901234567890123456789012345",
+   "line 167 012345678901234567890123456789012345",
+   "line 168 012345678901234567890123456789012345",
+   "line 169 012345678901234567890123456789012345",
+   "line 170 012345678901234567890123456789012345",
+   "line 171 012345678901234567890123456789012345",
+   "line 172 012345678901234567890123456789012345",
+   "line 173 012345678901234567890123456789012345",
+   "line 174 012345678901234567890123456789012345",
+   "line 175 012345678901234567890123456789012345",
+   "line 176 012345678901234567890123456789012345",
+   "line 177 012345678901234567890123456789012345"
+  ],
+  "outcome": "ok",
+  "stop_reason": "output_cap",
+  "truncated": true
+ },
+ {
+  "bytes_read": 6,
+  "bytes_received": 6,
+  "code": "",
+  "id": "cr-preserved-eof",
+  "lines": [
+   "a\r",
+   "b\r"
+  ],
+  "outcome": "ok",
+  "stop_reason": "eof",
+  "truncated": false
+ },
+ {
+  "cases": 22,
+  "duplicates": [],
+  "id": "__summary__",
+  "outcome": "ok",
+  "unique_ids": 22
+ }
+]
+```
+
+## QEMU/KVM
+
+```text
+qemu-system-x86_64 -M microvm -accel kvm -m 256 -smp 1 -kernel /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/boot/vmlinuz-lts -initrd /tmp/herness-head-slice-drx43r0j/head-slice-initramfs.cpio.gz -append console=ttyS0 rdinit=/init panic=-1 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -nic none -no-user-config -nographic -no-reboot -qmp unix:/tmp/herness-head-slice-drx43r0j/qmp-head.sock,server=on,wait=off
+```
+rc: 0 (0 = poweroff, 33 = isa-debug-exit; оба — не TCG)
+время: 3.568 с
+QMP query-kvm: {"return": {"enabled": true, "present": true}}
+kvm:kvm_entry: 57923
+KVM_RUN отдельно подтверждён `research/kvm/KVM-RUN-2026-11-17.txt`; счётчики
+разных прогонов не обязаны совпадать.
+guest stdout digest: `sha256:09ef898548d90b7f44e09ea73656183c14ed93239091bec0cd3adcd11a2335c0`
+запрещённые устройства в команде: []
+
+Гость печатал те же JSON-строки; хост проверил их тем же `verify_records`.
+Сеть/диск/host mounts отсутствуют в команде; это проверка конфигурации, не
+доказательство безопасности комнаты.
+
+### Результаты гостя
+
+- positive-1: ok lines=3 bytes_read=144 bytes_received=471 truncated=true stop_reason=line_cap
+- positive-2: ok lines=3 bytes_read=144 bytes_received=471 truncated=true stop_reason=line_cap
+- positive-3: ok lines=3 bytes_read=144 bytes_received=471 truncated=true stop_reason=line_cap
+- outside-root: refusal `S6_CLOSURE_BREACH`
+- dotdot-traversal: refusal `S6_CLOSURE_BREACH`
+- symlink-outside: refusal `S6_CLOSURE_BREACH`
+- symlink-inside: refusal `S6_CLOSURE_BREACH`
+- cap-below-first-line: refusal `K4_RESOURCE_LIMIT`
+- zero-line-count: refusal `S1_SCHEMA`
+- unknown-data-class: refusal `K6_DATA_CLASS_UNKNOWN`
+- admission-missing: refusal `K11_ADMISSION_REQUIRED`
+- admission-expired: refusal `K11_ADMISSION_REQUIRED`
+- admission-corrupt-signature: refusal `K11_ADMISSION_REQUIRED`
+- tampered-card: refusal `K11_ADMISSION_REQUIRED`
+- tampered-fixture-manifest: refusal `K11_ADMISSION_REQUIRED`
+- missing-file: refusal `S10_NOT_FOUND`
+- not-regular: refusal `S11_NOT_REGULAR`
+- invalid-utf8: refusal `S12_ENCODING`
+- outside-canary: refusal `S6_CLOSURE_BREACH`
+- byte-cap: ok lines=1 bytes_read=41 bytes_received=64 truncated=true stop_reason=byte_cap
+- output-cap: ok lines=178 bytes_read=8188 bytes_received=9200 truncated=true stop_reason=output_cap
+- cr-preserved-eof: ok lines=2 bytes_read=6 bytes_received=6 truncated=false stop_reason=eof
+
+## Проверки
+
+- 8 критических контролей: точные коды S6/S1/K4/K6/K11.
+- Нормальный fixture: 3 строки, bytes_read=144, truncated=true, stop_reason=line_cap.
+- Три повтора normal совпадают по lines/bytes_read/truncated/stop_reason.
+- bytes_read <= max_bytes_read и <= output_bytes=8192 во всех ok-прогонах.
+- canary вне корня не попала в вывод.
+- tampered card / fixture manifest / signature → K11.
+- byte cap, output cap, CR и EOF проверены отдельными кейсами.
+- S10/S11/S12 — отдельные объектные/кодировочные отказы.
+
+## Что это НЕ доказывает
+
+- Owner-подписи нет: admission test-only, `head` не активирован.
+- Полная семантика карточки/promoter и Windows-launch не проверялись этим срезом.
+- Гость не является доказанной границей безопасности: измерены коды и отсутствие
+  запрещённых устройств в команде, а не изоляция ядра/железа.
+- `K9_proven` не выдан.

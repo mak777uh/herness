@@ -18,7 +18,7 @@
  "runs": [
   "runs/accept/"
  ],
- "closed": false,
+ "closed": true,
  "owner_decision": "docs/DECISIONS-R5-2026-11-16.md",
  "kill_criteria": [
   "любой критический негативный контроль принят",
@@ -146,5 +146,9 @@
    "truncated": true
   }
  },
- "repeats": 3
+ "repeats": 3,
+ "conclusion": "PASS: все 8 критических контролей отвергнуты точными кодами; normal 3/144/truncated; 3 повтора детерминированы; host+QEMU/KVM evidence связан digest'ами; test-only admission не активирует head",
+ "evidence": "research/outputs/HEAD-SLICE-R1-2026-11-17.txt",
+ "closed_date": "2026-11-17",
+ "note": "Закрыто 2026-11-17 после PASS host+QEMU/KVM. Порог (criterion, 8 критических контролей, положительный контроль, repeats=3) запечатан ДО прогона (исходная печать be5893b67450…); во время прогона не менялся; после закрытия prereg перепечатан, актуальный хеш — в sidecar .sha256. Evidence: research/outputs/HEAD-SLICE-R1-2026-11-17.txt. Граница: test-only admission не активирует head; K9_proven не выдан."
 }
