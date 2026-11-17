@@ -36,14 +36,16 @@ registry, схема, словарь отказов, код и пре-регис
 Отдельно: R6 подтвердил не только замысел, но и **дефекты текущего кода**, которые нельзя
 оставлять «на потом»:
 
-- `head` не имеет разрешающего правила в `policy.json`; `card_atoms --check` даёт `rc=3`;
+- `head` не имеет разрешающего правила в `policy.json`; `python bin/card_atoms.py --check lab/tools/cards/head.json` даёт `rc=3` (без пути, `--check head`, скрипт отвечает `rc=2` «нет файла» — проверять нужно точный путь);
 - в `registry.jsonl` все шесть старых инструментов хранят `"status": "active"`, включая
   `search`, который решением Q8 отвергнут;
 - в коде нет проверки admission: `K11_ADMISSION_REQUIRED` есть только как строка словаря;
 - `read` делает `resolve_in` → `metadata` → `read_to_string`, то есть проверяет путь отдельно
   от открытия и читает файл целиком;
-- `write_beneath` ставит только `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS`, без
-  `NO_MAGICLINKS`/`NO_XDEV`;
+- `write_beneath` ставит только `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS`. `NO_MAGICLINKS`
+  при этом **подразумевается** самим `NO_SYMLINKS` (openat2(2): `RESOLVE_NO_SYMLINKS`
+  implies `RESOLVE_NO_MAGICLINKS`), поэтому это не отдельный дефект; реальный пробел —
+  отсутствие `NO_XDEV` (проход через точку монтирования);
 - `seal` и `netprobe` запускают себя через `Command::new`, хотя карточка обещает
   `process_spawn: false`, а схема — `max_processes: const 1`;
 - `resolve_in` всегда проверяет политику как `("read","read")`, независимо от вызывающего
@@ -73,7 +75,9 @@ registry, схема, словарь отказов, код и пре-регис
    величины; `BufReader::take`/`read_to_string` не годятся; `truncated` обязан быть явным.
    Детали различаются (§4.2), но принцип общий.
 6. **Чтение — от закреплённого root FD через `openat2`.** Флаги:
-   `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_MAGICLINKS | RESOLVE_NO_XDEV`;
+   `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_MAGICLINKS | RESOLVE_NO_XDEV`
+   (`NO_MAGICLINKS` уже влечётся `NO_SYMLINKS`, но пишется явно, чтобы не зависеть от
+   смены семантики на будущих ядрах);
    `fstat`/`S_ISREG`; fail-closed при отсутствии `openat2`; не-Linux fallback слабее и не
    засчитывается как свидетельство K1.
 7. **Комната — `microvm`, без NIC, host mounts, 9p/virtiofs, credentials и лишних устройств.**
@@ -105,7 +109,7 @@ registry, схема, словарь отказов, код и пре-регис
 |---|---|---|
 | `read` проверяет путь, затем отдельно открывает его и читает целиком | [`core-rs/src/loopmod.rs`](../core-rs/src/loopmod.rs), `resolve_in` ~587, `tool_read_in` ~821: `metadata` → `read_to_string` | **подтверждено**: TOCTOU-окно и чтение всего файла до обрезки вывода |
 | `search` читает каждый файл целиком | `tool_search_in` ~625: `read_to_string` после `metadata` | **подтверждено** для файлов до `MAX_FILE` |
-| `write_beneath` не ставит `NO_MAGICLINKS`/`NO_XDEV` | `loopmod.rs` ~936: `resolve = RESOLVE_BENEATH \| RESOLVE_NO_SYMLINKS` | **подтверждено** |
+| `write_beneath` не ставит `NO_XDEV`; `NO_MAGICLINKS` влечётся `NO_SYMLINKS` | `loopmod.rs` ~904: `resolve = RESOLVE_BENEATH \| RESOLVE_NO_SYMLINKS`; man openat2(2): `RESOLVE_NO_SYMLINKS` implies `RESOLVE_NO_MAGICLINKS` | **подтверждено с уточнением**: отдельный дефект — только `NO_XDEV`; `NO_MAGICLINKS` не нужен явно (при явной записи флагов это страховка от смены семантики) |
 | `resource_of` для пути вне корня подставляет `/mnt` заново | `resource_of` ~547: `strip_prefix` не срабатывает → `format!("file:/mnt/{}", path)` | **подтверждено как поведение функции**; `resolve_in` до неё проверяет `starts_with(root)`, поэтому это не доказанный обход чтения, а дефект публичной функции/политики |
 | `resolve_in` всегда проверяет `("read","read")` | `resolve_in` ~607 | **подтверждено**; вызывают `list`, `search`, `seal`, `read`. Для `seal` затем есть отдельная проверка `seal`, для `list` — `list`, для `search` — `search`; но первая проверка всё равно идёт от имени `read` |
 | у `head` нет разрешающего правила | `lab/tools/policy.json`: 19 правил, `head` отсутствует; `python bin/card_atoms.py --check lab/tools/cards/head.json` → `rc=3`, `[uncovered] a1 /mnt/**` | **подтверждено** |

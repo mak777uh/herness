@@ -1,0 +1,468 @@
+Принято. Прежде чем давать разбор, попробую открыть прибитые к снимку `3d988f8` файлы — бриф требует проверять код, а не достраивать.
+Репозиторий открылся — снимок доступен. Продолжаю проверку: скачаю файлы целиком, чтобы получить точные номера строк, хеши и содержимое fixture (без этого таблица S02 была бы выдумкой).
+Since the sandbox doesn't have network access, I'll verify snapshots via the extractor and compute locally. I'll continue fetching the main files.
+# R7 — независимый инженерный разбор
+
+**Кто отвечает:** внешний ревьюер, совмещаю ракурсы: формальные методы / Linux-изоляция и syscall-уровень / криптография допуска. Это рекомендации, не approval; решения Q11–Q18 принимает владелец. Код, policy, registry, схема, словарь, пре-регистрация — не менялись.
+
+## 0. Что я реально проверил (и чего не проверил)
+
+Я открыл снимок `3d988f8` через `raw.githubusercontent.com` и проверил тела функций, а не пересказы. Метод и границы:
+
+| Проверено | Как | Результат |
+|---|---|---|
+| `head-slice.txt` байт-в-байт | SHA-256 пересчитан локально | `b5157f94…76850`, **471 B, 10 строк, LF, trailing LF** — совпал с manifest/prereg |
+| `card_atoms --check head` | исполнил верный порт извлечённого скрипта с `policy.json` и `cards/head.json` | **rc=3**, `uncovered: a1 /mnt/**` — подтверждено |
+| `resource_of`/`policy_allows`/`resource_matches` | порт на Python, прогон | `/etc/passwd → file:/mnt/etc/passwd → True`; `file:/mnt/../etc/passwd → True`; `file:/etc/passwd → False` — подтверждено |
+| `tool_write_in`, `write_beneath`, `resolve_in`, `tool_read_in`, `tool_search_in`, `tool_seal/netprobe`, `run_tool_g`, non-Linux fallback | тела прочитаны | см. AUDIT; **`tool_write_in` НЕ вызывает `resolve_in`** |
+| `policy.json` (19 правил), Rust `POLICY` (14), `registry.jsonl` (6×`active`, v3, включая `search`), schema, draft, `refusal_codes.py` (23 кода), prereg, конституция, Q1–Q10, замеры QEMU/seccomp/pre_exec, `.gitattributes` | прочитаны | подтверждены; найдены расхождения (AUDIT) |
+| Семантика `file_read_stream` | написал и исполнил эталон на реальном fixture + синтетике | таблица ниже — **числа из прогона**, инварианты проверены (40 комбинаций, 3 повтора, chunk 1/7/4096) |
+| Schema vs draft + 9 мутантов | минимальный валидатор подмножества Draft 2020-12 (покрыты все ключевые слова этой схемы; не библиотека `jsonschema`) | draft проходит схему; 9 мутантов проходят схему, но требуют семантики |
+
+**Не проверено (честно):** точные номера строк (цитирую имена функций; `~587/~821/~936` брифа согласуются с телами, но нумерацию независимо не подтверждал); прогоны на машине владельца; «31 проверка / 30 из 32 гейтов» (тест-файлы не выгружал); JCS-векторы F (входы неизвестны); `tree.json`/второй клон; тексты D и E в разделах F01–S02 извлеклись идентично — атрибуция общего блока требует побайтовой сверки владельцем. Сырые ответы A–F — вход, не консенсус.
+
+---
+
+## R7-F01 [P0] Где живёт единственная семантика карточки (Q11)
+
+**ANSWER.** Канонический валидатор — **одна Rust-библиотека** (`herness-card-validator` в `core-rs`). Исполняется: в **promoter** (авторитетный гейт), в **CI** (тот же бинарь), в **runtime** — только перепроверка привязки digest'ов, не полная ревалидация. Python (`card_atoms.py`, `tool_card.py`) остаётся **ненормативным линтом/генератором векторов** и никогда не выдаёт «зелёный» для допуска.
+
+**CHOSEN.** Rust-эталон + общий корпус conformance-векторов; расхождение = красный тест `S5_IMPL_DIVERGES`, fail-closed. Отвергнуто: Python-канон с receipt (F) — это второй путь разрешения: promoter доверял бы receipt, который мог быть порождён другой семантикой; две независимые реализации «по договорённости» (гарантированно разъедутся на нормализации путей).
+
+**WHY.** Семантика должна жить там, где живёт runtime-привязка к байтам (Rust, openat2, digest). Цена: поддержка одного крейта + корпуса. Риск ложного зелёного при двух языках выше, чем цена единого.
+
+**Что обязательно сверх JSON Schema** (проверено: всё это проходит схему):
+
+| # | правило | что отвергает | полож. тест | отриц. тест |
+|---|---|---|---|---|
+| 1 | строгий парсинг: дубли ключей, unknown fields, integer-only | `{"kind":"a","kind":"b"}` | валидный draft | дубль ключа |
+| 2 | `kind↔template↔effects` биекция | `file_read` + `fs_write` | draft | **мутант прошёл схему (0 ошибок)** |
+| 3 | `process_spawn=false`, `max_processes=1` | spawn | draft | ловится **схемой** (const) |
+| 4 | scope непуст, нормализован, без `* ? [ .. // NUL \` | пустой `fs_read`, wildcard | draft | `segments:["**"]` — **прошёл схему** |
+| 5 | `file_read/digest`⊆fs.read; `directory_read`⊆fs.list; `file_write`⊆fs.write; `bridge_request`⊆bridges | эффект вне kind | draft | `file_write` с пустым write — прошёл схему |
+| 6 | `secret_ops=[]`, `secret_refs=[]`, `data_classes⊆{public,model_visible}` | unknown/secret | draft | `["model_visible","unknown"]` |
+| 7 | `input.max ≤ limits.max_bytes_read`; лимиты >0 ≤ потолка комнаты | рассинхрон слот/лимит | draft | input.max=100000>65536 — прошёл схему |
+| 8 | `template.slots` = имена inputs 1:1 | лишние/недостающие слоты | draft | slots без line_count — прошёл схему |
+| 9 | examples: ≥1 ok + ≥1 refusal; args типизированы по inputs; refusal∈словарь v2 ∩ card.refusals | чужой код, нетипизированный пример | draft | `E_NOT_FOUND`, args.line_count=999 — прошли схему |
+| 10 | `provenance` digest'ы ненулевые и = живым артефактам | нулевой digest | — | **сам draft сейчас проходит схему с нулями** |
+| 11 | `bridge_request` в v0: схема валидна, допуск невозможен | попытка admission | — | → `K11_ADMISSION_REQUIRED` |
+| 12 | отсутствие валидатора = FAIL, не skip | рапорт без прогона | — | пустой отчёт |
+
+**Привязка к template/binary.** Валидатор проверяет `card.template.{id,version}` против **машинно-читаемой спецификации шаблона** (slot-схема + digest исходника), зарегистрированной в реестре шаблонов; examples типизируются по этой спецификации. Привязка к **бинарю** — не дело валидатора: её делает admission-манифест (`binary_digest`, A01) и runtime-сверка. Валидатор доказывает непротиворечивость декларации, **не поведение кода**.
+
+**Что убрать из v0:** ничего нормативного. Предикаты `no_side_effects`, `output_truncated_if_more` сейчас никем не проверяются — либо подключить к observation (R02), либо явно пометить `not_checked` (F04), не оставлять как «зелёное по умолчанию».
+
+**Формат векторов:** `lab/conformance/*.json`: `{vector_id, card, expect:{verdict:"ok"|"refusal", codes:[…]}, rule_id}`. Политика расхождений: любой mismatch Python-линт vs Rust-канон на корпусе → CI красный, promotion заблокирован.
+
+**TESTS.** Матрица выше (исполнена на схеме). «Прибор слеп»: удалить вызов валидатора из CI-скрипта → гейт обязан упасть, а не «0 нарушений».
+**FAILURE MODE.** Две нормализации пути; правило 9 проверяет согласованность примера, а не поведение; нулевые provenancedigest'ы проходят схему.
+**NOT PROVEN.** Что карточка описывает реальный код; корректность шаблона; полнота корпуса.
+**CONFIDENCE.** high по правилам (проверено на схеме), medium по списку полей.
+
+---
+
+## R7-S02 [P0] Одна точная таблица `file_read_stream` (Q12)
+
+**ANSWER.** Байты первичны. `max_bytes_read` — жёсткий потолок **полученных из FD** байт; `line_count` — цель. Остановка по первому наступившему; причина — в `stop_reason`. `truncated = ¬proven_complete` (fail-closed).
+
+**CHOSEN (правила).**
+- `CHUNK = 4096` — **константа шаблона**, часть digest семантики. Сырой `read(fd, min(CHUNK, cap−bytes_read))`, без `BufReader::take`.
+- `bytes_read` = **все** байты, полученные из FD, включая разделители, неэмитированный хвост чанка и зонд. Никогда > cap. Номера строк/JSON-обёртка не входят.
+- Строка = байты до `LF` включительно. `CRLF`: один trailing `CR` снимается с **выданного текста**; `CR` — контент, не разделитель. Последняя строка без `LF` **при EOF** — полная, выдаётся. Частичная строка на cap — **не выдаётся**.
+- Зонд EOF — **только в пределах бюджета**. Бюджет исчерпан → зонда нет, EOF не подтверждён → `truncated=true` консервативно.
+- `stop_reason`: `eof` (read вернул 0) > `byte_cap` (bytes_read==cap, EOF не подтверждён) > `line_count`. Приоритет при одновременном срабатывании: `byte_cap` раньше `line_count`.
+- **cap < первой строки → отказ `K4_RESOURCE_LIMIT`**, ноль выданных байт, измерение сохраняется (это критический негативный контроль пре-регистрации «max_bytes_read меньше строки»). Некоторые строки влезли → ok+truncated (согласуется с draft-примером byte-cap=64 ≥ 41).
+- Невалидный UTF-8 в **выданной** строке или при EOF во всём полученном → отказ целиком. Обрезка multibyte на cap — не ошибка кодировки, а truncation. Невалидные байты в **неэмитированном хвосте** не инспектируются (NOT PROVEN).
+- `output_bytes` — отдельный лимит сериализованного кадра; кадр > output_bytes → `K4_RESOURCE_LIMIT` (detail `output_bytes`), без частичного JSON.
+
+**Псевдокод (исполнен как эталон):**
+```
+br=0; buf=[]; lines=[]
+loop:
+  if len(lines)==N:
+     if buf: stop=line_count; trunc=true
+     elif br<cap: b=read(min(CHUNK,cap-br)); br+=len(b)
+                  stop = eof,trunc=false if b=="" else line_count,trunc=true
+     else: stop=byte_cap; trunc=true        # зонда сверх бюджета НЕТ
+     break
+  if br==cap: stop=byte_cap; trunc=true; break
+  b=read(min(CHUNK,cap-br)); br+=len(b)
+  if b=="": if buf: lines+=buf; stop=eof; trunc=false; break
+  buf+=b; while "\n" in buf and len(lines)<N: emit complete LF-line
+if stop==byte_cap and len(lines)==0: return K4_RESOURCE_LIMIT(br)
+validate UTF-8 (emitted lines; whole prefix if eof) else refusal
+```
+
+**Таблица (числа из прогона на fixture 471 B / 10 строк, sha256 сверен; длины строк 41,46,57,53,46,60,58,40,46,24):**
+
+| вход | N / cap | lines | bytes_read | truncated | stop_reason | отказ |
+|---|---|---|---|---|---|---|
+| обычный fixture (prereg) | 3 / 4096 | 3 | **471** | true | line_count | — |
+| byte-cap (draft) | 200 / 64 | 1 | **64** | true | byte_cap | — |
+| cap ровно граница строки 1 | 200 / 41 | 1 | 41 | true | byte_cap | — |
+| cap граница строк 1–2 | 200 / 87 | 2 | 87 | true | byte_cap | — |
+| **cap < первой строки** | 200 / 40 | 0 | 40 | true | byte_cap | **K4_RESOURCE_LIMIT** |
+| cap == размер файла | 200 / 471 | 10 | 471 | **true** (ложная тревога, EOF не подтверждён) | byte_cap | — |
+| N == все 10, cap>file | 10 / 4096 | 10 | 471 | false | eof | — |
+| N=200 > строк в файле | 200 / 4096 | 10 | 471 | false | eof | — |
+| cap ровно 3 строки, N=3 | 3 / 144 | 3 | 144 | true | byte_cap | — |
+| cap 3 строки+1, N=3 | 3 / 145 | 3 | 145 | true | line_count | — |
+| пустой файл | 3 / 4096 | 0 | 0 | false | eof | — |
+| ровно N строк, EOF после LF (`a\nb\n`) | 2 / 100 | 2 | 4 | false | eof | — |
+| без завершающего LF (`a\nb`) | 5 / 100 | 2 | 3 | false | eof | — |
+| без LF, N=1 (`a\nb`) | 1 / 100 | 1 | 3 | true | line_count | — |
+| CRLF (`a\r\nb\r\n`) | 1 / 100 | 1 (`a`) | 6 | true | line_count | — |
+| одиночный CR (`a\rb\n`) | 5 / 100 | 1 (`a\rb`) | 4 | false | eof | — |
+| невалидный UTF-8 (`\xff\nok\n`) | 2 / 4096 | 0 | 5 | — | eof | **S1_SCHEMA** (интерим, detail `content_encoding`) |
+| cap внутри multibyte, нет LF (`ééé`) | 5 / 5 | 0 | 5 | true | byte_cap | **K4_RESOURCE_LIMIT** |
+| cap ровно на multibyte-строке (`ééé\n`) | 5 / 7 | 1 | 7 | true | byte_cap | — |
+| длинная строка 1 МиБ | 1 / 64 | 0 | 64 | true | byte_cap | **K4_RESOURCE_LIMIT** |
+| файла нет | — | — | 0 | — | — | **S2_ARTIFACT_MISSING** (openat2 ENOENT) |
+| каталог/FIFO/устройство, нет метки | — | — | 0 | — | — | **K6_DATA_CLASS_UNKNOWN** (класс до open) |
+| то же, но помечено в manifest | — | — | 0 | — | — | **S1_SCHEMA** (detail `is_regular_file`; open `O_NONBLOCK`, fstat до read) |
+| файл вырос/уменьшился | — | — | — | — | — | вне v0: `immutable:true`, комната RO + host-сверка digest; контракт — только observed-байты |
+
+**Инварианты (проверены прогоном):** `bytes_read ≤ cap` во всех 40 комбинациях; 3 повтора байт-в-байт; `lines/truncated/stop_reason` инвариантны к chunk∈{1,7,4096}; `bytes_read` контрактно зависит от chunk (для N=3,cap=4096: 145/147/471) — поэтому CHUNK фиксирован в digest семантики, смена chunk → `needs_revalidation`.
+
+**Отвергнуто:** зонд 1 байт **сверх** бюджета (E по брифу; C — `probe_one_byte` с отдельным счётчиком в извлечённом тексте) — нарушает «нельзя читать лишний байт сверх бюджета» и «bytes_read — только реально полученные из FD»; выдача частичной строки как полной; строка A «`ééé` cap5 → lines=1 `éé`» противоречит её же правилу о частичной строке и пре-регистрации.
+
+**TESTS.** Положительный: обычное чтение даёт ровно 3 строки (доказывает функциональность; не доказывает поведение вне корпуса). Отрицательный: cap=40 → K4, cap=64 → bytes_read=64 (доказывает потолок; не доказывает отсутствие read-ahead вне бюджета — это доказывает счётчик обёртки/трасса). Граница ровно-в-лимит, длинная строка, CRLF, без LF, невалидный UTF-8 — каждый доказывает конкретное правило таблицы и **не** доказывает полноту наблюдения/поведение при мутации файла. «Прибор слеп»: эталон с намеренно заниженным счётчиком обязан провалить инвариант `bytes_read ≤ cap` на трассе.
+**FAILURE MODE.** Read-ahead увеличивает bytes_read (учтён); частичная строка выглядит полной (запрещена); `truncated=false` при обрезке (исключено определением); EOF-зонд сверх лимита (запрещён); счётчик не включает хвост чанка (включает по построению).
+**NOT PROVEN.** Поведение на меняющихся файлах; кодировка непрочитанного хвоста; что `truncated=true` на cap==filesize — это ложная тревога, а не обрезка (различается только по `stop_reason`).
+**CONFIDENCE.** high — семантика исполнена и числа сверены; medium — тонкость консервативного truncated на точной границе (выбранное направление ошибки, как у B).
+
+---
+
+## R7-R01 [P0] Комната, которая запустится на этой машине (Q13)
+
+**ANSWER.** Один security-путь v0 — **WSL2 + KVM + microvm**, непривилегированный QEMU под Landlock+seccomp+cgroup. WHPX — не primary: на Windows нет эквивалентного host-confinement процесса QEMU, а загрузка гостя на microvm+WHPX не измерена (замер показал только `-S` паузу, rc=124). TCG — только `simulation`.
+
+**WHY.** (a) `/dev/kvm` есть (замер); (b) host-side ограничение QEMU возможно в WSL2 (namespaces/seccomp/Landlock/cgroups) и невозможно столь же на Windows; (c) инструментарий (openat2, Landlock-probe) — Linux. **Оговорка:** WSL2 сам ВМ → вложенная виртуализация; `/dev/kvm` ≠ `KVM_RUN` работает. Это надо **измерить**, а не верить.
+
+**Что измерить, чтобы выбор стал фактом:**
+1. `qemu-system-x86_64 -accel help` в WSL показывает `kvm`;
+2. probe `KVM_CREATE_VM`+`KVM_CREATE_VCPU`+`KVM_RUN` (маленькая C-программа или `kvm-ok`) — успех;
+3. **полная загрузка гостя** до маркера PID1 на microvm с единственным `-accel kvm`;
+4. доказательство ускорителя (ниже);
+5. негативные контроли гостя.
+Если KVM не подтверждён — срез **не закрыт** (клаузула неопределённости prereg), а не «fallback на WHPX как security».
+
+**Команда (один `-accel`, без fallback):**
+```bash
+qemu-system-x86_64 \
+  -accel kvm -machine microvm -cpu host -m 256M -smp 1 \
+  -nodefaults -no-user-config -nic none -display none -monitor none \
+  -kernel bzImage -initrd room.cpio.gz \
+  -append "console=ttyS0 panic=-1 reboot=t rdinit=/init" \
+  -serial file:run/serial.log \
+  -qmp unix:run/qmp.sock,server=on,wait=off \
+  -no-reboot \
+  -sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny
+```
+| устройство | зачем |
+|---|---|
+| `-machine microvm` | минимальная модель устройств (без PCI/VGA/USB/IDE по умолчанию) |
+| `-nic none` | **нет сетевого устройства вообще** — стена K3 |
+| `-nodefaults -no-user-config` | никаких дефолтных устройств/конфигов |
+| `-kernel/-initrd` | direct boot, **нет блочного устройства** → нет disk attack surface; initramfs RO в памяти гостя |
+| `-serial file:` | единственный канал вывода, файл принадлежит хосту (гость не seek'ает хост-FS); ядру нужен `CONFIG_SERIAL_8250=y`; альтернатива — virtio-console через mmio |
+| `-qmp unix:` | host-контроль, гостю не виден |
+| `-no-reboot`, `panic=-1` | выход при панике/ребуте, не reset-loop |
+| `-sandbox on` | seccomp **самого QEMU** на хосте (defense-in-depth, требует сборки с libseccomp) |
+| без 9p/virtiofs/host mounts | нет разделяемой FS |
+
+**Доказательство ускорителя (TCG не подделает):**
+- `ls -l /proc/$(pgrep -f qemu-system)/fd | grep -E 'kvm-vm|kvm-vcpu'` → `anon_inode:kvm-vm`, `anon_inode:kvm-vcpu` — **независимый маркер**;
+- дельта счётчиков `/sys/kernel/debug/kvm/*` (exits) за прогон;
+- QMP `query-status` = running; guest dmesg «Hypervisor detected: KVM»;
+- в cmdline ровно один `-accel kvm` (при единственном явном accel QEMU **падает с ошибкой**, а не тихо fallback'ает на TCG);
+- в evidence: версия QEMU, cmdline, digest kernel/initrd, serial-лог с маркером PID1, confinement-profile digest, всё выше. TCG-прогон помечается `simulation` и не может записать `security_run=true`.
+
+**Seccomp в госте (NET-зависимость + pre_exec ENOSYS).** Выбрано: **гостевое ядро с `CONFIG_NET=y`, но без NIC-драйвера и без packet-сокетов** (линейка kernel D уже показала рабочий фильтр) + **наследование фильтра через execve**: PID1 fork'ает launcher → launcher ставит `prctl(NO_NEW_PRIVS)` + seccomp-allowlist + Landlock → `execve(tool)` **в том же PID** (фильтр наследуется, активен с первой инструкции инструмента; `pre_exec` не нужен). PID1 проверяет `/proc/<pid>/status: Seccomp == 2` (истина ядра, не self-report) **до** передачи root-FD/work-токена; `Seccomp != 2` → kill, `S8_WALL_MISSING`. Landlock: fixture RO, staging RW, прочее deny. Отвергнуто: «отказ от seccomp» (ослабляет K4/K3-стену), «NET=y с NIC» (NIC нет физически). Последствие NET=y: добавляется socket-поверхность в госте — закрывается seccomp-запретом `socket/connect` для инструмента.
+
+**`max_processes: const 1` — что считается.** **Дерево инструмента в его cgroup после execve** (`pids.max=1`, считает и потоки → clone/thread → EAGAIN → K4). PID1/launcher/tracer — инфраструктура комнаты, **вне** cgroup инструмента, объявлены в `room_profile_digest` (TCB), не в карточке. Схема **не меняется** (const 1 сохраняется, K4 не ослабляется); в `$comment` + правило валидатора: «max_processes = максимум одновременных tasks в cgroup инструмента; инфраструктура комнаты не считается». Отвергнуто: поднять до 2 (B) — ослабляет инвариант карточки и смешивает комнату с инструментом. PID1 = supervisor, инструмент = единственный процесс в своей cgroup.
+
+**TCB:**
+| входит | не входит |
+|---|---|
+| host kernel WSL2 (6.6.114.1) + Hyper-V; KVM-модуль | код инструмента (объект сдерживания) |
+| QEMU binary + сборка + cmdline; host launcher/confinement | модель, генератор |
+| гостевое ядро — **только для внутригостевых стен** (K1/K2 относительно fixture); для безопасности хоста — недоверенное | promoter (для интегрити promotion — отдельное утверждение) |
+| initramfs: PID1, launcher (trusted, digest в room profile) | содержимое fixture (данные; метки доверены через подписанный manifest) |
+| admission-verifier + pinned pubkey; fixture manifest | хостовые процессы владельца (защищены host kernel) |
+
+**Граница «измеренная конфигурация» / «безопасность гипервизора».** Измерено: точная команда, digest'ы, proof ускорителя, confinement, негативные контроли. **Не доказано:** отсутствие 0-day QEMU/KVM/Hyper-V, качество изоляции при вложенной виртуализации, side channels, WSL2 как граница (его kernel в TCB; escape в WSL2 userspace может достичь `/mnt/c`, если QEMU не confined — потому host-confinement обязателен). Это assumption, не результат.
+
+**TESTS / негативные контроли гостя:** чтение `/etc/passwd` → отказ; запись в input root → отказ; прямой socket → отказ; canary-секрет в stdout → отказ; превышение лимита → K4 + kill без влияния на соседа; host-«выворотка»: сеть/файлы хоста не изменились, у QEMU нет посторонних FD. «Прибор слеп»: запуск с `-accel tcg` гейт обязан пометить `simulation`.
+**FAILURE MODE.** «Стартует с `-S`» принято за изоляцию; скрытый fallback; фрейм вывода подделан инструментом (хост не доверяет содержимому, только размеру/формату); Landlock без явного перечня прав.
+**NOT PROVEN.** Изоляция гостя как таковая; TCB QEMU/хоста; WSL2 как граница.
+**CONFIDENCE.** medium — архитектура/TCB high, но «изоляция на этой машине» не измерена; выбор KVM-vs-WHPX — суждение до замера полной загрузки.
+
+---
+
+## R7-R02 [P0] Наблюдение, которое не врёт (Q14)
+
+**ANSWER.** Минимальный работающий механизм: **seccomp-allowlist как стена** (launcher-наследование, R01) + **независимый ptrace/strace-трассировщик под PID1** на канале, недоступном инструменту для записи, + kernel-счётчики. Видит: syscall-имена, аргументы (разыменование указателей на syscall-stop), байты (ret read/write), потоки (`PTRACE_O_TRACECLONE`), детей (`TRACEFORK/VFORK/EXEC`).
+
+**CHOSEN.** ptrace/strace — достаточен для v0. **seccomp-unotify отвергнут как граница** (TOCTOU указателей — C прав; man `seccomp_unotify(2)` прямо предупреждает); допустим только как диагностика. Инструментирование/self-report — `observed_self_reported`, **никогда** не считается независимым наблюдением.
+
+**WHY.** Стена (seccomp+Landlock+openat2) даёт верхнюю границу эффектов **по построению** и не читает указателей → **нет TOCTOU в принуждении**. Трасса показывает, что на конкретных входах инструмент не пользуется сверх карточки. Решение по указателю не принимается: трассировщик читает память **остановленного** tracee (гонки нет), это post-hoc evidence.
+
+**`observed_independent` vs `observed_self_reported`:** независимое = порождено трассировщиком/PID1/kernel-счётчиком на канале, который инструмент не может писать (FD не передан, seccomp запрещает write в него). В v0 утверждаем только «наблюдено на корпусе», не «доказано для всех входов».
+
+**Слепой монитор — как обнаружить:**
+- обязательный canary: каждый прогон включает открытие/чтение fixture → трасса обязана содержать ≥1 `openat2`+`read` с ожидаемым путём/байтами; **ноль событий → `S7_GATE_BLIND`, FAIL**;
+- кадры `hdr`+`end`, `dropped_events==0`, `unclassified==0`, tracer rc==0, версия strace запинена в room profile;
+- мутант-контроль: rogue-бинарь (открывает вне root / socket / spawn / write) обязан дать **и** отказ стены, **и** событие трассы; стена отказала, трасса молчит → монитор слеп → FAIL;
+- поток/потомок-мутант: нарушение в clone-потоке обязано трассироваться (TRACECLONE) и блокироваться (seccomp наследуется; `pids.max=1` → EAGAIN).
+
+**attempted vs observed:** запись = entry (попытка) + exit (эффект состоялся только при ret≥0). `verdict` события: `within_card / breach / unknown`; неизвестный syscall → `unknown` → fail-closed.
+
+**Формат `effects-observation-v1` (JSONL):**
+```
+hdr: {run_id, card_digest, binary_digest, room_digest, fixture_digest, policy_digest,
+      manifest_id, tracer:{id,version,digest}, classification_table_digest}
+ev:  {seq, tid, syscall, args_resolved:{path|fd→path}, ret, bytes, effect_atom, verdict, phase}
+end: {events, dropped, unclassified, violations, tracer_rc, sha256}
+```
+`run_id = sha256(card‖binary‖room‖fixture‖policy‖manifest_id)`; хост пересчитывает. **Правило провала:** run годен ⟺ hdr∧end ∧ dropped==0 ∧ unclassified==0 ∧ violations==0 ∧ canary_seen ∧ barrier_seen ∧ 8/8 негативных контролей показали ожидаемую стену+трассу.
+
+**Негативные контроли (что в трассе и в стене):**
+| попытка | стена | трасса |
+|---|---|---|
+| чтение вне карточки | openat2 EXDEV/ELOOP → отказ | `openat2` breach/attempted |
+| сеть | seccomp EPERM на socket | `socket` breach |
+| spawn | seccomp EPERM / pids EAGAIN | `clone/execve` breach |
+| запись | Landlock EACCES / openat2 | `openat2/write` breach |
+| секрет-canary | egress-отказ K6 | событие egress-канала |
+
+**Расхождение монитор/стена:** в **любую** сторону run невалиден: трасса видит, стена пропустила → breach (дыра стены); стена отказала, трасса молчит → слепой монитор; оба → `S7/S8` FAIL, kill. Не «наверное нормально».
+
+**FAILURE MODE.** Покрытие корпусом (ветка не вызвана); инструмент детектит ptrace и ведёт себя иначе (ограничено шаблонным кодом + мутант-контролями, не доказано); неполная таблица классификации.
+**NOT PROVEN.** Полнота наблюдения; скрытые каналы (время/размер); эквивалентность поведения под трассой и без.
+**CONFIDENCE.** high по механике/формату, medium по полноте таблицы классификации.
+
+---
+
+## R7-R03 [P0] Owner-ключ без второго пути допуска (Q15)
+
+**ANSWER.** **Один operational Ed25519 + offline-backup того же ключа** (D/F). **Recovery-root, способный минтить ключи, отсутствует by construction.** Восстановление = restore того же ключа с backup; потеря обеих копий = **ручная замена trust anchor владельцем физически на хосте + epoch bump + полный re-admission всего**.
+
+**CHOSEN / WHY.** Один владелец, без команды, HSM не обязателен. Двухуровневые иерархии (A/C/E) добавляют церемонию и риск второго пути допуска без выгоды при n=1. Backup того же ключа = та же власть, не новый путь. «Recovery может добавить signing key?» — **в этой схеме recovery-ключа нет**; новый signing key появляется только церемонией владельца: генерация offline, pubkey пинится в trust-anchor файле, который правит владелец на хосте вне agent-writable дерева, epoch++, старый отзывается. Это не backdoor: нет удалённого пути, нет «кода восстановления», эффект потери ключа — **потеря всех прав**, а не их сохранение.
+
+**Trust anchor promoter'а:** файл вне рабочего дерева, ACL только владелец (Windows: профиль владельца, агент — отдельный непривилегированный пользователь; либо WSL root-owned `/etc/herness/trust-anchor.json`, агент non-root). **Копия в git — read-only зеркало для человека; promoter её не читает и не доверяет.** Конфиг promoter'а пинит `sha256(trust-anchor)` и сверяет при старте; смена anchor = действие владельца + запись в decision-log.
+
+**SSHSIG вместо «голого» Ed25519 — выбран SSHSIG** (Windows OpenSSH из коробки, passphrase встроена, namespace = domain separation). **Что это меняет в проверке:** SSHSIG фреймит payload (magic `SSHSIG`, namespace, hash=sha512) и подписывает SHA-512 фрейма; «голая» RFC 8032 verify по `prefix‖JCS` **не** проверит SSHSIG. В решении записать: `alg="sshsig-ed25519-sha512"`, `namespace="herness-admission-v1"`, `hash=sha512`; promoter пинит это; verifier — `ssh-keygen -Y verify` (OpenSSH в TCB, версия запинена) либо ~50 строк Rust (ed25519-dalek+sha2), сверенные против ssh-keygen-векторов.
+
+**Команды (Windows, без секретов в ответе):**
+```powershell
+# генерация (offline, отдельный терминал владельца)
+ssh-keygen -t ed25519 -a 100 -f owner-admission-1 -C "herness-owner-admission-1"
+# backup: зашифрованный приватный файл -> 2 offline-носителя (BitLocker To Go);
+#         проверка восстановления: подписать тестовое сообщение, проверить публичным
+# подпись манифеста (канонические JCS-байты)
+ssh-keygen -Y sign -f owner-admission-1 -n herness-admission-v1 manifest.jcs
+# проверка
+ssh-keygen -Y verify -f allowed_signers -I owner@herness -n herness-admission-v1 `
+           -s manifest.jcs.sig < manifest.jcs
+# allowed_signers: owner@herness ssh-ed25519 AAAA…   (pinned)
+# ротация: новый ключ генерируется, pubkey пинится владельцем в anchor, epoch++,
+#          старый retired (новые подписи запрещены), overlap до expires старых манифестов
+# отзыв: append-only revocations.jsonl, подписанный действующим ключом + epoch bump
+```
+
+**Связь key_id/epoch/validity/revoked против отката:** `key_id = sha256(pubkey blob)`; promoter хранит **монотонное состояние** (append-only, owner-writable): `current_epoch`, `last_seen_time`. Манифест несёт `min_epoch`; проверка отказывает если `now < last_seen_time − skew` **или** `manifest.min_epoch < current_epoch` **или** ключ/manifest в revocations. Отзыв ключа поднимает epoch → все его манифесты невалидны независимо от часов. Старый подписанный манифест не оживает после отката часов/файлов.
+
+**Схема keyring/revocations:**
+```
+trust-anchor.json: {keys:[{key_id, pubkey, role:"signing", not_before, expires, revoked:false}],
+                    epoch, anchor_digest}
+revocations.jsonl: {seq, prev_digest, revoked_key_id|manifest_id, epoch_bump, reason, sig}
+```
+
+**TESTS (recovery не backdoor; потеря не даёт автодопуска):** манифест, подписанный неизвестным ключом → K11; агентский uid правит anchor → promoter startup падает на pin-mismatch; удаление ключа + попытка promote → K11 (только физическая замена anchor работает, тест симулирует её как owner-действие + epoch bump + все старые манифесты отвергнуты); откат часов → отказ по монотонному состоянию; replay отозванного манифеста → epoch-отказ; откат revocations-файла → pinned epoch отказывает.
+**FAILURE MODE.** Anchor в agent-writable месте; владелец подписывает не глядя (усталость); SSHSIG-проверка «голым» verify (ложный отказ/ложное принятие при несовпадении фрейминга).
+**NOT PROVEN.** Безопасность offline-машины, passphrase, физического хранения; что владелец понимает, что подписывает.
+**CONFIDENCE.** high по отсутствию второго пути (by construction), medium по дисциплине церемонии.
+
+---
+
+## R7-T01 [P0] От stored `active` к производному статусу (Q18)
+
+**ANSWER.** `active` — **вычисляемый предикат**, не хранимое поле. Хранимые состояния: `proposed → quarantined → checked → admitted_confined`; `admitted_confined → needs_revalidation` (авто при дрейфе digest/срока/epoch) `→ quarantined`; любое `→ revoked` (терминально для данного manifest_id+digest).
+
+**Формула:**
+```
+active(tool, env, now) ⟺
+  state == admitted_confined
+  ∧ verify(owner_sig, key∈anchor, key not revoked, manifest not revoked)
+  ∧ manifest.min_epoch ≤ current_epoch ∧ now ∈ [not_before, expires)
+  ∧ monotonic_state ok
+  ∧ ∀d ∈ {card, source, binary, template, deps_lock, toolchain,
+          policy, lawset, room_profile, schema, fixture_manifest}: d == live(d)
+  ∧ evidence.verdict == pass ∧ room matches ∧ requested_op ⊆ admitted_scope
+```
+Сбрасывает статус: изменение **любого** из этих digest'ов, истечение срока, epoch bump, отзыв, несовпадение комнаты. Вычисляется **при каждом запуске**.
+
+**Legacy-шесть записей.** Заморозить `registry.jsonl` как исторический артефакт (rename `registry-legacy-v3.jsonl`, sha256 в evidence). Новый `registry-v2.jsonl` начинается genesis-событием со ссылкой на legacy-digest. Шесть записей мигрируют событием `legacy_observed → quarantined`, reason «pre-admission registry, stored active не признаётся». **Рабочий цикл не ломается:** по конституции **K11 не применяется к native-инструментам** («они уже внутри»); read/list/write/seal/netprobe/net остаются в **native inventory** room profile (K1–K10 применяются, K11 N/A), а не насильно проводятся через admission. Отвергнуто: пометить все шесть `admitted_confined` без подписи (ослабило бы K11) и удалить native-инструменты из цикла (сломало бы работу и противоречило конституции).
+
+**`search`.** Q8 отверг для первого среза. Фиксируется **owner-signed событием `rejected`** со ссылкой на DECISIONS-R5 Q8 (или promoter записывает решение владельца). Код остаётся историческим; диспетчер среза `search` не выдаёт (`run_tool_g` granted-list). Не «заодно» и не молча.
+
+**Кто пишет registry.** Только **promoter** (host-side, свой uid). Генератор — только candidate inbox (staging). Технически: ACL/uid-разделение + promoter при загрузке перепроверяет hash-chain и подписи + `check_autonomy` негативный тест «generator uid открывает registry на запись → отказ». Обещанием не проверяется.
+
+**Append-only формат:** каждая строка JCS; поля `seq`, `prev_digest = sha256(JCS(previous line))`, payload; owner SSHSIG на событиях `admitted/revoked`; структурные события (proposed/quarantined/checked/needs_revalidation) — promoter, chain даёт tamper-evidence. **Pointer:** `active.json {tool_id → manifest_digest, seq, chain_head_digest}`, атомарно tmp+fsync+rename, в promoter-owned каталоге. При старте promoter **перепроходит chain от genesis**, пересчитывает head, сверяет `pointer.seq/head`; несовпадение → отказ старта.
+
+**revoked ≠ expired ≠ needs_revalidation:** разные типы событий + разные reason в журнале; модель видит `K11_ADMISSION_REQUIRED` для всех трёх (без утечки деталей), журнал различает.
+
+**TESTS:** подмена pointer (правка active.json → startup отказ); разрыв hash-chain (байт в средней строке → walk падает); повторная активация отозванного digest (новое событие на revoked manifest → отказ, revoked терминален); изменение policy на 1 байт (пересчёт policy_digest → все admitted → needs_revalidation → следующий запуск K11). «Прибор слеп»: promoter, принимающий pointer без перепрохода chain, обязан провалить тест подмены.
+**FAILURE MODE.** Хранить active меткой (ловушка уже в registry); неатомарный pointer; transition без пересчёта digest'ов; проверка подписи только при promotion, не при каждом запуске.
+**NOT PROVEN.** Глобальная non-equivocation append-only файла (один оператор — один канал equivocation); безопасность из одного статуса.
+**CONFIDENCE.** high по FSM/предикату, medium по деталям подписей v0.
+
+---
+
+## R7-T02 [P0] Наименьший пилот генератора, который что-то доказывает (Q16)
+
+**ANSWER.** **2 шаблона** (`file_read_stream` + `digest_sha256`) — минимум, отделяющий «генератор» от «заранее написанного шаблона»: один шаблон с фиксированным Rust-кодом доказывает только генерацию карточек; два genuinely разных кодовых пути (потоковое чтение строк vs потоковое хеширование) при одном kind-семействе `file_read` доказывают переносимость генерации в пределах проверенного семейства. 12 spec F — избыточно для v0; 1 (A/D) — недостаточно.
+
+**Замороженный набор (фиксируется до прогона, хеши в prereg):**
+| метрика | порог | знаменатель |
+|---|---|---|
+| функциональные spec | **≥19/20** (≥95%, scorecard Q9) | 20 (10/шаблон; **5 held-out/шаблон**, авторинг до запуска, hash в prereg) |
+| критические негативные контроли | **100%**, один пропуск — стоп | 8 контролей среза × шаблон + spawn/сеть/запись/protected-path/read_to_string/limit-bypass |
+| атакующий корпус | 100% отвергнуты | 20 (независимый автор, не генератор) |
+| чувствительность гейта («кто проверяет проверяющий») | **100%** | 24 внедрённых мутанта (promoter-side, генератору неизвестны) |
+| детерминизм | 3 повтора байт-в-байт | все принятые кандидаты |
+| semantic validation | 100% | все кандидаты |
+| owner review | 100% подписываются владельцем (авто-approval нет, Q7) | все принятые |
+| время владельца | медиана минут/кандидат **≤50%** ручного baseline | тайминг от candidate-ready до подписи/отказа; baseline — владелец вручную реализует 2 held-out spec, с таймингом |
+
+**«Нельзя начинать» (всё сразу):** HEAD-SLICE-R1 `closed:true`, 8/8, 3 детерминированных повтора, evidence полон; канонический валидатор + dual-run корпус зелёные; owner-ключ + admission-verifier существуют, тесты зелёные; scorecard утверждён как пре-регистрация (сейчас черновик); комната security-run доказана (KVM-proof, R01); миграция registry v2 сделана.
+
+**Goodhart:** held-out spec хешируются до того, как генератор что-либо видит; мутанты пишет отдельный процесс/лицо без контекста генератора; генератор знает контракт (схему карточки) — это нормально, но **не видит** атакующий корпус и held-out; gate-sensitivity мутанты внедряются post-hoc promoter'ом; **все попытки** логируются append-only (prompt-hash, версия модели, digest каждого bundle включая провалы) — не «лучший из незаписанных».
+
+**Что остаётся человеком:** подпись, review diff (эффекты/scopes/лимиты/шаблон), расширение авторитета. Приемлемое время — медиана ≤50% ручного baseline, измеряется в минутах, логируется.
+
+**Не успех / kill criteria:** любой критический контроль принят; кандидат может писать в protected paths; функционал <19/20; провал детерминизма; медиана ревью ≥ ручной стоимости; >20% кандидатов требуют ручной правки кода (тогда это автодополнение, не генератор).
+
+**Candidate bundle:** card JSON + source + tests + digest'ы (source/binary/toolchain/template/deps) + evidence (выходы чекеров, логи негативных контролей) + метаданные генерации (модель, prompt-hash, версия шаблона). **Проверки promoter:** schema → semantic (F01) → card_atoms rc=0 → тесты в карантине → пересчёт всех digest'ов → статскан (нет сети/protected-путей/spawn/read_to_string) → allowlist шаблонов → observation pass. **Отчёт:** знаменатели + провалы явно, не «100%» без denominator.
+
+**NOT PROVEN.** Обобщение за пределы 2 шаблонов; статистическая надёжность (n=20 — инженерный гейт); безопасность произвольного кода.
+**CONFIDENCE.** medium — критерии проверяемы, числа требует owner-фиксации до прогона.
+
+---
+
+## R7-S05 [P1] Порядок отказов и комбинированные нарушения (Q17)
+
+**ANSWER.** Фиксируются **оба** порядка, раздельно.
+
+**Конвейер вычисления:** `K11 admission → S1 форма аргументов → S6 scope/closure (разрешение пути от root, класс ещё не запрашивается) → K6 класс (только для in-scope путей, из доверенного manifest, без чтения содержимого) → open+fstat preconditions (S2 missing / S1 is_regular_file) → bounded execution (K4 лимиты, K6_EGRESS на границе вывода) → output frame`.
+
+**Приоритет выдачи (primary):** `K11 > K6_SECRET_EGRESS > K6_DATA_CLASS_UNKNOWN > S6 > K4 > S2 > S1`.
+
+**«Вне корня + неизвестный класс» → primary `S6`.** Класс **не запрашивается** вне корня (нельзя классифицировать то, что отказались открывать; F операционно прав). Для single-path v0 комбинация K6_UNKNOWN+S6 на одном пути невозможна, поэтому спор B/E (K6>S6) vs F (K4>S6) для этого кейса moot. **S6 > K4** выбрано потому, что `S6_CLOSURE_BREACH` кодирует нарушение **K1/K2** (граница), а K4 — бюджет; граница важнее бюджета. Метрики считают **все** коды в `violations[]`, не только primary — порядок выдачи не искажает метрики.
+
+**Журнал:** модель видит **один** primary + короткую причину; журнал — весь упорядоченный `violations[]` со структурированными деталями. Пути **вне корня** — `sha256(requested_path)`, не сырой путь; in-root — относительный путь. Байты секрета **никогда**; K6_EGRESS detail = канал+класс, не содержимое.
+
+**Пробелы словаря v2:** отсутствующий файл → **`S2_ARTIFACT_MISSING`** (семантически подходит, поправка не нужна). Невалидный UTF-8 → **интерим `S1_SCHEMA`** с обязательным detail `content_encoding:invalid_utf8`; **предложить поправку v3: новый код `S2_CONTENT_ENCODING`** (не переиспользовать K6 — это маскирует класс дефекта, дух Q3). Нюанс: для head-среза fixture валиден, кейс — только негативный контроль; production-активацию инструментов, реально достигающих encoding-отказа, стоит отложить до v3 (позиция F).
+
+**TESTS:** каждый одиночный код; «нет admission + невалидный args» → K11; «вне корня + неизвестный класс» → S6, **instrumented manifest-stub утверждает, что lookup класса для out-of-root пути не вызывался**; «cap превышен + egress-canary» → primary K6_EGRESS, K4 в violations[].
+**FAILURE MODE.** S1/S6 как «удобный» ответ, перекрывающий K; несколько кодов в ответе модели без правила выбора; сырой out-of-root путь в журнале.
+**NOT PROVEN.** Что приоритет оптимален для всех кейсов (инженерная договорённость).
+**CONFIDENCE.** high по «один primary + список в журнале» и scope-first; medium по интерим-маппингу encoding.
+
+---
+
+## R7-F04 [P1] Лестница статусов и доказательств
+
+**ANSWER.** Точный набор v0: `declared → schema_checked → policy_checked → contract_checked → runtime_checked → K11_admitted`. `K9_model_checked` — зарезервирован для композиции (в срезе v0 композиции нет, не выдаётся). **`K9_proven` запрещён к выдаче константным правилом.**
+
+| ступень | что доказывает | обязательный артефакт | кто создаёт |
+|---|---|---|---|
+| declared | карточка существует | card JSON | автор/генератор |
+| schema_checked | форма валидна | отчёт JSON Schema | CI |
+| policy_checked | права покрыты policy, конфликтов нет | `card_atoms rc=0` + policy_digest | CI/promoter |
+| contract_checked | декларация непротиворечива (kind↔effects↔examples) | отчёт Rust-валидатора + корпус pass | promoter |
+| runtime_checked | **на корпусе в security-комнате**: 8/8 контролей, observation pass, 3 повтора | evidence bundle | quarantine-runner |
+| K11_admitted | владелец одобрил **точные байты** | подписанный admission-manifest | owner + promoter |
+
+**Сброс:** смена любого digest ∈ {card, source, binary, policy, lawset, room_profile, schema, fixture_manifest} → `runtime_checked` и выше невалидны → `needs_revalidation`; `schema_checked` переживает неизменную карточку. Статус — **вычисляемый предикат** в registry/manifest, не «нарисованное» строковое поле.
+
+**TESTS:** отчёт с литералом `K9_proven` → валидатор отвергает (запрещённый литерал); манифест с полем `status:"K9_proven"` → unknown/forbidden → отказ; **admitted rogue-бинарь всё равно убивается стенами** (admission ≠ безопасность, не отключает стены); `policy_checked` отчёт, утверждающий `K9_proven` → отказ.
+**FAILURE MODE.** Схлопывание ступеней в `verified:true`; `K11_admitted` прочитан как «безопасен»; runtime_checked на TCG/не-security комнате.
+**NOT PROVEN.** `K9_model_checked` не доказывает отсутствие side channels; runtime_checked — поведение на корпусе, не для всех входов; K6 enforcement = fail-closed классификация + egress-гейт, детектор неполон (конституция §8).
+**CONFIDENCE.** high — границы слов синтаксически проверяемы.
+
+---
+
+## R7-A01 [P1] Привязка admission к точным байтам
+
+**ANSWER.** Минимальная схема `admission-manifest-v1`:
+```
+fmt, manifest_id, tool{id,version,kind},
+artifacts{card, source, binary, template, deps_lock, toolchain, build_recipe},
+authority{lawset, policy, room_profile, schema, fixture_manifest, effects_digest, scope, data_classes},
+validity{not_before, expires, min_epoch},
+evidence{bundle_digest, levels{…}},
+approval{key_id, alg:"sshsig-ed25519-sha512", namespace:"herness-admission-v1", sig}
+```
+**Домен:** выбран SSHSIG (R03) — namespace `herness-admission-v1` обеспечивает domain separation; эквивалент «голого» варианта: `"herness:admission-manifest:v1\n" ‖ JCS(manifest minus approval)`. **Записать один вариант в решении**, не оба.
+
+**`stored == JCS(stored)` — требовать: да.** Ловит re-serialization drift, делает подпись-по-байтам == подпись-по-JCS. Ломает только pretty-printing (каноническое хранение; красивый рендер — отдельно для человека). Строгий парсинг: дубли JSON-ключей → отказ, unknown fields → отказ, время — integer epoch seconds, без float.
+
+**Привязка запуска к байтам:**
+- **WSL runner:** CAS-объект → `memfd_create(MFD_CLOEXEC|MFD_ALLOW_SEALING)` → `F_SEAL_WRITE|GROW|SHRINK|SEAL` → sha256 по memfd → сверка с manifest → `execveat(fd,"",AT_EMPTY_PATH)`. **TOCTOU закрыт** (fd запечатан).
+- **Windows QEMU image:** открыть handle с restrictive sharing (только read) → hash через handle → ACL owner-only-write на CAS → запуск. Остаточное окно: QEMU сам открывает путь (второй open) между нашим hash и его open; снимается ACL (агент не пишет) → требует компрометации владельца, вне scope. **Документировать остаток.**
+- **Гость:** бинарь в initramfs, digest образа в манифесте, PID1 повторно хеширует бинарь перед exec (вторая линия, не корень доверия).
+
+**Срок/epoch/отзыв/replay:** `not_before ≤ now < expires`; `min_epoch ≤ current_epoch` (монотонное состояние promoter); manifest_id ∉ revocations; ключ не отозван. Replay того же manifest_id для разных прогонов допустим (admission per-artifact, не per-run); run-журнал пишет manifest_id на прогон; отозванный manifest_id не переиспользуется.
+
+**TESTS:** подмена байта бинаря → digest mismatch K11; пере-сериализация манифеста (пробел) → stored≠JCS → отказ; дубль JSON-ключа → строгий парсинг отказ; unknown field → отказ; чужой домен/namespace → sig fail; просрочен → K11; отозванный ключ → K11; откат epoch → монотонное состояние отказ; валидная подпись, но устаревший policy_digest → K11 (authority drift).
+**FAILURE MODE.** Подпись не тех байтов (canonicalization drift); проверка пути вместо FD; верификация после spawn; «active» без пересчёта digest'ов при каждом запуске.
+**NOT PROVEN.** Что одобренный бинарь безопасен; воспроизводимость сборки; намерение владельца.
+**CONFIDENCE.** high по схеме/порядку; medium по Windows-остатку TOCTOU.
+
+---
+
+## R7-AUDIT [P1] Проверка утверждений R6 по коду
+
+Проверял тела функций снимка `3d988f8`, не пересказы. Атрибуция D/E в F01–S02 ограничена: блоки извлеклись идентично.
+
+| ответ | утверждение | вердикт | правильная формулировка / где |
+|---|---|---|---|
+| **A** | `pathScope.segments` — произвольные строки; `examples.expected.refusal` свободен; provenance нулевой | **верно** | schema проверена: все три проходят форму; нужны семантические правила F01 |
+| **A** | «проверенные артефакты… commit `9c8af80`» | неточно | цитирует базовую линию, не снимок `3d988f8` (код идентичен, дельта docs-only); тел/строк не приводит |
+| **A** | S02 «`ééé` 6 Б cap5 → lines=1 `éé`» | **противоречиво** | нет полной строки в cap → должен быть K4; противоречит собственному правилу A о частичной строке и prereg |
+| **B** | `resource_of` вне корня → `/mnt` заново; `policy_allows(...)=True`; `file:/mnt/../etc/passwd → True` | **верно, воспроизведено** | порт: `/etc/passwd→file:/mnt/etc/passwd→True`; `../`-путь→True; единственная стена — `starts_with` в `resolve_in` |
+| **B** | `resolve_in` всегда `("read","read")`; вызывают list/search/**write**/seal | **частично ложно** | `tool_write_in` **НЕ вызывает `resolve_in`**: он зовёт `resource_of`+`policy_allows("write","write")`+`write_beneath` напрямую. Бриф (read/list/search/seal) прав; B добавил write ошибочно |
+| **B** | seal/netprobe re-exec; head 65536>8192 + непокрытые refusals; max_processes конфликт; KNOWN_TOOLS содержит net | **верно** | тела подтверждены; draft examples не покрывают K4/K6_EGRESS/K11 |
+| **C** | не открывал ссылки/код | честно | ✓ |
+| **C** | S02 `probe_one_byte` с отдельным счётчиком | **нарушает ограничения** | читает байт сверх cap; если не в bytes_read — занижение, если в — превышение; отвергнуть |
+| **D** | нет live-доступа, всё из брифа | честно | ✓ |
+| **D** (общий блок F01, атрибуция требует сверки) | таблица K: «K2 Сеть/Мосты», «K3 Побочные эффекты», «K7 Provenance», «K8 Неизменяемость себя», «K10 Закрытый пул» | **ложно против конституции** | K2=`no_write_outside_root`; K3=`no_net_except_declared`; K7=`deterministic_output`; K8=`provenance`; K10=`no_self_modification`. D не видел конституцию (честно), но нумерация неверна |
+| **D** | SV-04 «scopes начинаются с `/`» | не соответствует схеме | реальный `pathScope = {root_ref, segments}`, не строки с `/`; D схему не видел |
+| **E** | recovery-root, 4 шаблона, unotify+барьер | согласуется с брифом | ✓ (R03/R05/T02 извлечены) |
+| **E** | R05 `write_beneath (~899)` | неточная ссылка | бриф/F дают ~936; вещество верно (2 флага) |
+| **E** | `open_regular_beneath`: ENOENT→S1_SCHEMA; non-regular→S6; `nlink==1` | спорно | ENOENT должен быть `S2_ARTIFACT_MISSING` (v2); `nlink==1` отвергает легитимный hardlinked fixture (fail-closed, но избыточно; задокументировать) |
+| **E** | S02 читает 1 байт сверх бюджета + частичная строка (по брифу) | **нарушает ограничения** | моя выгрузка E-S02 обрезана; характеризация брифа принята как вход, помечена |
+| **F** | registry 6×active v3; write_beneath 2 флага; rc=3; closed:false; seccomp/NET+pre_exec; policy без head | **верно, воспроизведено** | rc=3 исполнен; остальные подтверждены телами/замерами |
+| **F** | «`.gitattributes` покрывает только R5-ответы; надо расширить» | **ложно на снимке** | `.gitattributes` уже содержит `docs/research/external/2026-11-17-R6-answer-* -text -eol` и `head-slice.txt -text -eol` |
+| **F** | «output_bytes 8192 < max_bytes_read 65536 — мёртвый лимит» | неточно | разные оси (чтение vs сериализация); реальный пробел — не объявлено поведение при переполнении вывода |
+| **F** | JCS-векторы пересчитаны; tree.json/второй клон; L973 комментарий | **не проверено мной** | входы векторов/дерево не выгружал; вещество non-Linux комментария подтверждено («на не-Linux атомарности нет»), номер строки — нет |
+
+**Новые находки (мои, проверены):**
+1. **Rust `POLICY` = 14 правил vs `policy.json` = 19.** Пять `implied:"!"` deny отсутствуют в Rust; `resource_matches` **не поддерживает отрицание** — правило `file:!/mnt/**` не матчит ничего (проверено: False и для `/etc/passwd`, и для `/mnt/x`). Поведение сейчас эквивалентно благодаря default-deny, но комментарий «Совпадает с lab/tools/policy.json» буквально ложен; при codegen из JSON эти deny станут мёртвыми молча → класс `S5_POLICY_DRIFT`.
+2. **Registry `read` card `output_bytes=8192` vs код `MAX_READ=24*1024`** — контракт/код расходятся (`S5_IMPL_DIVERGES`); read может вернуть ~24 KiB + строку.
+3. **`tool_search_in` молча пропускает** нечитаемые/`>MAX_FILE` файлы (`let Ok … else continue`), но считает их в `scanned` → «найдено 0 в N файлах» при N, включающем непрочитанные → напряжение с K5.
+4. **Write policy на ненормализованном пути:** `/mnt/work/../../etc/x.md` → `policy_allows("write",…)=True` (проверено), но `openat2 RESOLVE_BENEATH` ловит → стена держит, **policy не стена для write**.
+5. **Write перезаписывает (`O_TRUNC`)** vs Q1 `file_write` = create-new/no-overwrite → миграционный пробел.
+6. **У `head` две карточки:** legacy `cards/head.json` (closure-формат, к нему относится rc=3) и `drafts/head-v1.draft.json` (новый формат, `card_atoms` его не потребляет). Ответы местами смешивают их.
+7. **Диспетчер `run_tool_g` имеет granted-list гейт** («инструмент не выдан в этом прогоне»), но **не admission** (нет digest/подписи). Бриф «проверки admission нет» верен; granted ≠ admission.
+
+**Факты брифа §1.1:** все 11 подтверждены по существу (с оговоркой о номерах строк).
+
+---
+
+## Что этот разбор не доказывает
+
+Не approval и не решение Q11–Q18. Не доказывает безопасность QEMU/гипервизора/Rust/K6; не выдаёт `K9_proven`; `policy_checked ≠ K9_proven`; TCG — симуляция; JSON Schema — форма, не поведение; отсутствие событий — не отсутствие нарушений. Числа S02 — из локального эталона на сверенном fixture, не из прогона в комнате владельца. Номера строк, замеры на машине, «31/30 из 32», JCS-векторы F, дерево/клон — не проверены; сказано прямо, не достроено.

@@ -35,9 +35,29 @@
 и приоритету отказов. Сводка, проверка утверждений и развилки —
 [`docs/R6-SYNTHESIS.md`](../../R6-SYNTHESIS.md).
 
+## R7 — 17.11.2026
+
+Пять ответов на [`EXTERNAL-QUESTIONS-R7.md`](../../EXTERNAL-QUESTIONS-R7.md) — все 11 вопросов
+(F01, S02, R01–R03, T01–T02, S05, F04, A01, AUDIT) в каждом. Четыре пришли как `.txt`, один —
+как `.md`; сохранены байт-в-байт, без нормализации переводов строк (правило в `.gitattributes`).
+
+| файл | размер | SHA-256 | что внутри |
+|---|---:|---|---|
+| [`2026-11-17-R7-answer-A.txt`](2026-11-17-R7-answer-A.txt) | 68 505 Б | `c06c76c67a8051c3fc3fa16a6aee20fa563881b7b1cd63976fb50e3666baac92` | открывал снимок на GitHub, проверял код; Rust-валидатор, WSL2+KVM, ptrace-наблюдение; «сырой» Ed25519/OpenSSL, один ключ + backup, без recovery-root; поправки к `resource_of` и `write_beneath` (NO_SYMLINKS влечёт NO_MAGICLINKS) |
+| [`2026-11-17-R7-answer-B.txt`](2026-11-17-R7-answer-B.txt) | 47 167 Б | `0ba05db696a9ce34138f40c0f3cfaa459141f9ec4a35c62709ba68d1a066e1b2` | код не открывал; Rust-валидатор, WSL2+KVM, наблюдение через отказы ядра + канарейки (без `observed_independent` в v0); отдельные `bytes_received`/`bytes_consumed`; recovery-ключ может обновлять/отзывать trust anchor, но не допускать; генератор — только карточка одного kind |
+| [`2026-11-17-R7-answer-C.txt`](2026-11-17-R7-answer-C.txt) | 85 057 Б | `19e7d865ed00e6c364e7ef57d6946710c05ce5a1f489523ca6454127a860b523` | код не открывал; таблица правил V01–V13 + исполняемые векторы, Rust-канон; ptrace+seccomp TRACE; один ключ без recovery-root; 3 шаблона × 4 spec + 6 held-out; `output_cap`, `RLIMIT_NPROC`; чтение 1 байта сверх бюджета в S02 |
+| [`2026-11-17-R7-answer-D.md`](2026-11-17-R7-answer-D.md) | 80 488 Б | `06e1c01c5523ce6d0496348d419594911a033ec2f23dcacf42de56f02cd32980` | Arena.ai Agent Mode, снимок проверял по файлам; Rust-валидатор, WSL2+KVM; Landlock audit logging как наблюдение (на ядре 6.6 недоступно — ABI v7/6.15); recovery-ключ только revoke/rotate; лестница `slice_passed`; 3 шаблона/108 прогонов; нумерация K-законов неверна (конституцию не видел) |
+| [`2026-11-17-R7-answer-E.txt`](2026-11-17-R7-answer-E.txt) | 71 976 Б | `3f210e665f3d25fa7fb81f7e18903b4442b578834fea67ab318fd6400d4a4e93` | открывал снимок через `raw.githubusercontent.com`, исполнял эталон S02; Rust-валидатор, WSL2+KVM, seccomp+ptrace; один операционный ключ + backup; 2 шаблона/20 spec; проверил, что `tool_write_in` не вызывает `resolve_in`, и расхождение Rust `POLICY` 14 против `policy.json` 19 |
+
+Это **не консенсус и не approval**. Ответы сходятся по Rust-канону, производному `active`,
+безопасности точных байтов и комнате без сети, но расходятся по семантике S02, механизму
+наблюдения, модели процессов, топологии ключа, объёму генератора и формату статусов.
+Проверка утверждений и развилки — [`docs/R7-SYNTHESIS.md`](../../R7-SYNTHESIS.md).
+
 Хеши проверяются командами:
 
 ```bash
 sha256sum docs/research/external/2026-11-16-R5-answer-*.md
 sha256sum docs/research/external/2026-11-17-R6-answer-*
+sha256sum docs/research/external/2026-11-17-R7-answer-*
 ```
