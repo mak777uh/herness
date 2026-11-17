@@ -1,0 +1,48 @@
+{
+ "merged": false,
+ "note": "только кандидат; активная policy не изменена",
+ "rules": [
+  {
+   "action": "read",
+   "effect": "allow",
+   "id": "head_cand_frs_h04-allow-fixtures",
+   "level": "A",
+   "resource": "file:/mnt/fixtures/**",
+   "subject": "agent",
+   "tool": "head_cand_frs_h04",
+   "why": "кандидат читает только синтетический fixture"
+  },
+  {
+   "action": "read",
+   "effect": "deny",
+   "id": "head_cand_frs_h04-deny-outside",
+   "level": "A",
+   "resource": "file:!/mnt/fixtures/**",
+   "subject": "agent",
+   "tool": "head_cand_frs_h04",
+   "why": "замыкание кандидата — только fixtures"
+  },
+  {
+   "action": "write",
+   "effect": "deny",
+   "id": "head_cand_frs_h04-deny-write",
+   "level": "A",
+   "resource": "file:/mnt/**",
+   "subject": "agent",
+   "tool": "head_cand_frs_h04",
+   "why": "чтение не пишет"
+  },
+  {
+   "action": "net",
+   "effect": "deny",
+   "id": "head_cand_frs_h04-deny-net",
+   "level": "A",
+   "resource": "net:**",
+   "subject": "agent",
+   "tool": "head_cand_frs_h04",
+   "why": "чтение не требует сети"
+  }
+ ],
+ "schema": "herness-policy-fragment-v1",
+ "tool": "head_cand_frs_h04"
+}

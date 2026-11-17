@@ -1,0 +1,29 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-h08",
+ "template": "file_read_stream",
+ "title": "CR без LF в последней строке сохраняется",
+ "line_count": 1,
+ "max_bytes_read": 100,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "6162630d646566",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "6162630d646566"
+    ],
+    "bytes_read": 7,
+    "bytes_received": 7,
+    "truncated": false,
+    "stop_reason": "eof"
+   }
+  }
+ ]
+}

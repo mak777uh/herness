@@ -1,0 +1,30 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a04",
+ "template": "file_read_stream",
+ "title": "CR сохраняется, строки делятся только по LF",
+ "line_count": 2,
+ "max_bytes_read": 4096,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "6f6e650d0a74776f0d0a74687265650a",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "6f6e650d",
+     "74776f0d"
+    ],
+    "bytes_read": 10,
+    "bytes_received": 16,
+    "truncated": true,
+    "stop_reason": "line_cap"
+   }
+  }
+ ]
+}

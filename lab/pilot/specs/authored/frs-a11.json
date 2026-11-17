@@ -1,0 +1,23 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a11",
+ "template": "file_read_stream",
+ "title": "невалидный UTF-8: S12",
+ "line_count": 2,
+ "max_bytes_read": 100,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "fffe0a",
+   "expect": {
+    "outcome": "error",
+    "code": "S12_ENCODING"
+   }
+  }
+ ]
+}

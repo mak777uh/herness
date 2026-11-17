@@ -1,0 +1,30 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-h06",
+ "template": "file_read_stream",
+ "title": "line_count достигнут, EOF не доказан: line_cap",
+ "line_count": 2,
+ "max_bytes_read": 100,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "610a620a",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "61",
+     "62"
+    ],
+    "bytes_read": 4,
+    "bytes_received": 4,
+    "truncated": true,
+    "stop_reason": "line_cap"
+   }
+  }
+ ]
+}

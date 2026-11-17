@@ -1,0 +1,30 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a03",
+ "template": "file_read_stream",
+ "title": "последняя строка без LF выдаётся на EOF",
+ "line_count": 5,
+ "max_bytes_read": 4096,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "616c7068610a62657461",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "616c706861",
+     "62657461"
+    ],
+    "bytes_read": 10,
+    "bytes_received": 10,
+    "truncated": false,
+    "stop_reason": "eof"
+   }
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a10",
+ "template": "file_read_stream",
+ "title": "UTF-8 multibyte выдаётся целиком",
+ "line_count": 2,
+ "max_bytes_read": 100,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "68c3a96c6c6f0a",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "68c3a96c6c6f"
+    ],
+    "bytes_read": 7,
+    "bytes_received": 7,
+    "truncated": false,
+    "stop_reason": "eof"
+   }
+  }
+ ]
+}

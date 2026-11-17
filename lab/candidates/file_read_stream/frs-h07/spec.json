@@ -1,0 +1,1 @@
+{"cases":[{"expect":{"code":"S12_ENCODING","outcome":"error"},"id":"main","input_hex":"6f6b0aff0a"}],"data_class":"model_visible","id":"frs-h07","line_count":2,"max_bytes_read":100,"path":["fixtures","case.txt"],"schema":"herness-tool-spec-v1","template":"file_read_stream","title":"S12 после валидной первой строки"}

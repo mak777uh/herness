@@ -1,0 +1,218 @@
+{
+ "data_classes": {
+  "accepted_inputs": [
+   "model_visible"
+  ],
+  "max_output_class": "model_visible"
+ },
+ "determinism": {
+  "clock": "none",
+  "ordering": "input_order",
+  "output": "deterministic",
+  "randomness": "none"
+ },
+ "effects": {
+  "bridges": [],
+  "fs_list": [],
+  "fs_read": [
+   {
+    "root_ref": "room:input",
+    "segments": [
+     "fixtures"
+    ]
+   }
+  ],
+  "fs_write": [],
+  "output_channels": [
+   "stdout"
+  ],
+  "process_spawn": false,
+  "secret_ops": []
+ },
+ "examples": [
+  {
+   "args": {
+    "line_count": 3,
+    "max_bytes_read": 10,
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "case.txt"
+     ]
+    }
+   },
+   "expected": {
+    "assertions": [
+     "lines == 0",
+     "bytes_read == 0",
+     "truncated == false",
+     "stop_reason == eof"
+    ],
+    "outcome": "ok"
+   },
+   "id": "main"
+  },
+  {
+   "args": {
+    "line_count": 3,
+    "max_bytes_read": 4096,
+    "path_ref": {
+     "root_ref": "host:/",
+     "segments": [
+      "etc",
+      "passwd"
+     ]
+    }
+   },
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "S6_CLOSURE_BREACH"
+   },
+   "id": "outside-root"
+  },
+  {
+   "args": {
+    "line_count": 0,
+    "max_bytes_read": 10,
+    "path_ref": {
+     "root_ref": "room:input",
+     "segments": [
+      "fixtures",
+      "case.txt"
+     ]
+    }
+   },
+   "expected": {
+    "outcome": "refusal",
+    "refusal": "S1_SCHEMA"
+   },
+   "id": "count-zero"
+  }
+ ],
+ "frame_conditions": [
+  {
+   "op": "no_side_effects"
+  }
+ ],
+ "id": "head_cand_frs_a08",
+ "inputs": [
+  {
+   "name": "path_ref",
+   "required": true,
+   "type": "relative_path"
+  },
+  {
+   "max": 200,
+   "min": 1,
+   "name": "line_count",
+   "required": true,
+   "type": "bounded_int"
+  },
+  {
+   "max": 65536,
+   "min": 1,
+   "name": "max_bytes_read",
+   "required": true,
+   "type": "bounded_int"
+  }
+ ],
+ "kind": "file_read",
+ "limits": {
+  "broker_requests": 0,
+  "cpu_ms": 1000,
+  "max_bytes_read": 10,
+  "max_depth": 0,
+  "max_files": 1,
+  "max_open_fds": 16,
+  "max_processes": 1,
+  "memory_bytes": 67108864,
+  "output_bytes": 8192,
+  "wall_ms": 2000,
+  "write_bytes": 0
+ },
+ "outputs": [
+  {
+   "max": 200,
+   "name": "lines",
+   "required": true,
+   "type": "bounded_list"
+  },
+  {
+   "name": "truncated",
+   "required": true,
+   "type": "truncated"
+  },
+  {
+   "max": 65536,
+   "min": 0,
+   "name": "bytes_read",
+   "required": true,
+   "type": "bounded_int"
+  },
+  {
+   "name": "stop_reason",
+   "required": true,
+   "type": "enum",
+   "values": [
+    "eof",
+    "line_cap",
+    "byte_cap",
+    "output_cap"
+   ]
+  }
+ ],
+ "postconditions": [
+  {
+   "op": "output_truncated_if_more"
+  },
+  {
+   "arg": 10,
+   "op": "bytes_le"
+  }
+ ],
+ "preconditions": [
+  {
+   "op": "path_within_root"
+  },
+  {
+   "op": "is_regular_file"
+  },
+  {
+   "arg": [
+    "model_visible"
+   ],
+   "op": "data_class_in"
+  }
+ ],
+ "provenance": {
+  "lawset_digest": "sha256:e9d6f90404c5cde3acbec145f780b2e7f2d054d484fb74269ca1e76334216fb5",
+  "policy_digest": "sha256:2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802",
+  "room_profile_digest": "sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6",
+  "schema_digest": "sha256:77195fbe464257d2d029a858853b7372f6c27337739c4da0f61466d4df920d70"
+ },
+ "purpose": "Прочитать не больше N строк и не больше объявленного числа байт из синтетического fixture класса model_visible; вернуть точную причину остановки.",
+ "refusals": [
+  "S1_SCHEMA",
+  "S6_CLOSURE_BREACH",
+  "S10_NOT_FOUND",
+  "S11_NOT_REGULAR",
+  "S12_ENCODING",
+  "S13_TOOL_INACTIVE",
+  "K4_RESOURCE_LIMIT",
+  "K6_DATA_CLASS_UNKNOWN",
+  "K6_SECRET_EGRESS",
+  "K11_ADMISSION_REQUIRED"
+ ],
+ "schema_version": "tool-card-v1",
+ "secret_refs": [],
+ "template": {
+  "id": "file_read_stream",
+  "slots": [
+   "path_ref",
+   "line_count",
+   "max_bytes_read"
+  ],
+  "version": 1
+ }
+}

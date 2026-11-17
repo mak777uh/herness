@@ -1,0 +1,1 @@
+{"cases":[{"expect":{"bytes_read":0,"bytes_received":0,"lines_hex":[],"outcome":"ok","stop_reason":"eof","truncated":false},"id":"main","input_hex":""}],"data_class":"model_visible","id":"frs-a08","line_count":3,"max_bytes_read":10,"path":["fixtures","case.txt"],"schema":"herness-tool-spec-v1","template":"file_read_stream","title":"пустой вход: 0 строк и EOF"}

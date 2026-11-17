@@ -1,0 +1,35 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a07",
+ "template": "file_read_stream",
+ "title": "cap меньше первой строки: K4",
+ "line_count": 5,
+ "max_bytes_read": 5,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "6162636465666768696a0a",
+   "line_count": 5,
+   "max_bytes_read": 5,
+   "expect": {
+    "outcome": "error",
+    "code": "K4_RESOURCE_LIMIT"
+   }
+  },
+  {
+   "id": "schema-line-count",
+   "input_hex": "610a",
+   "line_count": 201,
+   "max_bytes_read": 5,
+   "expect": {
+    "outcome": "error",
+    "code": "S1_SCHEMA"
+   }
+  }
+ ]
+}

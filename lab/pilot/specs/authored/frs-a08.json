@@ -1,0 +1,27 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a08",
+ "template": "file_read_stream",
+ "title": "пустой вход: 0 строк и EOF",
+ "line_count": 3,
+ "max_bytes_read": 10,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [],
+    "bytes_read": 0,
+    "bytes_received": 0,
+    "truncated": false,
+    "stop_reason": "eof"
+   }
+  }
+ ]
+}

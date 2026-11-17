@@ -1,0 +1,101 @@
+PILOT-GENERATOR-R1 — пилот генератора file_read_stream
+дата: 2026-11-17
+статус: PASS
+команда: python bin/pilot_generator.py --run
+
+== 1. Входное условие ==
+HEAD-SLICE-R1: closed=true; evidence research/outputs/HEAD-SLICE-R1-2026-11-17.txt
+HEAD-SLICE-R1 prereg digest: sha256:4522784ca577ce1c1217ee249dd2781199906a8a72cbe42d152539beef747069
+HEAD-SLICE-R1 evidence digest: sha256:49cc6bd0211e267eadb2f812af7939be6ede07d36e27d46c00731c40dc5b93a3
+
+== 2. Замороженные пороги (до прогона) ==
+{"authored_required": 12, "authored_total": 12, "critical_required": 16, "critical_total": 16, "functional_required": 8, "functional_total": 8, "generation_repeats": 3, "heldout_required": 8, "heldout_total": 8, "repeats": 3, "specs_required": 19, "specs_total": 20}
+criterion: PASS только если: сгенерировано 20/20 кандидатов, генерация байт-идентична в 3/3 повторах; все 12 authored и все 8 held-out спецификаций проходят 3/3 повтора (общий порог scorecard >=19/20, held-out строго 8/8); 16/16 критических и 8/8 функциональных мутантов пойманы; ни одна проверка не зелёная при отсутствующей телеметрии. Любой пропуск — FAIL без ослабления.
+
+== 3. Замороженные хеши ==
+new_tool.py: sha256:cadd56ad6569165704205e5a336fe9412be61d329363810e8da4d4e2d9c5e816
+authored set: sha256:6eca57ea314af935cea43823da73eb8a95d16f3b04917b7a1c00aeee73490fb1
+heldout set: sha256:fd8b1a4011e9d27f95380205e297f970d4aea84734a2c83067acf7c5e53d3165
+mutants: sha256:13f10b59bcece51eab4e367726ffc6f5f25943b5b6562e5b859996e2381bc11c
+
+== 4. Генерация ==
+повторов: 3, файлов: 120
+generation manifest digest: sha256:e0524cf467238a896c5dce7c85354f4a7225b4ad51c4fbd165771fe622c09630
+финальное дерево кандидатов: sha256:e0524cf467238a896c5dce7c85354f4a7225b4ad51c4fbd165771fe622c09630
+генерация байт-идентична во всех повторах: да
+
+== 5. Спецификации ==
+id | group | cases | compile | repeats rc | pass
+frs-a01 | authored | 1 | ok | 0/0/0 | PASS
+frs-a02 | authored | 1 | ok | 0/0/0 | PASS
+frs-a03 | authored | 1 | ok | 0/0/0 | PASS
+frs-a04 | authored | 1 | ok | 0/0/0 | PASS
+frs-a05 | authored | 2 | ok | 0/0/0 | PASS
+frs-a06 | authored | 1 | ok | 0/0/0 | PASS
+frs-a07 | authored | 2 | ok | 0/0/0 | PASS
+frs-a08 | authored | 1 | ok | 0/0/0 | PASS
+frs-a09 | authored | 1 | ok | 0/0/0 | PASS
+frs-a10 | authored | 1 | ok | 0/0/0 | PASS
+frs-a11 | authored | 1 | ok | 0/0/0 | PASS
+frs-a12 | authored | 1 | ok | 0/0/0 | PASS
+frs-h01 | heldout | 1 | ok | 0/0/0 | PASS
+frs-h02 | heldout | 1 | ok | 0/0/0 | PASS
+frs-h03 | heldout | 1 | ok | 0/0/0 | PASS
+frs-h04 | heldout | 1 | ok | 0/0/0 | PASS
+frs-h05 | heldout | 1 | ok | 0/0/0 | PASS
+frs-h06 | heldout | 1 | ok | 0/0/0 | PASS
+frs-h07 | heldout | 1 | ok | 0/0/0 | PASS
+frs-h08 | heldout | 1 | ok | 0/0/0 | PASS
+
+== 6. Мутанты ==
+id | class | caught | deterministic | first failure
+c01-ignore-max-read | critical | yes | yes | [FAIL] main: lines=3 expected=2
+c02-ignore-line-count | critical | yes | yes | [FAIL] main: lines=5 expected=3
+c03-no-k4 | critical | yes | yes | [FAIL] main: ожидался отказ K4_RESOURCE_LIMIT, получен ok
+c04-k4-too-broad | critical | yes | yes | [FAIL] main: получен отказ K4_RESOURCE_LIMIT: max_bytes_read=7 меньше первой строки, ожидался ok
+c05-emit-partial | critical | yes | yes | [FAIL] main: lines=2 expected=1
+c06-output-cap-ge | critical | yes | yes | [FAIL] main: lines=0 expected=1
+c07-no-output-cap | critical | yes | yes | [FAIL] main: lines=2 expected=0
+c08-strip-cr | critical | yes | yes | [FAIL] main: lines=2 expected=2
+c09-split-on-cr | critical | yes | yes | [FAIL] main: lines=2 expected=2
+c10-utf8-lossy | critical | yes | yes | [FAIL] main: ожидался отказ S12_ENCODING, получен ok
+c11-truncated-false | critical | yes | yes | [FAIL] main: truncated=false expected=true
+c12-truncated-true | critical | yes | yes | [FAIL] main: truncated=true expected=false
+c13-bytes-read-received | critical | yes | yes | [FAIL] main: bytes_read=35 expected=21
+c14-bytes-read-no-lf | critical | yes | yes | [FAIL] main: bytes_read=18 expected=21
+c15-drop-final-line | critical | yes | yes | [FAIL] main: lines=1 expected=2
+c16-line-count-offbyone | critical | yes | yes | [FAIL] main: lines=4 expected=3
+f01-bytecap-as-linecap | functional | yes | yes | [FAIL] main: stop_reason=line_cap expected=byte_cap
+f02-linecap-as-bytecap | functional | yes | yes | [FAIL] main: stop_reason=byte_cap expected=line_cap
+f03-outputcap-as-bytecap | functional | yes | yes | [FAIL] main: stop_reason=byte_cap expected=output_cap
+f04-empty-one-line | functional | yes | yes | [FAIL] main: lines=1 expected=0
+f05-received-offbyone | functional | yes | yes | [FAIL] main: bytes_received=34 expected=35
+f06-max-lines-201 | functional | yes | yes | [FAIL] schema-line-count: ожидался отказ S1_SCHEMA, получен ok
+f07-min-max-bytes-0 | functional | yes | yes | [FAIL] schema-zero-cap: ожидался отказ S1_SCHEMA, получен ok
+f08-truncated-output-only | functional | yes | yes | [FAIL] main: truncated=false expected=true
+
+== 7. Счёт ==
+authored: 12/12
+heldout: 8/8
+specs: 20/20 (порог >= 19)
+critical mutants: 16/16
+functional mutants: 8/8
+baseline bundle: PASS
+rustc: rustc 1.85.0 (4d91de4e4 2025-02-17)
+result: PASS
+
+== 8. Границы пилота ==
+кандидаты записаны только в lab/candidates/file_read_stream/<spec-id>/;
+активная policy, registry, admission и approval не изменялись;
+owner-ключ не создавался и не читался;
+ни один кандидат не активирован, K9_proven не выдавался;
+сеть, запись и host mounts не использовались; компиляция и запуск — WSL rustc.
+
+== 9. Что это не доказывает ==
+не доказывает статистическую надёжность на будущих шаблонах: 20 spec и 24 мутанта —
+инженерный gate, а не выборка мощности;
+не доказывает OS-границу: openat2/admission/room измерены в HEAD-SLICE-R1, а
+кандидат пилота — чистая функция над байтами;
+не заменяет owner-подпись и не делает head активным;
+не доказывает, что сгенерированные тесты полны за пределами этих мутантов;
+N/A в этом отчёте нет: все перечисленные проверки выполнены.

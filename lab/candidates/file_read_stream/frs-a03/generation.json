@@ -1,0 +1,15 @@
+{
+ "active": false,
+ "admission": null,
+ "card_digest": "sha256:61e217828b5d6269360da40f596d68ed262e154f8feb60c0490663642d8dffb9",
+ "generator": "herness-new-tool-v1",
+ "note": "кандидат; не влит в policy/registry и не имеет допуска",
+ "policy_fragment_digest": "sha256:9e84bbcb71f8a0fb281cfd480c69f3db36a942b522127615ccece093d9922167",
+ "schema": "herness-candidate-generation-v1",
+ "source_digest": "sha256:c9b27da3ea51eff9bd4dc518f42add65a1c04321f7500173af1e92e0268c3c5f",
+ "spec_digest": "sha256:fd23ca59396cacc91a839a1728aa780fb995352e77f54417e8ae6f1dc0352204",
+ "spec_id": "frs-a03",
+ "template": "file_read_stream",
+ "template_version": 1,
+ "tests_digest": "sha256:af78e6232568df398a8bc59fe0889e5cae4509ffd97ebe2eaa5914762eb9d2cd"
+}

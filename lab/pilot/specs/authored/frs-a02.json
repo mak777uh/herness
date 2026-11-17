@@ -1,0 +1,30 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a02",
+ "template": "file_read_stream",
+ "title": "две строки и доказанный EOF",
+ "line_count": 5,
+ "max_bytes_read": 4096,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "616c7068610a626574610a",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "616c706861",
+     "62657461"
+    ],
+    "bytes_read": 11,
+    "bytes_received": 11,
+    "truncated": false,
+    "stop_reason": "eof"
+   }
+  }
+ ]
+}

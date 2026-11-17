@@ -1,0 +1,1 @@
+{"cases":[{"expect":{"code":"K4_RESOURCE_LIMIT","outcome":"error"},"id":"main","input_hex":"610a"}],"data_class":"model_visible","id":"frs-h05","line_count":1,"max_bytes_read":1,"path":["fixtures","case.txt"],"schema":"herness-tool-spec-v1","template":"file_read_stream","title":"max_bytes_read=1 меньше первой строки: K4"}

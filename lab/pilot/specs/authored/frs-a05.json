@@ -1,0 +1,42 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-a05",
+ "template": "file_read_stream",
+ "title": "срез посреди второй строки: byte_cap, не K4",
+ "line_count": 5,
+ "max_bytes_read": 10,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "61610a6262626262620a63630a",
+   "line_count": 5,
+   "max_bytes_read": 10,
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "6161",
+     "626262626262"
+    ],
+    "bytes_read": 10,
+    "bytes_received": 10,
+    "truncated": true,
+    "stop_reason": "byte_cap"
+   }
+  },
+  {
+   "id": "schema-zero-cap",
+   "input_hex": "61610a",
+   "line_count": 5,
+   "max_bytes_read": 0,
+   "expect": {
+    "outcome": "error",
+    "code": "S1_SCHEMA"
+   }
+  }
+ ]
+}

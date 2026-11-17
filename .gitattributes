@@ -12,6 +12,13 @@
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
 
+# кандидаты генератора: source.rs/tests.rs сравниваются с выводом генератора байт-в-байт,
+# CRLF на checkout сломал бы --check и generation_digest
+lab/candidates/** text eol=lf
+# свидетельства, digest которых зафиксирован в пре-регистрациях (LF-байты до прогона)
+research/outputs/HEAD-SLICE-R1-2026-11-17.txt text eol=lf
+research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt text eol=lf
+
 # бинарь
 *.zstd binary
 *.png binary

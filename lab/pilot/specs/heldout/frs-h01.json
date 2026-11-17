@@ -1,0 +1,31 @@
+{
+ "schema": "herness-tool-spec-v1",
+ "id": "frs-h01",
+ "template": "file_read_stream",
+ "title": "пустые строки сохраняются",
+ "line_count": 3,
+ "max_bytes_read": 100,
+ "path": [
+  "fixtures",
+  "case.txt"
+ ],
+ "data_class": "model_visible",
+ "cases": [
+  {
+   "id": "main",
+   "input_hex": "0a0a780a",
+   "expect": {
+    "outcome": "ok",
+    "lines_hex": [
+     "",
+     "",
+     "78"
+    ],
+    "bytes_read": 4,
+    "bytes_received": 4,
+    "truncated": true,
+    "stop_reason": "line_cap"
+   }
+  }
+ ]
+}
