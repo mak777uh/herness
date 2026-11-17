@@ -16,7 +16,7 @@
 [`ef3828871f1c25e093cce7b80ec22e0928a0660e`](https://github.com/mak777uh/herness/tree/ef3828871f1c25e093cce7b80ec22e0928a0660e)
 (handoff; R5 — `c2fc552`, R4 — `4d1fae5`, evidence — `ded2cf2`, починенный checker — `ae926ef`,
 сырые ответы R5 байт-в-байт — `9c8af80`, R6-бриф — `09a6acf`, сырые ответы R6 и синтез — `3d988f8`,
-сырые ответы R7 и синтез — `c63f3b8`, бриф R8 — следующий коммит).
+сырые ответы R7 и синтез — `c63f3b8`, бриф R8 и handoff — `e5182b7`).
 **Предыдущая точка:** `b22eaec` (rolling-карта).
 **Главные артефакты:** [`docs/DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md) —
 решения владельца Q1–Q10; [`docs/R7-SYNTHESIS.md`](R7-SYNTHESIS.md) — синтез пяти ответов R7
@@ -357,10 +357,10 @@ git ls-remote --heads origin main
 git status --short
 ```
 
-Ожидание: HEAD и `origin/main` — `c63f3b8` или следующий коммит с R8/handoff; R7 evidence —
-`c63f3b8`, R6-бриф — `09a6acf`, R5 — `c2fc552`, R4 — `4d1fae5`; синтез и сырые ответы —
-в коммитах после `b22eaec`. В status только pre-existing CRLF-модификации, которых мы не
-трогали. **Не делать `git add -A`.** Добавлять только конкретные новые файлы.
+Ожидание: HEAD и `origin/main` — `e5182b7` или следующий docs-коммит после него
+(R7 evidence — `c63f3b8`); R6-бриф — `09a6acf`, R5 — `c2fc552`, R4 — `4d1fae5`; синтез и
+сырые ответы — в коммитах после `b22eaec`. В status только pre-existing CRLF-модификации,
+которых мы не трогали. **Не делать `git add -A`.** Добавлять только конкретные новые файлы.
 
 ### 4.2. Документы
 

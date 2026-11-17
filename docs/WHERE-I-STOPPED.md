@@ -2,7 +2,7 @@
 
 > **Обновление 17.11.2026, после R7.** Актуальный handoff —
 > [`docs/SELF-TOOLING-2026-11-16.md`](SELF-TOOLING-2026-11-16.md).
-> HEAD на момент обновления `c63f3b8` (R7 evidence; плюс следующий коммит с R8 и handoff);
+> HEAD на момент обновления `e5182b7` (R7 evidence — `c63f3b8`; R8 и handoff — `e5182b7`);
 > R6-бриф — `09a6acf`; R7-бриф — `0a19c3c`; R5 — `c2fc552`; R4 — `4d1fae5`.
 > Пять сырых ответов R7 сохранены байт-в-байт —
 > [`docs/research/external/`](research/external/README.md); синтез —
