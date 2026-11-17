@@ -13,8 +13,8 @@
 //! коммита. Результат без предшествующего вызова — дефект, а не мелочь: именно так в журналах
 //! появляются события, которых не было.
 
+use std::io::BufRead;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::OnceLock;
 
 use crate::journal::{Journal, Kind};
@@ -279,45 +279,47 @@ fn record(
     Ok(())
 }
 
-/// Инструмент `seal`: запечатать файл, переиспользовав себя же (режим `seal`).
 /// Признак «мы уже внутри цикла». Ставится дочерним процессам, чтобы они не запускали второй.
+/// Сам `seal` больше не порождает ребёнка: отпечаток считается в текущем процессе.
 pub const LOOP_GUARD: &str = "HS_LOOP_ACTIVE";
 
-fn tool_seal(arg: &str) -> Result<String, String> {
-    // Посредник: политика решает, можно ли запечатать этот файл.
-    {
-        let target = resolve_in(arg, &workspace_root())?;
-        let resource = resource_of(&target, &workspace_root(), "file")
-            .ok_or_else(|| "S6_CLOSURE_BREACH: путь вне корня".to_string())?;
-        if !policy_allows("seal", "seal", &resource) {
-            return Err(format!("S6_CLOSURE_BREACH: политика не разрешает запечатать: {resource}"));
+/// Объектный отказ: отсутствие и нечитаемость названы кодом, а не общим текстом.
+fn object_error(path: &Path, error: std::io::Error) -> String {
+    match error.kind() {
+        std::io::ErrorKind::NotFound => format!("S10_NOT_FOUND: нет {}", path.display()),
+        std::io::ErrorKind::InvalidData => {
+            format!("S12_ENCODING: {} не UTF-8 ({error})", path.display())
         }
+        _ => format!("не прочитать {}: {error}", path.display()),
     }
-    let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
-    let mut command = Command::new(exe);
-    command.arg("seal").arg(arg).env(LOOP_GUARD, "1");
-    // HS_TOOL: только инструмент просит ребёнка сказать вслух про фильтр. Замер стоимости
-    // запуска (20 «seal» подряд) идёт без этой переменной, иначе журнал забивается шумом.
-    command.env("HS_TOOL", "1");
-    // Фильтр ставит сам ребёнок первой строкой (`harden_self`): `pre_exec` в нашем ядре не
-    // работает (F-0024), а без фильтра «инструмент в песочнице» был бы только словом.
-    let output = command
-        .output()
-        .map_err(|error| format!("не запустить инструмент: {error}"))?;
-    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if output.status.success() {
-        // Граница видна в журнале: если фильтр не встал, это часть результата, а не слух.
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let note = if stderr.contains("фильтр UDP не поставлен") {
-            " [песочница: фильтра нет, ядро без seccomp]"
-        } else {
-            ""
-        };
-        Ok(format!("{stdout}{note}"))
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        Err(format!("код {:?}: {stdout}{stderr}", output.status.code()))
+}
+
+/// Инструмент `seal`: отпечаток файла без второго процесса.
+///
+/// Раньше `seal` запускал сам себя через `current_exe` в режиме `seal`. Это второй экземпляр
+/// в admitted-пути и лишняя точка, где дочерний процесс может не унаследовать правило.
+/// Отпечаток — чистая функция от байтов (`crate::seal_hash`), поэтому считается здесь.
+/// Инструмент остаётся вне первого среза (R8/A01): политика и лимит файла действуют.
+fn tool_seal(arg: &str) -> Result<String, String> {
+    tool_seal_in(arg, &workspace_root())
+}
+
+fn tool_seal_in(arg: &str, workspace: &Path) -> Result<String, String> {
+    let target = resolve_in(arg, workspace)?;
+    let resource = resource_of(&target, workspace, "file")
+        .ok_or_else(|| "S6_CLOSURE_BREACH: путь вне корня".to_string())?;
+    if !policy_allows("seal", "seal", &resource) {
+        return Err(format!("S6_CLOSURE_BREACH: политика не разрешает запечатать: {resource}"));
     }
+    let meta = std::fs::metadata(&target).map_err(|error| object_error(&target, error))?;
+    if !meta.is_file() {
+        return Err(format!("S11_NOT_REGULAR: не обычный файл: {}", target.display()));
+    }
+    if meta.len() > MAX_FILE {
+        return Err(format!("K4_RESOURCE_LIMIT: файл больше {MAX_FILE} байт"));
+    }
+    let text = std::fs::read_to_string(&target).map_err(|error| object_error(&target, error))?;
+    Ok(crate::seal_hash(&text))
 }
 
 /// Выход в сеть для агента (ADR-0054): `net search|open|links|follow`.
@@ -362,7 +364,11 @@ fn tool_net(arg: &str) -> Result<String, String> {
     link.net_request(request_line)
 }
 
-/// Диагностический инструмент: проверить, что правило песочницы унаследовано процессом.
+/// Диагностический инструмент: проверить правило песочницы в текущем процессе.
+///
+/// Раньше проба запускала себя же (`current_exe` + режим `sandbox-probe`). Это второй
+/// экземпляр в admitted-пути; теперь `probe`/`reach` вызываются напрямую, а `netprobe`
+/// остаётся вне первого среза (R8/A01) — его правила и адрес проверяет политика.
 fn tool_netprobe(arg: &str) -> Result<String, String> {
     // Посредник: политика решает, к какому адресу можно обращаться.
     // Адрес берётся из аргумента; пустой — значит мост по умолчанию.
@@ -371,36 +377,25 @@ fn tool_netprobe(arg: &str) -> Result<String, String> {
     if !policy_allows("netprobe", "net", &resource) {
         return Err(format!("политика не разрешает обращение: {resource}"));
     }
-    let exe = std::env::current_exe().map_err(|error| format!("нет своего пути: {error}"))?;
-    let shown = exe.display().to_string();
-    let mut command = Command::new(&exe);
-    // Адрес передаётся пробе: она делает настоящий TCP-connect, а не только проверяет
-    // фильтр сокетов (план этап 1.4).
-    command
-        .arg("sandbox-probe")
-        .arg(address)
-        .env(LOOP_GUARD, "1");
-    let output = command
-        .output()
-        .map_err(|error| {
-            let meta = std::fs::metadata(&shown)
-                .map(|m| format!("{} байт", m.len()))
-                .unwrap_or_else(|e| format!("метаданных нет: {e}"));
-            format!("не запустить пробу {shown} ({meta}): {error}")
-        })?;
-    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    // Обе строки, а не только первая: «фильтр работает» и «адрес доступен» — разные ответы.
-    let line = stdout
-        .lines()
-        .filter(|line| line.starts_with("sandbox:") || line.starts_with("reach:"))
-        .collect::<Vec<_>>()
-        .join("; ");
-    let line = if line.is_empty() { "sandbox: (нет строки)".to_string() } else { line };
-    if output.status.success() {
-        Ok(line)
-    } else {
-        Err(format!("проба вернула {:?}: {line}", output.status.code()))
+    let checks = crate::sandbox::probe()?;
+    let mut all_ok = true;
+    let mut parts: Vec<String> = Vec::new();
+    for (name, ok) in checks {
+        if !ok {
+            all_ok = false;
+        }
+        parts.push(format!("{name}: {}", if ok { "да" } else { "НЕТ" }));
     }
+    let mut out = format!("sandbox: {}", parts.join(", "));
+    // Вторая строка отвечает на другой вопрос: не «работает ли фильтр», а «доступен ли адрес».
+    match crate::sandbox::reach(address) {
+        Ok(()) => out.push_str(&format!("\nreach: {address} доступен")),
+        Err(error) => {
+            out.push_str(&format!("\nreach: {address} недоступен ({error})"));
+            all_ok = false;
+        }
+    }
+    if all_ok { Ok(out) } else { Err(out) }
 }
 
 /// Пределы инструментов: лучше честный обрезанный ответ, чем съеденная память.
@@ -408,18 +403,39 @@ pub const MAX_FILES: usize = 500;
 pub const MAX_DEPTH: usize = 4;
 pub const MAX_FILE: u64 = 1024 * 1024;
 pub const MAX_MATCHES: usize = 40;
-pub const MAX_READ: usize = 24 * 1024;
+/// Потолок выдачи `read` в байтах. Отдельно от `MAX_FILE`: одна строка не должна вытеснить
+/// весь ответ, даже если файл в пределах лимита.
+pub const READ_OUTPUT: usize = 8 * 1024;
 
 fn skip_dir(name: &str) -> bool {
     matches!(name, ".git" | "target" | "node_modules" | "__pycache__" | ".venv")
 }
 
-fn collect_files(dir: &Path, depth: usize, out: &mut Vec<std::path::PathBuf>) {
+fn collect_files(
+    dir: &Path,
+    depth: usize,
+    out: &mut Vec<std::path::PathBuf>,
+    problems: &mut Vec<String>,
+) {
     if depth > MAX_DEPTH || out.len() >= MAX_FILES {
         return;
     }
-    let Ok(entries) = std::fs::read_dir(dir) else { return };
-    let mut items: Vec<_> = entries.flatten().collect();
+    let entries = match std::fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(error) => {
+            problems.push(format!("{}: каталог не прочитан ({error})", dir.display()));
+            return;
+        }
+    };
+    let mut items = Vec::new();
+    for entry in entries {
+        match entry {
+            Ok(entry) => items.push(entry),
+            Err(error) => {
+                problems.push(format!("{}: запись не прочитана ({error})", dir.display()));
+            }
+        }
+    }
     items.sort_by_key(|entry| entry.file_name());
     for entry in items {
         if out.len() >= MAX_FILES {
@@ -430,11 +446,14 @@ fn collect_files(dir: &Path, depth: usize, out: &mut Vec<std::path::PathBuf>) {
         match entry.file_type() {
             Ok(kind) if kind.is_dir() => {
                 if !skip_dir(&name) {
-                    collect_files(&path, depth + 1, out);
+                    collect_files(&path, depth + 1, out, problems);
                 }
             }
             Ok(kind) if kind.is_file() => out.push(path),
-            _ => {}
+            Ok(_) => {}
+            Err(error) => {
+                problems.push(format!("{}: тип записи не определён ({error})", path.display()));
+            }
         }
     }
 }
@@ -681,6 +700,26 @@ fn resolve_in(arg: &str, root: &Path) -> Result<PathBuf, String> {
     Ok(path)
 }
 
+/// Найти `needle_lower` в `line` без учёта регистра; вернуть номер СИМВОЛА начала.
+///
+/// Почему не `line.to_lowercase().find(...)`: lowercasing меняет длину (`İ` → `i` + точка),
+/// поэтому байтовая позиция в lowercased строке не является границей символа исходной.
+/// Срез по такой позиции паниковал на Unicode. Здесь каждая lowercase-буква помнит, из
+/// какого символа исходной строки она получилась.
+fn find_ci(line: &str, needle_lower: &str) -> Option<usize> {
+    let mut lowered = String::new();
+    let mut origin: Vec<usize> = Vec::new();
+    for (index, ch) in line.chars().enumerate() {
+        for low in ch.to_lowercase() {
+            lowered.push(low);
+            origin.push(index);
+        }
+    }
+    let byte = lowered.find(needle_lower)?;
+    let start_lower = lowered[..byte].chars().count();
+    origin.get(start_lower).copied()
+}
+
 /// `search <путь> <подстрока>`: искать по содержимому, без shell и без внешних программ.
 ///
 /// Зачем своей реализацией, а не через `grep`: в комнате нет ни shell, ни coreutils, а тащить
@@ -710,9 +749,11 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     if needle.chars().count() < 2 {
         return Err("подстрока короче двух символов: слишком много совпадений".to_string());
     }
+    // Ошибки обхода не растворяются в «0 найдено»: каждая попадает в отдельную строку ответа.
+    let mut problems: Vec<String> = Vec::new();
     let mut files = Vec::new();
     if root.is_dir() {
-        collect_files(&root, 0, &mut files);
+        collect_files(&root, 0, &mut files, &mut problems);
     } else if root.is_file() {
         files.push(root.clone());
     } else {
@@ -721,34 +762,49 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     let scanned = files.len();
     let mut matches: Vec<String> = Vec::new();
     let mut truncated = false;
+    let lower_needle = needle.to_lowercase();
     // Считаем ВСЕ совпадения и все разные варианты, даже когда показываем только сорок:
     // иначе ответ «сколько разных» получается заниженным (замер: 3 вместо 4).
     let mut total = 0usize;
     let mut tails: Vec<String> = Vec::new();
     for path in files {
-        let Ok(meta) = std::fs::metadata(&path) else { continue };
-        if meta.len() > MAX_FILE {
-            continue;
-        }
-        let Ok(text) = std::fs::read_to_string(&path) else { continue };
-        for (index, line) in text.lines().enumerate() {
-            // Регистр не должен менять ответ: «usually» и «Usually» — одно и то же слово для
-            // человека и для задачи (F-0067).
-            let lower_line = line.to_lowercase();
-            let lower_needle = needle.to_lowercase();
-            if !lower_line.contains(&lower_needle) {
+        let meta = match std::fs::metadata(&path) {
+            Ok(meta) => meta,
+            Err(error) => {
+                problems.push(format!("{}: метаданные не прочитаны ({error})", path.display()));
                 continue;
             }
+        };
+        if meta.len() > MAX_FILE {
+            problems.push(format!("{}: больше {MAX_FILE} байт — не прочитан", path.display()));
+            continue;
+        }
+        let text = match std::fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(error) if error.kind() == std::io::ErrorKind::InvalidData => {
+                problems.push(format!("S12_ENCODING: {} не UTF-8", path.display()));
+                continue;
+            }
+            Err(error) => {
+                problems.push(format!("{}: не прочитан ({error})", path.display()));
+                continue;
+            }
+        };
+        for (index, line) in text.lines().enumerate() {
+            // Регистр не должен менять ответ: «usually» и «Usually» — одно и то же слово для
+            // человека и для задачи (F-0067). Позиция считается по символам исходной строки.
+            let Some(start) = find_ci(line, &lower_needle) else {
+                continue;
+            };
             total += 1;
-            if let Some(position) = lower_line.find(&lower_needle) {
-                let tail: String = line[position..]
-                    .split_whitespace()
-                    .take(2)
-                    .collect::<Vec<_>>()
-                    .join(" ");
-                if !tails.iter().any(|existing| existing == &tail) {
-                    tails.push(tail);
-                }
+            let rest: String = line.chars().skip(start).collect();
+            let tail: String = rest
+                .split_whitespace()
+                .take(2)
+                .collect::<Vec<_>>()
+                .join(" ");
+            if !tails.iter().any(|existing| existing == &tail) {
+                tails.push(tail);
             }
             if matches.len() < MAX_MATCHES {
                 // Окно показа ДОЛЖНО содержать само совпадение (F-SEARCH-1, 09.11.2026).
@@ -762,11 +818,8 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
                 // от начала строки; если нет — от совпадения с многоточием.
                 let trimmed = line.trim();
                 let chars: Vec<char> = trimmed.chars().collect();
-                let hit_char = trimmed
-                    .to_lowercase()
-                    .find(&needle.to_lowercase())
-                    .map(|byte| trimmed[..byte].chars().count())
-                    .unwrap_or(0);
+                let leading = line.chars().take_while(|ch| ch.is_whitespace()).count();
+                let hit_char = start.saturating_sub(leading);
                 let shown: String = if chars.len() <= 160 {
                     trimmed.to_string()
                 } else if hit_char < 120 {
@@ -792,8 +845,13 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
             }
         }
     }
+    let mut errors = String::new();
+    if !problems.is_empty() {
+        let shown = problems.iter().take(8).cloned().collect::<Vec<_>>().join(" | ");
+        errors = format!("\nошибки ({}): {shown}", problems.len());
+    }
     if matches.is_empty() {
-        return Ok(format!("найдено 0 в {scanned} файлах"));
+        return Ok(format!("найдено 0 в {scanned} файлах{errors}"));
     }
     // Сводка по файлам: при 20 файлах модели нужно сначала понять, какие читать, иначе она
     // листает подряд и тратит шаги (замер: 5 из 6 задач MuSiQue не дошли до ответа).
@@ -812,9 +870,6 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
         .take(8)
         .map(|(name, count)| format!("{name} ({count})"))
         .collect();
-    if matches.is_empty() {
-        return Ok(format!("найдено 0 в {scanned} файлах"));
-    }
     let mut out = format!(
         "найдено {} в {scanned} файлах{}:",
         total,
@@ -834,6 +889,7 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
         out.push('\n');
         out.push_str(&line);
     }
+    out.push_str(&errors);
     Ok(out)
 }
 
@@ -857,12 +913,21 @@ fn tool_list_in(arg: &str, workspace: &Path) -> Result<String, String> {
     // (задача о подсчёте инструментов: модель его не нашла).
     let mut dirs: Vec<String> = Vec::new();
     let mut files: Vec<String> = Vec::new();
-    for entry in entries.flatten() {
-        let meta = entry.metadata().ok();
+    for entry in entries {
+        let entry = entry
+            .map_err(|error| format!("не прочитать запись {}: {error}", root.display()))?;
         let name = entry.file_name().to_string_lossy().to_string();
-        match entry.file_type() {
-            Ok(kind) if kind.is_dir() => dirs.push(format!("{name}/\tкаталог")),
-            _ => files.push(format!("{name}\t{}", meta.map(|m| m.len()).unwrap_or(0))),
+        let kind = entry
+            .file_type()
+            .map_err(|error| format!("нет типа записи {name}: {error}"))?;
+        if kind.is_dir() {
+            dirs.push(format!("{name}/\tкаталог"));
+        } else {
+            // Битая запись — отказ, а не «файл размера 0»: молчаливый ноль выглядит как факт.
+            let meta = entry
+                .metadata()
+                .map_err(|error| format!("нет метаданных {name}: {error}"))?;
+            files.push(format!("{name}\t{}", meta.len()));
         }
         if dirs.len() + files.len() >= 200 {
             files.push("… (обрезано)".to_string());
@@ -902,32 +967,63 @@ fn tool_read_in(arg: &str, workspace: &Path) -> Result<String, String> {
     if !policy_allows("read", "read", &resource) {
         return Err(format!("S6_CLOSURE_BREACH: политика не разрешает чтение: {resource}"));
     }
-    let meta = std::fs::metadata(&path).map_err(|error| format!("нет файла: {error}"))?;
-    if meta.len() > MAX_FILE {
-        return Err(format!("файл больше {MAX_FILE} байт"));
+    let meta = std::fs::metadata(&path).map_err(|error| object_error(&path, error))?;
+    if !meta.is_file() {
+        return Err(format!("S11_NOT_REGULAR: не обычный файл: {}", path.display()));
     }
-    let text = std::fs::read_to_string(&path).map_err(|error| format!("не прочитать: {error}"))?;
-    let total = text.lines().count();
+    if meta.len() > MAX_FILE {
+        return Err(format!("K4_RESOURCE_LIMIT: файл больше {MAX_FILE} байт"));
+    }
+    // Потоковое чтение: файл не материализуется целиком, а строка проверяется ДО добавления.
+    // Иначе одна длинная строка могла переполнить ответ, а «файл прочитан целиком» было бы
+    // сказано без чтения хвоста.
+    let file = std::fs::File::open(&path).map_err(|error| object_error(&path, error))?;
+    let mut reader = std::io::BufReader::new(file);
     let mut out = String::new();
+    let mut bytes = Vec::new();
+    let mut total = 0usize;
     let mut next = from;
-    for (index, line) in text.lines().enumerate().skip(from.saturating_sub(1)) {
-        if out.len() >= MAX_READ {
+    let mut stopped = false;
+    loop {
+        bytes.clear();
+        let read = reader
+            .read_until(b'\n', &mut bytes)
+            .map_err(|error| format!("не прочитать {}: {error}", path.display()))?;
+        if read == 0 {
             break;
         }
-        out.push_str(&format!("{}: {}\n", index + 1, line));
-        next = index + 2;
+        total += 1;
+        if total < from {
+            continue;
+        }
+        let raw = std::str::from_utf8(&bytes)
+            .map_err(|_| format!("S12_ENCODING: {} не UTF-8 (строка {total})", path.display()))?;
+        let line = raw.strip_suffix('\n').unwrap_or(raw);
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        let rendered = format!("{total}: {line}\n");
+        if out.len() + rendered.len() > READ_OUTPUT {
+            if out.is_empty() {
+                return Err(format!(
+                    "K4_RESOURCE_LIMIT: строка {total} длиннее потолка выдачи {READ_OUTPUT} байт"
+                ));
+            }
+            stopped = true;
+            next = total;
+            break;
+        }
+        out.push_str(&rendered);
+        next = total + 1;
     }
     if out.is_empty() {
         return Ok(format!("строк {from} и далее нет: в файле {total} строк"));
     }
-    if next <= total {
+    if stopped {
         out.push_str(&format!(
-            "… (обрезано; всего {total} строк, продолжи: read {name} {next})"
+            "… (обрезано по {READ_OUTPUT} байт; продолжи: read {name} {next})"
         ));
     } else {
-        // Файл прочитан целиком: сказать это явно и запретить искать то же самое.
+        // Файл прочитан до EOF: сказать это явно и запретить искать то же самое.
         // Найдено прогоном S20: файл прочитан, потом восемь шагов поиска того же файла.
-        // Это не подсказка ответа, а граница: повторный поиск прочитанного — трата шагов.
         out.push_str(&format!(
             "(файл прочитан целиком, {total} строк; повторно искать его не нужно — ответ уже здесь)"
         ));
@@ -1195,17 +1291,32 @@ pub fn derive_status(events: &[Event]) -> &'static str {
     "done-без-опоры"
 }
 
+/// Единая точка полномочий: можно ли запускать инструмент в этом прогоне.
+///
+/// Сейчас состояние ещё не выводится из реестра (этап 8): действуют только грант прогона
+/// и запрет `head`. Функция существует, чтобы этап 8 заменил ОДНО тело, а не разбросанные
+/// проверки; тестового флага, обходящего её, нет.
+fn tool_authority(name: &str, granted: Option<&[String]>) -> Result<(), String> {
+    if let Some(list) = granted {
+        if !list.iter().any(|tool| tool == name) {
+            return Err(format!("инструмент {name} не выдан в этом прогоне"));
+        }
+    }
+    if name == "head" {
+        // head существует как candidate-шаблон, но не допущен: без admission и derived right
+        // запуск обязан отказать. Это не «выключенный флаг», а состояние допуска (R8/Q18).
+        return Err("S13_TOOL_INACTIVE: head не допущен в этом прогоне".to_string());
+    }
+    Ok(())
+}
+
 /// Инструмент с проверкой выдачи: что не выдано в этом прогоне, то отказ, а не тихий вызов.
 ///
 /// Зачем: набор инструментов — это полномочие, а не удобство. Прогону, который должен только
 /// читать, незачем держать `write` и `seal` включёнными «на всякий случай»: модель может ими
 /// воспользоваться, и тогда граница прогона определяется её настроением, а не объявлением.
 fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<String, String> {
-    if let Some(list) = granted {
-        if !list.iter().any(|tool| tool == name) {
-            return Err(format!("инструмент {name} не выдан в этом прогоне"));
-        }
-    }
+    tool_authority(name, granted)?;
     match name {
         "seal" => tool_seal(arg),
         "netprobe" => tool_netprobe(arg),
@@ -1214,9 +1325,6 @@ fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<Strin
         "list" => tool_list(arg),
         "read" => tool_read(arg),
         "write" => tool_write(arg),
-        // head существует как candidate-шаблон, но не допущен: без admission и derived right
-        // запуск обязан отказать. Это не «выключенный флаг», а состояние допуска (R8/Q18).
-        "head" => Err("S13_TOOL_INACTIVE: head не допущен в этом прогоне".to_string()),
         other => Err(format!("неизвестный инструмент: {other}")),
     }
 }
@@ -2612,6 +2720,35 @@ mod tests {
     }
 
     #[test]
+    fn поиск_не_режет_строку_по_чужой_позиции() {
+        // `İ` в нижнем регистре занимает больше байт, чем в исходной строке. Раньше позиция
+        // находилась в lowercased строке и применялась к исходной: срез падал на границе
+        // символа. Теперь позиция считается по символам исходной строки.
+        let dir = fixture("search-unicode");
+        std::fs::write(dir.join("u.md"), "İstanbul МАРКЕР\n").unwrap();
+        let out = tool_search_in("u.md МАРКЕР", &dir).unwrap();
+        assert!(out.contains("u.md:1:"), "{out}");
+        assert!(out.contains("İstanbul"), "{out}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn поиск_называет_нечитаемые_файлы() {
+        let dir = fixture("search-problems");
+        std::fs::write(dir.join("big.md"), vec![b'x'; MAX_FILE as usize + 1]).unwrap();
+        let out = tool_search_in(". МАРКЕР", &dir).unwrap();
+        assert!(out.contains("найдено 2"), "{out}");
+        assert!(out.contains("ошибки (1)"), "{out}");
+        assert!(out.contains("big.md"), "{out}");
+
+        std::fs::write(dir.join("bad.bin"), [0xff, 0xfe, 0x4d]).unwrap();
+        let bad = tool_search_in("bad.bin МАРКЕР", &dir).unwrap();
+        assert!(bad.starts_with("найдено 0"), "{bad}");
+        assert!(bad.contains("S12_ENCODING"), "{bad}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn чтение_даёт_номера_строк() {
         let dir = fixture("read");
         let out = tool_read_in("a.md", &dir).unwrap();
@@ -2633,12 +2770,72 @@ mod tests {
     }
 
     #[test]
+    fn чтение_останавливается_до_потолка_выдачи() {
+        let dir = fixture("read-cap-lines");
+        let mut body = String::new();
+        for index in 1..=1000 {
+            body.push_str(&format!("строка {index:04}: значение\n"));
+        }
+        std::fs::write(dir.join("big.md"), body).unwrap();
+        let out = tool_read_in("big.md", &dir).unwrap();
+        assert!(out.starts_with("1: строка 0001"), "{out}");
+        assert!(out.contains("обрезано по"), "{out}");
+        assert!(!out.contains("1000: строка"), "{out}");
+        // Потолок относится к файловым строкам; служебный хвост добавляется после него.
+        assert!(out.len() <= READ_OUTPUT + 200, "выдача {} байт", out.len());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn чтение_не_переполняется_одной_строкой() {
+        let dir = fixture("read-cap-line");
+        let long = "х".repeat(READ_OUTPUT);
+        std::fs::write(dir.join("long.md"), format!("{long}\n")).unwrap();
+        let error = tool_read_in("long.md", &dir).unwrap_err();
+        assert!(error.contains("K4_RESOURCE_LIMIT"), "{error}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn чтение_называет_объектные_отказы() {
+        let dir = fixture("read-objects");
+        let missing = tool_read_in("нет.md", &dir).unwrap_err();
+        assert!(missing.contains("S10_NOT_FOUND"), "{missing}");
+        let not_file = tool_read_in(".", &dir).unwrap_err();
+        assert!(not_file.contains("S11_NOT_REGULAR"), "{not_file}");
+        std::fs::write(dir.join("bad.bin"), [0xff, 0xfe, 0x00]).unwrap();
+        let bad = tool_read_in("bad.bin", &dir).unwrap_err();
+        assert!(bad.contains("S12_ENCODING"), "{bad}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn список_перечисляет_имена_и_типы() {
         let dir = fixture("list");
         std::fs::create_dir_all(dir.join("work")).unwrap();
         let out = tool_list_in(".", &dir).unwrap();
         assert!(out.contains("a.md"), "{out}");
         assert!(out.contains("каталог"), "{out}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn список_явно_отказывает_на_не_каталоге() {
+        let dir = fixture("list-file");
+        let error = tool_list_in("a.md", &dir).unwrap_err();
+        assert!(error.contains("не прочитать"), "{error}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn печать_считается_в_процессе() {
+        let dir = fixture("seal");
+        std::fs::create_dir_all(dir.join("work/sub")).unwrap();
+        std::fs::write(dir.join("work/sealed.md"), "тело\n").unwrap();
+        let expected = crate::seal_hash("тело\n");
+        assert_eq!(tool_seal_in("work/sealed.md", &dir).unwrap(), expected);
+        let error = tool_seal_in("work/sub", &dir).unwrap_err();
+        assert!(error.contains("S11_NOT_REGULAR"), "{error}");
         std::fs::remove_dir_all(&dir).ok();
     }
 

@@ -31,3 +31,44 @@ rc: 1
 Что это НЕ показывает: что после патчей поведение безопасно. Это доказывают Rust-тесты
 этапов 2–4 и `HEAD-SLICE-R1` с восемью критическими контролями; здесь — только факт
 исходного состояния и граница «до/после».
+
+## После этапов 2–4 (рабочее дерево, до коммита этапа 4)
+
+Команда: `python tests/test_r8_repros.py`
+rc: 1 (ожидаемо: два репро закрываются этапом 8)
+
+```
+[ok]   REPRO-POLICY-COUNT: один источник, 23 правила
+[ok]   REPRO-POLICY-BANG: `!` реализован
+[ok]   REPRO-RESOLVE-READ: resolve_in не решает за инструмент
+[ok]   REPRO-WRITE-TRUNC: create-new через O_EXCL
+[ok]   REPRO-WRITE-XDEV: NO_XDEV и NO_MAGICLINKS стоят
+[ok]   REPRO-WRITE-POLICY-BEFORE-OPEN: policy видит нормализованный путь
+[ok]   REPRO-READ-WHOLE: read не читает файл целиком
+[ok]   REPRO-READ-CAP: потолок выдачи отдельный
+[ok]   REPRO-SEARCH-SILENT: ошибки search явные
+[ok]   REPRO-SEARCH-UNICODE: поиск не режет строку по чужой позиции
+[ok]   REPRO-LIST-FLATTEN: ошибки list явные
+[ok]   REPRO-LIST-DOUBLE: один resolve
+[ok]   REPRO-SELF-EXEC: self-exec убран
+[FAIL] REPRO-ADMISSION: run_tool_g не проверяет admission/derived active: любой инструмент запускается по имени
+[FAIL] REPRO-HEAD-CARD: две карточки с одним id='head' в разных форматах: неизвестно, какая закон
+[ok]   REPRO-REFUSAL-V3: v3, 28 кодов
+[ok]   REPRO-SCHEMA-ENUM: enum == словарь
+[ok]   REPRO-DRAFT-ENUM: карточка использует только словарь
+
+проверок: 18, провалов: 2
+```
+
+Два оставшихся провала — не регресс: `REPRO-ADMISSION` и `REPRO-HEAD-CARD` относятся к
+этапу 8 (registry events, derived `active`, одна карточка `head`). Этап 4 закрыл семь
+проверок: потоковое чтение с потолком 8192 B, явные ошибки search/list, Unicode-позиция,
+self-exec `seal`/`netprobe`.
+
+Поведенческая проверка: `python bin/rust_tests.py` → `89 passed; 0 failed` (было 82:
+добавлены тесты на потолок, длинную строку, объектные коды, Unicode, явные ошибки и
+`seal` в процессе).
+
+Гейты: `python bin/hs.py gates` → оценено 31 из 33, N/A 2 (журналы, индекс прогонов);
+пробы поймали 17 из 17; политика — один источник, 23 правила.
+
