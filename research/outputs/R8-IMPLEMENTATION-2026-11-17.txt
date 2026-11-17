@@ -1,0 +1,71 @@
+# R8 — исполнение и проверки (17.11.2026)
+
+Вердикт: PASS для этапов 0–9 плана R8.
+Это инженерный отчёт, не доказательство безопасности и не approval внешних моделей.
+Настоящий owner-ключ не создавался; ни один инструмент не активирован; `K9_proven` нет.
+
+## Коммиты
+
+| этап | коммит | содержание |
+|---|---|---|
+| 0 | e82dc22 | решения R8, S02, словарь отказов v3, карточки |
+| 1 | d95c533 | красные репро и evidence |
+| 2 | d95c533 | policy: один источник, `!`, сегменты, parity-гейт |
+| 3 | 96470e9 | write: create-new `O_EXCL`, `NO_XDEV`, границы |
+| 4 | 318eb9e | legacy read/search/list и единая точка authority |
+| 5 | 729fee8 | KVM_RUN: QMP, tracepoint, отрицательный контроль |
+| 6 | f790ef5 | admission v0 и promoter |
+| 7 | 8d1f542 | `file_read_stream` и HEAD-SLICE-R1 — PASS |
+| 8 | a6e7292 | реестр: genesis events, производный `active` |
+| 9 | 92963cf | пилот PILOT-GENERATOR-R1 — PASS |
+
+## Полный прогон проверок
+
+Команда: `python bin/hs.py gates`
+rc: 0
+Профиль auto: оценено 31 из 33 гейтов; N/A 2 — «журналы» (нет `runs/`) и «индекс
+прогонов» (нет `runs/accept/*.bin`). N/A — не зелёный: эти проверки не состоялись.
+Все оценённые гейты: 0 проблем; пробы: поймали 17 из 17.
+
+| команда | rc | итог |
+|---|---|---|
+| `python bin/gate_rust.py --rust` | 0 | rust (полный): 0 проблем |
+| `python bin/rust_tests.py` | 0 | тестов пройдено: 120, провалов 0 |
+| `python bin/check_policy_parity.py --check` | 0 | политика: один источник, 23 правила, карточка head не шире политики |
+| `python tests/test_tool_card.py` | 0 | провалов: 0 |
+| `python tests/test_card_atoms.py` | 0 | провалов: 0 |
+| `python tests/test_r8_repros.py` | 0 | проверок: 18, провалов: 0 |
+| `python tests/test_new_tool.py` | 0 | провалов: 0 |
+| `python bin/admission.py --self-test` | 0 | PASS: 23 проверки, test_only=true, active не становится |
+| `python bin/promoter.py --self-test` | 0 | PASS: 9 проверок; Windows verify/store, запуск отказом |
+| `python bin/new_tool.py --all lab/pilot/specs --check` | 0 | спецификаций: 20, провалов: 0 |
+| `python bin/pilot_generator.py --verify` | 0 | пре-регистрация совпадает |
+| `python bin/prereg.py check` | 0 | пре-регистраций: 22, чувствительность 22/22 |
+| `python bin/registry_state.py --check` | 0 | снимок заморожен, цепочка событий цела, active пуст |
+| `python bin/refusal_codes.py --check S12_ENCODING` | 0 | код есть в словаре v3 |
+| `python bin/hs.py lab validate` | 0 | экспериментов 31, следующих гипотез 6 |
+
+## Записанные прогоны, которые не перезапускались
+
+`python bin/head_slice.py --host`, `python bin/head_slice.py --qemu` и
+`python bin/kvm_probe.py --verify` в Stage 10 не перезапускались: они перезаписывают
+`research/outputs/HEAD-SLICE-R1-2026-11-17.txt` и
+`research/kvm/KVM-RUN-2026-11-17.txt` (новые временные пути, время, счётчики). Байты
+HEAD evidence заморожены в `lab/prereg/PILOT-GENERATOR-R1.json`
+(`head_slice_evidence_digest: sha256:49cc6bd0…`); перезапись сломала бы запечатанную
+проверку пилота. Записанные PASS — из Stage 5/7; текущий код проверен
+`python bin/rust_tests.py` (120 тестов, включая `head_slice`) и
+`python bin/pilot_generator.py --verify`. Это не «N/A = зелёный»: evidence существует и
+связано digest'ами, но повторный прогон сознательно не сделан, чтобы не уничтожить
+замороженную связку.
+
+## Что это не доказывает
+
+- что KVM_RUN означает изоляцию комнаты: он доказывает исполнение под KVM, не отсутствие
+  каналов утечки;
+- что HEAD-SLICE-R1 покрывает все инструменты: только `file_read_stream` на
+  синтетической фикстуре с test-only admission;
+- что PILOT-GENERATOR-R1 доказывает безопасность генератора: это инженерный scorecard
+  одного шаблона, не статистика;
+- что promoter проверял настоящую owner-подпись: ключ был test-only;
+- что `head` можно активировать: он остаётся candidate, `active` пуст.
