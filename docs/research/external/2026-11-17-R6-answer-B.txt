@@ -1,0 +1,487 @@
+# R6 — независимый инженерный разбор (внешняя модель)
+
+**Кто отвечает:** внешний ревьюер, совмещаю три ракурса — формальные методы (Lean/бounded model checking), Linux-изоляция и syscall-уровень, криптография допуска/подписей. Ответ — рекомендации, не approval. Приоритет — `P0`; на часть `P1` отвечаю кратко, остальное честно оставляю без ответа.
+
+## 0. Что я реально проверил, а что нет
+
+**Открыл и прочитал (через raw/blob GitHub):**
+
+| файл | коммит | что взял |
+|---|---|---|
+| `docs/CONSTITUTION-v0-2026-11-16.md` | `004249a` | точные K1–K11, юрисдикцию, статусы «не обеспечен/частично», требование негативного контроля на каждый закон |
+| `docs/DECISIONS-R5-2026-11-16.md` | `004249a` | Q1–Q10 полностью |
+| `lab/tools/tool-card-v1.schema.json` | `004249a` | все required-поля, `process_spawn: const false`, `secret_ops: maxItems 0`, `max_processes: const 1`, enum 23 кодов |
+| `lab/tools/drafts/head-v1.draft.json` | `004249a` | слоты, лимиты, 5 примеров, provenance из нулевых хешей |
+| `lab/prereg/HEAD-SLICE-R1.json` | `004249a` | критерий 8/8, kill-criteria, fixture 471 B / 10 строк |
+| `lab/fixtures/model_visible/manifest.json` | `004249a` | `root_ref: room:input`, `fixture_root: fixtures`, `path: head-slice.txt` — **расхождения с карточкой `head` здесь нет**, отображение логическое |
+| `core-rs/src/loopmod.rs` | `9c8af80` | `normalize`, `plain`, `POLICY`, `policy_allows`, `resource_of`, `resource_matches`, `resolve_in`, `tool_seal`, `tool_netprobe`, `tool_net`, `KNOWN_TOOLS`, `parse_step`, константы `MAX_*`, тесты WRITE-SYMLINK-R1 |
+
+**Не проверил и не достраиваю:** тела `tool_read_in` и `write_beneath` (середина файла не попала в выгрузку — про них говорю только то, что видно по вызовам и тестам); `bin/card_atoms.py`, `bin/tool_card.py`, `lab/tools/policy.json`, `registry.jsonl`, scorecard. **Номера строк из брифа (~587/~821/~899) я не подтверждал** — ссылаюсь на имена функций.
+
+**Что исполнил локально (воспроизводимо):** порт `resource_of/resource_matches/policy_allows` на Python, эталонный `file_read_stream` + 30 000 случайных прогонов инвариантов, перебор модели авторитетов, расчёт Уилсона/Клоппера–Пирсона. **Lean и Rust в этой среде не запускались** — соответствующие артефакты помечены как эскизы.
+
+---
+
+## F01. Формальное ядро v0
+
+**ANSWER:** гибрид из трёх слоёв, но **одно** нормативное ядро: Lean 4 + Mathlib для семантики авторитетов и трасс; Kani (bounded model checking) для свойств **реального Rust**; дифференциальные векторы как единственный мост между ними. TLA+/Alloy/Cedar/Rego в v0 не вводить.
+
+**CHOSEN:** Lean 4 — ядро (`Authority`, `Trace`, `allow`); Kani — 3–5 harness на `resource_matches`, `policy_allows`, `resolve_in_fd`, счётчик `bytes_read`; JSON-векторы, сгенерированные `#eval` в Lean, как Rust-тесты. **Отвергнуто:** TLA+ (лайвнесс в v0 не нужен, появится вторая семантика), Alloy (полезен для FSM реестра, но отложить до T01-реализации), Cedar/Rego (это policy-движки, не доказательство; они бы конкурировали с `POLICY` в Rust), экстракция Lean→Rust (нет зрелого пути — не обещать).
+
+**WHY:** цена: Lean-модель на 200–400 строк + Kani-харнесы — это дни, а не месяцы, и у вас уже есть Lean/Mathlib-компетенция. Риск, который покупается: «красивая модель, не связанная с кодом». Он снимается не доказательством, а **тремя механическими связками**: (1) `POLICY` генерируется из `policy.json` кодгеном, а не «ловится гейтом»; (2) векторы из Lean исполняются Rust-тестом; (3) ledger допущений — каждый зазор модель→код имеет id теста.
+
+**ARTIFACT.** Эскиз ядра (алфавит конечный — чтобы `decide` работал; переход к строкам — допущение A1):
+
+```lean
+import Mathlib.Data.Set.Basic
+namespace Herness
+inductive Seg | mnt | work | fixtures | etc | passwd | other (n : Nat)
+  deriving DecidableEq, Repr
+abbrev Path := List Seg
+abbrev Eff  := Path × Seg          -- (объект, действие) в v0: read/write/list
+structure Auth where allowed : Set Eff
+def attenuate (p c : Auth) : Auth := ⟨p.allowed ∩ c.allowed⟩
+theorem attenuate_le_parent (p c : Auth) : (attenuate p c).allowed ⊆ p.allowed :=
+  Set.inter_subset_left
+def TraceOK (a : Auth) (t : List Eff) : Prop := ∀ e ∈ t, e ∈ a.allowed
+theorem delegation_sound (p c : Auth) (t : List Eff)
+    (h : TraceOK (attenuate p c) t) : TraceOK p t :=
+  fun _ he => Set.inter_subset_left (h _ he)      -- K9, статическая половина
+-- политика: default-deny + deny-overrides, как policy_allows в Rust
+structure Rule where tool action : String; pre : Path; deny : Bool
+def hit (r : Rule) (t a : String) (p : Path) : Bool :=
+  (r.tool == t) && (r.action == a) && (r.pre.isPrefixOf p)
+def allow (rs : List Rule) (t a : String) (p : Path) : Bool :=
+  (rs.any (fun r => hit r t a p && !r.deny)) && !(rs.any (fun r => hit r t a p && r.deny))
+theorem no_rules_no_right (t a : String) (p : Path) : allow [] t a p = false := rfl
+end Herness
+```
+
+Таблица «закон → свойство → проверка» (v0):
+
+| закон | статически (Lean/Kani) | на трассе (runtime) | вручную |
+|---|---|---|---|
+| K1/K2 | `allow` не даёт прав вне префикса; Kani: `resolve_in_fd` fail-closed | seccomp/Landlock + openat2-отказы в журнале ядра | соответствие `room:input` ↔ физический каталог |
+| K3 | в модели нет net-эффекта у `file_*` | `CONFIG_NET=n`, seccomp denies `socket*` | правила мостов (v0: мостов нет → N/A) |
+| K4 | Kani: `bytes_read ≤ cap` в цикле | cgroup/RLIMIT/wall-таймер | «сосед не пострадал» — измерение |
+| K5 | тотальность `Result` в шаблоне (тип, не паника) | каждый отказ несёт код из словаря | полнота словаря |
+| K6 | класс — решётка, понижения нет (`max` монотонен) | fail-closed классификация + egress-контроль | классификация реальных данных |
+| K7 | в шаблоне нет clock/random | 3 повтора, байт-в-байт | waiver-обоснования |
+| K8 | — | promoter сверяет хеши | — |
+| K9 | `delegation_sound`, `attenuate_le_*` | в v0 композиций нет → **N/A, не «доказано»** | downstream-цепочки |
+| K10 | генератор не имеет write-эффекта на authority | uid/Landlock/ro-монтирование | — |
+| K11 | — | верификатор подписи + epoch | **решение о допуске — человек по определению** |
+
+Ledger допущений (обязательный файл `lab/formal/ASSUMPTIONS.md`): A1 алфавит путей конечен → тесты на реальные строки; A2 резолюция атомарна и без симлинков → `openat2` + T-R5-01…05; A3 алфавит эффектов полон → seccomp-allowlist + наблюдение F03; A4 один поток → `clone` запрещён фильтром; A5 Ed25519 стойка → **допущение, не доказательство**.
+
+**TESTS:** `decide`-отрицательный контроль в Lean: карточка ребёнка заявляет эффект вне родителя → `TraceOK` ложен; Rust-тест `vectors_from_lean.rs` прогоняет ≥1000 векторов и падает при любом расхождении; Kani-контрпример: путь вне корня → `allow == false`.
+
+**FAILURE MODE:** модель доказана, `POLICY` в Rust правится руками → векторы устаревают, тест зелёный на старом корпусе. Лечится: хеш корпуса в `provenance`, несовпадение = `S5_POLICY_DRIFT`.
+
+**NOT PROVEN:** что Rust = модель; что ядро/openat2/QEMU корректны; что-либо о конкурентности и сайд-каналах. Kani — ограниченная размотка, не полная верификация.
+
+**CONFIDENCE:** medium-high по выбору ядра; medium по трудоёмкости Kani на вашем коде (нужен доступ к телам функций).
+
+---
+
+## F02. `LawRecord-v1`
+
+**ANSWER:** закон — запись с **вычисляемым**, а не заявляемым статусом. Гейт не читает `status` из файла; он выводит его из наличия доказательств. `not_proven` арифметически не превращается в зелёный.
+
+**CHOSEN:** JSON Schema (форма) + детерминированный вычислитель статуса (семантика) + обязательный негативный контроль на каждый закон. Отвергнуто: свободный текст как источник проверки; статус, проставляемый автором записи.
+
+**WHY:** конституция §7.3 уже требует негативный контроль — значит статус без контроля физически не может быть выше `not_proven`. Цена: 11 записей + 11 контролей; риск: «бумажный зелёный», снимается выводом статуса.
+
+**ARTIFACT.**
+
+```json
+{"$id":"https://herness.invalid/schema/law-record-v1.json","type":"object","additionalProperties":false,
+ "required":["schema_version","id","law_version","name","text_ref","jurisdiction","modality","subject",
+             "scope","check","evidence","status_inputs","amendment"],
+ "properties":{
+  "schema_version":{"const":"law-record-v1"},
+  "id":{"enum":["K1","K2","K3","K4","K5","K6","K7","K8","K9","K10","K11"]},
+  "law_version":{"type":"integer","minimum":1},
+  "name":{"type":"string"},
+  "text_ref":{"type":"object","required":["digest","anchor"],
+    "properties":{"digest":{"pattern":"^sha256:[0-9a-f]{64}$"},"anchor":{"type":"string"}}},
+  "jurisdiction":{"enum":["room_zero","owner_space_boundary","adjacent_bridge","downstream_chain"]},
+  "modality":{"enum":["prohibition","obligation"]},
+  "subject":{"type":"array","items":{"enum":["tool","generator","promoter","bridge","harness","room"]}},
+  "scope":{"type":"object"},
+  "check":{"type":"object","required":["method","checker_id","command","expected_rc","negative_control"],
+    "properties":{"method":{"enum":["static","runtime","manual","not_proven"]},
+                  "checker_id":{"type":"string"},"command":{"type":"string"},
+                  "expected_rc":{"type":"integer"},
+                  "negative_control":{"type":"array","minItems":1,"items":{"type":"string"}}}},
+  "evidence":{"type":"array","items":{"type":"object","required":["kind","digest"],
+    "properties":{"kind":{"enum":["lean_theorem","kani_harness","run_log","observation","owner_decision"]},
+                  "digest":{"pattern":"^sha256:[0-9a-f]{64}$"},
+                  "assumptions":{"type":"array","items":{"type":"string"}}}}},
+  "status_inputs":{"type":"object","required":["has_negative_control","last_run_rc","evidence_fresh"],
+    "properties":{"has_negative_control":{"type":"boolean"},
+                  "last_run_rc":{"type":["integer","null"]},
+                  "evidence_fresh":{"type":"boolean"}}},
+  "amendment":{"type":"object","required":["adr","owner_key_id","signature","date"]}}}
+```
+
+Правило вывода: `not_proven`, если нет негативного контроля **или** нет свежего evidence **или** `method = not_proven`; `manual`, если решение человека обязательно и записано; `static`/`runtime` — только если соответствующее доказательство есть и свежо (хеш authority совпал). Агрегат по инструменту: **зелёный только если все применимые законы ∈ {static, runtime}**; `N/A` допустим лишь с явным основанием («в срезе нет композиций»), `unknown` — провал.
+
+Заполнение v0 (кратко): K1/K2 — `runtime` + `static`; K3 — `runtime` (запрет прямого выхода), мостовая часть `not_proven`; K4 — `runtime` **после** замера, сейчас `not_proven`; K5 — `static`+`runtime`; K6 — `runtime` на синтетике, для реальных данных `manual`; K7 — `runtime` (DRT); K8/K10/K11 — `runtime`; K9 — `static` для модели + `N/A` для среза. **`manual` в v0 остаются: классификация реальных данных (K6), решение о допуске чужого (K11), waiver детерминизма (K7).** Различайте «ручное решение» (легитимно) и «ручная проверка вместо автоматической» (это `not_proven`).
+
+Поправка: новый `law_version`, ADR, подпись владельца; старые записи не перезаписываются — `lawset` append-only, `lawset_digest` меняется → все карточки автоматически `needs_revalidation`.
+
+**TESTS:** неизвестный `id` (`K12`) → отказ схемы; запись без `negative_control` → отказ; попытка выставить `status:"runtime"` без evidence → вычислитель возвращает `not_proven`, гейт rc=3; `lawset_digest` изменён → ни одна карточка не `active`.
+
+**FAILURE MODE:** закон описан, контроль есть, но контроль проверяет не то (например, K6-контроль ищет canary в stdout и не смотрит журнал). Лечение: контроль обязан перечислять **все** каналы из `output_channels` + журнал.
+
+**NOT PROVEN:** полнота K1–K11; что «runtime» означает «нарушение невозможно» — это «нарушение наблюдалось бы».
+
+**CONFIDENCE:** high по схеме и правилу вывода; medium по маппингу (нужны тела функций).
+
+---
+
+## F03. `observed_code_effects ⊆ card_effects` в v0
+
+**ANSWER:** наблюдение должно быть **не самоописанием инструмента**. В v0: seccomp-allowlist как принуждение + **телеметрия происхождения «ядро» на отдельном канале**, который инструменту недоступен для записи. `ptrace`/`seccomp notify` как границу — отвергнуть.
+
+**CHOSEN:** (1) шаблон делает I/O только через аудируемый модуль; (2) в гостевом ядре seccomp: всё вне allowlist → `SECCOMP_RET_KILL_PROCESS`, «интересные разрешённые» → `SECCOMP_RET_LOG`; (3) `console=ttyS0` → **хостовый файл A** (только ядро), вывод инструмента → `hvc0`/virtio-serial → **хостовый файл B**; (4) Landlock на fs в госте и на хосте для QEMU. **Отвергнуто:** `seccomp_unotify` как политика — man-страница прямо говорит, что механизм **нельзя** использовать для реализации политики безопасности из-за TOCTOU по аргументам-указателям ; `ptrace`-наблюдатель (медленно, свой TCB, меняет тайминги); «только статический анализ» (не наблюдение).
+
+**WHY:** ключевой риск — инструмент сам пишет «нарушений нет». Разделение каналов делает подделку дороже: у инструмента нет fd на `ttyS0` и нет `/dev/kmsg`. Цена: два serial-канала вместо одного и `CONFIG_AUDIT=y` в гостевом ядре.
+
+**ARTIFACT.** Формат `effects-observation-v1` (пишет **наблюдатель**, не инструмент):
+
+```json
+{"schema_version":"effects-observation-v1","run_id":"...","card_digest":"sha256:...",
+ "binary_digest":"sha256:...","room_profile_digest":"sha256:...",
+ "observer":{"kind":"guest_kernel_seccomp_audit","channel":"serial-A","kernel_digest":"sha256:..."},
+ "coverage":{"scope":"syscall_boundary","complete":false,"self_reported":["bytes_read","lines"]},
+ "completeness":{"filter_installed":true,"filter_hash":"sha256:...","audit_drops":0,"channel_a_bytes":1234},
+ "events":[{"seq":1,"syscall":"openat2","path_logical":"room:input/fixtures/head-slice.txt",
+            "effect":"fs_read","decision":"allowed","card_rule":"effects.fs_read[0]"},
+           {"seq":2,"syscall":"openat2","path_logical":"../outside","effect":"fs_read",
+            "decision":"denied","errno":"EXDEV","card_rule":null}],
+ "counters":{"output_bytes_host_measured":412,"wall_ms":37,"kills":0},
+ "verdict":"fail|pass|blind"}
+```
+
+Правила: **(а)** нет телеметрии / `filter_installed=false` / `audit_drops>0` / канал A пуст → `verdict=blind` → `S7_GATE_BLIND`, **не** «нет нарушений»; **(б)** `attempted ⊄ card` — уже нарушение, даже если эффект заблокирован (иначе «отбитая атака» маскирует дефект карточки); **(в)** `realized ⊆ attempted ⊆ card` — три разных множества, три счётчика; **(г)** `bytes_read` в v0 **самоописание**: независимого измерения нет, оно подкреплено Kani-свойством цикла и тестами, и это надо писать в evidence буквально.
+
+**TESTS (негативные контроли):** мутант M1 `openat2("../outside")` → запись `denied EXDEV` в канале A, `verdict=fail`; M2 удалён вызов аудита → `blind`; M3 `socket()` → `KILL_PROCESS` + строка ядра в A; M4 попытка `write` при `fs_write: []` → отказ; M5 инструмент пишет строку, имитирующую ядерную, в канал B → верификатор отвергает (канал не тот). Позитивный контроль: обычный `head` → `pass` и непустой канал A.
+
+**FAILURE MODE:** «зелёный по умолчанию»: фильтр не встал (как уже бывало с UDP-фильтром — в `tool_seal` есть ветка «фильтр не поставлен»), лог пуст, чекер трактует пустоту как отсутствие нарушений. Второй: `SECCOMP_RET_LOG` не попадает в printk при вашей конфигурации ядра — тогда канал A пуст и всё честно падает в `blind`, но срез не закрывается. **Это надо замерить, а не предполагать.**
+
+**NOT PROVEN:** полнота наблюдения (vDSO-вызовы seccomp не видит; сайд-каналы; поведение ядра/QEMU); что `bytes_read` измерен независимо.
+
+**CONFIDENCE:** medium-high по архитектуре; **low** по конкретному «аудит seccomp дойдёт до printk в минимальном ядре» — это первый замер, который я бы поставил в очередь.
+
+---
+
+## S01. Semantic validator поверх JSON Schema
+
+**ANSWER:** канонический валидатор — **один, на Rust**, в том же крейте, что runtime; Python-версия допустима только как генератор векторов и обязана побайтово совпадать на корпусе. Никаких «двух семантик по договорённости».
+
+**CHOSEN:** обязательные правила (каждое — с тестом):
+
+| # | правило | что отвергает |
+|---|---|---|
+| V1 | `kind` ↔ допустимый `template.id` (таблица соответствий) | `digest` с `file_read_stream` |
+| V2 | `effects` ровно канонический набор для `kind`; лишнее — отказ | `file_read` с непустым `fs_write` |
+| V3 | `process_spawn=false`, `secret_ops=[]`, `secret_refs=[]` (уже в схеме) + **проверка кода шаблона**: нет `Command::new` | миграцию `seal` «как есть» (см. §«Расхождения») |
+| V4 | `pathScope.segments`: без `*`, `**`, `..`, `.`, пустых, без абсолютных; `root_ref` ∈ реестру корней комнаты | `segments:["**"]`, `root_ref:"host:/"` в нормативной части |
+| V5 | непустой scope для читающего/пишущего `kind`; пустой массив = «нет эффекта», не wildcard | `file_read` с `fs_read: []` |
+| V6 | каждый `examples[].args.path_ref` ⊆ некоторого `effects`-scope **и** присутствует в fixture-манифесте | пример, ссылающийся на несуществующий объект |
+| V7 | каждый `examples[].expected.refusal` ∈ `card.refusals` ∩ словарь v2 | «пример с чужим кодом отказа» |
+| V8 | каждый код в `card.refusals` покрыт ≥1 негативным контролем в evidence | `head`: `K4`, `K6_SECRET_EGRESS`, `K11` объявлены, но не покрыты примерами |
+| V9 | слоты ↔ `inputs` ↔ `limits`: `max(slot) ≤ limits.*`; `outputs.bounds ≥ template.max` | `line_count.max=200` при `outputs.lines.max=100` |
+| V10 | если `limits.max_bytes_read > limits.output_bytes` — обязательно объявленное поведение `on_output_cap:"refusal"` | `head`: 65536 > 8192 без объявления |
+| V11 | `data_classes.max_output_class ≥ accepted_inputs` (понижение запрещено), taint не убывает | `accepted:[secret]` при `max_output:public` |
+| V12 | уникальность `id` в реестре; `provenance.*` не нулевые для не-draft | `head` с нулевыми хешами при статусе `checked` |
+| V13 | постусловия — **динамические**: `bytes_read ≤ args.max_bytes_read`, а не только `≤ 65536` | «схема зелёная, поведение не проверено» |
+
+**Убрать из v0 можно:** `frame_conditions` как отдельный список (для read-only шаблонов он вырожден в `no_side_effects` и дублирует V2); `determinism.clock/randomness` значения `waived` (в v0 запрещены, оставить `none`/`fixed_input`); `predicates.op: fd_open` (внутреннее, не контракт). **Нельзя убрать:** `effects`, `limits`, `data_classes`, `refusals`, `examples`, `provenance`, `template.slots` — на них стоят V2/V6/V8/V9/V13.
+
+**WHY:** цена удаления — потеря проверяемости ровно там, где сейчас нет наблюдателя; цена сохранения лишних полей — ложное ощущение строгости и расхождение двух валидаторов.
+
+**ARTIFACT/TESTS:** таблица выше = тест-план; корпус `lab/tools/vectors/*.json` (по 2 на правило: accept/reject), хеш корпуса в `provenance.schema_digest`; CI: Rust-валидатор и Python-порт обязаны дать идентичный rc на всём корпусе, иначе `S5_IMPL_DIVERGES`.
+
+**FAILURE MODE:** валидатор проверяет карточку, но не код шаблона → карточка обещает `process_spawn=false`, а `seal` делает re-exec. V3 без проверки кода — декорация.
+
+**NOT PROVEN:** что карточка описывает поведение; что набор правил полон.
+
+**CONFIDENCE:** high (правила выведены из реально прочитанной схемы и карточки).
+
+---
+
+## S02. Точная семантика `file_read_stream`
+
+**ANSWER:** байтовый лимит — жёсткий потолок чтения; `line_count` — вторичный стоп. `truncated` — **односторонняя гарантия**: `truncated=false` ⟹ выдано всё содержимое файла. Никакой «оптимистичной полноты».
+
+**CHOSEN:**
+- приоритет: `max_bytes_read` важнее `line_count`; при конфликте — отказ, а не «сколько влезло»;
+- `bytes_read` = байты, **полученные из файла**, включая терминаторы и read-ahead; номера строк и оформление в него не входят; добавить выход `bytes_emitted` (точное число байт, стоящих за выданными строками) — это и есть разведение `max_bytes_read` и `output_bytes`;
+- терминатор — `LF`; `CR` непосредственно перед `LF` — часть терминатора и снимается; одиночный `CR` — контент; последняя строка без `LF` выдаётся, если прочитана целиком;
+- `truncated = (stop_reason != "eof")`, добавить выход `stop_reason ∈ {eof, line_count, byte_cap}`; при достижении N строк делается **зонд на 1 байт** (если лимит позволяет), чтобы отличить «файл кончился» от «осталось ещё»;
+- невалидный UTF-8 в **выдаваемой** строке → отказ целиком (fail-closed), без построчного redaction;
+- `read_chunk_bytes` объявляется в карточке; read-ahead ≤ `chunk−1` байт за N-й строкой — это честно записывается в `bytes_read`;
+- если первая строка не влезает в лимит → **отказ `K4_RESOURCE_LIMIT`**, ноль выданных байт, измерение сохраняется (совпадает с пре-регистрацией, где этот случай — критический негативный контроль).
+
+**WHY:** альтернатива «выдать сколько влезло» даёт модели обрезанную строку без признака неполноты — это ложное зелёное в данных, а не в коде. Цена: файл, чей размер ровно равен лимиту, помечается `truncated=true` (ложная тревога). Это выбранныйdirection ошибки.
+
+**ARTIFACT (исполнено локально, эталон):**
+
+```python
+while True:
+    if len(lines) == line_count:
+        if pending: stop = "line_count"                 # уже знаем, что есть остаток
+        elif cap - br > 0:
+            b = f.read(1); br += len(b)                 # зонд EOF, 1 байт
+            stop = "eof" if b == b"" else "line_count"
+        else: stop = "line_count"
+        break
+    rem = cap - br
+    if rem == 0: stop = "byte_cap"; break
+    b = f.read(min(chunk, rem)); br += len(b)           # НИКОГДА не читаем сверх cap
+    if b == b"":
+        if pending: lines.append(pending); pending = b""
+        stop = "eof"; break
+    pending += b
+    while b"\n" in pending and len(lines) < line_count:
+        raw, pending = pending.split(b"\n", 1)
+        lines.append(raw[:-1] if raw.endswith(b"\r") else raw)
+if stop == "byte_cap": pending = b""                    # половину строки не выдаём
+if not lines and br > 0: refuse("K4_RESOURCE_LIMIT")
+```
+
+Таблица (реальные числа из прогона):
+
+| вход | N | cap | lines | bytes_read | stop | truncated | отказ |
+|---|---|---|---|---|---|---|---|
+| fixture-подобный `l1..l10\n` | 3 | 4096 | 3 | 31 | line_count | true | — |
+| `a\r\nb\r\nc\r\n` | 2 | 4096 | `a`,`b` | 9 | line_count | true | — |
+| `a\rb\nc\n` | 2 | 4096 | `a\rb`,`c` | 6 | eof | false | — |
+| `a\nb` (без хвостового LF) | 2 | 4096 | `a`,`b` | 3 | eof | false | — |
+| `a\nb\n` | 2 | 4096 | `a`,`b` | 4 | eof | false | — |
+| `abc\n` | 10 | 4 | `abc` | 4 | byte_cap | **true** | — |
+| `abc\n` | 10 | 3 | — | 3 | — | — | `K4_RESOURCE_LIMIT` |
+| `a`×16+`\n`+`b\n` | 3 | 4 | — | 4 | — | — | `K4_RESOURCE_LIMIT` |
+| `x`×100000 | 3 | 64 | — | 64 | — | — | `K4_RESOURCE_LIMIT` |
+| пустой файл | 3 | 4096 | `[]` | 0 | eof | false | — |
+| `\xff\xfe\nok\n` | 2 | 4096 | — | 6 | — | — | `K6_DATA_CLASS_UNKNOWN` |
+| любой | 0 | 4096 | — | 0 | — | — | `S1_SCHEMA` |
+
+**Про UTF-8 честно:** в словаре v2 **нет** кода для недекодируемого содержимого. Моё временное отображение — `K6_DATA_CLASS_UNKNOWN` с основанием «класс `model_visible` присвоен текстовому содержимому; недекодируемые байты не подтверждают заявленный класс». Это **спорно** и требует решения владельца: либо поправка v3 с отдельным кодом, либо явное расширение описания K6-кода. Переиспользовать `S1_SCHEMA` нельзя — это маскировка.
+
+**TESTS:** 30 000 случайных входов (алфавит `a,b,\r,\n`, chunk ∈ {1,2,7,4096}): `bytes_read ≤ cap` — 0 нарушений; `len(lines) ≤ N` — 0; **`truncated=false` ⟹ реконструкция вывода побайтово равна входу (с точностью до CRLF→LF)** — 0 нарушений на 28 583 ok-прогонах.
+
+**FAILURE MODE (реальный, найден у себя):** первая версия эталона ставила `stop="eof"` после зонда, **не проверяя непустой `pending`** — и на «3 строки из 10» возвращала `truncated=false`. Это ровно то ложное зелёное, о котором бриф: «вывод полон» при обрезке. Поймано инвариантом, а не чтением кода. Вывод: инвариант полноты обязан быть тестом, а не комментарием.
+
+**NOT PROVEN:** что Rust-реализация совпадёт с эталоном (нужен дифференциальный корпус); что read-ahead приемлем для K6 (байты за пределами N строк попадают в память процесса, но не в вывод).
+
+**CONFIDENCE:** high по семантике (исполнена и проверена), medium по коду отказа для UTF-8.
+
+---
+
+## R01. Минимальная QEMU-комната v0 и TCB
+
+**ANSWER:** primary security run — **WSL2 + KVM + `microvm`**, непривилегированный QEMU под Landlock+seccomp+cgroup; Windows + WHPX — второй, более слабый по confinement хоста прогон; TCG — только симуляция. Изоляцию гостя **не доказываем** — ссылаемся на upstream-политику и измеряем конфигурацию.
+
+**CHOSEN:** гость = kernel + initramfs, **PID1 = supervisor, ровно один дочерний инструмент** (см. конфликт с `max_processes: const 1` ниже), `CONFIG_NET=n`, `CONFIG_MODULES=n`, `CONFIG_BINFMT_MISC=n`, статический бинарь, никаких дисков, NIC, host-mounts, credentials. Вывод: `hvc0` (virtio-serial) → хостовый файл B; лог ядра: `console=ttyS0` → файл A. Аргументы — в `cmdline` одним base64url-JSON, проверенным promoter'ом (учитывать `COMMAND_LINE_SIZE`). Завершение — `reboot=t` + `-no-reboot` (рекомендованный для microvm triple-fault) плюс `isa-debug-exit` для кода возврата .
+
+**WHY:** upstream прямо говорит: TCG — non-virtualization use case, «must not rely on QEMU to provide guest isolation»; `microvm` входит в список поддерживаемых для x86_64 machine types, и есть машинная проверка статуса — `-compat insecure-input=reject` и `-machine help`/`-accel help` с флагом secure (https://www.qemu.org/docs/master/system/security.html). Это даёт **воспроизводимое доказательство конфигурации** вместо слов. Landlock для TCP появился только в ABI v4 / Linux 6.7 , а у вас WSL-ядро 6.6 → ABI v3, сетевых правил нет ; поэтому сеть запрещается seccomp'ом и отсутствием NIC, а не Landlock. На Windows нет seccomp/Landlock/cgroup — confinement QEMU слабее, при том что upstream считает пиковую память QEMU «эффективно неограниченной».
+
+**ARTIFACT (команды; это шаблон, а не проверенный у вас прогон):**
+
+```bash
+# замер, отдельный прогон (не security run)
+qemu-system-x86_64 -version; qemu-system-x86_64 -accel help; qemu-system-x86_64 -machine help
+# security run (WSL2, непривилегированный uid, Landlock-обёртка + cgroup v2)
+hs-room-run --landlock --cgroup mem=192M,cpu=50%,pids=8 -- \
+ qemu-system-x86_64 -accel kvm -M microvm,x-option-roms=off,pit=off,pic=off,rtc=on \
+ -compat insecure-input=reject -nodefaults -no-user-config -nographic -no-reboot \
+ -m 128m -smp 1 -cpu host \
+ -kernel /proc/self/fd/10 -initrd /proc/self/fd/11 \
+ -append "console=ttyS0 reboot=t panic=-1 oops=panic quiet loglevel=0 rdinit=/init hs.req=<b64>" \
+ -chardev file,id=k,path=run/A.kernel.log -serial chardev:k \
+ -chardev file,id=o,path=run/B.tool.out -device virtio-serial-device -device virtconsole,chardev=o \
+ -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
+ -sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
+ -net none -monitor none -qmp none
+```
+
+**TCB:** аппаратура + Hyper-V (L0) + ядро WSL2 + KVM + QEMU (device model, virtio-mmio/serial backends) + гостевое ядро + initramfs/supervisor + бинарь инструмента + promoter/верификатор + процедура ключа. **Вне TCB:** модель, генератор,宿主-userland, сеть владельца. **Отдельно:** WSL2 сам по себе не граница (видит `/mnt/c`, работает root) — поэтому QEMU запускается непривилегированно и Landlock-allowlist ограничивает его каталогом прогона; глобальные настройки WSL не меняются.
+
+**TESTS:** гость вызывает `socket()` → kill + строка в A; `fork` → kill; `openat2("/mnt/c/...")` → отказ; хост: QEMU пытается открыть файл вне каталога прогона → Landlock-отказ; отсутствие сети в госте (`/sys/class/net` пуст); `-compat insecure-input=reject` не даёт стартовать с небезопасным типом; три повтора дают идентичный B.
+
+**FAILURE MODE:** «`-S` стартанул на whpx и microvm» трактуется как «изоляция есть». Старт без диска и сети не проверяет ни загрузку гостя, ни device model. Второй: `microvm` под WHPX может не загрузиться (нет kvmclock, известны проблемы с PIC на Win10) — это **надо замерить**, я это не подтверждал .
+
+**NOT PROVEN:** отсутствие VM-escape; корректность KVM/QEMU; стойкость к сайд-каналам; что host confinement на Windows эквивалентен linux-ному.
+
+**CONFIDENCE:** medium-high по архитектуре и по «TCG ≠ граница» (это позиция upstream), **low** по «microvm+WHPX загрузится на вашей машине» и по проходимости аудита в printk.
+
+---
+
+## R02. `admission-manifest-v1`
+
+**ANSWER:** подписывать **канонические байты**, которые затем хранятся неизменяемо; требовать, чтобы сохранённый манифест **уже был в форме JCS** — тогда подпись по байтам и подпись по JCS совпадают, а любая пересериализация обнаруживается.
+
+**CHOSEN:** JCS (RFC 8785) + domain separation + detached Ed25519; CAS по sha256; привязка запуска к inode через FD/`/proc/self/fd/N` и к initramfs-дайджесту. Отвергнуто: подпись «по пути», подпись.pretty-printed JSON, «сначала подписали — потом собрали бинарь».
+
+**WHY:** JCS сам по себе не защищает от подмены байтов между подписью и проверкой; требование «stored == JCS(stored)» превращает канонизацию из источника риска в проверку. Ограничения JCS соблюдаем: только целые ≤ 2^53, никаких float, UTF-8 без lone surrogates, без дубликатов ключей.
+
+**ARTIFACT (схема, сокращённо до required):**
+
+```json
+{"schema_version":"admission-manifest-v1","manifest_id":"...","subject":{"tool_id":"head","version":1},
+ "artifacts":{"card":"sha256:…","template_source":"sha256:…","binary":"sha256:…",
+              "initramfs":"sha256:…","guest_kernel":"sha256:…","deps_lock":"sha256:…","toolchain":"sha256:…"},
+ "authority":{"constitution":"sha256:…","lawset":"sha256:…","policy":"sha256:…","room_profile":"sha256:…",
+              "kind_set":"sha256:…","effects_scope":"sha256:…","data_class_policy":"sha256:…",
+              "tool_card_schema":"sha256:…","refusal_dict":"sha256:…"},
+ "scope":{"rooms":["room:input"],"kinds":["file_read"],"templates":["file_read_stream@1"],
+          "effects":{"fs_read":[{"root_ref":"room:input","segments":["fixtures"]}],"fs_write":[],"bridges":[]},
+          "data_classes":{"accepted":["model_visible"],"max_output":"model_visible"}},
+ "validity":{"not_before":"2026-11-17T00:00:00Z","expires":"2027-02-17T00:00:00Z","revocation_epoch":1},
+ "evidence":{"prereg":"HEAD-SLICE-R1","runs":["sha256:…"],"negative_controls":"sha256:…",
+             "observation":"sha256:…","vectors":"sha256:…"},
+ "approval":{"key_id":"sha256:<pubkey>","alg":"ed25519","signature":"base64:…"}}
+```
+
+Подписываемый payload: `b"herness/admission-manifest/v1\x00" || JCS(manifest без поля approval)`. Порядок проверки (fail-fast, каждый шаг — свой код): 1 строгая схема → 2 `stored == JCS(stored)` → 3 `key_id` известен, не отозван, `epoch ≥ current_epoch` → 4 подпись → 5 все `artifacts`-дайджесты совпадают с реальными объектами CAS (хеш считается **с FD**) → 6 все `authority`-дайджесты равны текущим живым → 7 окно валидности → 8 `scope ⊆ card.effects` и `scope ⊆ room ceiling` → 9 evidence непуст и `verdict=pass` (не `blind`).
+
+Замена бинаря после approval: несовпадение дайджеста → `K11_ADMISSION_REQUIRED`, статус `needs_revalidation`, запуск невозможен. Просрочка/отзыв — тот же код, разные записи в журнале. Смена зависимости меняет `deps_lock`/`toolchain` → манифест недействителен. Привязка: promoter открывает kernel/initramfs `O_RDONLY`, считает sha256 **с этого FD**, передаёт QEMU `/proc/self/fd/N` (magic-link на тот же inode) — путь больше не участвует. Инструмент внутри гостя исполняется из initramfs, чей дайджест подписан; `execveat(fd, "", AT_EMPTY_PATH)` — для хостовых проверок.
+
+**TESTS:** pretty-printed манифест → отказ; подпись от другого ключа → отказ; манифест с `expires` в прошлом → отказ; бинарь изменён на 1 байт → отказ; `authority.policy` изменён → `needs_revalidation`; epoch поднят → все старые манифесты недействительны; подмена файла по пути после хеширования → хеш не сходится (тест на inode-binding).
+
+**FAILURE MODE:** «подписали те байты, а запустили другие» через путь; и «зелёный манифест с `evidence.verdict=blind`».
+
+**NOT PROVEN:** что подписавший понимал, что подписывает; стойкость Ed25519; что хостовые часы не откатаны (часы — доверенное допущение, epoch монотонен только в реестре).
+
+**CONFIDENCE:** high.
+
+---
+
+## R03. Жизненный цикл owner-ключа
+
+**ANSWER:** два офлайн-ключа с **разными полномочиями**: `owner-sign` (допуск) и `owner-revoke` (только отзыв/ротация). Восстановление не должно уметь выдавать права — иначе это backdoor.
+
+**CHOSEN и шаги:**
+1. **Генерация:** офлайн-среда (Live-USB Tails или отдельная машина без сети), `openssl genpkey -algorithm ed25519` либо `age`/`minisign`-совместимый инструмент; сид 32 байта (RFC 8032). Никакой генерации в WSL/на рабочей машине с сетью, никаких ключей в git/.env/контексте модели.
+2. **Хранение:** зашифрованный контейнер (`age -p`, парольная фраза ≥ 6 слов) на двух USB в разных местах + бумажная копия сида (base32, 52 символа) в конверте; парольная фраза — в локальном менеджере паролей, не в том же конверте.
+3. **Backup/восстановление:** обязательный **репетиционный** прогон: восстановить ключ из бумаги на второй офлайн-машине, подписать тестовый манифест, проверить верификатором, записать результат в журнал. Непроверенный backup = отсутствие backup.
+4. **Публичная часть:** `lab/keys/<key_id>.pub`, `key_id = sha256(pubkey)`, запись в append-only `key-registry.jsonl` с полномочиями (`admit` / `revoke`), сроком и подписью владельца; хеш реестра входит в `authority`.
+5. **Подписание:** офлайн-церемония: на USB приносится `manifest.json` (уже JCS), проверяется глазами diff по authority-дайджестам, подписывается payload с доменным префиксом, обратно выносится только `.sig`.
+6. **Ротация:** новый ключ кросс-сертифицируется старым, `epoch += 1`, все активные манифесты переподписываются. **Цена прямо:** ротация = повторный допуск всех инструментов; это не баг, это K8/K11.
+7. **Отзыв:** заранее подписанные `revocation`-записи для каждого `key_id` хранятся офлайн и могут быть предъявлены **без** приватного ключа; `owner-revoke` может только отзывать и понижать статус.
+8. **Потеря ключа:** предъявляется заготовленный отзыв → все инструменты `revoked`; новый ключ генерируется заново, повторный допуск вручную. Восстановление доступа к подписи **не** предусмотрено — это и есть отсутствие backdoor.
+9. **Компрометация:** отзыв + `epoch += 1` + пересмотр всех.manifest, подписанных после даты компрометации; журнал — append-only, ничего не удаляется.
+
+**WHY:** разделение полномочий снимает главную ловушку recovery: «ключ, который может всё, лежит в сейфе на всякий случай». Цена — две церемонии вместо одной и обязательная переподпись при ротации.
+
+**ARTIFACT:** `key-registry.jsonl` (hash-chain), `revocation-<key_id>.json` (подписан при генерации), `ceremony-log.md` (кто, когда, хеши, без секретов), верификатор promoter'а: `key_id → permissions → epoch → срок → подпись → domain prefix`.
+
+**TESTS:** подпись `owner-revoke` на манифесте допуска → отказ верификатора; отозванный ключ → все запуски `K11_ADMISSION_REQUIRED`; подпись без доменного префикса → отказ; recovery-репетиция пройдена и залогирована; попытка положить приватный ключ в репозиторий → pre-commit-хук блокирует (проверка по формату ключа).
+
+**FAILURE MODE:** «offline» на машине, которая вчера была в сети; парольная фраза и USB в одном месте; заготовленных отзывов нет → потеря ключа делает отзыв невозможным.
+
+**NOT PROVEN:** физическая безопасность носителей; что владелец не подпишет вредоносный манифест; отсутствие компрометации хоста, где стоит публичный верификатор.
+
+**CONFIDENCE:** high по процедуре, medium по конкретным инструментам (зависит от того, что владелец реально поставит офлайн).
+
+---
+
+## T01. Статусы, `active`, реестр, отзыв
+
+**ANSWER:** реестр — единственный источник истины, append-only JSONL с hash-chain; `active` — **вычисляемый предикат**, а не поле; активация — атомарное добавление подписанной записи, а не правка указателя.
+
+**CHOSEN (FSM):**
+
+| из | в | кто | обязательные проверки |
+|---|---|---|---|
+| — | `proposed` | генератор (только в candidate-область) | схема карточки |
+| `proposed` | `quarantined` | promoter | перенос в CAS, хеши, нет доступа к authority |
+| `quarantined` | `checked` | promoter | semantic validator + все тесты + observation `verdict=pass` + 8/8 контролей |
+| `checked` | `admitted_confined` | **только владелец** (подпись) | admission-manifest валиден полностью (R02) |
+| любой | `needs_revalidation` | promoter (автоматически) | любой `authority`/`artifacts` дайджест разошёлся, истёк срок, schema/lawset изменён |
+| любой | `revoked` | владелец или promoter по несовпадению дайджеста | запись причины; монотонно |
+| `revoked` | `checked` | — | **запрещено**; только новый артефакт с новым хешем |
+
+`active(tool) ⟺ state = admitted_confined ∧ все artifacts-дайджесты совпадают с байтами запуска ∧ все authority-дайджесты совпадают с живыми ∧ now ∈ [not_before, expires] ∧ epoch ≥ current ∧ evidence.verdict = pass ∧ ни один критический контроль не провален`.
+
+Формат записи: `{seq, prev_digest, ts, tool_id, subject_digest, from, to, actor, reason, evidence[], signature?}`; `active.json` — только кеш, при расхождении с реестром — fail-closed. Атомарность: `append + fsync(file) + fsync(dir)`; отдельный указатель не нужен.
+
+**Что нельзя:** генератору — писать в `registry.jsonl`, `policy`, `approval`, `keys`, менять `active`; promoter'у — создавать `admitted_confined` без подписи владельца, «чинить» evidence, повышать статус после отзыва. **Отдельно:** диспетчер вызова обязан спрашивать реестр. В `loopmod.rs` имена зашиты в `KNOWN_TOOLS` (7 имён, включая `net`), и я **не увидел** проверки admission в месте вызова — это надо проверить в `run_task`/dispatch; если её нет, `active` декоративен.
+
+**TESTS:** подмена `active.json` → отказ; разрыв hash-chain → отказ; повторная активация отозванного хеша → отказ; смена `policy.json` на 1 байт → все `active` ложны; генератор пытается писать реестр → отказ на уровне uid/Landlock (K10-контроль).
+
+**FAILURE MODE:** реестр есть, диспетчер его не читает; или `active` кешируется и переживает отзыв.
+
+**NOT PROVEN:** что переходы нельзя обойти в обход promoter'а (это K10 + изоляция, не FSM).
+
+**CONFIDENCE:** high.
+
+---
+
+## T02. Критерий успеха генератора и поток candidate → promotion
+
+**ANSWER:** успех генератора — не «процент прошедших», а **прохождение того же гейта, что и ручной срез, при отсутствии ручных правок кода и при 100 % критических контролей**, на задачах, зафиксированных до запуска.
+
+**CHOSEN (пре-регистрируемые пороги):**
+
+| метрика | порог | почему |
+|---|---|---|
+| шаблоны | 3 (`file_read_stream`, `directory_read_list`, `digest_sha256`) | по одному на.kind, без композиций |
+| функциональные задачи | 15 (5 × шаблон), held-out, авторинг до запуска, хеш набора в prereg | иначе подгонка |
+| критические негативные контроли | 24 (8 × шаблон), **100 %**, один пропуск — стоп | как Q9/пре-регистрация |
+| чувствительность гейта | 100 % на 24 внедрённых мутантах («кто проверяет проверяющий») | иначе гейт слеп |
+| ручные правки кода | **0**; правка = провал (это ручной инструмент, не генератор) | иначе метрика лжёт |
+| детерминизм | 3 повтора, байт-в-байт | K7 |
+| ревью владельца | ≤ 15 мин/инструмент, 1 подпись; медиана и максимум в отчёте | bottleneck измерим |
+| K10-трип | любое касание authority → немедленный стоп всей программы | не торгуется |
+| статистика | Уилсон 95 % LB рядом с каждым процентом, порог не меняется после результата | честность |
+
+**Числа, которые надо писать в отчёте буквально (посчитано):** 8/8 → Wilson LB **0.676**; 20/20 → **0.839**; 24/24 → **0.862**; 100/100 → **0.963**. Чтобы заявить «≥ 99 % надёжности» с 95 % доверием при нуле провалов, нужно **299** подряд (Клоппер–Пирсон) или **381** (Уилсон). Значит 20/20 и 8/8 — инженерный гейт, а не утверждение о вероятности; формулировка «безопасно на 99 %» запрещена.
+
+**Candidate bundle:** карточка, исходник шаблона, бинарь, `deps.lock`, toolchain-id, тесты, observation-логи (канал A и B), diff против authority (обязан быть пустым), отчёт о покрытии отказов, `candidate.json` с хешами всего перечисленного. **Автоматизируется:** сборка, semantic validator, тесты,-controls, observation, расчёт метрик, формирование манифеста. **Остаётся человеком:** решение о допуске и подпись; оценка «понимания» в спорных случаях; поправки законов/словаря.
+
+**«Не успех»:** любой критический контроль принят; `verdict=blind`; потребовалась ручная правка; метрика посчитана на задачах, придуманных после прогона; порог изменён после первого результата. **«Нельзя начинать»:** срез не зелёный; нет канонического semantic validator; нет наблюдения F03; нет верификатора admission и ключа; нет FSM реестра; нет ответа владельца по F01/F02.
+
+**TESTS:** прогон «пустого генератора» (копия ручного шаблона) обязан пройти гейт — иначе гейт нечестен; прогон мутанта с удалённым лимитом обязан упасть; повторный прогон того же candidate даёт тот же отчёт.
+
+**FAILURE MODE:** генератор учится проходить гейт, а не соблюдать закон (Goodhart): 24 мутанта известны генератору → он их обходит. Лечение: held-out набор мутантов, не показываемый генератору, и ротация каталога мутаций после каждого цикла.
+
+**NOT PROVEN:** что успех на 3 шаблонах переносится на 4-й; что генератор не напишет вредоносный код, прошедший гейт; статистическая надёжность.
+
+**CONFIDENCE:** high по критериям и числам, medium по объёму (3 шаблона — мой выбор, владелец может сузить до 1).
+
+---
+
+## F04 (P1, кратко). Лестница статусов K9/K11
+
+`policy_checked` — строковая проверка `policy_allows`, **ноль** гарантий о поведении. `contract_checked` — semantic validator + все примеры + негативные контроли + observation `pass`. `K9_model_checked` — доказана композиционная теорема **в модели** при явно перечисленных допущениях. `K9_proven` — **недостижимо в v0**: требует доказательства о реальной композиции и о мостах; в срезе композиций нет → `N/A` с основанием, не «доказано». `K11_admitted` — только валидный admission-manifest + подпись + epoch. Отзыв任何一种 статуса — автоматический при расхождении любого дайджеста, монотонный. Минимальный тест на мост: `bridge_request` объявляет `bridge:A`, а код пытается соединиться с адресом вне allowlist моста B → отказ + запись в канал A; второй тест: мост объявляет downstream-цепочку без доказательства → `K11_ADMISSION_REQUIRED`, а не «разрешено политикой».
+
+## S05 (P1, кратко). Комбинированные нарушения
+
+Порядок **вычисления**: admission → форма аргументов → scope → класс → лимиты → исполнение. Порядок **выдачи** — по тяжести, а не по порядку проверки: `K11_ADMISSION_REQUIRED` > `K6_SECRET_EGRESS` > `K6_DATA_CLASS_UNKNOWN` > `S6_CLOSURE_BREACH` > `K4_RESOURCE_LIMIT` > `S2_ARTIFACT_MISSING` > `S1_SCHEMA`. Модель видит **один** первичный код + короткую причину; журнал — весь упорядоченный список `violations[]` с деталями. Байты файла не читаются, пока scope и класс не прошли. Маппинг `openat2`: `EXDEV`/`ELOOP` → `S6_CLOSURE_BREACH`; `EAGAIN` → ≤3 повтора, затем `S6` (fail-closed); `ENOENT` → `S2_ARTIFACT_MISSING`; не regular file → `S1_SCHEMA` с деталью `precondition:is_regular_file`. **Дыра словаря:** нет кода для ошибок I/O (`EACCES`, `EIO`) и для недекодируемого содержимого — предлагаю поправку v3, а до неё явно зафиксировать временное отображение решением владельца. Правило поправки: код не переиспользуется и не перенумеровывается, каждый код обязан ссылаться на `LawRecord.id`.
+
+## R05 (P1, кратко). Rust `file_read_stream` и TOCTOU
+
+Заменить `resolve_in → PathBuf` на `resolve_in_fd → OwnedFd`: `openat2(root_fd, rel, {flags: O_RDONLY|O_CLOEXEC, resolve: BENEATH|NO_SYMLINKS|NO_MAGICLINKS|NO_XDEV})`; `fstat` → `S_ISREG` (флаг `OPENAT2_REGULAR` есть только с Linux 7.2 , на 6.6 недоступен); зафиксировать `st_dev`/`st_ino`; для immutable-fixture требовать `st_nlink == 1` (hardlink — это тот же inode, флаги резолюции его не ловят) и опираться на `fs.protected_hardlinks` + read-only монтирование. Читать `read(fd, buf, min(chunk, cap−br))` в цикле из S02 — **не** `BufReader::take` (читает вперёд) и **не** `read_to_string`. FD закрывается по `Drop`, включая пути отказа. Тесты: symlink-swap до/после open, rename после open (чтение обязано остаться на исходном inode), `/proc/self/fd/*` → `ELOOP`, `..` → `EXDEV`, файл больше лимита, одна длинная строка, отсутствие файла, гонка `EAGAIN`. Не-Linux: **security-срез не запускается**, тесты на Windows — только симуляция семантики; fallback через `canonicalize` слабее (окно TOCTOU остаётся) и обязан давать `verdict=blind`, а не «pass».
+
+---
+
+## Проверенные расхождения (это находки, а не мнения)
+
+1. **`resource_of` делает политику не-стеной.** Для пути вне корня `strip_prefix` не срабатывает, и функция подставляет `/mnt` заново. Исполненный порт: `/etc/passwd → file:/mnt/etc/passwd`, `policy_allows("read","read", …) = True`; `/home/user/.ssh/id_ed25519 → … = True`. Единственная реальная стена — `starts_with(root)` в `resolve_in`. Требование: `resource_of` обязан возвращать `Err` при неудачном `strip_prefix`, и это надо покрыть Kani/тестом. Также `policy_allows` — чистая строковая функция: `file:/mnt/../etc/passwd` у неё `True`.
+2. **`resolve_in` всегда проверяет политику как `("read","read")`**, независимо от вызывающего инструмента (`list`, `search`, `write`, `seal`). Это пере-ограничение в безопасную сторону, но модель и код расходятся по субъекту — F01/F02 это фиксируют как дефект, а не как «особенность».
+3. **`tool_seal` и `tool_netprobe` делают re-exec себя** (`Command::new(exe)`). Схема требует `process_spawn: false` и `max_processes: const 1`. Значит миграция `seal → digest` «как есть» невозможна: шаблон `digest` обязан считать хеш в процессе. Это конкретный вход в S06.
+4. **`head`: `limits.max_bytes_read = 65536 > output_bytes = 8192`** без объявленного поведения при переполнении вывода; `postconditions.bytes_le = 65536` — статический потолок, а не per-call инвариант; `K4`, `K6_SECRET_EGRESS`, `K11` объявлены в `refusals`, но не покрыты ни одним примером.
+5. **`max_processes: const 1` конфликтует с независимым наблюдателем в госте.** Либо PID1 = инструмент и телеметрия самоописательная (тогда F03 честно слабее), либо PID1 = supervisor + 1 ребёнок и поправка схемы на `2`. Это развилка для владельца, я рекомендую второе.
+6. **`KNOWN_TOOLS` зашит в код**, `net` в списке; проверку admission в диспетчере я не видел — проверить и, если её нет, считать `active` декоративным.
+7. **`POLICY` — константа в Rust с комментарием «расхождение ловит гейт».**Recommendation: кодген из `policy.json`, чтобы расхождение было невозможно, а не обнаруживаемо.
+
+## На что я не отвечал
+
+`S03`, `S04`, `S06`, `R04`, `T03`, `T04`, `I01`, `I02`, `I03` — вне объёма этого ответа. Причины: `S03`/`S06` требуют тел `tool_write_in`/`tool_list_in` и старого валидатора, которых я не прочитал (кроме находки №3 выше); `S04`/`I02` premature — в первой комнате нет сети, и я не готов проектировать реестр мостов без K9-модели; `R04` требует замера cgroup на вашей машине; `T03`/`T04` — организационные решения владельца, где мой голос не должен размывать ответственность; `I03` — гигиена репозитория, где вред от неверного совета выше пользы.
+
+**Общая уверенность:** high по F02/R02/R03/T01/S01/S02, medium по F01/F03/T02, medium-low по R01 в части «что именно заведётся на вашем железе». Всё, что помечено «замерить», — это отсутствие проверки, а не зелёное. Ответ подлежит сохранению с SHA-256 как сырой вход R6; решением он не становится.

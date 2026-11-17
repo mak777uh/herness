@@ -30,3 +30,6 @@ research/outputs/continuity-key-R2.json -text
 # сырые ответы внешних моделей: sha256 в README считается по байтам файла,
 # нормализация LF сломает сверку (ответ A пришёл с CRLF)
 docs/research/external/2026-11-16-R5-answer-*.md -text -eol
+# то же для R6: шесть сырых ответов (A-E .txt, F .md) коммитятся байт-в-байт,
+# иначе sha256 в README перестанет совпадать с файлом
+docs/research/external/2026-11-17-R6-answer-* -text -eol
