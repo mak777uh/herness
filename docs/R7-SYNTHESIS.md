@@ -511,5 +511,5 @@ Windows-путь. D-вариант «Landlock закрывает TOCTOU» нев
 10. Отдельный блок «дефекты, которые чинятся независимо»: policy drift, `O_TRUNC`,
     `MAX_READ`, `search` skip, две карточки `head`.
 
-Сам бриф — `docs/EXTERNAL-QUESTIONS-R8.md` (следующий коммит); он
+Сам бриф — [`docs/EXTERNAL-QUESTIONS-R8.md`](EXTERNAL-QUESTIONS-R8.md); он
 самодостаточен, ссылки прибиты к коммитам, наши вердикты в него не входят.
