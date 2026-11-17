@@ -19,6 +19,17 @@ lab/candidates/** text eol=lf
 research/outputs/HEAD-SLICE-R1-2026-11-17.txt text eol=lf
 research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt text eol=lf
 
+# Digest конституции запечатан в provenance карточки head и 20 карточек кандидатов
+# как sha256:e9d6f904… — он был измерен на CRLF checkout. Пиннинг делает эти байты
+# воспроизводимыми на любой ОС; с LF на чистом клоне гейт provenance падает.
+# Это не меняет текст конституции, а фиксирует представление, для которого
+# считались digest'ы. При смене представления нужно перепечатать карточки.
+docs/CONSTITUTION-v0-2026-11-16.md text eol=crlf
+
+# SHA-256 HEAD-SLICE-R1 prereg заморожен в PILOT-GENERATOR-R1 до прогона также
+# по CRLF-байтам (sha256:4522784c…). Пиннинг сохраняет --verify на чистом клоне.
+lab/prereg/HEAD-SLICE-R1.json text eol=crlf
+
 # бинарь
 *.zstd binary
 *.png binary
