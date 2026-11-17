@@ -55,10 +55,32 @@
 Проверка утверждений и развилки — [`docs/R7-SYNTHESIS.md`](../../R7-SYNTHESIS.md);
 следующий бриф — [`docs/EXTERNAL-QUESTIONS-R8.md`](../../EXTERNAL-QUESTIONS-R8.md).
 
+## R8 — 17.11.2026
+
+Пять ответов на [`EXTERNAL-QUESTIONS-R8.md`](../../EXTERNAL-QUESTIONS-R8.md) — все 11 вопросов
+(F01, S02, R01–R03, T01–T02, S05, F04, A01, AUDIT) в каждом. Четыре пришли как `.txt`, один —
+как `.md`; сохранены байт-в-байт, без нормализации переводов строк (правило в `.gitattributes`).
+Метки A–E — порядок вложений владельца, а не самоидентификация моделей.
+
+| файл | размер | SHA-256 | что внутри |
+|---|---:|---|---|
+| [`2026-11-17-R8-answer-A.txt`](2026-11-17-R8-answer-A.txt) | 65 172 Б | `284862a9b1d9012cfee3e8c9cffe7036e1d21223aee2ce1e0115615d9057dce8` | открывал снимок `c63f3b8`, читал код; полный Rust-валидатор на promoter + тонкий runtime V02/V04/V05/V06/V12; WSL2+KVM `microvm`; seccomp TRACE + ptrace; SSHSIG; пять native `needs_revalidation`; карточный пилот 20/20/20; `policy.json` → codegen |
+| [`2026-11-17-R8-answer-B.txt`](2026-11-17-R8-answer-B.txt) | 62 585 Б | `e9dfbca2c388ddad8083a452a884f28225aa676c6eb4bed6ea6787cb5a7760d4` | репозиторий не открывал; один Rust-валидатор дважды (приём и каждая загрузка), C01–C12; WSL2+KVM `q35`; ptrace; SSHSIG; `read`/`list` — `needs_revalidation`, `write`/`seal`/`netprobe` — `quarantined`; карточный пилот 12/16; S1 вторым |
+| [`2026-11-17-R8-answer-C.txt`](2026-11-17-R8-answer-C.txt) | 54 519 Б | `874f64a8a80ee616473a02360181a53b5819c7107a994e0da52e34c63cea5e77` | ссылки не открывал; один Rust-крейт на приёме и при каждой загрузке, CV-01–CV-13; WSL2+KVM `q35`, `microvm` — отдельный профиль; отказы ядра + канарейки; raw Ed25519 + `K_rev`; все шесть native `quarantined`; карточный пилот 12/24; строка 9 S02 невалидна как записана |
+| [`2026-11-17-R8-answer-D.md`](2026-11-17-R8-answer-D.md) | 70 034 Б | `5b7369fa7e1c9a4a95f60bbe4bcf5020e24e064f52459919ac432c2c24e07401` | снимок `c63f3b8`; полная семантика один раз на promoter + digest-only runtime; **Windows QEMU `-accel whpx -M microvm`** (главный выброс); seccomp+cgroup+канарейки; SSHSIG; все шесть native `quarantined`; кодовый пилот на двух шаблонах; строка 6 S02 — `ok`, что противоречит пре-регистрации; CR снимается; есть иностранные токены и самоисправления |
+| [`2026-11-17-R8-answer-E.txt`](2026-11-17-R8-answer-E.txt) | 72 409 Б | `87ef64a52376ce358dbdac744f073f32219518ae751b924ffa23b842b0e60d5d` | открывал снимок `c63f3b8`, читал код; полный host-валидатор + тонкий runtime; WSL2+KVM `microvm`; seccomp TRACE + ptrace; raw Ed25519 + узкий recovery; все шесть native `quarantined`; кодовый пилот 20/24; вывод `NOT READY` |
+
+Это **не консенсус и не approval**. Ответы сходятся по Rust-канону, производному `active`,
+точным байтам admission и комнате без сети, но расходятся по runtime-валидатору, таблице S02,
+ускорителю и машине, наблюдению, ключу/recovery, legacy-шести, пилоту, порядку отказов,
+статусам и манифесту. Сводка, проверка утверждений и развилки —
+[`docs/R8-SYNTHESIS.md`](../../R8-SYNTHESIS.md).
+
 Хеши проверяются командами:
 
 ```bash
 sha256sum docs/research/external/2026-11-16-R5-answer-*.md
 sha256sum docs/research/external/2026-11-17-R6-answer-*
 sha256sum docs/research/external/2026-11-17-R7-answer-*
+sha256sum docs/research/external/2026-11-17-R8-answer-*
 ```
