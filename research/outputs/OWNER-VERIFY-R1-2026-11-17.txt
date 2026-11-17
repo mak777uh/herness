@@ -1,0 +1,2 @@
+PASS owner verify self-test: 5 проверок
+test-only: true; ключ эфемерный; запись не выполнялась

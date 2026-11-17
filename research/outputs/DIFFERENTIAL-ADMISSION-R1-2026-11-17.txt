@@ -1,0 +1,20 @@
+DIFFERENTIAL-ADMISSION-R1
+дата: 2026-11-17
+rust helper: /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/target/release/canonical_check
+rust digest: sha256:2b8bbd9f660cb439caa5b6739a629791d97ce2005712604ac7e115e4a66f37b5
+рабочий каталог: /tmp/herness-differential-7zdh_yew
+проверок: 25; провалов: 0
+
+что доказано:
+- Python и Rust дают одинаковые canonical-байты на случайных JCS-векторах;
+- повтор ключа, float, big int и не-ASCII ключ отвергаются обоими;
+- test-only манифест принимается обоими только с явным allow_test_only;
+- правка байта, подписи, срока и повтор ключа отвергаются обоими;
+- test_only=false на эфемерном ключе принимается обоими (песочница).
+
+что это не доказывает:
+- что эфемерный ключ является owner-ключом;
+- что production registry.active не пуст или что head активирован;
+- что полная семантика карточки реализована в promoter;
+- что Rust и Python совпадают на всех возможных JSON, кроме проверенных классов;
+- K9_proven не выдан.

@@ -366,7 +366,7 @@ Q2 S1 до I/O, `K4` раньше ошибок объекта, осторожн�
 | 9 | `92963cf` | генератор одного шаблона и пилот: 20 спецификаций, 24 мутанта, 3 повтора — PASS | `lab/pilot/`, `lab/candidates/`, `research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt` |
 | 10 | `fe27d07`, `edbf085` | handoff, claims, push; после первого LF-CI — CRLF-пиннинг запечатанных digest | `docs/`, `CLAIMS.md`, `.gitattributes` |
 | 11 | `a95fe58`, `c063ded`, `8c30f27`, `700d516` | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS (CI 31/31 без сборки); байтовый откат проб и CRLF-пин карточки; CI `44159576484` — success | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
-| 12 | `fe143b6` | сухая owner-церемония: эфемерный ключ с anchor `test_only:false`, promoter без `--allow-test-only`, песочный `active=[head]`; production не изменён; 30/30 WSL, 28/28 CI без `--build`, 19/19 Windows без launch; CI `44163715508` — success | `bin/owner_ceremony_dry_run.py`, `research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt` |
+| 12 | `fe143b6` | сухая owner-церемония: эфемерный ключ с anchor `test_only:false`, promoter без `--allow-test-only`, песочный `active=[head]`; production не изменён; 30/30 WSL, 28/28 CI без `--build`, 19/19 Windows без launch (после негативных контролей — 56/56 WSL, 45/45 Windows, §1.14); CI `44163715508` — success | `bin/owner_ceremony_dry_run.py`, `research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt` |
 
 CI на чистом LF checkout поймал то, чего CRLF-дерево не показывало: `lawset_digest`
 в provenance карточки head и 20 карточек кандидатов, а также SHA-256
@@ -445,12 +445,12 @@ Test-only репетиция доказывает отказ, но не пров
 отказывается создавать что-либо, кроме test-only, — новый помощник вызывается только
 прибором, не пользовательской командой.
 
-Результаты: в WSL **30/30 PASS**, включая `memfd/execveat`, normal 3 строки/144 B/
-`line_cap` и outside-root `S6_CLOSURE_BREACH`; в CI без `--build` — **28/28**; на Windows
-без launch — **19/19**. В песочном реестре `head` = `active`, `active=[head]`;
-production-файлы реестра до и после совпали, production `head` остаётся `candidate`,
-production `active` пуст. CI job `admission` запускает прибор после test-only репетиции,
-без `--build` (бинарь уже собран); CI `44163715508` — success. Evidence:
+Результаты: в WSL **56/56 PASS** (после добавления негативных контролей и сверки содержимого
+фикстуры), включая `memfd/execveat`, normal 3 строки/144 B/`line_cap` и outside-root
+`S6_CLOSURE_BREACH`; на Windows без launch — **45/45**. В песочном реестре `head` = `active`,
+`active=[head]`; production-файлы реестра до и после совпали, production `head` остаётся
+`candidate`, production `active` пуст. CI job `admission` запускает прибор после test-only
+репетиции, без `--build` (бинарь уже собран). Evidence:
 [`research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt`](../research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt).
 
 Границы. Эфемерный ключ — не owner-ключ; anchor `test_only:false` — объявление для
@@ -458,6 +458,50 @@ production `active` пуст. CI job `admission` запускает прибор
 `admission_digest`, а манифест содержит `key_fingerprint`, но **allowlist owner-anchor в
 реестре отсутствует**: владелец обязан сверить fingerprint и anchor вне канала до
 добавления события. `run_tool_g` по-прежнему не имеет ветки `head`; `K9_proven` не выдан.
+
+### 1.14. Аудит допуска: строгий JCS, дифференциальная проверка, края `head`, owner-отчёт
+
+Это продолжение безопасных работ 17.11.2026; настоящий owner-ключ, production `active`,
+`K9_proven` и публикация по-прежнему не выполнялись.
+
+**Строгий JCS в двух реализациях.** Python admission и Rust admission теперь отвергают
+повтор ключа, float, integer вне `±(2^53−1)` и не-ASCII ключи до проверки подписи.
+Добавлен независимый Rust-помощник `core-rs/src/bin/canonical_check.rs` и прибор
+[`bin/differential_admission.py`](../bin/differential_admission.py): 32 случайных JCS-вектора
+и 25 проверок манифеста дают **0 расхождений** Python/Rust по каноническим байтам, допуску
+и отказу. Rust lib: **131 тест** (было 118). Evidence:
+[`research/outputs/DIFFERENTIAL-ADMISSION-R1-2026-11-17.txt`](../research/outputs/DIFFERENTIAL-ADMISSION-R1-2026-11-17.txt), C-0318.
+
+**Сухая церемония усилена негативными контролями.** К положительной ветке добавлены:
+CLI `keygen` без `--test-only` и попытка записать ключ в репозиторий; изменённые байты
+манифеста, подписи и anchor; чужой fingerprint; просроченный и ещё не вступивший admission;
+`seq=0`; отсутствующий `test_only`; повтор ключа; integer вне JCS-диапазона; повтор `seq`
+и разрыв `prev` в песочном журнале; `test_only:true`, отсутствие и не-bool значение в
+событии реестра. Evidence различает digest **манифеста фикстуры** и digest **содержимого**
+`head-slice.txt` (471 B), сверяя содержимое с записью в манифесте. WSL — **56/56 PASS**,
+Windows без launch — **45/45**. C-0319.
+
+**Края `head`.** 13 новых Rust-тестов (всего 131 в lib): частичная строка при EOF и при
+`byte_cap`, граница `line_cap`/`byte_cap`, CR без `\n`, UTF-8, разорванный между чанками,
+невалидный UTF-8 в невыданной части, огромная строка → `output_cap`, ровно `OUTPUT_BYTES`,
+пустой файл/пустая строка, несовпадение размера → K11, дубликат ключа fixture-манифеста →
+S1, 48 сгенерированных входов с инвариантами и повторностью. Fixture-манифест теперь
+разбирается строгим JCS-парсером. Evidence:
+[`research/outputs/HEAD-EDGE-R1-2026-11-17.txt`](../research/outputs/HEAD-EDGE-R1-2026-11-17.txt), C-0321.
+
+**Owner-side verify-only.** [`bin/verify_owner_package.py`](../bin/verify_owner_package.py)
+читает манифест, подпись, anchor, шесть точных артефактов, fixture-манифест и его
+содержимое, evidence и production-состояние реестра; ничего не пишет, ключ не читает.
+`test_only=true` по умолчанию считается провалом; `--allow-test-only` только осматривает.
+Self-test на эфемерном пакете: **5 сценариев** (годный пакет, test-only без разрешения,
+изменённая карточка, изменённое содержимое фикстуры, изменённая подпись), C-0320. Это
+единственная проверка, которая сверяет **sha256 содержимого** фикстуры; runtime `head`
+сверяет только размер — известный разрыв, записан в `head.rs` и handoff.
+
+**Известные границы после аудита.** Promoter по-прежнему не связывает `--job` root/fixture
+с внешним admission и не реализует полную семантику карточки; реестр не проверяет подпись
+и не имеет allowlist owner-anchor; `run_tool_g` не имеет ветки `head`; `head` не сверяет
+sha256 содержимого фикстуры. Ни один из этих пунктов не закрашен «зелёным».
 
 ---
 

@@ -31,10 +31,10 @@ python bin/activation_rehearsal.py --no-launch
 wsl.exe -e sh -lc 'cd /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness && python3 bin/activation_rehearsal.py --build --evidence research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt'
 ```
 
-Ожидание: `PASS activation rehearsal: 33/33`; normal — 3 строки/144 B/`line_cap`;
-outside-root — `S6_CLOSURE_BREACH`. В CI та же цепочка идёт без `--build` (бинарь
-собирается отдельным шагом) и даёт `31/31`; это не другой порог, а отсутствие двух
-проверок сборки. Рабочий каталог и ключ создаются вне репозитория и
+Ожидание: `PASS activation rehearsal: 33/33` в WSL; на Windows без launch — `22/22`.
+Normal — 3 строки/144 B/`line_cap`; outside-root — `S6_CLOSURE_BREACH`. В CI та же
+цепочка идёт без `--build` (бинарь собирается отдельным шагом); это не другой порог,
+а отсутствие проверок сборки. Рабочий каталог и ключ создаются вне репозитория и
 удаляются, если не указан `--keep`; в evidence попадает только fingerprint, не seed.
 
 Репетиция доказывает: подпись и шесть exact-byte digest проверяются; test-only без
@@ -49,13 +49,32 @@ python bin/owner_ceremony_dry_run.py --no-launch
 wsl.exe -e sh -lc 'cd /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness && python3 bin/owner_ceremony_dry_run.py --build --evidence research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt'
 ```
 
-Ожидание: `19/19` на Windows без launch, `30/30` в WSL, `28/28` в CI без `--build`
-(бинарь собирается отдельным шагом). Прибор создаёт **эфемерный** ключ
-с anchor `test_only:false` вне репозитория, проверяет манифест без `--allow-test-only`,
-выполняет promoter verify/store и даёт песочный `head=active`, `active=[head]`; production
-`head` остаётся `candidate`, production `active` пуст. Это проверка положительной ветки,
-**не** approval и не настоящая церемония: эфемерный ключ не является owner-ключом, а
-CLI `keygen` намеренно не умеет создавать `test_only:false`.
+Ожидание: `45/45` на Windows без launch, `56/56` в WSL с launch. Прибор создаёт
+**эфемерный** ключ с anchor `test_only:false` вне репозитория, проверяет манифест без
+`--allow-test-only`, выполняет promoter verify/store и даёт песочный `head=active`,
+`active=[head]`; production `head` остаётся `candidate`, production `active` пуст.
+Добавлены негативные контроли: CLI `keygen` без `--test-only` и внутри репозитория;
+изменённые манифест, подпись, anchor и fingerprint; срок; `seq=0`; отсутствующий
+`test_only`; повтор ключа; integer вне JCS; повтор `seq` и разрыв `prev`; три test-only
+варианта реестра. Это проверка положительной ветки, **не** approval и не настоящая
+церемония: эфемерный ключ не является owner-ключом, а CLI `keygen` намеренно не умеет
+создавать `test_only:false`.
+
+Проверить готовый пакет можно read-only прибором (ничего не пишет, private key не читает):
+
+```text
+python bin/verify_owner_package.py --manifest <manifest.json> --sig <manifest.sig> \
+  --anchor <anchor.json> --card <card.json> --source <source> --binary <binary> \
+  --fixture <fixture-manifest.json> --policy <policy.json> --room <room.json> \
+  --evidence <evidence.txt>
+```
+
+Без `--allow-test-only` пакет с `test_only:true` по умолчанию считается провалом.
+`--allow-test-only` только осматривает песочный пакет и не делает его approval.
+Self-test прибора: `python bin/verify_owner_package.py --self-test` → 5 сценариев
+(годный пакет, test-only без разрешения, изменённая карточка, изменённое содержимое
+фикстуры, изменённая подпись). Это единственная проверка, которая сверяет **sha256
+содержимого** фикстуры; runtime `head` сверяет только размер — известный разрыв.
 
 ## 3. Что уже закрыто в реестре
 
@@ -92,6 +111,9 @@ CLI `keygen` намеренно не умеет создавать `test_only:fa
    `python bin/admission.py verify --manifest ... --sig ... --anchor ...` — без
    `--allow-test-only`; затем `python bin/promoter.py verify ... --store ...`. Ожидание:
    подпись и шесть digest сходятся, `test_only` отсутствует или false, store не содержит seed.
+   Дополнительно — независимый read-only отчёт
+   `python bin/verify_owner_package.py ...` (см. §2): он сверяет те же шесть digest,
+   карточку, содержимое fixture-манифеста и evidence, ничего не записывая.
 8. **Записать evidence.** Команда, rc, digest'ы, fingerprint, дата, кто и на каком хосте
    подписывал. Evidence — не seed и не приватный ключ.
 9. **Добавить событие `admitted`.** Append-only событие в `registry.events.jsonl`:
