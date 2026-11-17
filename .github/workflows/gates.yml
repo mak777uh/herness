@@ -68,13 +68,18 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Зависимости Ed25519
         run: python -m pip install cryptography==46.0.5
-      - name: Self-tests admission и promoter
+      - name: Self-tests admission, promoter и owner-проверки
         run: |
           python bin/admission.py --self-test
           python bin/promoter.py --self-test
-      - name: Сборка head_slice_host
+          python bin/verify_owner_package.py --self-test
+      - name: Сборка head_slice_host и canonical_check
         working-directory: core-rs
-        run: cargo build --release --bin head_slice_host
+        run: cargo build --release --bin head_slice_host --bin canonical_check
+      # Независимый Rust-парсер JCS обязан совпасть с Python на канонизации,
+      # допуске и отказе. Это не owner-церемония и не активация.
+      - name: Дифференциальная проверка JCS (Python vs Rust)
+        run: python bin/differential_admission.py --vectors 32
       # Launch идёт только через memfd/execveat. Если среда запретит syscall,
       # это будет видно как FAIL, а не заменено путём/TCG; локальное WSL-evidence
       # остаётся отдельным источником.

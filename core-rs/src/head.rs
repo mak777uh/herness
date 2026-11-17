@@ -12,6 +12,10 @@
 //! `VerifiedAdmission` с tool=head и digest'ом fixture-манифеста. Полная семантика
 //! карточки и точные байты card/source/binary/policy/room — на promoter; см.
 //! `docs/DECISIONS-R8-2026-11-17.md` (Q11/A01).
+//!
+//! Известный разрыв: с manifest сверяется размер файла, но не sha256 его содержимого.
+//! Файл того же размера с другими байтами не будет отвергнут этим модулем; целостность
+//! комнаты должна обеспечиваться снаружи head.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -160,8 +164,17 @@ fn safe_relative(path: &str) -> bool {
 
 impl FixtureManifest {
     pub fn parse(bytes: &[u8]) -> Result<Self, String> {
-        let value: Value = serde_json::from_slice(bytes)
-            .map_err(|error| schema_error(format!("fixture manifest не JSON: {error}")))?;
+        // Строгий JCS-разбор: повтор ключа, float и integer вне ±(2^53−1)
+        // не должны читаться двумя реализациями по-разному.
+        let value: Value = crate::admission::strict_json_value(bytes, "fixture manifest")
+            .map_err(|error| {
+                schema_error(format!(
+                    "fixture manifest не разбирается как JSON: {}",
+                    error
+                        .strip_prefix("K11_ADMISSION_REQUIRED: ")
+                        .unwrap_or(&error)
+                ))
+            })?;
         let object = value
             .as_object()
             .ok_or_else(|| schema_error("fixture manifest должен быть объектом"))?;
@@ -493,7 +506,8 @@ pub fn file_read_stream(
             let stat = unsafe { stat.assume_init() };
             if stat.st_size as u64 != meta.bytes {
                 return Err(admission_error(
-                    "размер fixture не совпадает с fixture manifest (exact bytes)",
+                    "размер fixture не совпадает с fixture manifest; \
+                     sha256 содержимого здесь не сверяется (известный разрыв)",
                 ));
             }
         }
@@ -830,5 +844,190 @@ mod tests {
             assert_eq!(first, again);
         }
         let _ = std::fs::remove_dir_all(root);
+    }
+
+    fn run_bytes(
+        name: &str,
+        bytes: &[u8],
+        line_count: usize,
+        max: usize,
+    ) -> Result<HeadOutput, String> {
+        let root = temp_root(name);
+        std::fs::write(root.join("fixtures/data.bin"), bytes).unwrap();
+        let manifest = serde_json::to_vec(&manifest_value(&[(
+            "data.bin",
+            bytes.len() as u64,
+            &digest_bytes(bytes),
+            "model_visible",
+        )]))
+        .unwrap();
+        let result = run(&root, &manifest, &["fixtures", "data.bin"], line_count, max);
+        let _ = std::fs::remove_dir_all(root);
+        result
+    }
+
+    #[test]
+    fn partial_line_at_eof_is_emitted_once_and_not_truncated() {
+        let output = run_bytes("partial-eof", b"abc", 3, 10).unwrap();
+        assert_eq!(output.lines, vec!["abc".to_string()]);
+        assert_eq!(output.bytes_read, 3);
+        assert!(!output.truncated);
+        assert_eq!(output.stop_reason, StopReason::Eof);
+    }
+
+    #[test]
+    fn partial_line_at_byte_cap_is_not_emitted() {
+        let output = run_bytes("partial-cap", b"ok\nabc", 3, 5).unwrap();
+        assert_eq!(output.lines, vec!["ok".to_string()]);
+        assert_eq!(output.bytes_read, 3);
+        assert!(output.truncated);
+        assert_eq!(output.stop_reason, StopReason::ByteCap);
+    }
+
+    #[test]
+    fn exact_cap_at_line_boundary_respects_line_cap_first() {
+        let output = run_bytes("cap-line", b"abc\n", 1, 4).unwrap();
+        assert_eq!(output.lines, vec!["abc".to_string()]);
+        assert_eq!(output.stop_reason, StopReason::LineCap);
+        assert!(output.truncated);
+        let output = run_bytes("cap-byte", b"abc\n", 2, 4).unwrap();
+        assert_eq!(output.lines, vec!["abc".to_string()]);
+        assert_eq!(output.stop_reason, StopReason::ByteCap);
+        assert!(output.truncated);
+    }
+
+    #[test]
+    fn multibyte_utf8_split_across_chunks_stays_whole() {
+        let line = "é".repeat(3000);
+        let mut bytes = line.as_bytes().to_vec();
+        bytes.push(b'\n');
+        let output = run_bytes("utf8-split", &bytes, 1, 8192).unwrap();
+        assert_eq!(output.lines, vec![line]);
+        assert_eq!(output.bytes_read, 6001);
+        assert_eq!(output.stop_reason, StopReason::LineCap);
+    }
+
+    #[test]
+    fn lone_cr_is_preserved_and_not_a_separator() {
+        let output = run_bytes("cr-only", b"a\rb\r", 3, 10).unwrap();
+        assert_eq!(output.lines, vec!["a\rb\r".to_string()]);
+        assert_eq!(output.bytes_read, 4);
+        assert_eq!(output.stop_reason, StopReason::Eof);
+        assert!(!output.truncated);
+    }
+
+    #[test]
+    fn invalid_utf8_in_unemitted_partial_is_not_s12() {
+        let output = run_bytes("utf8-partial", b"ok\n\xff", 3, 4).unwrap();
+        assert_eq!(output.lines, vec!["ok".to_string()]);
+        assert_eq!(output.stop_reason, StopReason::ByteCap);
+    }
+
+    #[test]
+    fn invalid_utf8_final_partial_at_eof_is_s12() {
+        let error = run_bytes("utf8-eof", b"ok\n\xff", 3, 10).unwrap_err();
+        assert!(error.starts_with("S12_ENCODING:"), "{error}");
+    }
+
+    #[test]
+    fn huge_line_is_output_cap_not_k4() {
+        let mut bytes = vec![b'x'; 9000];
+        bytes.push(b'\n');
+        let output = run_bytes("huge-line", &bytes, 1, 65536).unwrap();
+        assert!(output.lines.is_empty());
+        assert_eq!(output.bytes_read, 0);
+        assert!(output.truncated);
+        assert_eq!(output.stop_reason, StopReason::OutputCap);
+    }
+
+    #[test]
+    fn line_exactly_output_cap_is_emitted() {
+        let mut bytes = vec![b'x'; OUTPUT_BYTES - 1];
+        bytes.push(b'\n');
+        bytes.extend_from_slice(b"y\n");
+        let output = run_bytes("output-boundary", &bytes, 2, 65536).unwrap();
+        assert_eq!(output.lines.len(), 1);
+        assert_eq!(output.lines[0].len(), OUTPUT_BYTES - 1);
+        assert_eq!(output.bytes_read, OUTPUT_BYTES);
+        assert_eq!(output.stop_reason, StopReason::OutputCap);
+        assert!(output.truncated);
+    }
+
+    #[test]
+    fn empty_file_is_eof_and_empty_line_is_a_line() {
+        let output = run_bytes("empty-file", b"", 3, 10).unwrap();
+        assert!(output.lines.is_empty());
+        assert!(!output.truncated);
+        assert_eq!(output.stop_reason, StopReason::Eof);
+        let output = run_bytes("empty-line", b"\n", 3, 10).unwrap();
+        assert_eq!(output.lines, vec![String::new()]);
+        assert_eq!(output.bytes_read, 1);
+        assert_eq!(output.stop_reason, StopReason::Eof);
+    }
+
+    #[test]
+    fn size_mismatch_with_manifest_is_k11() {
+        let root = temp_root("size-mismatch");
+        let bytes = b"abc";
+        std::fs::write(root.join("fixtures/data.bin"), bytes).unwrap();
+        let manifest = serde_json::to_vec(&manifest_value(&[(
+            "data.bin",
+            4,
+            &digest_bytes(bytes),
+            "model_visible",
+        )]))
+        .unwrap();
+        let error = run(&root, &manifest, &["fixtures", "data.bin"], 1, 10).unwrap_err();
+        assert!(error.starts_with("K11_ADMISSION_REQUIRED:"), "{error}");
+        assert!(error.contains("размер"), "{error}");
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn duplicate_fixture_manifest_key_is_s1() {
+        let raw = br#"{"schema_version":"fixture-manifest-v1","root_ref":"room:input","root_ref":"room:input","fixture_root":"fixtures","accepted_classes":["model_visible"],"files":[]}"#;
+        let root = temp_root("fixture-duplicate");
+        std::fs::write(root.join("fixtures/data.bin"), b"x").unwrap();
+        let error = run(&root, raw, &["fixtures", "data.bin"], 1, 10).unwrap_err();
+        assert!(error.starts_with("S1_SCHEMA:"), "{error}");
+        assert!(error.contains("повтор ключа"), "{error}");
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn byte_invariants_hold_on_generated_inputs() {
+        let mut state: u64 = 0x9e37_79b9_7f4a_7c15;
+        for case in 0..48 {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            let length = (state as usize % 12000) + 1;
+            let mut bytes = Vec::with_capacity(length);
+            for _ in 0..length {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                bytes.push(match state % 17 {
+                    0 => b'\n',
+                    1 => b'\r',
+                    _ => b'a' + (state % 26) as u8,
+                });
+            }
+            let line_count = ((state >> 8) as usize % 6) + 1;
+            let max = ((state >> 16) as usize % 12000) + 1;
+            let first = run_bytes(&format!("property-{case}"), &bytes, line_count, max);
+            let again = run_bytes(&format!("property-{case}-again"), &bytes, line_count, max);
+            assert_eq!(first, again, "повторность на case {case}");
+            let output = match first {
+                Ok(output) => output,
+                Err(error) => {
+                    assert!(error.starts_with("K4_RESOURCE_LIMIT:"), "{error}");
+                    continue;
+                }
+            };
+            assert!(output.lines.len() <= line_count, "case {case}");
+            assert!(output.bytes_read <= OUTPUT_BYTES, "case {case}");
+            assert!(output.bytes_read <= max, "case {case}");
+            assert!(output.bytes_received <= max, "case {case}");
+            assert_eq!(output.truncated, output.stop_reason != StopReason::Eof, "case {case}");
+            let joined: usize = output.lines.iter().map(|line| line.len()).sum();
+            assert!(joined <= output.bytes_read, "case {case}");
+        }
     }
 }

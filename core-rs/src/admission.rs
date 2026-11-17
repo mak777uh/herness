@@ -10,11 +10,12 @@
 //! не становится допуском.
 
 use std::collections::BTreeMap;
-use std::fmt::Write as _;
+use std::fmt::{self, Write as _};
 use std::io::Read;
 use std::path::Path;
 
 use ed25519_dalek::{Signature, VerifyingKey};
+use serde::de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
@@ -22,6 +23,8 @@ use sha2::{Digest, Sha256};
 pub const DOMAIN: &[u8] = b"herness-admission-v1";
 /// Хеш пустой цепочки: первый admission обязан ссылаться на него.
 pub const GENESIS: &str = "sha256:ad91748e7797e06cd9bade33556abe349c5b6f8ad15fd51384ffe1822a889b68";
+/// JCS-числа — IEEE-754 double: за пределами ±(2^53-1) парсеры расходятся.
+pub const SAFE_INT: u64 = 9_007_199_254_740_991;
 /// Поля exact-byte привязки. Все обязательны; пропуск — K11.
 pub const DIGEST_FIELDS: [&str; 6] = [
     "card_digest",
@@ -119,8 +122,18 @@ fn write_canonical(value: &Value, out: &mut Vec<u8>) -> Result<(), String> {
         Value::Bool(false) => out.extend_from_slice(b"false"),
         Value::Number(number) => {
             if let Some(value) = number.as_i64() {
+                if value.unsigned_abs() > SAFE_INT {
+                    return Err(refuse(format!(
+                        "целое {value} вне безопасного диапазона JCS (±{SAFE_INT})"
+                    )));
+                }
                 out.extend_from_slice(value.to_string().as_bytes());
             } else if let Some(value) = number.as_u64() {
+                if value > SAFE_INT {
+                    return Err(refuse(format!(
+                        "целое {value} вне безопасного диапазона JCS (±{SAFE_INT})"
+                    )));
+                }
                 out.extend_from_slice(value.to_string().as_bytes());
             } else {
                 return Err(refuse("float в каноническом JSON запрещён"));
@@ -167,9 +180,117 @@ pub fn canonical_json_bytes(value: &Value) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
+/// Строгий JSON-объект: повтор ключа, float и целое вне safe range — отказ.
+///
+/// `serde_json::Value` сам по себе теряет повторы ключей (побеждает последний),
+/// поэтому разбор идёт через visitor, а не через `from_slice::<Value>`.
+struct StrictValue(Value);
+
+impl<'de> Deserialize<'de> for StrictValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(StrictVisitor)
+    }
+}
+
+struct StrictVisitor;
+
+impl<'de> Visitor<'de> for StrictVisitor {
+    type Value = StrictValue;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("JSON в JCS-подмножестве v0")
+    }
+
+    fn visit_bool<E: de::Error>(self, value: bool) -> Result<Self::Value, E> {
+        Ok(StrictValue(Value::Bool(value)))
+    }
+
+    fn visit_i64<E: de::Error>(self, value: i64) -> Result<Self::Value, E> {
+        if value.unsigned_abs() > SAFE_INT {
+            return Err(de::Error::custom(format!(
+                "целое {value} вне безопасного диапазона JCS (±{SAFE_INT})"
+            )));
+        }
+        Ok(StrictValue(Value::from(value)))
+    }
+
+    fn visit_u64<E: de::Error>(self, value: u64) -> Result<Self::Value, E> {
+        if value > SAFE_INT {
+            return Err(de::Error::custom(format!(
+                "целое {value} вне безопасного диапазона JCS (±{SAFE_INT})"
+            )));
+        }
+        Ok(StrictValue(Value::from(value)))
+    }
+
+    fn visit_f64<E: de::Error>(self, _value: f64) -> Result<Self::Value, E> {
+        Err(de::Error::custom("float в каноническом JSON запрещён"))
+    }
+
+    fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
+        Ok(StrictValue(Value::String(value.to_string())))
+    }
+
+    fn visit_string<E: de::Error>(self, value: String) -> Result<Self::Value, E> {
+        Ok(StrictValue(Value::String(value)))
+    }
+
+    fn visit_none<E: de::Error>(self) -> Result<Self::Value, E> {
+        Ok(StrictValue(Value::Null))
+    }
+
+    fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> {
+        Ok(StrictValue(Value::Null))
+    }
+
+    fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Deserialize::deserialize(deserializer)
+    }
+
+    fn visit_seq<A>(self, mut sequence: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let mut values = Vec::new();
+        while let Some(value) = sequence.next_element::<StrictValue>()? {
+            values.push(value.0);
+        }
+        Ok(StrictValue(Value::Array(values)))
+    }
+
+    fn visit_map<A>(self, mut access: A) -> Result<Self::Value, A::Error>
+    where
+        A: MapAccess<'de>,
+    {
+        let mut values = Map::new();
+        while let Some(key) = access.next_key::<String>()? {
+            if values.contains_key(&key) {
+                return Err(de::Error::custom(format!(
+                    "повтор ключа {key:?} в JSON запрещён"
+                )));
+            }
+            let value = access.next_value::<StrictValue>()?;
+            values.insert(key, value.0);
+        }
+        Ok(StrictValue(Value::Object(values)))
+    }
+}
+
 fn parse_document(bytes: &[u8], what: &str) -> Result<Value, String> {
-    serde_json::from_slice(bytes)
+    serde_json::from_slice::<StrictValue>(bytes)
+        .map(|value| value.0)
         .map_err(|error| refuse(format!("{what} не разбирается как JSON: {error}")))
+}
+
+/// Публичная точка для differential-проверок: разбор в строгом JCS-подмножестве.
+pub fn strict_json_value(bytes: &[u8], what: &str) -> Result<Value, String> {
+    parse_document(bytes, what)
 }
 
 fn object<'a>(value: &'a Value, what: &str) -> Result<&'a Map<String, Value>, String> {
@@ -186,10 +307,16 @@ fn text<'a>(object: &'a Map<String, Value>, key: &str) -> Result<&'a str, String
 }
 
 fn integer(object: &Map<String, Value>, key: &str) -> Result<i64, String> {
-    object
+    let value = object
         .get(key)
         .and_then(Value::as_i64)
-        .ok_or_else(|| refuse(format!("нет целого поля {key}")))
+        .ok_or_else(|| refuse(format!("нет целого поля {key}")))?;
+    if value.unsigned_abs() > SAFE_INT {
+        return Err(refuse(format!(
+            "целое {value} вне безопасного диапазона JCS (±{SAFE_INT})"
+        )));
+    }
+    Ok(value)
 }
 
 fn boolean(object: &Map<String, Value>, key: &str) -> Result<bool, String> {
@@ -497,6 +624,46 @@ mod tests {
     fn canonical_json_rejects_float() {
         let value = serde_json::json!({"x": 1.5});
         assert!(canonical_json_bytes(&value).unwrap_err().starts_with("K11_"));
+    }
+
+    #[test]
+    fn canonical_json_rejects_big_int_and_keeps_boundary() {
+        let boundary = serde_json::json!({"x": SAFE_INT});
+        assert_eq!(
+            canonical_json_bytes(&boundary).unwrap(),
+            b"{\"x\":9007199254740991}"
+        );
+        let big = serde_json::json!({"x": SAFE_INT + 1});
+        let error = canonical_json_bytes(&big).unwrap_err();
+        assert!(error.contains("безопасного диапазона"), "{error}");
+        let negative = serde_json::json!({"x": -(SAFE_INT as i64) - 1});
+        let error = canonical_json_bytes(&negative).unwrap_err();
+        assert!(error.contains("безопасного диапазона"), "{error}");
+    }
+
+    #[test]
+    fn duplicate_keys_are_rejected_before_signature() {
+        let key = SigningKey::from_bytes(&SEED);
+        let anchor = anchor_bytes(&key, 1, &[], GENESIS);
+        let (bytes, signature) = sign(&manifest(1, GENESIS, true), &key);
+        let mut duplicate = bytes.clone();
+        duplicate.pop();
+        duplicate.extend_from_slice(b",\"test_only\":true}");
+        let error = verify_admission(&duplicate, &signature, &anchor, now(), true).unwrap_err();
+        assert!(error.contains("повтор ключа"), "{error}");
+
+        let mut duplicate_anchor = anchor.clone();
+        duplicate_anchor.pop();
+        duplicate_anchor.extend_from_slice(b",\"min_epoch\":1}");
+        let error =
+            verify_admission(&bytes, &signature, &duplicate_anchor, now(), true).unwrap_err();
+        assert!(error.contains("повтор ключа"), "{error}");
+    }
+
+    #[test]
+    fn parse_document_rejects_big_int() {
+        let error = parse_document(b"{\"seq\":9007199254740993}", "manifest").unwrap_err();
+        assert!(error.contains("безопасного диапазона"), "{error}");
     }
 
     #[test]

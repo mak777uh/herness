@@ -46,6 +46,7 @@ EVENT_TYPES = (
     "expired",
 )
 LEGACY = ("search", "list", "read", "write", "seal", "netprobe")
+SAFE_INT = 2**53 - 1
 DIGEST_RE = __import__("re").compile(r"^sha256:[0-9a-f]{64}$")
 
 
@@ -61,10 +62,25 @@ def _reject_float(_text: str) -> Any:
     raise RegistryError("float в каноническом JSON запрещён")
 
 
+def _pairs_without_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise RegistryError(f"повтор ключа {key!r} в JSON запрещён")
+        result[key] = value
+    return result
+
+
 def _check_subset(value: Any) -> None:
     if isinstance(value, float):
         raise RegistryError("float в каноническом JSON запрещён")
-    if value is None or isinstance(value, (bool, int, str)):
+    if value is None or isinstance(value, (bool, str)):
+        return
+    if isinstance(value, int):
+        if abs(value) > SAFE_INT:
+            raise RegistryError(
+                f"целое {value} вне безопасного диапазона JCS (±{SAFE_INT})"
+            )
         return
     if isinstance(value, list):
         for item in value:
@@ -118,7 +134,14 @@ def read_snapshot(path: Path = SNAPSHOT) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for index, line in enumerate(read_lines(path), 1):
         try:
-            row = json.loads(line.decode("utf-8"))
+            row = json.loads(
+                line.decode("utf-8"),
+                parse_float=_reject_float,
+                parse_constant=_reject_float,
+                object_pairs_hook=_pairs_without_duplicates,
+            )
+        except RegistryError as exc:
+            raise RegistryError(f"registry.jsonl:{index}: {exc}") from exc
         except Exception as exc:  # noqa: BLE001
             raise RegistryError(f"registry.jsonl:{index}: не JSON: {exc}") from exc
         if not isinstance(row, dict) or not isinstance(row.get("id"), str):
@@ -132,7 +155,14 @@ def read_events(path: Path = EVENTS) -> list[tuple[bytes, dict[str, Any]]]:
     events: list[tuple[bytes, dict[str, Any]]] = []
     for index, line in enumerate(read_lines(path), 1):
         try:
-            event = json.loads(line.decode("utf-8"))
+            event = json.loads(
+                line.decode("utf-8"),
+                parse_float=_reject_float,
+                parse_constant=_reject_float,
+                object_pairs_hook=_pairs_without_duplicates,
+            )
+        except RegistryError as exc:
+            raise RegistryError(f"registry.events.jsonl:{index}: {exc}") from exc
         except Exception as exc:  # noqa: BLE001
             raise RegistryError(f"registry.events.jsonl:{index}: не JSON: {exc}") from exc
         if not isinstance(event, dict):
@@ -341,6 +371,10 @@ def authorize_state(state: dict[str, Any], tool: str) -> tuple[bool, str]:
     record = (state.get("tools") or {}).get(tool)
     if record is None:
         return False, f"S13_TOOL_INACTIVE: {tool} отсутствует в реестре"
+    # Legacy-инструменты вне v0 даже если событие ошибочно/злонамеренно говорит
+    # active: их допуск требует отдельного решения, а не строки в state.
+    if tool in LEGACY:
+        return False, f"S13_TOOL_INACTIVE: {tool} — legacy вне v0 (состояние {record['state']})"
     if record["state"] != "active":
         return False, f"S13_TOOL_INACTIVE: {tool} в состоянии {record['state']}"
     return True, tool

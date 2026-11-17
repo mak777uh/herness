@@ -25,7 +25,7 @@ import platform
 import shutil
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 BIN = ROOT / "bin"
@@ -102,7 +102,187 @@ def verify_positive(
     ]
     adm.verify_checks(result, checks)
     rehearsal.check(True, "шесть exact-byte digest совпадают")
+    fixture = verify_fixture_manifest(rehearsal)
+    rehearsal.check(fixture, "содержимое фикстуры сверено с её манифестом")
     return result
+
+
+def verify_fixture_manifest(rehearsal: ar.Rehearsal) -> bool:
+    manifest_path = rehearsal.artifacts["fixture"]
+    document = json.loads(manifest_path.read_text(encoding="utf-8"))
+    files = document.get("files") if isinstance(document, dict) else None
+    entry = next(
+        (item for item in (files or []) if item.get("path") == "head-slice.txt"), None
+    )
+    content_path = manifest_path.parent / "head-slice.txt"
+    content_digest = ar.sha256(content_path)
+    content_bytes = content_path.stat().st_size
+    rehearsal.records["fixture"] = {
+        "manifest_digest": rehearsal.digests["fixture"],
+        "content_digest": content_digest,
+        "content_bytes": content_bytes,
+        "manifest_entry_digest": entry.get("sha256") if entry else None,
+        "manifest_entry_bytes": entry.get("bytes") if entry else None,
+    }
+    rehearsal.check(
+        entry is not None and entry.get("sha256") == content_digest,
+        "digest содержимого фикстуры совпадает с манифестом",
+    )
+    rehearsal.check(
+        entry is not None and entry.get("bytes") == content_bytes,
+        "размер содержимого фикстуры совпадает с манифестом",
+    )
+    return entry is not None and entry.get("sha256") == content_digest
+
+
+def _refusal(
+    rehearsal: ar.Rehearsal, label: str, action: Callable[[], Any], needle: str
+) -> None:
+    try:
+        action()
+    except adm.AdmissionError as exc:
+        text = str(exc)
+        rehearsal.note(f"{label}: {text}")
+        rehearsal.check(
+            needle in text and "K11_ADMISSION_REQUIRED" in text,
+            f"{label}: отказ K11 «{needle}»",
+        )
+    except Exception as exc:  # noqa: BLE001
+        rehearsal.note(f"{label}: неожиданное {type(exc).__name__}: {exc}")
+        rehearsal.check(False, f"{label}: ожидался AdmissionError, получен {type(exc).__name__}")
+    else:
+        rehearsal.check(False, f"{label}: ожидался отказ, но проверка прошла")
+
+
+def _signed(document: dict[str, Any], key: Any) -> tuple[bytes, str]:
+    raw = adm.canonical(document) + b"\n"
+    return raw, adm.sign_manifest(raw, key)
+
+
+def negative_admission(
+    rehearsal: ar.Rehearsal, key_path: Path, manifest: Path, sig: Path, anchor: Path
+) -> None:
+    key = adm.load_private_key(key_path)
+    manifest_bytes = manifest.read_bytes()
+    signature = sig.read_text(encoding="ascii")
+    anchor_bytes = anchor.read_bytes()
+    document = json.loads(manifest_bytes)
+    now = NOW_UNIX
+
+    cli = [sys.executable, str(BIN / "admission.py"), "keygen"]
+    cli_dir = rehearsal.work / "cli-key-no-flag"
+    result = rehearsal.run([*cli, "--dir", str(cli_dir)])
+    rehearsal.check(
+        result.returncode != 0 and "--test-only" in (result.stderr or ""),
+        "CLI keygen без --test-only отказывает",
+    )
+    rehearsal.check(not cli_dir.exists(), "CLI keygen без --test-only не создаёт каталог")
+
+    repo_dir = ROOT / "lab" / "tools" / ".owner-keygen-must-not-exist"
+    result = rehearsal.run([*cli, "--dir", str(repo_dir), "--test-only"])
+    rehearsal.check(
+        result.returncode != 0 and "внутри репозитория" in (result.stderr or ""),
+        "CLI keygen внутри репозитория отказывает",
+    )
+    rehearsal.check(not repo_dir.exists(), "CLI keygen внутри репозитория не создаёт каталог")
+
+    tampered_manifest = manifest_bytes.replace(b'"seq":1', b'"seq":2', 1)
+    rehearsal.check(tampered_manifest != manifest_bytes, "копия манифеста действительно изменена")
+    _refusal(
+        rehearsal,
+        "изменённый байт манифеста",
+        lambda: adm.verify_admission(tampered_manifest, signature, anchor_bytes, now, False),
+        "подпись не соответствует",
+    )
+
+    first = "0" if signature[0] != "0" else "1"
+    bad_signature = first + signature[1:]
+    _refusal(
+        rehearsal,
+        "изменённая подпись",
+        lambda: adm.verify_admission(manifest_bytes, bad_signature, anchor_bytes, now, False),
+        "подпись не соответствует",
+    )
+
+    anchor_document = json.loads(anchor_bytes)
+    public = bytearray(bytes.fromhex(anchor_document["public_key"]))
+    public[0] ^= 1
+    anchor_document["public_key"] = public.hex()
+    _refusal(
+        rehearsal,
+        "изменённый anchor",
+        lambda: adm.verify_admission(
+            manifest_bytes, signature, adm.canonical(anchor_document), now, False
+        ),
+        "fingerprint не совпадает",
+    )
+
+    wrong_fingerprint = dict(document)
+    wrong_fingerprint["key_fingerprint"] = adm.digest_bytes(b"not this owner")
+    raw, variant_signature = _signed(wrong_fingerprint, key)
+    _refusal(
+        rehearsal,
+        "чужой fingerprint в манифесте",
+        lambda: adm.verify_admission(raw, variant_signature, anchor_bytes, now, False),
+        "key_fingerprint не совпадает",
+    )
+
+    later = adm.parse_time("2028-01-01T00:00:00Z", "now")
+    _refusal(
+        rehearsal,
+        "просроченный admission",
+        lambda: adm.verify_admission(manifest_bytes, signature, anchor_bytes, later, False),
+        "просрочен",
+    )
+    earlier = adm.parse_time("2025-01-01T00:00:00Z", "now")
+    _refusal(
+        rehearsal,
+        "ещё не вступивший admission",
+        lambda: adm.verify_admission(manifest_bytes, signature, anchor_bytes, earlier, False),
+        "ещё не вступил",
+    )
+
+    seq_zero = dict(document)
+    seq_zero["seq"] = 0
+    raw, variant_signature = _signed(seq_zero, key)
+    _refusal(
+        rehearsal,
+        "seq=0 подписан",
+        lambda: adm.verify_admission(raw, variant_signature, anchor_bytes, now, False),
+        "epoch и seq",
+    )
+
+    missing_flag = {name: value for name, value in document.items() if name != "test_only"}
+    raw, variant_signature = _signed(missing_flag, key)
+    _refusal(
+        rehearsal,
+        "test_only отсутствует",
+        lambda: adm.verify_admission(raw, variant_signature, anchor_bytes, now, False),
+        "нет булева поля test_only",
+    )
+
+    duplicate = adm.canonical(document)[:-1] + b',"test_only":false}' + b"\n"
+    duplicate_signature = key.sign(adm.DOMAIN + b"\n" + duplicate).hex()
+    _refusal(
+        rehearsal,
+        "повтор ключа в манифесте",
+        lambda: adm.verify_admission(duplicate, duplicate_signature, anchor_bytes, now, False),
+        "повтор ключа",
+    )
+
+    big = dict(document)
+    big["seq"] = adm.SAFE_INT + 1
+    big_raw = (
+        json.dumps(big, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        + b"\n"
+    )
+    big_signature = key.sign(adm.DOMAIN + b"\n" + big_raw).hex()
+    _refusal(
+        rehearsal,
+        "integer вне JCS-диапазона",
+        lambda: adm.verify_admission(big_raw, big_signature, anchor_bytes, now, False),
+        "безопасного диапазона",
+    )
 
 
 def promoter_positive(
@@ -195,6 +375,86 @@ def registry_positive(rehearsal: ar.Rehearsal, manifest: Path) -> dict[str, Any]
     return state
 
 
+def registry_negative(rehearsal: ar.Rehearsal) -> None:
+    source = rehearsal.work / "registry"
+    files = {
+        name: (source / name).read_bytes()
+        for name in ("registry.jsonl", "registry.events.jsonl", "policy.json")
+    }
+
+    def sandbox(name: str) -> tuple[Path, Path, Path]:
+        target = rehearsal.work / name
+        target.mkdir(parents=True, exist_ok=True)
+        for filename, data in files.items():
+            ar.write(target / filename, data)
+        return (
+            target / "registry.jsonl",
+            target / "registry.events.jsonl",
+            target / "policy.json",
+        )
+
+    snapshot, events_path, policy = sandbox("registry-neg-seq")
+    events = rs.read_events(events_path)
+    lines = [line for line, _ in events]
+    events_path.write_bytes(b"\n".join([*lines, lines[-1]]) + b"\n")
+    try:
+        rs.computed_state(snapshot=snapshot, events=events_path, policy=policy)
+    except rs.RegistryError as exc:
+        rehearsal.note(f"повтор seq: {exc}")
+        rehearsal.check("seq" in str(exc), "повтор seq в песочном журнале отвергнут")
+    else:
+        rehearsal.check(False, "повтор seq в песочном журнале отвергнут")
+
+    snapshot, events_path, policy = sandbox("registry-neg-prev")
+    events = rs.read_events(events_path)
+    broken = dict(events[-1][1])
+    broken["seq"] = len(events)
+    broken["prev"] = rs.genesis_prev()
+    events_path.write_bytes(
+        b"\n".join([*(line for line, _ in events), rs.canonical(broken)]) + b"\n"
+    )
+    try:
+        rs.computed_state(snapshot=snapshot, events=events_path, policy=policy)
+    except rs.RegistryError as exc:
+        rehearsal.note(f"разрыв prev: {exc}")
+        rehearsal.check("prev" in str(exc), "разрыв prev в песочном журнале отвергнут")
+    else:
+        rehearsal.check(False, "разрыв prev в песочном журнале отвергнут")
+
+    variants = (
+        ("test_only=true", "true", True),
+        ("test_only отсутствует", "missing", None),
+        ("test_only-строка", "string", "false"),
+    )
+    for label, suffix, value in variants:
+        snapshot, events_path, policy = sandbox(f"registry-neg-{suffix}")
+        events = rs.read_events(events_path)
+        last = dict(events[-1][1])
+        body = dict(last["body"])
+        if value is None:
+            body.pop("test_only", None)
+        else:
+            body["test_only"] = value
+        last["body"] = body
+        events_path.write_bytes(
+            b"\n".join(
+                [*(line for line, _ in events[:-1]), rs.canonical(last)]
+            )
+            + b"\n"
+        )
+        state = rs.computed_state(snapshot=snapshot, events=events_path, policy=policy)
+        head = state.get("tools", {}).get("head", {})
+        rehearsal.check(
+            head.get("state") == "admitted_inactive" and state.get("active") == [],
+            f"{label}: head admitted_inactive, active пуст",
+        )
+        ok, message = rs.authorize_state(state, "head")
+        rehearsal.check(
+            not ok and "admitted_inactive" in message,
+            f"{label}: authorize_state отказывает",
+        )
+
+
 def evidence_text(rehearsal: ar.Rehearsal) -> str:
     passed = sum(1 for flag, _ in rehearsal.checks if flag)
     total = len(rehearsal.checks)
@@ -217,6 +477,18 @@ def evidence_text(rehearsal: ar.Rehearsal) -> str:
     ]
     for name in sorted(rehearsal.digests):
         lines.append(f"- {name}: `{rehearsal.digests[name]}`")
+    fixture = rehearsal.records.get("fixture") or {}
+    if fixture:
+        lines += [
+            "",
+            "Фикстура — два разных объекта:",
+            f"- `fixture` в admission — digest файла `lab/fixtures/model_visible/manifest.json`,",
+            "  а не digest содержимого;",
+            f"- содержимое `head-slice.txt`: `{fixture.get('content_digest')}`,",
+            f"  {fixture.get('content_bytes')} B; сверено с записью `files[0].sha256`/`bytes`",
+            "  внутри манифеста. Admission связывает манифест, содержимое связано манифестом;",
+            "  отдельного digest-поля для содержимого в admission нет.",
+        ]
     lines += [
         f"- key_fingerprint: `{rehearsal.key_fingerprint}`",
         f"- manifest_digest: `{rehearsal.manifest_digest}`",
@@ -229,6 +501,21 @@ def evidence_text(rehearsal: ar.Rehearsal) -> str:
     green = {name for flag, name in rehearsal.checks if flag}
     if any(name.startswith("подпись проверена") for name in green):
         lines.append("- Манифест с `test_only:false` проверяется без `--allow-test-only`.")
+    if any(name.startswith("CLI keygen") for name in green):
+        lines.append(
+            "- CLI не создаёт ключ без `--test-only` и не пишет ключ внутрь репозитория."
+        )
+    if any(name.startswith("изменённый байт манифеста") for name in green):
+        lines.append(
+            "- Негативные контроли: изменённый манифест, подпись, anchor, чужой fingerprint,"
+            " просроченный/незрелый admission, `seq=0`, отсутствующий `test_only`,"
+            " повтор ключа и integer вне JCS-диапазона отвергаются K11."
+        )
+    if any(name.startswith("содержимое фикстуры") for name in green):
+        lines.append(
+            "- Digest и размер содержимого фикстуры совпадают с записью в её манифесте;"
+            " это разные объекты, и оба проверены."
+        )
     if any(name.startswith("promoter verify") for name in green):
         lines.append("- Promoter принимает манифест и сохраняет `promotion.json` с `test_only:false`.")
     if rehearsal.launch_state == "passed":
@@ -238,6 +525,12 @@ def evidence_text(rehearsal: ar.Rehearsal) -> str:
         )
     if any(name.startswith("песочный active") for name in green):
         lines.append("- В песочном реестре событие `admitted` с `test_only:false` даёт `active`.")
+    if any(name.startswith("test_only=true:") for name in green):
+        lines.append(
+            "- В песочном реестре `test_only:true`, отсутствие поля и не-bool дают"
+            " `admitted_inactive`; `authorize_state` отказывает. Повтор `seq` и разрыв"
+            " `prev` отвергаются валидатором цепочки."
+        )
     if any(name.startswith("production registry") for name in green):
         lines.append("- Production-файлы реестра не изменены; production `head` остаётся `candidate`.")
     if passed != total:
@@ -248,6 +541,8 @@ def evidence_text(rehearsal: ar.Rehearsal) -> str:
         "",
         "- Эфемерный ключ не является owner-ключом; anchor `test_only:false` — объявление для песочницы.",
         "- Это не owner approval и не разрешение на production-активацию.",
+        "- Негативные контроли перечисляют конкретные случаи отказа, а не полноту валидатора:",
+        "  другие атаки на парсер/подпись не проверялись.",
         "- Реестр не верифицирует подпись; её проверяет promoter. Событие связывает `admission_digest`",
         "  (манифест содержит `key_fingerprint`), но реестр не содержит allowlist owner-anchor:",
         "  владелец обязан сверить fingerprint и anchor вне канала до добавления события.",
@@ -280,8 +575,10 @@ def main(argv: list[str] | None = None) -> int:
         key_path, anchor_path = make_key(rehearsal)
         manifest, sig = make_manifest(rehearsal, key_path, anchor_path)
         verify_positive(rehearsal, manifest, sig, anchor_path)
+        negative_admission(rehearsal, key_path, manifest, sig, anchor_path)
         promoter_positive(rehearsal, manifest, sig, anchor_path)
         registry_positive(rehearsal, manifest)
+        registry_negative(rehearsal)
         ar.launch(rehearsal, manifest, sig, anchor_path, not args.no_launch, allow_test_only=False)
         text = evidence_text(rehearsal)
         if args.evidence:

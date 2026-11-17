@@ -17,6 +17,7 @@ from __future__ import annotations
 import copy
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -176,6 +177,35 @@ def main() -> int:
     check(not ok and "candidate" in message, "authorize(head) — candidate")
     ok, _ = rs.authorize("net")
     check(ok, "net — отдельный bridge path, не блокируется реестром")
+
+    # Legacy вне v0: даже подложенный active в производном состоянии не даёт допуска.
+    rogue = copy.deepcopy(signed_state)
+    rogue["tools"]["search"]["state"] = "active"
+    rogue["active"] = sorted(["head", "search"])
+    ok, message = rs.authorize_state(rogue, "search")
+    check(not ok and "legacy" in message, f"legacy search не допускается: {message}")
+    ok, _ = rs.authorize_state(rogue, "head")
+    check(ok, "head в том же состоянии остаётся допустимым")
+
+    # JCS: big int и повтор ключа отвергаются до вывода состояния.
+    try:
+        rs.canonical({"seq": 2**53})
+    except rs.RegistryError as exc:
+        check("безопасного диапазона" in str(exc), f"big int отвергнут: {exc}")
+    else:
+        check(False, "big int в событии не отвергнут")
+    with tempfile.TemporaryDirectory() as tmp:
+        duplicate = Path(tmp) / "events.jsonl"
+        duplicate.write_text(
+            '{"schema":"herness-registry-event-v1","schema":"herness-registry-event-v1"}\n',
+            encoding="utf-8",
+        )
+        try:
+            rs.read_events(duplicate)
+        except rs.RegistryError as exc:
+            check("повтор ключа" in str(exc), f"повтор ключа отвергнут: {exc}")
+        else:
+            check(False, "повтор ключа в событии не отвергнут")
 
     problems = rs.check_files()
     check(problems == [], f"registry.state.json и цепочка согласованы: {problems[:2]}")

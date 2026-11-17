@@ -50,6 +50,7 @@ DIGEST_FIELDS = (
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 TOOL_RE = re.compile(r"^[a-z0-9_]{1,64}$")
 TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+SAFE_INT = 2**53 - 1
 
 
 class AdmissionError(Exception):
@@ -68,23 +69,50 @@ def _reject_constant(_text: str) -> Any:
     raise refuse("NaN/Infinity в JSON запрещены")
 
 
+def _pairs_without_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """JSON-объект без повторов ключей.
+
+    `json.loads` по умолчанию берёт последнее значение, поэтому два разных
+    парсера могут прочитать один и тот же подписанный файл по-разному.
+    Повтор ключа — отказ, а не выбор победителя.
+    """
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise refuse(f"повтор ключа {key!r} в JSON запрещён")
+        result[key] = value
+    return result
+
+
 def load_json_bytes(data: bytes, what: str) -> Any:
     try:
-        return json.loads(
+        document = json.loads(
             data.decode("utf-8"),
             parse_float=_reject_float,
             parse_constant=_reject_constant,
+            object_pairs_hook=_pairs_without_duplicates,
         )
     except AdmissionError:
         raise
     except Exception as exc:
         raise refuse(f"{what} не разбирается как JSON: {exc}") from exc
+    # Та же строгость, что и при подписи: до проверки подписи документ должен
+    # лежать в JCS-подмножестве, иначе разные парсеры увидят разные числа.
+    _check_canonical_subset(document)
+    return document
 
 
 def _check_canonical_subset(value: Any) -> None:
     if isinstance(value, float):
         raise refuse("float в каноническом JSON запрещён")
-    if isinstance(value, bool) or value is None or isinstance(value, (int, str)):
+    if isinstance(value, bool) or value is None or isinstance(value, str):
+        return
+    if isinstance(value, int):
+        if abs(value) > SAFE_INT:
+            raise refuse(
+                f"целое {value} вне безопасного диапазона JCS (±{SAFE_INT}): "
+                "сравнение через парсеры неоднозначно"
+            )
         return
     if isinstance(value, list):
         for item in value:
@@ -491,12 +519,14 @@ def keygen_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _expect_refusal(label: str, callable_) -> None:
+def _expect_refusal(label: str, callable_, needle: str | None = None) -> None:
     try:
         callable_()
     except AdmissionError as exc:
         if not str(exc).startswith("K11_ADMISSION_REQUIRED:"):
             raise AssertionError(f"{label}: неверный код отказа: {exc}") from exc
+        if needle is not None and needle not in str(exc):
+            raise AssertionError(f"{label}: в отказе нет {needle!r}: {exc}") from exc
         return
     raise AssertionError(f"{label}: ожидался K11, получен успех")
 
@@ -738,6 +768,44 @@ def self_test() -> int:
             ),
         )
         checks += 1
+
+        # Повтор ключа: два парсера не должны читать подписанный файл по-разному.
+        duplicate_manifest = canonical(manifest)[:-1] + b',"test_only":true}'
+        _expect_refusal(
+            "duplicate manifest key",
+            lambda: verify_admission(
+                duplicate_manifest, signature, anchor_bytes, now, allow_test_only=True
+            ),
+            "повтор ключа",
+        )
+        checks += 1
+
+        duplicate_anchor = canonical(json.loads(anchor_bytes))[:-1] + b',"min_epoch":1}'
+        _expect_refusal(
+            "duplicate anchor key",
+            lambda: verify_admission(
+                manifest_path.read_bytes(), signature, duplicate_anchor, now, allow_test_only=True
+            ),
+            "повтор ключа",
+        )
+        checks += 1
+
+        # JCS-числа — IEEE-754: за пределами ±(2^53-1) парсеры расходятся.
+        _expect_refusal(
+            "big int canonical",
+            lambda: canonical({"seq": 2**53}),
+            "безопасного диапазона",
+        )
+        assert canonical({"seq": SAFE_INT}) == b'{"seq":9007199254740991}'
+        big_manifest = dict(manifest)
+        big_manifest["seq"] = 2**53 + 1
+        big_raw = json.dumps(big_manifest, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        _expect_refusal(
+            "big int manifest",
+            lambda: verify_admission(big_raw, signature, anchor_bytes, now, allow_test_only=True),
+            "безопасного диапазона",
+        )
+        checks += 2
 
         print(f"PASS admission self-test: {checks} проверок")
         print(f"fingerprint: {fingerprint}")
