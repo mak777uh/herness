@@ -437,7 +437,14 @@ def parse_records(text: str) -> list[dict[str, Any]]:
     return records
 
 
-def launch(rehearsal: Rehearsal, manifest: Path, sig: Path, anchor: Path, enabled: bool) -> None:
+def launch(
+    rehearsal: Rehearsal,
+    manifest: Path,
+    sig: Path,
+    anchor: Path,
+    enabled: bool,
+    allow_test_only: bool = True,
+) -> None:
     if not enabled:
         rehearsal.note("launch N/A: --no-launch; promoter launch не проверялся")
         rehearsal.launch_state = "n/a"
@@ -447,6 +454,9 @@ def launch(rehearsal: Rehearsal, manifest: Path, sig: Path, anchor: Path, enable
         rehearsal.launch_state = "n/a"
         return
     job = make_job(rehearsal, manifest, sig, anchor)
+    extra = ["--arg=--job", f"--arg={job}"]
+    if allow_test_only:
+        extra.insert(0, "--allow-test-only")
     command = promoter_command(
         rehearsal,
         manifest,
@@ -454,7 +464,7 @@ def launch(rehearsal: Rehearsal, manifest: Path, sig: Path, anchor: Path, enable
         anchor,
         "promote",
         rehearsal.work / "store-launch",
-        ["--allow-test-only", "--arg=--job", f"--arg={job}"],
+        extra,
     )
     result = rehearsal.run(command, timeout=120)
     text = (result.stdout or "") + (result.stderr or "")

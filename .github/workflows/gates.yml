@@ -80,9 +80,16 @@ jobs:
       # остаётся отдельным источником.
       - name: Test-only активационная репетиция
         run: python bin/activation_rehearsal.py --quiet --evidence /tmp/activation-rehearsal.txt
+      # Положительная ветка: эфемерный ключ с anchor test_only=false, promoter без
+      # --allow-test-only, песочный active. Production-файлы реестра только читаются.
+      # Это не настоящий owner-ключ и не approval.
+      - name: Сухая owner-церемония (положительная ветка, песочница)
+        run: python bin/owner_ceremony_dry_run.py --quiet --evidence /tmp/owner-ceremony-dry-run.txt
       - name: Показать evidence при сбое
         if: failure()
-        run: cat /tmp/activation-rehearsal.txt 2>/dev/null || true
+        run: |
+          cat /tmp/activation-rehearsal.txt 2>/dev/null || true
+          cat /tmp/owner-ceremony-dry-run.txt 2>/dev/null || true
 
   rust:
     name: Rust-тесты ядра

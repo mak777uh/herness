@@ -330,11 +330,16 @@ def _write_private_seed(path: Path, seed: bytes) -> None:
         pass
 
 
-def create_test_key(directory: Path) -> tuple[Path, Path, str]:
+def create_ephemeral_key(directory: Path, test_only: bool, name: str) -> tuple[Path, Path, str]:
+    """Создать эфемерный ключ вне репозитория; `test_only` — объявление anchor, не сила ключа.
+
+    Настоящий owner-ключ через CLI не создаётся: эта функция нужна песочным приборам,
+    чтобы проверить положительную ветку допуска. Seed не печатается.
+    """
     if _inside_repo(directory):
         raise refuse("private key не может лежать внутри репозитория")
     directory.mkdir(parents=True, exist_ok=True)
-    key_path = directory / "test-only.seed"
+    key_path = directory / f"{name}.seed"
     anchor_path = directory / "anchor.json"
     if key_path.exists() or anchor_path.exists():
         raise refuse(f"файлы ключа уже существуют в {directory}")
@@ -351,13 +356,17 @@ def create_test_key(directory: Path) -> tuple[Path, Path, str]:
         "min_epoch": 1,
         "revoked_epochs": [],
         "expected_prev": GENESIS,
-        "test_only": True,
+        "test_only": bool(test_only),
     }
     anchor_path.write_text(
         json.dumps(anchor, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return key_path, anchor_path, fingerprint
+
+
+def create_test_key(directory: Path) -> tuple[Path, Path, str]:
+    return create_ephemeral_key(directory, test_only=True, name="test-only")
 
 
 def load_private_key(path: Path) -> Ed25519PrivateKey:

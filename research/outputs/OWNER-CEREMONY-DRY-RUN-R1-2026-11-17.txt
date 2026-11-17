@@ -1,0 +1,73 @@
+# OWNER-CEREMONY-DRY-RUN-R1 — положительная ветка допуска в песочнице
+
+Дата: 17.11.2026; хост: Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.43; Python: 3.14.4
+Сценарий: эфемерный ключ, anchor `test_only:false`, манифест `test_only:false`.
+Это не настоящий owner-ключ и не approval; production не активируется.
+
+## Проверки
+
+- [ok] карточка head совпадает с запечатанной HEAD-SLICE-R1
+- [ok] cargo build --release --bin head_slice_host
+- [ok] собранный head_slice_host существует
+- [ok] эфемерный ключ лежит вне репозитория
+- [ok] anchor помечен test_only=false (симуляция owner)
+- [ok] fingerprint anchor совпадает
+- [ok] detached подпись — 128 hex (64 байта)
+- [ok] подпись проверена без --allow-test-only
+- [ok] verify видит test_only=false
+- [ok] шесть exact-byte digest совпадают
+- [ok] promoter verify без --allow-test-only проходит для test_only=false
+- [ok] promoter store создал promotion.json
+- [ok] store сохраняет test_only=false
+- [ok] store относится к head
+- [ok] в store нет private seed
+- [ok] песочный head = active
+- [ok] песочный active = [head]
+- [ok] authorize_state(head) разрешает в песочнице
+- [ok] production registry-файлы не изменены
+- [ok] production head остаётся candidate
+- [ok] production active пуст
+- [ok] promoter promote завершился rc=0
+- [ok] запуск через memfd/execveat, без path fallback
+- [ok] promoter не меняет activation
+- [ok] normal: outcome=ok
+- [ok] normal: 3 строки
+- [ok] normal: bytes_read=144
+- [ok] normal: truncated=true
+- [ok] normal: stop_reason=line_cap
+- [ok] outside-root: S6_CLOSURE_BREACH
+
+## Входы
+
+- binary: `sha256:0973f8428e6b900c8271383380cb0f078f1588bcf1da21b53d1596597095f576`
+- card: `sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97`
+- fixture: `sha256:47b2cfd7444628769f25318cf88d652e97a9add3f5d448e50418fa9f082ccb33`
+- policy: `sha256:2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802`
+- room: `sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6`
+- source: `sha256:c53841b0b17bb992d57c7860a57ded969a8aeb19fe5eae6fac6be6b7f8df1d16`
+- key_fingerprint: `sha256:5c4f3e196304230ed5d2a98468a35f892abf6752b4ab14a35a251312066465e1`
+- manifest_digest: `sha256:96da865cd39bf464cf4f4810332be2ff00470999bd3fb75f8ddd1a2a16ca307e`
+- registry_event_digest: `sha256:1362339cb2ec81c7e81f657b648afb1accfece4647ee97455d0c13404b6ede36`
+- launch: passed
+
+## Что это доказывает
+
+- Манифест с `test_only:false` проверяется без `--allow-test-only`.
+- Promoter принимает манифест и сохраняет `promotion.json` с `test_only:false`.
+- head запускается через memfd/execveat; normal 3 строки/144 B/`line_cap`, outside-root — `S6_CLOSURE_BREACH`.
+- В песочном реестре событие `admitted` с `test_only:false` даёт `active`.
+- Production-файлы реестра не изменены; production `head` остаётся `candidate`.
+
+## Что это не доказывает
+
+- Эфемерный ключ не является owner-ключом; anchor `test_only:false` — объявление для песочницы.
+- Это не owner approval и не разрешение на production-активацию.
+- Реестр не верифицирует подпись; её проверяет promoter. Событие связывает `admission_digest`
+  (манифест содержит `key_fingerprint`), но реестр не содержит allowlist owner-anchor:
+  владелец обязан сверить fingerprint и anchor вне канала до добавления события.
+- `run_tool_g` не имеет ветки `head`: conversational loop не запускает head и после активации;
+  запуск идёт через promoter. Это отдельный разрыв, не закрашенный этим прогоном.
+- QEMU/KVM повторно не запускался; HEAD-SLICE-R1 evidence не переписывалось.
+- `K9_proven` не выдавался.
+
+Итог: PASS (30/30)
