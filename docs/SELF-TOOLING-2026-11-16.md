@@ -18,8 +18,8 @@
 [`ef3828871f1c25e093cce7b80ec22e0928a0660e`](https://github.com/mak777uh/herness/tree/ef3828871f1c25e093cce7b80ec22e0928a0660e)
 (handoff; R5 — `c2fc552`, R4 — `4d1fae5`, evidence — `ded2cf2`, починенный checker — `ae926ef`,
 сырые ответы R5 байт-в-байт — `9c8af80`, R6-бриф — `09a6acf`, сырые ответы R6 и синтез — `3d988f8`,
-сырые ответы R7 и синтез — `c63f3b8`, бриф R8 и handoff — `e5182b7`, handoff R8 — `04e8b31`;
-сырые ответы R8 и синтез — коммит после `04e8b31`).
+сырые ответы R7 и синтез — `c63f3b8`, бриф R8 и handoff — `e5182b7`, handoff R8 — `04e8b31`,
+сырые ответы R8 и синтез — `384d804`; handoff — коммит после него).
 **Предыдущая точка:** `b22eaec` (rolling-карта).
 **Главные артефакты:** [`docs/DECISIONS-R5-2026-11-16.md`](DECISIONS-R5-2026-11-16.md) —
 решения владельца Q1–Q10; [`docs/R8-SYNTHESIS.md`](R8-SYNTHESIS.md) — синтез пяти ответов R8,
