@@ -1,5 +1,27 @@
-# SELF-TOOLING — след смены 16–17.11.2026
+# SELF-TOOLING — след смены 16–18.11.2026
 
+> **Обновление 18.11.2026, два разрыва допуска закрыты (без активации).** Promoter
+> теперь принимает `--job` только как данные и связывает его с уже проверенным admission:
+> `root`, fixture-манифест, шесть digest-путей, manifest/sig/anchor и расположение
+> fixture-каталога; per-case override запрещён, несовпадение — отказ до store/launch.
+> Job передаётся хосту точными байтами через запечатанный memfd и унаследованный
+> `--job-fd`, а не путём. Runtime `head` сверяет не только размер, но и **sha256
+> содержимого** фикстуры; `MAX_HASH_BYTES = 8 MiB` даёт `K4` вместо неограниченного
+> чтения, хешируются ровно те байты, которые затем выдаются. Проверки: Rust lib —
+> **133 passed** (2 новых: same-size/different-bytes → `K11`, файл выше предела → `K4`);
+> promoter self-test — **18/18 Windows**, **21/21 WSL**; активационная репетиция —
+> **34/34 WSL**, **22/22 Windows**; owner-церемония — **57/57 WSL**, **45/45 Windows**;
+> HEAD-SLICE host+QEMU — **PASS**. Evidence:
+> [`PROMOTER-JOB-BINDING-R1-2026-11-18.txt`](../research/outputs/PROMOTER-JOB-BINDING-R1-2026-11-18.txt),
+> [`HEAD-EDGE-R1-2026-11-17.txt`](../research/outputs/HEAD-EDGE-R1-2026-11-17.txt),
+> [`ACTIVATION-REHEARSAL-R1-2026-11-17.txt`](../research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt),
+> [`OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt`](../research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt),
+> [`HEAD-SLICE-R1-2026-11-17.txt`](../research/outputs/HEAD-SLICE-R1-2026-11-17.txt), C-0322/C-0323.
+> Production `head` остаётся `candidate`, `active` пуст; настоящий owner-ключ не создавался,
+> admission не подписан, `K9_proven` не выдан, наружу ничего не публиковалось.
+> Оставшиеся границы: реестр не проверяет подпись и не имеет allowlist owner-anchor;
+> `run_tool_g` не имеет ветки `head`; promoter не реализует полную семантику карточки.
+>
 > **Обновление 17.11.2026, R8 реализован.** Владелец делегировал выбор рекомендаций R8
 > («делай сам все поочерёдно»); решения Q11–Q18, F04 и A01 записаны агентом в
 > [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md) с явной пометкой, что
@@ -365,8 +387,9 @@ Q2 S1 до I/O, `K4` раньше ошибок объекта, осторожн�
 | 8 | `a6e7292` | реестр: genesis events, JCS/prev/seq, производный `active`; legacy quarantined, search rejected | `lab/tools/registry.events.jsonl`, `registry.state.json` |
 | 9 | `92963cf` | генератор одного шаблона и пилот: 20 спецификаций, 24 мутанта, 3 повтора — PASS | `lab/pilot/`, `lab/candidates/`, `research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt` |
 | 10 | `fe27d07`, `edbf085` | handoff, claims, push; после первого LF-CI — CRLF-пиннинг запечатанных digest | `docs/`, `CLAIMS.md`, `.gitattributes` |
-| 11 | `a95fe58`, `c063ded`, `8c30f27`, `700d516` | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS (CI 31/31 без сборки); байтовый откат проб и CRLF-пин карточки; CI `44159576484` — success | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
-| 12 | `fe143b6` | сухая owner-церемония: эфемерный ключ с anchor `test_only:false`, promoter без `--allow-test-only`, песочный `active=[head]`; production не изменён; 30/30 WSL, 28/28 CI без `--build`, 19/19 Windows без launch (после негативных контролей — 56/56 WSL, 45/45 Windows, §1.14); CI `44163715508` — success | `bin/owner_ceremony_dry_run.py`, `research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt` |
+| 11 | `a95fe58`, `c063ded`, `8c30f27`, `700d516` | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS на тот момент (CI 31/31 без сборки; после job-проверки — 34/34, этап 13); байтовый откат проб и CRLF-пин карточки; CI `44159576484` — success | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
+| 12 | `fe143b6` | сухая owner-церемония: эфемерный ключ с anchor `test_only:false`, promoter без `--allow-test-only`, песочный `active=[head]`; production не изменён; 30/30 WSL, 28/28 CI без `--build`, 19/19 Windows без launch (после негативных контролей — 56/56 WSL на тот момент, 45/45 Windows; сейчас 57/57 WSL после job-проверки, §1.15); CI `44163715508` — success | `bin/owner_ceremony_dry_run.py`, `research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt` |
+| 13 | 18.11.2026 | promoter связывает `--job` root/fixture/checks/admission и запрещает per-case override; job идёт в launch запечатанным memfd через `--job-fd`; runtime `head` сверяет sha256 содержимого с пределом `MAX_HASH_BYTES`; 133 Rust-теста, 34/34 WSL, 22/22 Windows, HEAD-SLICE host+QEMU PASS | `bin/promoter.py`, `core-rs/src/head.rs`, `core-rs/src/bin/head_slice_host.rs`, `research/outputs/PROMOTER-JOB-BINDING-R1-2026-11-18.txt`, C-0322/C-0323 |
 
 CI на чистом LF checkout поймал то, чего CRLF-дерево не показывало: `lawset_digest`
 в provenance карточки head и 20 карточек кандидатов, а также SHA-256
@@ -418,7 +441,8 @@ production. Найден и закрыт дефект: `admitted` с `test_only:
 `bin/activation_rehearsal.py` создаёт ключ и рабочий каталог вне репозитория, подписывает
 манифест, проверяет отказ без `--allow-test-only` и приём с ним, ловит изменённый байт,
 выполняет `promoter verify/store`, строит временный registry-песочный журнал и запускает
-`head_slice_host` через `memfd + F_SEAL_* + execveat` на Linux. В WSL: **33/33 PASS**,
+`head_slice_host` через `memfd + F_SEAL_* + execveat` на Linux. В WSL: **33/33 PASS**
+на тот момент; после job-проверки — **34/34** (§1.15),
 normal — 3 строки/144 B/`line_cap`, outside-root — `S6_CLOSURE_BREACH`; production
 `registry.jsonl`, `registry.events.jsonl`, `registry.state.json` не изменены, `head`
 остаётся `candidate`, `active` пуст. CI job `admission` проходит ту же цепочку без
@@ -445,7 +469,8 @@ Test-only репетиция доказывает отказ, но не пров
 отказывается создавать что-либо, кроме test-only, — новый помощник вызывается только
 прибором, не пользовательской командой.
 
-Результаты: в WSL **56/56 PASS** (после добавления негативных контролей и сверки содержимого
+Результаты: в WSL **56/56 PASS** на тот момент; после job-проверки — **57/57** (§1.15)
+(после добавления негативных контролей и сверки содержимого
 фикстуры), включая `memfd/execveat`, normal 3 строки/144 B/`line_cap` и outside-root
 `S6_CLOSURE_BREACH`; на Windows без launch — **45/45**. В песочном реестре `head` = `active`,
 `active=[head]`; production-файлы реестра до и после совпали, production `head` остаётся
@@ -469,7 +494,7 @@ Test-only репетиция доказывает отказ, но не пров
 Добавлен независимый Rust-помощник `core-rs/src/bin/canonical_check.rs` и прибор
 [`bin/differential_admission.py`](../bin/differential_admission.py): 32 случайных JCS-вектора
 и 25 проверок манифеста дают **0 расхождений** Python/Rust по каноническим байтам, допуску
-и отказу. Rust lib: **131 тест** (было 118). Evidence:
+и отказу. Rust lib: **131 тест** на тот момент (было 118; после §1.15 — 133). Evidence:
 [`research/outputs/DIFFERENTIAL-ADMISSION-R1-2026-11-17.txt`](../research/outputs/DIFFERENTIAL-ADMISSION-R1-2026-11-17.txt), C-0318.
 
 **Сухая церемония усилена негативными контролями.** К положительной ветке добавлены:
@@ -478,10 +503,11 @@ CLI `keygen` без `--test-only` и попытка записать ключ в
 `seq=0`; отсутствующий `test_only`; повтор ключа; integer вне JCS-диапазона; повтор `seq`
 и разрыв `prev` в песочном журнале; `test_only:true`, отсутствие и не-bool значение в
 событии реестра. Evidence различает digest **манифеста фикстуры** и digest **содержимого**
-`head-slice.txt` (471 B), сверяя содержимое с записью в манифесте. WSL — **56/56 PASS**,
+`head-slice.txt` (471 B), сверяя содержимое с записью в манифесте. WSL — **56/56 PASS** на
+тот момент (сейчас 57/57 после job-проверки, §1.15),
 Windows без launch — **45/45**. C-0319.
 
-**Края `head`.** 13 новых Rust-тестов (всего 131 в lib): частичная строка при EOF и при
+**Края `head`.** 13 новых Rust-тестов на тот момент (всего 131 в lib; после §1.15 — 133): частичная строка при EOF и при
 `byte_cap`, граница `line_cap`/`byte_cap`, CR без `\n`, UTF-8, разорванный между чанками,
 невалидный UTF-8 в невыданной части, огромная строка → `output_cap`, ровно `OUTPUT_BYTES`,
 пустой файл/пустая строка, несовпадение размера → K11, дубликат ключа fixture-манифеста →
@@ -494,14 +520,68 @@ S1, 48 сгенерированных входов с инвариантами �
 содержимое, evidence и production-состояние реестра; ничего не пишет, ключ не читает.
 `test_only=true` по умолчанию считается провалом; `--allow-test-only` только осматривает.
 Self-test на эфемерном пакете: **5 сценариев** (годный пакет, test-only без разрешения,
-изменённая карточка, изменённое содержимое фикстуры, изменённая подпись), C-0320. Это
-единственная проверка, которая сверяет **sha256 содержимого** фикстуры; runtime `head`
-сверяет только размер — известный разрыв, записан в `head.rs` и handoff.
+изменённая карточка, изменённое содержимое фикстуры, изменённая подпись), C-0320. На
+тот момент это была единственная проверка **sha256 содержимого** фикстуры; в §1.15 runtime
+`head` тоже начал сверять содержимое, поэтому owner-прибор остаётся независимой второй
+проверкой, а не единственной.
 
-**Известные границы после аудита.** Promoter по-прежнему не связывает `--job` root/fixture
-с внешним admission и не реализует полную семантику карточки; реестр не проверяет подпись
-и не имеет allowlist owner-anchor; `run_tool_g` не имеет ветки `head`; `head` не сверяет
-sha256 содержимого фикстуры. Ни один из этих пунктов не закрашен «зелёным».
+**Известные границы после аудита.** Promoter не реализует полную семантику карточки
+(связывание `--job` root/fixture/checks/admission закрыто в §1.15); реестр не проверяет
+подпись и не имеет allowlist owner-anchor; `run_tool_g` не имеет ветки `head`. Ни один из
+этих пунктов не закрашен «зелёным».
+
+### 1.15. Job привязан к admission, содержимое фикстуры сверяется (18.11.2026)
+
+Продолжение «делай первые два»: закрыты два разрыва, названные в §1.14, без активации
+production. Настоящий owner-ключ не создавался, `K9_proven` не выдавался.
+
+**Promoter: `--job` как данные, а не доверенная конфигурация.** `bin/promoter.py` читает
+job строгим JCS-парсером (`admission.load_json_bytes`), требует ровно шесть полей
+(`root`, `now_unix`, `fixture_manifest`, `admission`, `checks`, `cases`) и сверяет каждое
+значение с уже проверенными CLI-путями:
+
+- `job.root` — существующий каталог; fixture-манифест должен лежать ровно в
+  `root/<fixture_root>`, а `fixture_root` — безопасный сегмент без `/`, `\`, `..`;
+- `job.fixture_manifest` равен пути `--fixture`, прошедшему digest-проверку;
+- `job.checks` содержит ровно шесть полей и каждый путь равен соответствующему
+  `--card/--source/--binary/--fixture/--policy/--room`;
+- `job.admission` содержит ровно `manifest/sig/anchor` и каждый путь равен
+  `--manifest/--sig/--anchor`;
+- `cases` — непустой массив; per-case override `admission`, `checks` или
+  `fixture_manifest` запрещён, иначе один кейс мог бы отключить допуск внутри запуска;
+- `--job-fd` зарезервирован promoter; дубликат `--job` (включая `--arg=--job`) —
+  отказ, а не «последний победил».
+
+Точные проверенные байты job сохраняются в `exact_bytes.job` и в `store/job.json`;
+`promotion.json` содержит `job.sha256`. `head promote` без job отказывает до store и
+launch. На Linux job и binary передаются через два запечатанных memfd; job-memfd намеренно
+не `CLOEXEC`, binary — `CLOEXEC`; `_argv_with_job` убирает путь `--job` и добавляет
+`--job-fd <fd>`, после чего `execveat` заменяет процесс. Хост читает унаследованный fd,
+делает `seek(0)` (иначе offset после `os.write` даёт пустой JSON) и не имеет path-fallback.
+
+**Runtime `head`: размер и sha256.** `file_read_stream` после `openat2`/`fstat` сверяет
+`st_size` с манифестом, затем предел `MAX_HASH_BYTES = 8 MiB` (`K4`, а не частичное чтение),
+читает ровно объявленный размер (+1 для обнаружения роста), сравнивает `sha256` с записью
+манифеста (`K11` при расхождении) и отдаёт **те же** байты через `Cursor`. Между проверкой
+хеша и выдачей нет повторного чтения пути, поэтому TOCTOU-подмена не проходит. Два новых
+Rust-теста: файл того же размера с другими байтами (`abd` против хеша `abc`) отвергнут
+`K11_ADMISSION_REQUIRED` с упоминанием `sha256`; файл `MAX_HASH_BYTES + 1` отвергнут
+`K4_RESOURCE_LIMIT` без чтения содержимого. Всего в lib — **133 passed**.
+
+**Чем это не является.** Job-связывание не реализует полную семантику карточки и не
+доказывает, что `head` ведёт себя правильно на всех входах; `now_unix` не подписан, но
+promoter проверяет допуск на `--now`, а хост — на `now_unix`, поэтому обе точки остаются
+fail-closed. Предел 8 MiB означает, что большая фикстура отвергается, а не читается
+потоково. Реестр по-прежнему не проверяет подпись и не имеет allowlist owner-anchor;
+`run_tool_g` по-прежнему без ветки `head`; production `head` — `candidate`, `active` пуст.
+`K9_proven` не выдан.
+
+Evidence: [`PROMOTER-JOB-BINDING-R1-2026-11-18.txt`](../research/outputs/PROMOTER-JOB-BINDING-R1-2026-11-18.txt)
+(18/18 Windows, 21/21 WSL), [`HEAD-EDGE-R1-2026-11-17.txt`](../research/outputs/HEAD-EDGE-R1-2026-11-17.txt)
+(133 passed), [`ACTIVATION-REHEARSAL-R1-2026-11-17.txt`](../research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt)
+(34/34 WSL, 22/22 Windows), [`OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt`](../research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt)
+(57/57 WSL, 45/45 Windows), [`HEAD-SLICE-R1-2026-11-17.txt`](../research/outputs/HEAD-SLICE-R1-2026-11-17.txt)
+(host+QEMU PASS). C-0322/C-0323.
 
 ---
 

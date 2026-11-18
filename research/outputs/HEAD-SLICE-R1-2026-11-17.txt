@@ -6,25 +6,25 @@
 
 ## Точные байты
 
-- card_digest: `sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97` (`/tmp/herness-head-slice-drx43r0j/artifacts/card.json`)
-- source_digest: `sha256:c53841b0b17bb992d57c7860a57ded969a8aeb19fe5eae6fac6be6b7f8df1d16` (`/tmp/herness-head-slice-drx43r0j/artifacts/head.rs`)
-- binary_digest: `sha256:7137a2caa120cbef7002f8591801dab7829f5a7fe47e3d089d94ddccf5b402e7` (`/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/target/release/head_slice_host`)
-- fixture_digest: `sha256:6e06e6b985535fab391b258833dfecb70d371b1dd108da85675cf62fbf34a617` (`/tmp/herness-head-slice-drx43r0j/room/fixtures/manifest.json`)
-- policy_digest: `sha256:2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802` (`/tmp/herness-head-slice-drx43r0j/artifacts/policy.json`)
-- room_digest: `sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6` (`/tmp/herness-head-slice-drx43r0j/artifacts/room.json`)
+- card_digest: `sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97` (`/tmp/herness-head-slice-jn81wyv7/artifacts/card.json`)
+- source_digest: `sha256:66e54c9ca8a5f39f28d170de1e9a46d143b64e8de15a7014474f29365e1c9019` (`/tmp/herness-head-slice-jn81wyv7/artifacts/head.rs`)
+- binary_digest: `sha256:e8b173c75856a0d660ac8e337d2ca39b64c19122132be85a217dd4a0790f3994` (`/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/target/release/head_slice_host`)
+- fixture_digest: `sha256:6e06e6b985535fab391b258833dfecb70d371b1dd108da85675cf62fbf34a617` (`/tmp/herness-head-slice-jn81wyv7/room/fixtures/manifest.json`)
+- policy_digest: `sha256:2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802` (`/tmp/herness-head-slice-jn81wyv7/artifacts/policy.json`)
+- room_digest: `sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6` (`/tmp/herness-head-slice-jn81wyv7/artifacts/room.json`)
 - fixture: `sha256:b5157f948c0833f80ac96ad64916c93d747e07df253801dfcd5674e59ce76850` (471 B, 10 строк, синтетический model_visible)
-- test-only key fingerprint: `sha256:6862426bf890b270064756fe20e356927e6307a1363786cc0b317310ca3b4644` (seed не печатается)
+- test-only key fingerprint: `sha256:275b3d93ba1e3b55c9eb69943780bce8c8e960cf792070cd5e67628b9b41b1d1` (seed не печатается)
 
 ## Среда
 
 - host: Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.43
 - kernel: Linux DESKTOP-PE9BOJ5 6.6.114.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Mon Dec  1 20:46:23 UTC 2025 x86_64 GNU/Linux
 - qemu: QEMU emulator version 10.2.1 (Debian 1:10.2.1+ds-1ubuntu3.3)
-- rustc: rustc 1.100.0-nightly (8925ea358 2026-08-20)
-- cargo: cargo 1.100.0-nightly (514c56dd7 2026-08-19)
+- rustc: rustc 1.85.0 (4d91de4e4 2025-02-17)
+- cargo: cargo 1.85.0 (d73d2caf9 2024-12-31)
 - binary_static: True
 - build_static: True
-- guest_kvm_entry: 57923
+- guest_kvm_entry: 92782
 - guest_qmp: {"return": {"enabled": true, "present": true}}
 
 ## Сборка
@@ -37,9 +37,9 @@ cargo rustc --release --bin head_slice_host -- -C target-feature=+crt-static  # 
 
 ## Хост
 
-Команда: `/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/target/release/head_slice_host --job /tmp/herness-head-slice-drx43r0j/job-host.json`
+Команда: `/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/target/release/head_slice_host --job /tmp/herness-head-slice-jn81wyv7/job-host.json`
 rc: 0
-время: 0.497 с
+время: 0.475 с
 ```json
 [
  {
@@ -146,7 +146,7 @@ rc: 0
  },
  {
   "code": "K11_ADMISSION_REQUIRED",
-  "error": "K11_ADMISSION_REQUIRED: /tmp/herness-head-slice-drx43r0j/artifacts/tampered-card.json не совпадает с допущенными байтами: ожидалось sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, получено sha256:78974b82c691f2c1aeb8d1e38321bfb157b92c17d00c04ef9cdecc86a5de7543",
+  "error": "K11_ADMISSION_REQUIRED: /tmp/herness-head-slice-jn81wyv7/artifacts/tampered-card.json не совпадает с допущенными байтами: ожидалось sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, получено sha256:78974b82c691f2c1aeb8d1e38321bfb157b92c17d00c04ef9cdecc86a5de7543",
   "id": "tampered-card",
   "outcome": "refusal"
  },
@@ -407,15 +407,15 @@ rc: 0
 ## QEMU/KVM
 
 ```text
-qemu-system-x86_64 -M microvm -accel kvm -m 256 -smp 1 -kernel /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/boot/vmlinuz-lts -initrd /tmp/herness-head-slice-drx43r0j/head-slice-initramfs.cpio.gz -append console=ttyS0 rdinit=/init panic=-1 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -nic none -no-user-config -nographic -no-reboot -qmp unix:/tmp/herness-head-slice-drx43r0j/qmp-head.sock,server=on,wait=off
+qemu-system-x86_64 -M microvm -accel kvm -m 256 -smp 1 -kernel /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs/boot/vmlinuz-lts -initrd /tmp/herness-head-slice-jn81wyv7/head-slice-initramfs.cpio.gz -append console=ttyS0 rdinit=/init panic=-1 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -nic none -no-user-config -nographic -no-reboot -qmp unix:/tmp/herness-head-slice-jn81wyv7/qmp-head.sock,server=on,wait=off
 ```
 rc: 0 (0 = poweroff, 33 = isa-debug-exit; оба — не TCG)
-время: 3.568 с
+время: 3.571 с
 QMP query-kvm: {"return": {"enabled": true, "present": true}}
-kvm:kvm_entry: 57923
+kvm:kvm_entry: 92782
 KVM_RUN отдельно подтверждён `research/kvm/KVM-RUN-2026-11-17.txt`; счётчики
 разных прогонов не обязаны совпадать.
-guest stdout digest: `sha256:09ef898548d90b7f44e09ea73656183c14ed93239091bec0cd3adcd11a2335c0`
+guest stdout digest: `sha256:66799b21ba2d3091a3b8606eed20520addae31771375b2fe68b7ec78cd3a61c1`
 запрещённые устройства в команде: []
 
 Гость печатал те же JSON-строки; хост проверил их тем же `verify_records`.

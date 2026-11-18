@@ -1,7 +1,7 @@
 # Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side, F-0080)
 
-proofs (резолвер): `C:\111\harness\proofs`
-WSL: `/mnt/c/111/harness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
+proofs (резолвер): `C:\Users\Admin\Documents\Qoder\2026-11-16\7e4ba6fe\herness\proofs`
+WSL: `/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
 
 ## Агрегат Proofs: СОБРАН (rc=0)
    Build completed successfully (10 jobs).

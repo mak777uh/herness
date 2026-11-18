@@ -454,7 +454,7 @@ def launch(
         rehearsal.launch_state = "n/a"
         return
     job = make_job(rehearsal, manifest, sig, anchor)
-    extra = ["--arg=--job", f"--arg={job}"]
+    extra = ["--job", str(job)]
     if allow_test_only:
         extra.insert(0, "--allow-test-only")
     command = promoter_command(
@@ -480,6 +480,10 @@ def launch(
     }
     rehearsal.check(result.returncode == 0, "promoter promote завершился rc=0")
     rehearsal.check("execveat-memfd" in text, "запуск через memfd/execveat, без path fallback")
+    rehearsal.check(
+        "job_sha256" in text and "memfd:fd" in text,
+        "job передан запечатанным memfd, а не путём",
+    )
     rehearsal.check("activation" in text and "none" in text, "promoter не меняет activation")
     rehearsal.check(normal is not None and normal.get("outcome") == "ok", "normal: outcome=ok")
     if normal:
@@ -494,8 +498,8 @@ def launch(
     launch_flags = [
         flag
         for flag, name in rehearsal.checks
-        if name.startswith(("promoter promote", "запуск через", "promoter не меняет",
-                            "normal:", "outside-root:"))
+        if name.startswith(("promoter promote", "запуск через", "job передан",
+                            "promoter не меняет", "normal:", "outside-root:"))
     ]
     rehearsal.launch_ok = bool(launch_flags) and all(launch_flags)
     rehearsal.launch_state = "passed" if rehearsal.launch_ok else "failed"

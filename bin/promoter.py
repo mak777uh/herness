@@ -7,6 +7,11 @@
 - Linux: запуск только из memfd с `F_SEAL_*` через `execveat(AT_EMPTY_PATH)`;
   пути к файлу как источнику запуска нет, поэтому подмена байтов после проверки
   не меняет исполняемое;
+- для `head` запуск требует `--job` (или `--arg=--job PATH`): root, fixture
+  manifest, checks и admission внутри job обязаны совпадать с проверенными
+  путями; per-case override запрещён. Точные байты job тоже запечатаны в memfd
+  и передаются хосту унаследованным fd (`--job-fd`), поэтому подмена файла job
+  между проверкой и запуском не проходит;
 - Windows/не-Linux: только verify/store, запуск отказом;
 - `seal`/`netprobe` вне v0; test-only никогда не активирует инструмент.
 """
@@ -38,6 +43,16 @@ import admission  # noqa: E402
 V0_TOOLS = {"head"}
 OUT_OF_V0 = {"seal", "netprobe"}
 AT_EMPTY_PATH = 0x1000
+CHECK_ARGS = {
+    "card_digest": "card",
+    "source_digest": "source",
+    "binary_digest": "binary",
+    "fixture_digest": "fixture",
+    "policy_digest": "policy",
+    "room_digest": "room",
+}
+ADMISSION_ARGS = {"manifest": "manifest", "sig": "sig", "anchor": "anchor"}
+JOB_KEYS = {"root", "now_unix", "fixture_manifest", "admission", "checks", "cases"}
 
 
 class PromoterError(Exception):
@@ -50,6 +65,179 @@ def refuse(reason: str) -> "PromoterError":
 
 def now_unix() -> int:
     return int(time.time())
+
+
+def _text_field(mapping: dict[str, Any], key: str, what: str) -> str:
+    value = mapping.get(key)
+    if not isinstance(value, str) or not value:
+        raise refuse(f"{what}: поле {key} должно быть непустой строкой")
+    return value
+
+
+def _resolved(value: str | Path, what: str) -> Path:
+    try:
+        return Path(value).resolve(strict=True)
+    except OSError as exc:
+        raise refuse(f"{what}: путь не разрешается: {value}: {exc}") from exc
+
+
+def _same_path(left: Path, right: Path) -> bool:
+    return os.path.normcase(str(left)) == os.path.normcase(str(right))
+
+
+def _job_reference(args: argparse.Namespace) -> Path | None:
+    """Возвращает job из `--job` или `--arg=--job[=]PATH`, запрещая дубли."""
+    found: list[Path] = []
+    direct = getattr(args, "job", None)
+    if direct:
+        if isinstance(direct, list):
+            found.extend(Path(item) for item in direct)
+        else:
+            found.append(Path(direct))
+    arguments = list(getattr(args, "arg", []) or [])
+    index = 0
+    while index < len(arguments):
+        item = arguments[index]
+        if item == "--job":
+            if index + 1 >= len(arguments) or arguments[index + 1].startswith("--"):
+                raise refuse("--arg=--job без значения")
+            found.append(Path(arguments[index + 1]))
+            index += 2
+            continue
+        if item.startswith("--job="):
+            value = item.split("=", 1)[1]
+            if not value:
+                raise refuse("--arg=--job= без значения")
+            found.append(Path(value))
+        index += 1
+    if len(found) > 1:
+        raise refuse("job задан более одного раза; неоднозначность запрещена")
+    return found[0] if found else None
+
+
+def _safe_fixture_segment(value: str) -> bool:
+    return (
+        bool(value)
+        and value not in (".", "..")
+        and "/" not in value
+        and "\\" not in value
+        and "\0" not in value
+    )
+
+
+def bind_job(args: argparse.Namespace, result: dict[str, Any]) -> dict[str, Any] | None:
+    """Связывает job с уже проверенными путями и admission.
+
+    Это не доверенная конфигурация: job читается как данные, каждое поле
+    сверяется с CLI-путями, прошедшими digest-проверку. Per-case override
+    запрещён, иначе кейс мог бы отключить admission или подменить fixture
+    внутри одного запуска.
+    """
+    reference = _job_reference(args)
+    if reference is None:
+        return None
+    if result["tool"] != "head":
+        raise refuse(f"job поддержан только для head, не для {result['tool']}")
+    for item in getattr(args, "arg", []) or []:
+        if item == "--job-fd" or item.startswith("--job-fd="):
+            raise refuse("--job-fd зарезервирован promoter: job передаётся через --job")
+    job_path = _resolved(reference, "job")
+    try:
+        job_bytes = job_path.read_bytes()
+    except OSError as exc:
+        raise refuse(f"job: не прочитать {job_path}: {exc}") from exc
+    job = admission.load_json_bytes(job_bytes, "job")
+    if not isinstance(job, dict):
+        raise refuse("job: ожидался объект")
+    missing = JOB_KEYS - set(job)
+    extra = set(job) - JOB_KEYS
+    if missing or extra:
+        raise refuse(f"job: состав полей не v0; нет {sorted(missing)}, лишние {sorted(extra)}")
+
+    root = _resolved(_text_field(job, "root", "job"), "job.root")
+    if not root.is_dir():
+        raise refuse(f"job.root не каталог: {root}")
+    now_value = job.get("now_unix")
+    if isinstance(now_value, bool) or not isinstance(now_value, int):
+        raise refuse("job.now_unix: ожидалось целое")
+
+    fixture_path = _resolved(
+        _text_field(job, "fixture_manifest", "job"), "job.fixture_manifest"
+    )
+    if not _same_path(fixture_path, Path(result["checks"]["fixture_digest"])):
+        raise refuse("job.fixture_manifest не совпадает с проверенным --fixture")
+
+    checks = job.get("checks")
+    if not isinstance(checks, dict) or set(checks) != set(CHECK_ARGS):
+        raise refuse("job.checks: ожидались ровно шесть digest-путей")
+    for field in CHECK_ARGS:
+        value = _resolved(_text_field(checks, field, "job.checks"), f"job.checks.{field}")
+        if not _same_path(value, Path(result["checks"][field])):
+            raise refuse(f"job.checks.{field} не совпадает с проверенным путём")
+
+    job_admission = job.get("admission")
+    if not isinstance(job_admission, dict) or set(job_admission) != set(ADMISSION_ARGS):
+        raise refuse("job.admission: ожидались manifest, sig и anchor")
+    for key, attribute in ADMISSION_ARGS.items():
+        value = _resolved(
+            _text_field(job_admission, key, "job.admission"), f"job.admission.{key}"
+        )
+        cli_path = _resolved(getattr(args, attribute), f"--{attribute}")
+        if not _same_path(value, cli_path):
+            raise refuse(f"job.admission.{key} не совпадает с проверенным --{attribute}")
+
+    try:
+        fixture_bytes = fixture_path.read_bytes()
+    except OSError as exc:
+        raise refuse(f"job.fixture_manifest: не прочитать {fixture_path}: {exc}") from exc
+    fixture = admission.load_json_bytes(fixture_bytes, "job.fixture_manifest")
+    if not isinstance(fixture, dict):
+        raise refuse("job.fixture_manifest: ожидался объект")
+    if fixture.get("schema_version") != "fixture-manifest-v1":
+        raise refuse("job.fixture_manifest: ожидалась схема fixture-manifest-v1")
+    root_ref = fixture.get("root_ref")
+    if not isinstance(root_ref, str) or not root_ref:
+        raise refuse("job.fixture_manifest: root_ref должен быть непустой строкой")
+    fixture_root = fixture.get("fixture_root")
+    if not isinstance(fixture_root, str) or not _safe_fixture_segment(fixture_root):
+        raise refuse("job.fixture_manifest: fixture_root должен быть безопасным сегментом")
+    try:
+        fixture_parent = fixture_path.parent.resolve(strict=True)
+        expected_parent = (root / fixture_root).resolve(strict=True)
+    except OSError as exc:
+        raise refuse(f"job.root/fixture_root не разрешается: {exc}") from exc
+    if not _same_path(fixture_parent, expected_parent):
+        raise refuse(
+            "job.root не соответствует расположению fixture manifest: "
+            f"{fixture_parent} != {expected_parent}"
+        )
+
+    cases = job.get("cases")
+    if not isinstance(cases, list) or not cases:
+        raise refuse("job.cases: ожидался непустой массив")
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            raise refuse(f"job.cases[{index}]: ожидался объект")
+        overrides = [
+            key for key in ("admission", "checks", "fixture_manifest") if key in case
+        ]
+        if overrides:
+            raise refuse(
+                f"job.cases[{index}] переопределяет {', '.join(overrides)}; "
+                "promoter v0 запрещает per-case override"
+            )
+
+    result["_job_bytes"] = job_bytes
+    result["exact_bytes"]["job"] = admission.digest_bytes(job_bytes)
+    return {
+        "path": str(job_path),
+        "sha256": admission.digest_bytes(job_bytes),
+        "root": str(root),
+        "fixture_manifest": str(fixture_path),
+        "fixture_root": fixture_root,
+        "root_ref": root_ref,
+        "cases": len(cases),
+    }
 
 
 def verify_all(args: argparse.Namespace) -> dict[str, Any]:
@@ -94,6 +282,7 @@ def verify_all(args: argparse.Namespace) -> dict[str, Any]:
         "signature": admission.digest_bytes(signature_bytes),
         "anchor": admission.digest_bytes(anchor_bytes),
     }
+    result["job"] = bind_job(args, result)
     return result
 
 
@@ -117,6 +306,10 @@ def store(result: dict[str, Any], args: argparse.Namespace) -> Path:
         "anchor.json": _read_exact(args.anchor, result["exact_bytes"]["anchor"], "anchor"),
         "binary": _read_exact(args.binary, result["digests"]["binary_digest"], "binary"),
     }
+    if result.get("job"):
+        # job проверен и запечатан вместе с binary; store хранит именно его
+        # байты, иначе evidence описывает не тот запуск.
+        exact["job.json"] = result["_job_bytes"]
     summary = {
         key: result[key]
         for key in (
@@ -132,7 +325,9 @@ def store(result: dict[str, Any], args: argparse.Namespace) -> Path:
             "validity_ok",
             "checked_at_unix",
             "exact_bytes",
+            "job",
         )
+        if key in result
     }
     directory.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".store-staging-", dir=directory.parent))
@@ -156,7 +351,8 @@ def store(result: dict[str, Any], args: argparse.Namespace) -> Path:
 
 
 def summary(result: dict[str, Any]) -> str:
-    return json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True)
+    public = {key: value for key, value in result.items() if not key.startswith("_")}
+    return json.dumps(public, ensure_ascii=False, indent=2, sort_keys=True)
 
 
 def verify_command(args: argparse.Namespace) -> int:
@@ -166,6 +362,34 @@ def verify_command(args: argparse.Namespace) -> int:
     if not args.quiet:
         print(summary(result))
     return 0
+
+
+def _sealed_memfd(name: str, payload: bytes, cloexec: bool) -> int:
+    if not hasattr(os, "memfd_create"):
+        raise refuse("в этой сборке Python нет os.memfd_create")
+    flags = os.MFD_ALLOW_SEALING | (os.MFD_CLOEXEC if cloexec else 0)
+    memfd = os.memfd_create(name, flags)
+    try:
+        view = memoryview(payload)
+        while view:
+            written = os.write(memfd, view)
+            if written <= 0:
+                raise refuse("memfd: запись не продвинулась")
+            view = view[written:]
+        os.fchmod(memfd, 0o700)
+        if fcntl is None:
+            raise refuse("модуль fcntl недоступен: F_SEAL невозможен")
+        seals = (
+            fcntl.F_SEAL_SEAL
+            | fcntl.F_SEAL_SHRINK
+            | fcntl.F_SEAL_GROW
+            | fcntl.F_SEAL_WRITE
+        )
+        fcntl.fcntl(memfd, fcntl.F_ADD_SEALS, seals)
+    except BaseException:
+        os.close(memfd)
+        raise
+    return memfd
 
 
 def _execveat(fd: int, argv: list[str]) -> None:
@@ -201,6 +425,33 @@ def _execveat(fd: int, argv: list[str]) -> None:
     raise refuse(f"execveat вернул {result}, errno={error} ({errno.errorcode.get(error, '?')})")
 
 
+def _argv_with_job(args: argparse.Namespace, job_fd: int) -> list[str]:
+    """Убирает путь job из argv и передаёт унаследованный fd запечатанного memfd."""
+    forwarded: list[str] = []
+    found = 0
+    arguments = list(args.arg)
+    index = 0
+    while index < len(arguments):
+        item = arguments[index]
+        if item == "--job":
+            found += 1
+            index += 2
+            continue
+        if item.startswith("--job="):
+            found += 1
+            index += 1
+            continue
+        forwarded.append(item)
+        index += 1
+    direct = getattr(args, "job", None)
+    if direct:
+        found += len(direct) if isinstance(direct, list) else 1
+    if found != 1:
+        raise refuse(f"job: ожидался ровно один источник, найдено {found}")
+    forwarded.extend(["--job-fd", str(job_fd)])
+    return forwarded
+
+
 def promote_command(args: argparse.Namespace) -> int:
     result = verify_all(args)
     tool = result["tool"]
@@ -208,6 +459,11 @@ def promote_command(args: argparse.Namespace) -> int:
         raise refuse(f"{tool} вне v0: допускается только head")
     if tool not in V0_TOOLS:
         raise refuse(f"инструмент {tool} не входит в v0 promoter")
+    if result.get("job") is None:
+        raise refuse(
+            "head promote требует --job: без него root/fixture/checks не связаны "
+            "с подписанным admission"
+        )
     if args.store:
         store(result, args)
     if not sys.platform.startswith("linux"):
@@ -224,31 +480,15 @@ def promote_command(args: argparse.Namespace) -> int:
         raise refuse("binary изменился между проверкой и запуском")
     if not hasattr(os, "memfd_create"):
         raise refuse("в этой сборке Python нет os.memfd_create")
-    memfd = os.memfd_create(
-        "herness-promoter",
-        os.MFD_ALLOW_SEALING | getattr(os, "MFD_CLOEXEC", 0),
-    )
+    # job не перечитывается из пути: хост получает запечатанный memfd.
+    # Иначе подмена файла между bind_job и стартом обошла бы привязку.
+    job_memfd = _sealed_memfd("herness-job", result["_job_bytes"], cloexec=False)
     try:
-        view = memoryview(payload)
-        while view:
-            written = os.write(memfd, view)
-            if written <= 0:
-                raise refuse("memfd: запись не продвинулась")
-            view = view[written:]
-        os.fchmod(memfd, 0o700)
-        if fcntl is None:
-            raise refuse("модуль fcntl недоступен: F_SEAL невозможен")
-        seals = (
-            fcntl.F_SEAL_SEAL
-            | fcntl.F_SEAL_SHRINK
-            | fcntl.F_SEAL_GROW
-            | fcntl.F_SEAL_WRITE
-        )
-        fcntl.fcntl(memfd, fcntl.F_ADD_SEALS, seals)
-    except OSError as exc:
-        os.close(memfd)
-        raise refuse(f"memfd/F_SEAL не удались: {exc}") from exc
-    argv = [str(binary), *args.arg]
+        memfd = _sealed_memfd("herness-promoter", payload, cloexec=True)
+    except BaseException:
+        os.close(job_memfd)
+        raise
+    argv = [str(binary), *_argv_with_job(args, job_memfd)]
     if not args.quiet:
         print(
             json.dumps(
@@ -257,6 +497,8 @@ def promote_command(args: argparse.Namespace) -> int:
                     "tool": tool,
                     "test_only": result["test_only"],
                     "key_fingerprint": result["key_fingerprint"],
+                    "job_sha256": result["job"]["sha256"],
+                    "job_transport": "memfd:fd",
                     "activation": "none: promoter не меняет registry",
                 },
                 ensure_ascii=False,
@@ -289,11 +531,14 @@ def self_test() -> int:
         key_path, anchor_path, fingerprint = admission.create_test_key(directory / "keys")
         key = admission.load_private_key(key_path)
         anchor_bytes = anchor_path.read_bytes()
+        room = directory / "room"
+        fixtures = room / "fixtures"
+        fixtures.mkdir(parents=True)
         targets = {
             "card": directory / "card.json",
             "source": directory / "head.rs",
             "binary": directory / "head.bin",
-            "fixture": directory / "fixture.txt",
+            "fixture": fixtures / "manifest.json",
             "policy": directory / "policy.json",
             "room": directory / "room.json",
         }
@@ -305,7 +550,24 @@ def self_test() -> int:
             shutil.copyfile(true_binary, targets["binary"])
         else:
             targets["binary"].write_bytes(b"\x7fELF baseline\n")
-        targets["fixture"].write_bytes(b"synthetic model_visible\n")
+        fixture_bytes = b"synthetic model_visible\n"
+        (fixtures / "data.txt").write_bytes(fixture_bytes)
+        fixture_manifest = {
+            "schema_version": "fixture-manifest-v1",
+            "root_ref": "room:input",
+            "fixture_root": "fixtures",
+            "accepted_classes": ["model_visible"],
+            "files": [
+                {
+                    "path": "data.txt",
+                    "bytes": len(fixture_bytes),
+                    "lines": 1,
+                    "sha256": admission.digest_bytes(fixture_bytes),
+                    "data_class": "model_visible",
+                }
+            ],
+        }
+        targets["fixture"].write_bytes(admission.canonical(fixture_manifest) + b"\n")
         targets["policy"].write_bytes(b'{"allow":["file:/mnt/fixtures/**"],"deny":[]}\n')
         targets["room"].write_bytes(b'{"network":false,"disk":false,"write_allowed":false}\n')
         manifest = {
@@ -338,7 +600,60 @@ def self_test() -> int:
         sig_path = directory / "manifest.sig"
         sig_path.write_text(signature + "\n", encoding="ascii")
 
-        base = [
+        def write_job(
+            name: str,
+            *,
+            job_manifest: Path = manifest_path,
+            job_sig: Path = sig_path,
+            job_binary: Path = targets["binary"],
+            job_root: Path = room,
+            job_fixture: Path = targets["fixture"],
+            job_anchor: Path = anchor_path,
+            check_overrides: dict[str, Path] | None = None,
+            cases_override: list[dict[str, Any]] | None = None,
+        ) -> Path:
+            job_checks = {
+                "card_digest": targets["card"],
+                "source_digest": targets["source"],
+                "binary_digest": job_binary,
+                "fixture_digest": job_fixture,
+                "policy_digest": targets["policy"],
+                "room_digest": targets["room"],
+            }
+            if check_overrides:
+                job_checks.update(check_overrides)
+            cases = cases_override or [
+                {
+                    "id": "normal",
+                    "path_ref": {
+                        "root_ref": "room:input",
+                        "segments": ["fixtures", "data.txt"],
+                    },
+                    "line_count": 1,
+                    "max_bytes_read": 32,
+                }
+            ]
+            job = {
+                "root": str(job_root),
+                "now_unix": 1780272000,
+                "fixture_manifest": str(job_fixture),
+                "admission": {
+                    "manifest": str(job_manifest),
+                    "sig": str(job_sig),
+                    "anchor": str(job_anchor),
+                },
+                "checks": {key: str(value) for key, value in job_checks.items()},
+                "cases": cases,
+            }
+            path = directory / f"{name}-job.json"
+            path.write_text(
+                json.dumps(job, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            return path
+
+        base_job = write_job("base")
+        base_without_job = [
             "--manifest", str(manifest_path),
             "--sig", str(sig_path),
             "--anchor", str(anchor_path),
@@ -349,7 +664,12 @@ def self_test() -> int:
             "--policy", str(targets["policy"]),
             "--room", str(targets["room"]),
         ]
+        base = [*base_without_job, "--job", str(base_job)]
         common = [*base, "--now", "2026-06-01T00:00:00Z", "--allow-test-only"]
+        no_job_common = [
+            *base_without_job,
+            "--now", "2026-06-01T00:00:00Z", "--allow-test-only",
+        ]
 
         def variant(binary_path: Path, name: str) -> list[str]:
             """Манифест с другим binary: для проверок env/fd изоляции."""
@@ -365,15 +685,111 @@ def self_test() -> int:
                 admission.sign_manifest(manifest_variant.read_bytes(), key) + "\n",
                 encoding="ascii",
             )
-            args = list(base)
+            args = list(base_without_job)
             args[args.index(str(manifest_path))] = str(manifest_variant)
             args[args.index(str(sig_path))] = str(sig_variant)
             args[args.index(str(targets["binary"]))] = str(binary_path)
+            job_path = write_job(
+                name,
+                job_manifest=manifest_variant,
+                job_sig=sig_variant,
+                job_binary=binary_path,
+            )
+            args.extend(["--job", str(job_path)])
             return args
 
         verify = _run_promoter(["verify", *common, "--quiet"])
         assert verify.returncode == 0, (verify.returncode, verify.stdout, verify.stderr)
         checks += 1
+
+        # job обязан совпадать с проверенными путями и admission. Каждый
+        # контроль ниже — отказ до store/launch, а не «предупреждение».
+        def with_job(command: list[str], job_path: Path) -> list[str]:
+            value = list(command)
+            value[value.index("--job") + 1] = str(job_path)
+            return value
+
+        other_room = directory / "other-room"
+        (other_room / "fixtures").mkdir(parents=True)
+        wrong_root_job = write_job("wrong-root", job_root=other_room)
+        refused = _run_promoter(["verify", *with_job(common, wrong_root_job), "--quiet"])
+        assert refused.returncode != 0 and "job.root" in refused.stderr, (
+            refused.returncode,
+            refused.stdout,
+            refused.stderr,
+        )
+        checks += 1
+
+        fixture_copy = fixtures / "manifest-copy.json"
+        fixture_copy.write_bytes(targets["fixture"].read_bytes())
+        wrong_fixture_job = write_job("wrong-fixture", job_fixture=fixture_copy)
+        refused = _run_promoter(["verify", *with_job(common, wrong_fixture_job), "--quiet"])
+        assert refused.returncode != 0 and "job.fixture_manifest" in refused.stderr, (
+            refused.returncode,
+            refused.stderr,
+        )
+        checks += 1
+
+        policy_copy = directory / "policy-copy.json"
+        policy_copy.write_bytes(targets["policy"].read_bytes())
+        wrong_check_job = write_job(
+            "wrong-check", check_overrides={"policy_digest": policy_copy}
+        )
+        refused = _run_promoter(["verify", *with_job(common, wrong_check_job), "--quiet"])
+        assert refused.returncode != 0 and "job.checks.policy_digest" in refused.stderr, (
+            refused.returncode,
+            refused.stderr,
+        )
+        checks += 1
+
+        anchor_copy = directory / "anchor-copy.json"
+        anchor_copy.write_bytes(anchor_bytes)
+        wrong_anchor_job = write_job("wrong-anchor", job_anchor=anchor_copy)
+        refused = _run_promoter(["verify", *with_job(common, wrong_anchor_job), "--quiet"])
+        assert refused.returncode != 0 and "job.admission.anchor" in refused.stderr, (
+            refused.returncode,
+            refused.stderr,
+        )
+        checks += 1
+
+        override_job = write_job("override")
+        override_value = json.loads(override_job.read_text(encoding="utf-8"))
+        override_value["cases"][0]["fixture_manifest"] = str(targets["fixture"])
+        override_job.write_text(
+            json.dumps(override_value, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        refused = _run_promoter(["verify", *with_job(common, override_job), "--quiet"])
+        assert refused.returncode != 0 and "per-case override" in refused.stderr, (
+            refused.returncode,
+            refused.stderr,
+        )
+        checks += 1
+
+        duplicated = _run_promoter(
+            ["verify", *common, "--job", str(base_job), "--quiet"]
+        )
+        assert duplicated.returncode != 0 and "более одного раза" in duplicated.stderr
+        checks += 1
+
+        missing_job = _run_promoter(["promote", *no_job_common])
+        assert missing_job.returncode != 0 and "требует --job" in missing_job.stderr, (
+            missing_job.returncode,
+            missing_job.stderr,
+        )
+        checks += 1
+
+        if sys.platform.startswith("linux"):
+            before_launch = _run_promoter(
+                ["promote", *with_job(common, wrong_root_job), "--arg", "0"]
+            )
+            assert before_launch.returncode != 0 and "job.root" in before_launch.stderr, (
+                before_launch.returncode,
+                before_launch.stdout,
+                before_launch.stderr,
+            )
+            assert "HEAD-SLICE-R1" not in before_launch.stdout
+            checks += 1
 
         no_permission = [item for item in common if item != "--allow-test-only"]
         refused = _run_promoter(["verify", *no_permission, "--quiet"])
@@ -434,13 +850,22 @@ def self_test() -> int:
         result = _run_promoter(["verify", *common, "--store", str(stored), "--quiet"])
         assert result.returncode == 0, (result.returncode, result.stderr)
         names = {item.name for item in stored.iterdir()}
-        assert {"manifest.json", "manifest.sig", "anchor.json", "binary", "promotion.json"} <= names
+        assert {
+            "manifest.json",
+            "manifest.sig",
+            "anchor.json",
+            "binary",
+            "job.json",
+            "promotion.json",
+        } <= names
         assert not any("seed" in name for name in names)
         promotion = json.loads((stored / "promotion.json").read_text(encoding="utf-8"))
         assert promotion["exact_bytes"]["manifest"] == admission.digest_file(stored / "manifest.json")
         assert promotion["exact_bytes"]["signature"] == admission.digest_file(stored / "manifest.sig")
         assert promotion["exact_bytes"]["anchor"] == admission.digest_file(stored / "anchor.json")
+        assert promotion["exact_bytes"]["job"] == admission.digest_file(stored / "job.json")
         assert promotion["digests"]["binary_digest"] == admission.digest_file(stored / "binary")
+        assert promotion["job"]["sha256"] == promotion["exact_bytes"]["job"]
         checks += 1
 
         # store обязан писать ровно проверенные байты: подмена между verify и
@@ -455,6 +880,7 @@ def self_test() -> int:
             fixture=str(targets["fixture"]),
             policy=str(targets["policy"]),
             room=str(targets["room"]),
+            job=str(base_job),
             now="2026-06-01T00:00:00Z",
             allow_test_only=True,
             store=str(directory / "poison-store"),
@@ -531,7 +957,7 @@ def self_test() -> int:
         seal_signature = key.sign(admission.DOMAIN + b"\n" + seal_bytes).hex()
         (directory / "seal.json").write_bytes(seal_bytes)
         (directory / "seal.sig").write_text(seal_signature + "\n", encoding="ascii")
-        seal_args = [item for item in common]
+        seal_args = [item for item in no_job_common]
         seal_args[seal_args.index(str(manifest_path))] = str(directory / "seal.json")
         seal_args[seal_args.index(str(sig_path))] = str(directory / "seal.sig")
         seal_args[seal_args.index(str(targets["card"]))] = str(seal_card)
@@ -545,7 +971,8 @@ def self_test() -> int:
 
         # Просроченный admission: подпись верна, срок нет.
         expired = _run_promoter(
-            ["verify", *base, "--now", "2028-01-01T00:00:00Z", "--allow-test-only", "--quiet"]
+            ["verify", *base_without_job, "--now", "2028-01-01T00:00:00Z",
+             "--allow-test-only", "--quiet"]
         )
         assert expired.returncode != 0 and "просрочен" in expired.stderr
         checks += 1
@@ -555,7 +982,7 @@ def self_test() -> int:
         revoked["revoked_epochs"] = [1]
         revoked_path = directory / "revoked-anchor.json"
         revoked_path.write_bytes(admission.canonical(revoked))
-        revoked_args = list(common)
+        revoked_args = list(no_job_common)
         revoked_args[revoked_args.index(str(anchor_path))] = str(revoked_path)
         result = _run_promoter(["verify", *revoked_args, "--quiet"])
         assert result.returncode != 0 and "отозван" in result.stderr
@@ -573,9 +1000,9 @@ def self_test() -> int:
             "revoked_epochs": [],
             "expected_prev": admission.GENESIS,
         }
-        wrong_path = directory / "wrong-anchor.json"
+        wrong_path = directory / "wrong-anchor-public.json"
         wrong_path.write_bytes(admission.canonical(wrong))
-        wrong_args = list(common)
+        wrong_args = list(no_job_common)
         wrong_args[wrong_args.index(str(anchor_path))] = str(wrong_path)
         result = _run_promoter(["verify", *wrong_args, "--quiet"])
         assert result.returncode != 0 and "K11_ADMISSION_REQUIRED" in result.stderr
@@ -602,6 +1029,7 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--fixture", required=True)
         subparser.add_argument("--policy", required=True)
         subparser.add_argument("--room", required=True)
+        subparser.add_argument("--job", action="append")
         subparser.add_argument("--now")
         subparser.add_argument("--allow-test-only", action="store_true")
         subparser.add_argument("--store")

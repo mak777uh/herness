@@ -1,0 +1,19 @@
+# PROMOTER-JOB-BINDING-R1 — --job привязан к подписанному admission
+
+Дата: 2026-11-18; test-only; настоящий owner-ключ не создавался.
+
+## Windows (verify/store, без launch)
+
+Команда: python bin/promoter.py --self-test
+PASS promoter self-test: Windows verify/store, запуск отказом (N/A для launch)
+PASS promoter self-test: 18 проверок
+fingerprint: sha256:c6863dc482594cc1e5b8d956eb20bbf14b78b7c16571e4bd6d52575a9c44dc12
+rc=0
+
+## WSL (verify/store + launch через memfd/execveat)
+
+Команда: python3 bin/promoter.py --self-test
+PASS promoter self-test: Linux launch через memfd+execveat
+PASS promoter self-test: 21 проверок
+fingerprint: sha256:eeec0ac37c98c39f6762daef01c41ced140e6df1646b9edd779e7e25bffa71e3
+rc=0

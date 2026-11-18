@@ -2,12 +2,14 @@
 //! и как init в QEMU-госте.
 //!
 //! Job связывает точные байты (checks), admission, fixture manifest, root и кейсы.
-//! Каждый результат печатается одной JSON-строкой с маркером `HEAD-SLICE-R1`.
+//! Промоутер передаёт job через унаследованный fd запечатанного memfd; в гостевом
+//! режиме path остаётся `/job.json`. Каждый результат печатается одной JSON-строкой
+//! с маркером `HEAD-SLICE-R1`.
 //! В гостевом режиме после job бинарь выключает машину (`reboot(RB_POWER_OFF)`);
 //! сеть/диск/host mounts не нужны и не запрашиваются.
 
 use std::collections::BTreeMap;
-use std::io::{Read, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
@@ -43,6 +45,30 @@ fn read_bytes(path: &Path) -> Result<Vec<u8>, String> {
     file.read_to_end(&mut bytes)
         .map_err(|error| format!("job: не прочитать {}: {error}", path.display()))?;
     Ok(bytes)
+}
+
+fn read_job(job_fd: Option<i32>, path: &Path) -> Result<String, String> {
+    if let Some(fd) = job_fd {
+        #[cfg(unix)]
+        {
+            use std::os::fd::FromRawFd;
+            // fd унаследован от promoter: memfd уже запечатан, путь не нужен.
+            let mut file = unsafe { std::fs::File::from_raw_fd(fd) };
+            // os.write в promoter оставил offset в конце; читаем с начала.
+            file.seek(SeekFrom::Start(0))
+                .map_err(|error| format!("job fd {fd}: seek: {error}"))?;
+            let mut text = String::new();
+            file.read_to_string(&mut text)
+                .map_err(|error| format!("job fd {fd}: {error}"))?;
+            return Ok(text);
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = fd;
+            return Err("job fd не поддержан на этой платформе".to_string());
+        }
+    }
+    std::fs::read_to_string(path).map_err(|error| format!("{}: {error}", path.display()))
 }
 
 fn verify_admission_case(
@@ -261,6 +287,7 @@ fn guest_poweroff() -> ! {
 
 fn main() {
     let mut job_path = PathBuf::from("/job.json");
+    let mut job_fd: Option<i32> = None;
     let mut guest = false;
     let mut args = std::env::args().skip(1);
     while let Some(argument) = args.next() {
@@ -271,6 +298,24 @@ fn main() {
                     job_path = PathBuf::from(value);
                 }
             }
+            "--job-fd" => {
+                let parsed = args.next().and_then(|value| value.parse::<i32>().ok());
+                match parsed {
+                    Some(fd) if fd >= 0 => job_fd = Some(fd),
+                    _ => {
+                        emit(json!({
+                            "id": "__setup__",
+                            "outcome": "error",
+                            "code": "JOB_FD",
+                            "error": "job fd: ожидалось неотрицательное целое",
+                        }));
+                        if guest {
+                            guest_poweroff();
+                        }
+                        std::process::exit(2);
+                    }
+                }
+            }
             other => {
                 eprintln!("неизвестный аргумент {other}");
                 std::process::exit(2);
@@ -278,14 +323,14 @@ fn main() {
         }
     }
 
-    let job_text = match std::fs::read_to_string(&job_path) {
+    let job_text = match read_job(job_fd, &job_path) {
         Ok(text) => text,
         Err(error) => {
             emit(json!({
                 "id": "__setup__",
                 "outcome": "error",
                 "code": "JOB_READ",
-                "error": format!("{}: {error}", job_path.display()),
+                "error": error,
             }));
             if guest {
                 guest_poweroff();

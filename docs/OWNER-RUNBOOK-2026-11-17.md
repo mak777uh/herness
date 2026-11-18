@@ -1,4 +1,4 @@
-# OWNER-RUNBOOK — допуск инструмента `head` (17.11.2026)
+# OWNER-RUNBOOK — допуск инструмента `head` (17.11.2026, обновлён 18.11.2026)
 
 > Это **не approval** и не инструкция «активировать сейчас». Документ фиксирует, что уже
 > проверено на эфемерном test-only ключе, и какой чек-лист остаётся владельцу для настоящей
@@ -13,6 +13,12 @@
 - `K9_proven` не выдан.
 - Production-файлы `lab/tools/registry.jsonl`, `registry.events.jsonl`,
   `registry.state.json` не переписывались test-only репетицией и сухой owner-церемонией.
+- `head promote` требует `--job`: без него promoter отказывает до store и launch. Job не
+  является доверенной конфигурацией — promoter сверяет его `root`, fixture-манифест,
+  шесть digest-путей и manifest/sig/anchor с уже проверенным admission; per-case override
+  запрещён. На Linux точные байты job передаются хосту запечатанным memfd через `--job-fd`,
+  без повторного чтения пути. Runtime `head` сверяет и размер, и sha256 содержимого
+  фикстуры (предел `MAX_HASH_BYTES = 8 MiB`, выше — `K4`).
 - Известный разрыв: `run_tool_g` не имеет ветки `head`. Даже после активации conversational
   loop не запустит `head`; запуск идёт через promoter. Это отдельная работа, не часть
   церемонии ключа.
@@ -31,16 +37,17 @@ python bin/activation_rehearsal.py --no-launch
 wsl.exe -e sh -lc 'cd /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness && python3 bin/activation_rehearsal.py --build --evidence research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt'
 ```
 
-Ожидание: `PASS activation rehearsal: 33/33` в WSL; на Windows без launch — `22/22`.
+Ожидание: `PASS activation rehearsal: 34/34` в WSL; на Windows без launch — `22/22`.
 Normal — 3 строки/144 B/`line_cap`; outside-root — `S6_CLOSURE_BREACH`. В CI та же
 цепочка идёт без `--build` (бинарь собирается отдельным шагом); это не другой порог,
 а отсутствие проверок сборки. Рабочий каталог и ключ создаются вне репозитория и
 удаляются, если не указан `--keep`; в evidence попадает только fingerprint, не seed.
 
-Репетиция доказывает: подпись и шесть exact-byte digest проверяются; test-only без
-`--allow-test-only` отвергается; promoter verify/store работает; test-only `admitted`
-остаётся `admitted_inactive`; launch идёт без path fallback. Она **не** доказывает, что
-владелец согласен, что ключ настоящий или что комната изолирует произвольный код.
+Репетиция доказывает: подпись и шесть exact-byte digest проверяются; job связан с
+admission и передаётся запечатанным fd, а не путём; test-only без `--allow-test-only`
+отвергается; promoter verify/store работает; test-only `admitted` остаётся
+`admitted_inactive`; launch идёт без path fallback. Она **не** доказывает, что владелец
+согласен, что ключ настоящий или что комната изолирует произвольный код.
 
 Положительная ветка отдельно проверена песочным прибором (этап 12):
 
@@ -49,7 +56,8 @@ python bin/owner_ceremony_dry_run.py --no-launch
 wsl.exe -e sh -lc 'cd /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness && python3 bin/owner_ceremony_dry_run.py --build --evidence research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt'
 ```
 
-Ожидание: `45/45` на Windows без launch, `56/56` в WSL с launch. Прибор создаёт
+Ожидание: `45/45` на Windows без launch, `57/57` в WSL с launch (добавилась проверка
+передачи job через memfd). Прибор создаёт
 **эфемерный** ключ с anchor `test_only:false` вне репозитория, проверяет манифест без
 `--allow-test-only`, выполняет promoter verify/store и даёт песочный `head=active`,
 `active=[head]`; production `head` остаётся `candidate`, production `active` пуст.
@@ -73,8 +81,9 @@ python bin/verify_owner_package.py --manifest <manifest.json> --sig <manifest.si
 `--allow-test-only` только осматривает песочный пакет и не делает его approval.
 Self-test прибора: `python bin/verify_owner_package.py --self-test` → 5 сценариев
 (годный пакет, test-only без разрешения, изменённая карточка, изменённое содержимое
-фикстуры, изменённая подпись). Это единственная проверка, которая сверяет **sha256
-содержимого** фикстуры; runtime `head` сверяет только размер — известный разрыв.
+фикстуры, изменённая подпись). Owner-прибор и runtime `head` теперь **независимо**
+сверяют **sha256 содержимого** фикстуры; runtime делает это с пределом `MAX_HASH_BYTES`
+и отказывает `K4` выше предела, а не читает файл неограниченно.
 
 ## 3. Что уже закрыто в реестре
 
@@ -109,7 +118,10 @@ Self-test прибора: `python bin/verify_owner_package.py --self-test` → 5
    дать те же байты и hex-подпись; иначе verifier откажет.
 7. **Проверить до активации.**
    `python bin/admission.py verify --manifest ... --sig ... --anchor ...` — без
-   `--allow-test-only`; затем `python bin/promoter.py verify ... --store ...`. Ожидание:
+   `--allow-test-only`; затем `python bin/promoter.py verify ... --store ...`. Если
+   проверяется будущий запуск, добавьте `--job <job.json>`: promoter сверит `root`,
+   fixture-манифест, шесть digest-путей и manifest/sig/anchor с проверенным допуском и
+   откажет при любом расхождении. `head promote` без `--job` невозможен. Ожидание:
    подпись и шесть digest сходятся, `test_only` отсутствует или false, store не содержит seed.
    Дополнительно — независимый read-only отчёт
    `python bin/verify_owner_package.py ...` (см. §2): он сверяет те же шесть digest,
@@ -140,8 +152,9 @@ Self-test прибора: `python bin/verify_owner_package.py --self-test` → 5
 Остановиться, если: требуется передать seed агенту или в контекст; тестовая подпись или
 песочная owner-церемония выдаётся за owner-подпись/approval; событие `admitted` имеет
 `test_only:true` или не имеет поля; кто-то предлагает ослабить гейт/порог; launch
-подменяется путём или TCG; в evidence попадает приватный ключ; production-файлы реестра
-меняются без события и проверки.
+подменяется путём или TCG; job принимается как доверенная конфигурация без сверки с
+admission или перечитывается по пути вместо fd; в evidence попадает приватный ключ;
+production-файлы реестра меняются без события и проверки.
 
 Границы: этот runbook не является approval, не создаёт ключ и не доказывает изоляцию
 комнаты. `K9_proven` остаётся невыданным.

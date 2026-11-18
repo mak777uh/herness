@@ -5,15 +5,15 @@
 
 ## Ключ и манифест
 
-- key_fingerprint: `sha256:3733d7650290140e4654bb14a41f4f0c85c9bc3db971281668566b3e45141e46` (private seed не печатается и лежит вне репозитория)
-- manifest_digest: `sha256:19ebc1edff336029a30d78303da2f6d7ef52f5823a84d663a245b149377ade1f`
+- key_fingerprint: `sha256:c79d59ed5974e2248fd5a21128fcd949f515fff3ddfdaf826833a40dcddd26fc` (private seed не печатается и лежит вне репозитория)
+- manifest_digest: `sha256:6e9d1d426dbc85fff1160f172a0a30aff367ee7a895538f170fd257c23875ead`
 - test_only: true; epoch=1; seq=1; prev=GENESIS
 
 ## Точные входы
 
 - card: `sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97`
-- source: `sha256:112fb4e3524add1671551b645ba74230e6f4ac19dcdfed551def3d203b16442b`
-- binary: `sha256:af19f90d3557023ec4b0c0c653c909e52faa6f91a320a4859ce391ffbdb4bba9`
+- source: `sha256:66e54c9ca8a5f39f28d170de1e9a46d143b64e8de15a7014474f29365e1c9019`
+- binary: `sha256:1e86d26d6ee9f5a2cb790eb02b3d44ed6e183afb9dc1f98982e1bbbc98d1f4f7`
 - fixture: `sha256:47b2cfd7444628769f25318cf88d652e97a9add3f5d448e50418fa9f082ccb33`
 - policy: `sha256:2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802`
 - room: `sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6`
@@ -46,6 +46,7 @@
 - [ok] production active пуст
 - [ok] promoter promote завершился rc=0
 - [ok] запуск через memfd/execveat, без path fallback
+- [ok] job передан запечатанным memfd, а не путём
 - [ok] promoter не меняет activation
 - [ok] normal: outcome=ok
 - [ok] normal: 3 строки
@@ -57,16 +58,12 @@
 ## Примечания и N/A
 
 - без --allow-test-only: K11_ADMISSION_REQUIRED: manifest: test-only не даёт права запуска; нужен owner-подписанный admission
-- tampered card: K11_ADMISSION_REQUIRED: /tmp/herness-activation-qko3m1nj/artifacts/tampered-card.json не совпадает с допущенными байтами: ожидалось sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, получено sha256:ed1cec513bcd760c6c85837c979dcbcfd2bc516133de2993bbf03e9d0e36dbd0
+- tampered card: K11_ADMISSION_REQUIRED: /tmp/herness-activation-dyg4nb3z/artifacts/tampered-card.json не совпадает с допущенными байтами: ожидалось sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, получено sha256:ed1cec513bcd760c6c85837c979dcbcfd2bc516133de2993bbf03e9d0e36dbd0
 
 ## Команды
 
-- `cargo build --release --bin head_slice_host`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs; rc=0; 12.598 с
+- `cargo build --release --bin head_slice_host`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs; rc=0; 0.883 с
 ```text
-   Compiling serde_core v1.0.229
-   Compiling serde v1.0.229
-   Compiling serde_json v1.0.154
-   Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/core-rs)
 warning: variable `result_tag` is assigned to, but never used
     --> src/loopmod.rs:1787:25
      |
@@ -94,39 +91,40 @@ warning: function `run_tool` is never used
      = note: `#[warn(dead_code)]` on by default
 
 warning: `hs-core` (lib) generated 3 warnings
-    Finished `release` profile [optimized] target(s) in 12.56s
+    Finished `release` profile [optimized] target(s) in 0.85s
 ```
-- `/usr/bin/python3 /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/bin/promoter.py verify --manifest /tmp/herness-activation-qko3m1nj/admission/manifest.json --sig /tmp/herness-activation-qko3m1nj/admission/manifest.sig --anchor /tmp/herness-activation-qko3m1nj/keys/anchor.json --card /tmp/herness-activation-qko3m1nj/artifacts/card.json --source /tmp/herness-activation-qko3m1nj/artifacts/head.rs --binary /tmp/herness-activation-qko3m1nj/artifacts/binary --fixture /tmp/herness-activation-qko3m1nj/room/fixtures/manifest.json --policy /tmp/herness-activation-qko3m1nj/artifacts/policy.json --room /tmp/herness-activation-qko3m1nj/artifacts/room.json --now 2026-11-17T12:00:00Z`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness; rc=2; 0.226 с
+- `/usr/bin/python3 /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/bin/promoter.py verify --manifest /tmp/herness-activation-dyg4nb3z/admission/manifest.json --sig /tmp/herness-activation-dyg4nb3z/admission/manifest.sig --anchor /tmp/herness-activation-dyg4nb3z/keys/anchor.json --card /tmp/herness-activation-dyg4nb3z/artifacts/card.json --source /tmp/herness-activation-dyg4nb3z/artifacts/head.rs --binary /tmp/herness-activation-dyg4nb3z/artifacts/binary --fixture /tmp/herness-activation-dyg4nb3z/room/fixtures/manifest.json --policy /tmp/herness-activation-dyg4nb3z/artifacts/policy.json --room /tmp/herness-activation-dyg4nb3z/artifacts/room.json --now 2026-11-17T12:00:00Z`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness; rc=2; 0.181 с
 ```text
 K11_ADMISSION_REQUIRED: manifest: test-only не даёт права запуска; нужен owner-подписанный admission
 ```
-- `/usr/bin/python3 /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/bin/promoter.py verify --manifest /tmp/herness-activation-qko3m1nj/admission/manifest.json --sig /tmp/herness-activation-qko3m1nj/admission/manifest.sig --anchor /tmp/herness-activation-qko3m1nj/keys/anchor.json --card /tmp/herness-activation-qko3m1nj/artifacts/card.json --source /tmp/herness-activation-qko3m1nj/artifacts/head.rs --binary /tmp/herness-activation-qko3m1nj/artifacts/binary --fixture /tmp/herness-activation-qko3m1nj/room/fixtures/manifest.json --policy /tmp/herness-activation-qko3m1nj/artifacts/policy.json --room /tmp/herness-activation-qko3m1nj/artifacts/room.json --now 2026-11-17T12:00:00Z --store /tmp/herness-activation-qko3m1nj/store --allow-test-only`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness; rc=0; 0.249 с
+- `/usr/bin/python3 /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/bin/promoter.py verify --manifest /tmp/herness-activation-dyg4nb3z/admission/manifest.json --sig /tmp/herness-activation-dyg4nb3z/admission/manifest.sig --anchor /tmp/herness-activation-dyg4nb3z/keys/anchor.json --card /tmp/herness-activation-dyg4nb3z/artifacts/card.json --source /tmp/herness-activation-dyg4nb3z/artifacts/head.rs --binary /tmp/herness-activation-dyg4nb3z/artifacts/binary --fixture /tmp/herness-activation-dyg4nb3z/room/fixtures/manifest.json --policy /tmp/herness-activation-dyg4nb3z/artifacts/policy.json --room /tmp/herness-activation-dyg4nb3z/artifacts/room.json --now 2026-11-17T12:00:00Z --store /tmp/herness-activation-dyg4nb3z/store --allow-test-only`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness; rc=0; 0.216 с
 ```text
 {
   "checked_at_unix": 1794916800,
   "checks": {
-    "binary_digest": "/tmp/herness-activation-qko3m1nj/artifacts/binary",
-    "card_digest": "/tmp/herness-activation-qko3m1nj/artifacts/card.json",
-    "fixture_digest": "/tmp/herness-activation-qko3m1nj/room/fixtures/manifest.json",
-    "policy_digest": "/tmp/herness-activation-qko3m1nj/artifacts/policy.json",
-    "room_digest": "/tmp/herness-activation-qko3m1nj/artifacts/room.json",
-    "source_digest": "/tmp/herness-activation-qko3m1nj/artifacts/head.rs"
+    "binary_digest": "/tmp/herness-activation-dyg4nb3z/artifacts/binary",
+    "card_digest": "/tmp/herness-activation-dyg4nb3z/artifacts/card.json",
+    "fixture_digest": "/tmp/herness-activation-dyg4nb3z/room/fixtures/manifest.json",
+    "policy_digest": "/tmp/herness-activation-dyg4nb3z/artifacts/policy.json",
+    "room_digest": "/tmp/herness-activation-dyg4nb3z/artifacts/room.json",
+    "source_digest": "/tmp/herness-activation-dyg4nb3z/artifacts/head.rs"
   },
   "digests": {
-    "binary_digest": "sha256:af19f90d3557023ec4b0c0c653c909e52faa6f91a320a4859ce391ffbdb4bba9",
+    "binary_digest": "sha256:1e86d26d6ee9f5a2cb790eb02b3d44ed6e183afb9dc1f98982e1bbbc98d1f4f7",
     "card_digest": "sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97",
     "fixture_digest": "sha256:47b2cfd7444628769f25318cf88d652e97a9add3f5d448e50418fa9f082ccb33",
     "policy_digest": "sha256:2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802",
     "room_digest": "sha256:f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6",
-    "source_digest": "sha256:112fb4e3524add1671551b645ba74230e6f4ac19dcdfed551def3d203b16442b"
+    "source_digest": "sha256:66e54c9ca8a5f39f28d170de1e9a46d143b64e8de15a7014474f29365e1c9019"
   },
   "epoch": 1,
   "exact_bytes": {
-    "anchor": "sha256:3f1330359cb3c4113f50af377597aedc4dfcf336272d3346f09a4261abcc8933",
-    "manifest": "sha256:19ebc1edff336029a30d78303da2f6d7ef52f5823a84d663a245b149377ade1f",
-    "signature": "sha256:75dabe431d932ce82d96238614e8ff1b041f8d9fb60ca04dd223fdc3d980fe5b"
+    "anchor": "sha256:5672b31766993a5200379a83c8bb807f4b0f33c4f35fee4e847022bb9f6c8af5",
+    "manifest": "sha256:6e9d1d426dbc85fff1160f172a0a30aff367ee7a895538f170fd257c23875ead",
+    "signature": "sha256:9f3ba38ad080efdbb19ea9f2892f3633baefcd571f12d755f1215ec40e7b5379"
   },
-  "key_fingerprint": "sha256:3733d7650290140e4654bb14a41f4f0c85c9bc3db971281668566b3e45141e46",
+  "job": null,
+  "key_fingerprint": "sha256:c79d59ed5974e2248fd5a21128fcd949f515fff3ddfdaf826833a40dcddd26fc",
   "kind": "tool_admission",
   "schema": "herness-admission-v1",
   "seq": 1,
@@ -136,9 +134,9 @@ K11_ADMISSION_REQUIRED: manifest: test-only не даёт права запус�
   "validity_ok": true
 }
 ```
-- `/usr/bin/python3 /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/bin/promoter.py promote --manifest /tmp/herness-activation-qko3m1nj/admission/manifest.json --sig /tmp/herness-activation-qko3m1nj/admission/manifest.sig --anchor /tmp/herness-activation-qko3m1nj/keys/anchor.json --card /tmp/herness-activation-qko3m1nj/artifacts/card.json --source /tmp/herness-activation-qko3m1nj/artifacts/head.rs --binary /tmp/herness-activation-qko3m1nj/artifacts/binary --fixture /tmp/herness-activation-qko3m1nj/room/fixtures/manifest.json --policy /tmp/herness-activation-qko3m1nj/artifacts/policy.json --room /tmp/herness-activation-qko3m1nj/artifacts/room.json --now 2026-11-17T12:00:00Z --store /tmp/herness-activation-qko3m1nj/store-launch --allow-test-only --arg=--job --arg=/tmp/herness-activation-qko3m1nj/job.json`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness; rc=0; 0.231 с
+- `/usr/bin/python3 /mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/bin/promoter.py promote --manifest /tmp/herness-activation-dyg4nb3z/admission/manifest.json --sig /tmp/herness-activation-dyg4nb3z/admission/manifest.sig --anchor /tmp/herness-activation-dyg4nb3z/keys/anchor.json --card /tmp/herness-activation-dyg4nb3z/artifacts/card.json --source /tmp/herness-activation-dyg4nb3z/artifacts/head.rs --binary /tmp/herness-activation-dyg4nb3z/artifacts/binary --fixture /tmp/herness-activation-dyg4nb3z/room/fixtures/manifest.json --policy /tmp/herness-activation-dyg4nb3z/artifacts/policy.json --room /tmp/herness-activation-dyg4nb3z/artifacts/room.json --now 2026-11-17T12:00:00Z --store /tmp/herness-activation-dyg4nb3z/store-launch --allow-test-only --job /tmp/herness-activation-dyg4nb3z/job.json`; cwd=/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness; rc=0; 0.192 с
 ```text
-{"activation": "none: promoter не меняет registry", "key_fingerprint": "sha256:3733d7650290140e4654bb14a41f4f0c85c9bc3db971281668566b3e45141e46", "launch": "execveat-memfd", "test_only": true, "tool": "head"}
+{"activation": "none: promoter не меняет registry", "job_sha256": "sha256:31980528eedbb18a435335916ebfacee96dd6a003bcb2d8be5685c2d1ab7e584", "job_transport": "memfd:fd", "key_fingerprint": "sha256:c79d59ed5974e2248fd5a21128fcd949f515fff3ddfdaf826833a40dcddd26fc", "launch": "execveat-memfd", "test_only": true, "tool": "head"}
 HEAD-SLICE-R1 {"bytes_read":144,"bytes_received":471,"code":"","id":"normal","lines":["line 01: synthetic model_visible fixture","line 02: no secret, no owner data, no network","line 03: the first slice may read at most max_bytes_read"],"outcome":"ok","stop_reason":"line_cap","truncated":true}
 HEAD-SLICE-R1 {"code":"S6_CLOSURE_BREACH","error":"S6_CLOSURE_BREACH: root_ref host:/ не входит в комнату room:input","id":"outside-root","outcome":"refusal"}
 HEAD-SLICE-R1 {"cases":2,"duplicates":[],"id":"__summary__","outcome":"ok","unique_ids":2}
@@ -181,7 +179,7 @@ rc: 0
 
 ## Что это доказывает
 
-- 33 из 33 проверок прошли; итог — ниже, а не в этом списке.
+- 34 из 34 проверок прошли; итог — ниже, а не в этом списке.
 - Манифест: подпись и шесть exact-byte digest проверены; без `--allow-test-only` test-only отвергнут; изменённый байт отвергнут.
 - Promoter verify/store выполнены; store сохраняет test_only=true и не содержит seed.
 - Test-only admitted-событие в песочном реестре даёт `admitted_inactive`; `authorize_state` отказывает.
@@ -197,4 +195,4 @@ rc: 0
 - QEMU/KVM повторно не запускался; HEAD-SLICE-R1 evidence не переписывалось.
 - `K9_proven` не выдавался.
 
-Итог: PASS (33/33)
+Итог: PASS (34/34)

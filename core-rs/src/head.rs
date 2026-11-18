@@ -2,7 +2,10 @@
 //!
 //! Граница держится на `openat2(root_fd, relative, O_RDONLY|O_CLOEXEC,
 //! RESOLVE_BENEATH|RESOLVE_NO_SYMLINKS|RESOLVE_NO_MAGICLINKS|RESOLVE_NO_XDEV)`.
-//! После open — `fstat`; не regular file отвергается. Потоковый цикл читает не больше
+//! После open — `fstat`; не regular file отвергается. Размер сверяется с manifest,
+//! затем содержимое читается целиком в память в пределах `MAX_HASH_BYTES`, sha256
+//! сверяется с manifest, и только эти же байты отдаются в потоковом цикле
+//! (без TOCTOU между хешем и выдачей). Потоковый цикл читает не больше
 //! `max_bytes_read`, строка выдаётся только целиком, `bytes_read` считается по выданным
 //! строкам, `bytes_received` остаётся диагностикой. `truncated=false` только при
 //! доказанном EOF (`read()==0`). Это Linux-инструмент: без `openat2` запуск отказывает,
@@ -13,13 +16,14 @@
 //! карточки и точные байты card/source/binary/policy/room — на promoter; см.
 //! `docs/DECISIONS-R8-2026-11-17.md` (Q11/A01).
 //!
-//! Известный разрыв: с manifest сверяется размер файла, но не sha256 его содержимого.
-//! Файл того же размера с другими байтами не будет отвергнут этим модулем; целостность
-//! комнаты должна обеспечиваться снаружи head.
+//! Известный разрыв закрыт: с manifest сверяются и размер, и sha256 содержимого.
+//! Верхняя граница `MAX_HASH_BYTES` не даёт превратить сверку в неограниченное
+//! чтение: файл больше границы отвергается K4, а не читается частично.
+//! Целостность комнаты по-прежнему должна обеспечиваться снаружи head.
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::io::Read;
+use std::io::{Cursor, Read};
 use std::path::Path;
 
 use serde_json::Value;
@@ -32,6 +36,9 @@ pub const MIN_LINES: usize = 1;
 pub const MAX_LINES: usize = 200;
 pub const MIN_MAX_BYTES: usize = 1;
 pub const MAX_MAX_BYTES: usize = 65536;
+/// Предел полной sha256-сверки: больше — K4, а не частичное чтение.
+/// Укладывается в memory_bytes карточки (64 MiB) с запасом.
+pub const MAX_HASH_BYTES: u64 = 8 * 1024 * 1024;
 pub const TOOL: &str = "head";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -495,24 +502,64 @@ pub fn file_read_stream(
     if !is_regular(&file)? {
         return Err(regular_error(format!("{relative} не regular file")));
     }
-    if let Some(meta) = file_meta {
-        #[cfg(target_os = "linux")]
-        {
-            use std::os::fd::AsRawFd;
-            let mut stat = std::mem::MaybeUninit::<libc::stat>::zeroed();
-            if unsafe { libc::fstat(file.as_raw_fd(), stat.as_mut_ptr()) } != 0 {
-                return Err(closure_error("fstat после open отказал"));
-            }
-            let stat = unsafe { stat.assume_init() };
-            if stat.st_size as u64 != meta.bytes {
-                return Err(admission_error(
-                    "размер fixture не совпадает с fixture manifest; \
-                     sha256 содержимого здесь не сверяется (известный разрыв)",
-                ));
-            }
+    let Some(meta) = file_meta else {
+        return Err(class_error(format!(
+            "файл {relative} не помечен в fixture manifest"
+        )));
+    };
+    #[cfg(target_os = "linux")]
+    {
+        use std::os::fd::AsRawFd;
+        let mut stat = std::mem::MaybeUninit::<libc::stat>::zeroed();
+        if unsafe { libc::fstat(file.as_raw_fd(), stat.as_mut_ptr()) } != 0 {
+            return Err(closure_error("fstat после open отказал"));
         }
-        let _ = meta;
+        let stat = unsafe { stat.assume_init() };
+        if stat.st_size as u64 != meta.bytes {
+            return Err(admission_error(format!(
+                "размер fixture {relative} не совпадает с fixture manifest: \
+                 ожидалось {}, на диске {}",
+                meta.bytes, stat.st_size
+            )));
+        }
     }
+    if meta.bytes > MAX_HASH_BYTES {
+        return Err(limit_error(format!(
+            "fixture {relative}: {} байт больше MAX_HASH_BYTES={MAX_HASH_BYTES}; \
+             полная sha256-сверка не укладывается в K4",
+            meta.bytes
+        )));
+    }
+
+    // Читаем ровно объявленный размер (+1 для обнаружения лишнего) и хешируем
+    // те же байты, которые затем отдаём. Иначе файл мог бы измениться между
+    // проверкой хеша и выдачей.
+    let mut content = Vec::new();
+    let limit = meta
+        .bytes
+        .checked_add(1)
+        .ok_or_else(|| limit_error("fixture bytes: переполнение при сверке"))?;
+    file.by_ref()
+        .take(limit)
+        .read_to_end(&mut content)
+        .map_err(|error| closure_error(format!("read для sha256 отказал: {error}")))?;
+    if content.len() as u64 != meta.bytes {
+        return Err(admission_error(format!(
+            "fixture {relative} изменила размер во время проверки: \
+             ожидалось {}, прочитано {}",
+            meta.bytes,
+            content.len()
+        )));
+    }
+    let actual = digest_bytes(&content);
+    if actual != meta.sha256 {
+        return Err(admission_error(format!(
+            "sha256 fixture {relative} не совпадает с fixture manifest: \
+             ожидалось {}, получено {}",
+            meta.sha256, actual
+        )));
+    }
+    let mut file = Cursor::new(content);
 
     let mut lines: Vec<String> = Vec::new();
     let mut bytes_read = 0usize;
@@ -980,6 +1027,43 @@ mod tests {
         let error = run(&root, &manifest, &["fixtures", "data.bin"], 1, 10).unwrap_err();
         assert!(error.starts_with("K11_ADMISSION_REQUIRED:"), "{error}");
         assert!(error.contains("размер"), "{error}");
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn same_size_different_bytes_is_k11_sha256() {
+        let root = temp_root("sha-mismatch");
+        std::fs::write(root.join("fixtures/data.bin"), b"abd").unwrap();
+        let manifest = serde_json::to_vec(&manifest_value(&[(
+            "data.bin",
+            3,
+            &digest_bytes(b"abc"),
+            "model_visible",
+        )]))
+        .unwrap();
+        let error = run(&root, &manifest, &["fixtures", "data.bin"], 1, 10).unwrap_err();
+        assert!(error.starts_with("K11_ADMISSION_REQUIRED:"), "{error}");
+        assert!(error.contains("sha256"), "{error}");
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn fixture_above_hash_cap_is_k4_without_reading() {
+        let root = temp_root("hash-cap");
+        let path = root.join("fixtures/data.bin");
+        let file = std::fs::File::create(&path).unwrap();
+        file.set_len(MAX_HASH_BYTES + 1).unwrap();
+        drop(file);
+        let manifest = serde_json::to_vec(&manifest_value(&[(
+            "data.bin",
+            MAX_HASH_BYTES + 1,
+            &digest_bytes(b""),
+            "model_visible",
+        )]))
+        .unwrap();
+        let error = run(&root, &manifest, &["fixtures", "data.bin"], 1, 10).unwrap_err();
+        assert!(error.starts_with("K4_RESOURCE_LIMIT:"), "{error}");
+        assert!(error.contains("MAX_HASH_BYTES"), "{error}");
         let _ = std::fs::remove_dir_all(root);
     }
 
