@@ -119,6 +119,8 @@ python tests/test_bridge_net_namespace.py — ВЕРДИКТ: PASS — /v1/net �
 python bin/hs.py gates --profile auto — профиль auto: оценено 31 из 33 гейтов; N/A 2 (журналы, индекс прогонов); rc=0
 python bin/verify_claims.py --fast — утверждений: 292; провалено: 0 (быстрый режим)
 python bin/hs.py lab validate — реестр связен: экспериментов 39, следующих гипотез 7
+CI 44350168720 (коммит 7edd412) — success, все 6 job'ов: негативные тесты,
+плагин, Rust-тесты ядра, утверждения, гейты auto, допуск/test-only.
 
 === Границы (не покрыто) ===
 - Landlock ставится самим net.py после старта интерпретатора: код, исполнившийся

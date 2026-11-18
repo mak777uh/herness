@@ -1,5 +1,29 @@
 # ГДЕ ОСТАНОВИЛСЯ — 18.11.2026 (rolling-карта смены)
 
+> **Обновление 18.11.2026, барьер записи внешнего помощника (Landlock + low-IL).**
+> `bin/net.py` больше не может писать в комнату/репозиторий. Перед разбором
+> запроса и до сети ставится Landlock (ABI ≥ 3, права записи), единственный
+> разрешённый путь — `runs/net`; при ABI < 3 — отказ `fs-sandbox` до сети.
+> На `/mnt/c` (9p/drvfs) Landlock не узнаёт существующие inode, поэтому журнал
+> и `session.json` открываются до барьера и пишутся через fd; новых путей это
+> не открывает. Красный репро: копия HEAD пишет `room/protected.txt`
+> (`SANDBOX=absent, PROTECTED_WRITE=1`, текст `PWNED`). После: `PROTECTED_WRITE=0`
+> (errno 13), `STATE_WRITE=1, JOURNAL=1, SESSION_RESULTS=1, RC=0`; ABI=0 —
+> отказ до fetch, rc=3; плечи D/E на 9p — журнал и сессия через fd, защищённая
+> запись отвергнута; Windows low-IL — `PROTECTED_WRITE=0, STATE_WRITE=1`, 28 ok
+> (C-0331, E-0039, `research/outputs/NET-FS-WRITE-BARRIER-R1-2026-11-18.txt`).
+> Регрессии: `test_bridge.py` 8/8, `test_bridge_key_isolation.py` PASS,
+> `test_bridge_net_namespace.py` PASS, гейты локально — 31/33 (N/A 2),
+> `verify_claims --fast` — 292/292, `lab validate` — реестр связен.
+> Граница: барьер ставится после старта интерпретатора; чтение и сеть не
+> ограничены; на 9p через fd пишутся только два файла состояния; прямой запуск
+> `net.py` вне моста на Windows не покрыт; `runs/net` остаётся downstream-
+> записью; симлинки, жёсткие ссылки и гонки не покрыты; это не K9; настоящий
+> ключ не использовался, active пуст, K9_proven нет.
+> Следующее — K9 (`composition_preserves`).
+> **Проверенный handoff-коммит:** `7edd412`; CI `44350168720` — success, все 6 job'ов.
+> docs-правки после него не меняют код и проходят тот же workflow.
+
 > **Обновление 18.11.2026, Windows-изоляция `/v1/net` — low-IL (H-0010).**
 > Windows-ветка больше не запускает `net.py` обычным ребёнком: `bin/win_lowil.py`
 > создаёт restricted-токен, ставит `TokenIntegrityLevel = S-1-16-4096` (Low),
