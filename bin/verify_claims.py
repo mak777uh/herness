@@ -74,7 +74,7 @@ def run_command(cmd: str, timeout: int = 120, retries: int = 0) -> tuple[str, st
 # или исходники; полный режим (CI) исполняет их по-прежнему. Список — по природе команды.
 SLOW = ("live", "ping", "probe_api", "live_cases", "replay_archive", "measure_steps",
         "dist_stats", "patterns.py", "snapshot_stats", "hs.py tools", "hs.py browser", "selftest", "hs.py run",
-        "hs.py bench", "rust_tests.py",
+        "hs.py bench", "rust_tests.py", "proc_isolation.py",
         # ADR-0055 (11.11.2026): живые прогоны комнаты, сборка/монтирование образа, живая сеть.
         ".ps1",                   # accept-run/crash-resume/run.ps1 — живой QEMU, мутирует образ
         "build_room.py",          # --build/--check — WSL mkfs/mount образа

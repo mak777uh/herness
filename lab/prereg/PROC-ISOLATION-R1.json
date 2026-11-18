@@ -1,0 +1,66 @@
+{
+ "schema": 2,
+ "id": "PROC-ISOLATION-R1",
+ "date": "2026-11-18",
+ "question": "Может ли дочерний процесс того же uid прочитать стартовое окружение родителя через /proc/<ppid>/environ, и скрывает ли родителя PID-namespace unshare -U -p -f --mount-proc",
+ "hypothesis": "Остаток BRIDGE-KEY-ISOLATION-R1: allowlist окружения не защищает от /proc/<ppid>/environ на Linux; дочерний процесс видит HS_BRIDGE_KEY в стартовом окружении моста. PID-namespace, созданный unshare, убирает родителя из /proc ребёнка, поэтому поиск канарейки по всему /proc даёт 0",
+ "criterion": "Подтверждение: плечо A (без изоляции) — PROBE_RAN=1, FOUND=1, FOUND_ANY=1; плечо B (unshare -U -p -f --mount-proc) — PROBE_RAN=1, FOUND=0, FOUND_ANY=0. Опровержение: A не видит канарейку, или B видит её хотя бы одним путём, или хотя бы один probe не выполнился. Неопределённость: unshare недоступен — это FAIL среза, не «зелёный»",
+ "arms": [
+  "A: child с allowlist-окружением без изоляции; читает /proc/<ppid>/environ",
+  "B: child в unshare -U -p -f --mount-proc; читает /proc/<ppid>/environ и весь /proc"
+ ],
+ "sensitivity": "Плечи различаются одним фактом: виден ли pid родителя в /proc ребёнка. Положительный контроль — PROBE_RAN=1 в обоих плечах; без него ABSENT ничего не значит",
+ "unit_of_analysis": "один запуск родителя с синтетической канарейкой в стартовом окружении и два probe-ребёнка",
+ "primary_metric": "FOUND и FOUND_ANY по всему /proc; порог B — оба 0",
+ "test": "python bin/proc_isolation.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при FOUND=1 в B, при невыполнении probe или при отсутствии unshare; порог не менять",
+ "fixture": "синтетическая канарейка генерируется прогоном; значения не печатаются, только булевы результаты",
+ "environment": {
+  "host": "Windows + WSL2 Ubuntu; в WSL uid 0",
+  "network": "не нужна",
+  "real_secrets": false
+ },
+ "critical_controls": [
+  {
+   "id": "residual-visible",
+   "input": "плечо A, родитель запущен с HS_BRIDGE_KEY=<канарейка>",
+   "expect": "FOUND=1 и FOUND_ANY=1"
+  },
+  {
+   "id": "namespace-hides-parent",
+   "input": "плечо B, тот же родитель, child в unshare",
+   "expect": "FOUND=0 и FOUND_ANY=0"
+  },
+  {
+   "id": "probe-ran",
+   "input": "оба плеча",
+   "expect": "PROBE_RAN=1"
+  }
+ ],
+ "kill_criteria": [
+  "канарейка видна в плече B",
+  "probe не выполнился в любом плече",
+  "используется настоящий ключ или токен владельца",
+  "unshare отсутствует или падает, а результат выдаётся за успех"
+ ],
+ "known_limits": [
+  "Это WSL/Linux-прототип, а не изменение bin/bridge.py и не защита Windows",
+  "В WSL прогон идёт под uid 0; на обычном uid unshare может требовать userns, и тогда плечо B честно падает",
+  "PID-namespace скрывает родителя, но не изолирует файловую систему, сеть и токен-файл; это не K9-доказательство",
+  "Комната и настоящий мост не участвуют; canary синтетическая",
+  "CFS/pid namespace не проверялись на побег через ptrace или /proc соседей"
+ ],
+ "prior_observation": "Разведка 18.11.2026 до регистрации: одноразовые probe в WSL дали ABSENT при установке env после старта и FOUND при старте с HS_BRIDGE_KEY; unshare -p -f --mount-proc и unshare -U -p -f --mount-proc завершились rc=0. Полный прогон с контролем — этот срез",
+ "closed": true,
+ "conclusion": "PASS: плечо A воспроизводит остаток — allowlist-ребёнок видит HS_BRIDGE_KEY в /proc родителя (FOUND=1, FOUND_ANY=1); плечо B в unshare -U -p -f --mount-proc не видит родителя ни напрямую, ни поиском по /proc (FOUND=0, FOUND_ANY=0); оба probe выполнились. WSL uid 0; bin/bridge.py не менялся, интеграция — needs_owner; evidence research/outputs/PROC-ISOLATION-R1-2026-11-18.txt",
+ "result": {
+  "verdict": "PASS — остаток /proc воспроизведён; PID-namespace скрывает родителя",
+  "arm_a": "PROBE_RAN=1; FOUND=1; FOUND_ANY=1",
+  "arm_b": "PROBE_RAN=1; FOUND=0; FOUND_ANY=0",
+  "environment": "WSL2 Ubuntu; uid=0(root); util-linux 2.41.3; kernel 6.6.114.1-microsoft-standard-WSL2",
+  "evidence": "research/outputs/PROC-ISOLATION-R1-2026-11-18.txt",
+  "residual": "мост не использует namespace; Windows не покрыт; файловая система, сеть, токен-файл и ptrace не изолированы; K9 не доказан"
+ },
+ "owner_decision": "test-only прототип; bin/bridge.py не меняется; интеграция namespace в мост — отдельное решение владельца",
+ "updated": "2026-11-18"
+}

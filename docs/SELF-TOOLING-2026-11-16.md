@@ -1,5 +1,16 @@
 # SELF-TOOLING — след смены 16–18.11.2026
 
+> **Обновление 18.11.2026, остаток `/proc` и PID-namespace.** Allowlist окружения
+> закрывает наследование, но не same-uid чтение `/proc/<ppid>/environ`: ребёнок видит
+> `HS_BRIDGE_KEY` в стартовом окружении родителя. Прототип `python bin/proc_isolation.py`:
+> A без изоляции — `FOUND=1, FOUND_ANY=1`; B в `unshare -U -p -f --mount-proc` —
+> `FOUND=0, FOUND_ANY=0`, оба probe выполнились (C-0327, E-0035,
+> [`PROC-ISOLATION-R1-2026-11-18.txt`](../research/outputs/PROC-ISOLATION-R1-2026-11-18.txt)).
+> `bin/bridge.py` не менялся: интеграция namespace — `needs_owner`. WSL-прогон под
+> `uid=0(root)`; обычный uid и Windows не покрыты; файловая система, сеть, token-файл и
+> ptrace не изолированы. Следующее — решение владельца о Linux-namespace в мосте или
+> отдельном механизме Windows, затем запрет записи внешнего в комнату 1 и K9.
+>
 > **Обновление 18.11.2026, внешняя метка в комнате и честная сводка Rust-тестов.**
 > `HttpBridge::net_request` теперь помечает ответ `/v1/net` первой строкой
 > `[external_untrusted]` — и успех, и типизированный отказ. Красный репро: 2 FAILED,
@@ -21,7 +32,8 @@
 > **0 вхождений** в ответе, output, журнале и stdout/stderr (C-0324,
 > [`BRIDGE-KEY-ISOLATION-R1-2026-11-18.txt`](../research/outputs/BRIDGE-KEY-ISOLATION-R1-2026-11-18.txt)).
 > Граница: закрыт только канал окружения; token-путь в argv и same-uid доступ через
-> `/proc`, а также Windows-командная строка не проверялись. Метка `external_untrusted`
+> `/proc` остаются; same-uid `/proc/<ppid>/environ` подтверждён отдельно (C-0327),
+> Windows-командная строка не проверялась. Метка `external_untrusted`
 > сделана на границе комнаты (C-0325); следующее — sealed fd для token/ключа и запрет
 > возврата внешнего в комнату 1. Production `head` остаётся `candidate`, `active` пуст.
 >
