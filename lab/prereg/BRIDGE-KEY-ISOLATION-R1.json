@@ -1,0 +1,64 @@
+{
+ "schema": 2,
+ "id": "BRIDGE-KEY-ISOLATION-R1",
+ "date": "2026-11-18",
+ "question": "Может ли внешний помощник /v1/net, который мост запускает для выхода в сеть, прочитать ключ провайдера из окружения моста, и закрывает ли это отдельное allowlist-окружение дочернего процесса",
+ "hypothesis": "Сейчас bin/bridge.py запускает bin/net.py через subprocess.run без env=, поэтому дочерний процесс наследует os.environ, включая HS_BRIDGE_KEY; после фикса дочерний процесс получает только allowlist-переменные (PATH, SYSTEMROOT, WINDIR, TEMP, TMP, LANG, LC_ALL, PYTHONIOENCODING, PYTHONUTF8) и канарейка не появляется ни в ответе /v1/net, ни в журнале моста",
+ "criterion": "Подтверждение: до фикса подставной net.py печатает канарейку, полученную из HS_BRIDGE_KEY, и она видна в ответе /v1/net; после фикса — 0 вхождений канарейки в ответе, bridge.log и stdout/stderr моста; положительный контроль — подставной net.py действительно выполняется (NET_PROBE в ответе). Опровержение: канарейка остаётся хотя бы в одном канале после фикса или дочерний процесс не запускается. Неопределённость: мост не стартует или /v1/net недоступен — срез не закрыт",
+ "arms": [
+  "A: текущий subprocess.run без env= (наследование окружения)",
+  "B: subprocess.run(env=child_env()) с allowlist-окружением"
+ ],
+ "sensitivity": "Класс различается одним фактом: появилась ли канарейка в ответе /v1/net. Положительный контроль обязателен: подставной net.py должен выполниться и вернуть NET_PROBE, иначе пустой ответ ничего не доказывает",
+ "unit_of_analysis": "один POST /v1/net к мосту, запущенному с синтетическим HS_BRIDGE_KEY и подставным net.py",
+ "primary_metric": "число вхождений канарейки в ответ, журнал моста и stdout/stderr; порог после фикса — 0",
+ "test": "python tests/test_bridge_key_isolation.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при канарейке в любом канале после фикса или при невыполнении подставного net.py; порог не менять",
+ "fixture": "синтетическая канарейка, генерируется тестом; ключи и токены владельца не читаются и не используются",
+ "environment": {
+  "host": "Windows + WSL2",
+  "network": "только loopback между тестом и мостом; внешняя сеть не нужна",
+  "real_secrets": false
+ },
+ "critical_controls": [
+  {
+   "id": "env-canary",
+   "input": "мост запущен с HS_BRIDGE_KEY=<канарейка>; POST /v1/net {request: probe}",
+   "expect_before": "канарейка видна в ответе: наследование окружения",
+   "expect_after": "канарейка не видна ни в ответе, ни в журнале"
+  },
+  {
+   "id": "positive-net-probe",
+   "input": "тот же POST",
+   "expect_after": "NET_PROBE в ответе: дочерний процесс выполнен"
+  },
+  {
+   "id": "log-clean",
+   "input": "bridge.log после запроса",
+   "expect_after": "0 вхождений канарейки"
+  }
+ ],
+ "kill_criteria": [
+  "канарейка после фикса в ответе, журнале или stdout/stderr",
+  "подставной net.py не выполнился",
+  "тест использует настоящий ключ или токен владельца"
+ ],
+ "known_limits": [
+  "Это фикс одного канала (окружение), а не доказательство изоляции процессов",
+  "Путь к token-файлу остаётся в argv моста и может быть прочитан дочерним процессом того же uid через /proc/<ppid>/cmdline на Linux; отдельный срез",
+  "Same-uid ptrace/чтение памяти не проверяются",
+  "Windows-поведение close_fds и доступ к командной строке процесса отдельно не доказываются"
+ ],
+ "closed": true,
+ "conclusion": "PASS: до фикса канарейка из HS_BRIDGE_KEY видна в ответе /v1/net (response=1, output=1, 3 провала), после allowlist-окружения и close_fds=True — 0 вхождений во всех каналах (7/7 ok), положительный контроль NET_PROBE выполнен; evidence research/outputs/BRIDGE-KEY-ISOLATION-R1-2026-11-18.txt; настоящий ключ не использовался, active пуст, K9_proven нет",
+ "result": {
+  "verdict": "PASS — дочерний процесс /v1/net не получает ключ из окружения",
+  "before": "canary_sha256=55ac75a041ef415f; response=1; output=1; bridge.log=0; proc.log=0; rc=1; 3 провала",
+  "after": "canary_sha256=d1ee43216a489391; response=0; output=0; bridge.log=0; proc.log=0; rc=0; 7/7 ok",
+  "positive_control": "NET_PROBE в ответе /v1/net — подставной net.py выполнен",
+  "evidence": "research/outputs/BRIDGE-KEY-ISOLATION-R1-2026-11-18.txt",
+  "residual": "token-файл в argv и /proc/<ppid>/cmdline того же uid; same-uid память; командная строка Windows; нет изоляции процессов; SSRF-политика не перемерялась"
+ },
+ "owner_decision": "реализация в рамках делегирования владельца; не активация и не approval",
+ "updated": "2026-11-18"
+}

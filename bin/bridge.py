@@ -54,6 +54,27 @@ BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36")
 ALLOWED_PREFIX = "/v1/"
 
+# Окружение внешнего помощника `net.py`: только то, без чего не запускается Python.
+# Ключ провайдера живёт в окружении моста; если запускать дочерний процесс без env=,
+# он наследует HS_BRIDGE_KEY и внешний слой (разбор чужого HTML) видит ключ первой
+# комнаты. Поэтому здесь allowlist, а не копия os.environ: новое имя секрета не
+# попадёт в ребёнка по умолчанию. PATH нужен для поиска программ, TEMP/TMP — для
+# временных файлов; HOME, APPDATA, токены и прокси-переменные не передаются.
+NET_CHILD_ENV = frozenset({
+    "PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP",
+    "LANG", "LC_ALL", "PYTHONIOENCODING", "PYTHONUTF8",
+})
+
+
+def net_child_env(environ: dict[str, str] | None = None) -> dict[str, str]:
+    """Окружение для /v1/net: allowlist, а не наследование секретов моста."""
+    source = os.environ if environ is None else environ
+    return {
+        key: value
+        for key, value in source.items()
+        if key.upper() in NET_CHILD_ENV
+    }
+
 
 def token_fingerprint(token: str) -> str:
     """Отпечаток токена для журнала: по нему видно, кто звал, но не видно самого токена."""
@@ -244,6 +265,7 @@ def make_handler(bridge: Bridge):
                         [sys.executable, str(ROOT / "bin" / "net.py"), *argv],
                         capture_output=True, text=True, encoding="utf-8",
                         errors="replace", cwd=str(ROOT), timeout=120,
+                        env=net_child_env(), close_fds=True,
                     )
                 except subprocess.TimeoutExpired:
                     bridge.log({"ts": time.time(), "path": self.path, "status": 504,

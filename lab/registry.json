@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-11-17",
+ "updated_at": "2026-11-18",
  "program": {
   "name": "herness",
   "phase": "M0: прибор собран, внешних задач нет; идёт проверка предпосылки ядра",
@@ -316,6 +316,16 @@
    "status": "closed",
    "conclusion": "research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt",
    "note": "PASS: 3/3 идентичные генерации (20 кандидатов, дерево sha256:e0524cf4…), 20/20 спецификаций (12 авторских + 8 отложенных), baseline PASS, 16/16 критических и 8/8 функциональных мутантов пойманы, каждый по 3 детерминированным прогонам; rustc 1.85.0. Кандидаты лежат в lab/candidates и не активированы: active пуст, admission/approval не выдавались, K9_proven нет. Граница: инженерный scorecard одного шаблона, не статистическое доказательство безопасности и не проверка настоящего owner-ключа."
+  },
+  {
+   "id": "E-0032",
+   "title": "BRIDGE-KEY-ISOLATION-R1: внешний помощник /v1/net не наследует ключ моста",
+   "hypothesis": "Дочерний процесс /v1/net не должен читать HS_BRIDGE_KEY из окружения моста; allowlist-окружение закрывает канал наследования, не доказывая изоляцию процессов.",
+   "prereg": "lab/prereg/BRIDGE-KEY-ISOLATION-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/BRIDGE-KEY-ISOLATION-R1-2026-11-18.txt",
+   "claim": "C-0324",
+   "note": "PASS: до фикса подставной net.py печатал синтетическую канарейку из HS_BRIDGE_KEY (response=1, output=1, 3 провала), после allowlist-окружения и close_fds=True — 0 вхождений во всех каналах (7/7 ok), положительный контроль NET_PROBE сработал. Граница: путь к token-файлу остаётся в argv и доступен процессу того же uid через /proc/<ppid>/cmdline; same-uid память, командная строка Windows и изоляция процессов не проверялись; SSRF-политика не перемерялась. Настоящий ключ не использовался, active пуст, K9_proven нет."
   }
  ]
 }
