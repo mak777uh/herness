@@ -385,6 +385,16 @@
    "conclusion": "research/outputs/WINDOWS-NET-LOWIL-R1-2026-11-18.txt",
    "claim": "C-0330",
    "note": "PASS: A (medium напрямую) — FOUND=1, FOUND_ANY=1; B через мост — 200, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5; C без лаунчера — 503 «не найден»; D с заглушкой exit 1 — 503 «не работает»; net.py в C/D не исполнен; E — LOWIL_PROBE=1; 24 ok, 0 провалов. bin/win_lowil.py: restricted low-IL токен, pipes, job kill-on-close, --probe; bin/bridge.py: Windows-ветка net_command + 503 по LOWIL_REFUSED. runs/net опускается до Low для записи журнала. Решение владельца «давай» 18.11.2026 (H-0010). Граница: Windows-only; token-файл, командная строка, файловая система, сеть и K9 не покрыты; проба кэшируется; A измеряет канал, не старую копию моста; настоящий ключ не использовался, active пуст, K9_proven нет."
+  },
+  {
+   "id": "E-0039",
+   "title": "NET-FS-WRITE-BARRIER-R1: Landlock и low-IL не дают внешнему помощнику писать в комнату",
+   "hypothesis": "net.py, разбирая чужой HTML, может писать любым доступным uid путям, включая комнату; Landlock с правами записи и единственным разрешённым runs/net отсекает это (EACCES), не мешая журналу и session.json, а ABI < 3 отказывает до сети; на /mnt/c (9p) состояние пишется через fd, открытые до барьера; на Windows low-IL не пишет medium-файлы.",
+   "prereg": "lab/prereg/NET-FS-WRITE-BARRIER-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/NET-FS-WRITE-BARRIER-R1-2026-11-18.txt",
+   "claim": "C-0331",
+   "note": "PASS: RED (HEAD) — SANDBOX=absent, PROTECTED_WRITE=1, protected=PWNED; A — PROTECTED_WRITE=0 errno 13, STATE_WRITE=1, JOURNAL=1, SESSION_RESULTS=1, RC=0; B ABI=0 — отказ fs-sandbox до fetch, rc=3; D/E 9p — защищённая запись 0, журнал/сессия через fd, rc=0/3; Windows C — low-IL PROTECTED_WRITE=0, STATE_WRITE=1, 28 ok. Регрессии: test_bridge 8/8, key isolation PASS, namespace PASS. Границы: Landlock после старта, чтение и сеть не ограничены; 9p fd-канал для двух файлов состояния; Windows прямой запуск вне моста не покрыт; runs/net остаётся записываемым downstream; симлинки/гонки не покрыты; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
   }
  ]
 }

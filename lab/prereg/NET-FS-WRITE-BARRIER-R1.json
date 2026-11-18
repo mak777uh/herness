@@ -1,0 +1,75 @@
+{
+ "schema": 2,
+ "id": "NET-FS-WRITE-BARRIER-R1",
+ "date": "2026-11-18",
+ "question": "Может ли внешний помощник /v1/net писать в файлы комнаты/репозитория, и закрывает ли это Landlock на Linux и low-IL на Windows, сохраняя запись downstream-состояния runs/net",
+ "hypothesis": "net.py разбирает чужой HTML и до изменения пишет любым доступным uid путям, включая репозиторий; вредоносная страница может использовать ошибку разбора и записать файл в комнату 1. Landlock с обрабатываемыми правами записи и единственным разрешённым путём runs/net отсекает такие записи (EACCES), не мешая журналу и session.json, а при ABI < 3 помощник обязан отказать до сети. На Windows тот же барьер даёт low-IL токен: medium-файлы репозитория недоступны на запись, runs/net помечен Low.",
+ "criterion": "Подтверждение (Linux): до изменения probe на копии HEAD печатает SANDBOX=absent и PROTECTED_WRITE=1; после — SANDBOX=ok, PROTECTED_WRITE=0 (errno 13), STATE_WRITE=1, session.json создан, RC=0. Плечо ABI: monkeypatch _landlock_abi=0 — SANDBOX_REFUSED=fs-sandbox, FETCH_CALLED=0, rc=3. Windows: low-IL подставной net.py не пишет PROTECTED-маркер (PROTECTED_WRITE=0), пишет STATE-MARKER (STATE_WRITE=1). Опровержение: после изменения PROTECTED_WRITE=1, STATE_WRITE=0, или отсутствие Landlock не даёт отказа, или fetch вызван при отказе. Неопределённость: ядро без Landlock, ctypes/syscall недоступны, тест не может создать temp-дерево.",
+ "arms": [
+  "RED: копия bin/net.py из HEAD (без apply_fs_sandbox), fake_fetch пытается писать room/protected.txt — ожидается SANDBOX=absent, PROTECTED_WRITE=1",
+  "A: копия после изменения, fake_fetch пытается писать room/protected.txt — ожидается SANDBOX=ok, PROTECTED_WRITE=0 (errno 13), STATE_WRITE=1, session.json создан, RC=0",
+  "B: ABI=0 через monkeypatch _landlock_abi — ожидается SANDBOX_REFUSED=fs-sandbox, FETCH_CALLED=0, rc=3",
+  "C: Windows, low-IL подставной net.py через мост — ожидается PROTECTED_WRITE=0, STATE_WRITE=1",
+  "D: Linux, прямой запуск net.py links без сессии — ожидается прежний отказ no-page rc=3, запись журнала не падает",
+  "E: WSL /mnt/c (9p), probe в каталоге рядом с репозиторием: Landlock не открывает существующие inode, журнал и сессия пишутся через fd, открытые до барьера — ожидается PROTECTED_WRITE=0 (errno 13), JOURNAL=1, SESSION_RESULTS=1, RC=0",
+  "F: WSL /mnt/c (9p), прямой net.py links — ожидается rc=3 no-page, журнал пополнен, __pycache__ нет"
+ ],
+ "revision": "2026-11-18, до финального batch: путь теста исправлен на tests/test_net_fs_write_barrier.py; добавлены плечи E/F после пробы 9p — на /mnt/c Landlock path-beneath не пропускает открытие существующих файлов даже в runs/net, поэтому состояние открывается до барьера и пишется через fd. Критерий защищённой записи не менялся; STATE_WRITE=1 остаётся для A на обычной ФС, для E состояние проверяется записью журнала и session.json.",
+ "sensitivity": "RED отделяет «барьер работает» от «проба не пыталась писать»: если RED не даёт PROTECTED_WRITE=1, успех A ничего не доказывает. STATE_WRITE=1 в A/C показывает, что барьер не сломал штатную запись downstream-состояния, а не просто запретил всё. B проверяет fail-closed: при неизвестном ABI сеть не трогается. C проверяет второй механизм отдельно, не перенося Linux-успех на Windows.",
+ "unit_of_analysis": "один дочерний процесс Python с копией bin/net.py и подменённым fetch, который пытается писать защищённый файл и состояние; плюс один POST /v1/net на Windows с подставным low-IL помощником",
+ "primary_metric": "PROTECTED_WRITE (0/1), errno защищённой записи, STATE_WRITE (0/1), JOURNAL (0/1), SESSION_RESULTS, SANDBOX/SANDBOX_REFUSED, FETCH_CALLED",
+ "test": "python tests/test_net_fs_write_barrier.py — A/B/C/D/E/F; RED — отдельный прогон копии HEAD bin/net.py; Windows C — python tests/test_bridge_win_isolation.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при PROTECTED_WRITE=1 после изменения, STATE_WRITE=0, вызове fetch при отказе ABI или использовании настоящих секретов; критерий и порог не менять",
+ "fixture": "temp-копия bin/net.py и bin/net_policy.py, temp-каталоги room/ и runs/net; подменённый fetch пишет синтетический маркер; на Windows — подставной net.py в копии дерева моста и синтетический токен; настоящие ключи, токены и файлы комнаты не читаются",
+ "environment": {
+  "host": "Windows 11 + WSL Ubuntu (Linux-ветка), Python 3, ядро WSL с Landlock ABI 3",
+  "network": "внешняя сеть не нужна: fetch подменён, мост только loopback",
+  "real_secrets": false
+ },
+ "prior_observation": "Прототип Landlock в WSL: ABI=3, ruleset с правами записи и путём /tmp/.../ok; запись в ok прошла, в соседний bad — EACCES (errno 13). Это наблюдение механизма, а не результат R1; официальный batch — после этой пре-регистрации.",
+ "critical_controls": [
+  {
+   "id": "red-write-succeeds-before",
+   "input": "RED, копия HEAD net.py без барьера",
+   "expect": "SANDBOX=absent, PROTECTED_WRITE=1"
+  },
+  {
+   "id": "landlock-denies-protected",
+   "input": "A, fake_fetch пишет room/protected.txt",
+   "expect": "SANDBOX=ok, PROTECTED_WRITE=0, errno 13"
+  },
+  {
+   "id": "state-write-survives",
+   "input": "A и C, запись runs/net",
+   "expect": "STATE_WRITE=1, session.json создан"
+  },
+  {
+   "id": "old-abi-refused",
+   "input": "B, _landlock_abi=0",
+   "expect": "SANDBOX_REFUSED=fs-sandbox, FETCH_CALLED=0, rc=3"
+  },
+  {
+   "id": "windows-lowil-write-barrier",
+   "input": "C, low-IL помощник через мост",
+   "expect": "PROTECTED_WRITE=0, STATE_WRITE=1"
+  }
+ ],
+ "kill_criteria": [
+  "после изменения PROTECTED_WRITE=1 или STATE_WRITE=0",
+  "при ABI<3 помощник всё равно вызывает fetch",
+  "RED не воспроизводит запись (PROTECTED_WRITE=0) — тогда A недействителен",
+  "используется настоящий ключ/токен или защищённый файл комнаты",
+  "тест ослаблен, чтобы стать зелёным"
+ ],
+ "known_limits": [
+  "Landlock ставится самим net.py после старта интерпретатора; код, исполнившийся до барьера, и чтение файлов не ограничены",
+  "Сеть барьер не ограничивает: она по-прежнему только через мост и политику; это не K9",
+  "Windows-барьер — low IL лаунчера, а не Landlock; прямой запуск net.py вне моста на Windows не покрыт",
+  "runs/net остаётся доступен внешнему помощнику на запись; это downstream-состояние, а не первая комната",
+  "Тест проверяет один процесс и один путь; симлинки, жесткие ссылки и гонки не покрыты",
+  "Это не активация: active пуст, настоящий owner-ключ не создавался, K9_proven не выдавался"
+ ],
+ "owner_decision": "продолжение по решению владельца «давай» 18.11.2026 (следующий шаг после Windows-изоляции: запрет записи внешнего в комнату 1); bin/net.py не защищён, bin/bridge.py не меняется",
+ "closed": true,
+ "conclusion": "research/outputs/NET-FS-WRITE-BARRIER-R1-2026-11-18.txt"
+}

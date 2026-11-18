@@ -13,6 +13,11 @@ FOUND=0, FOUND_ANY=0 и «OpenProcess err=5» — отказ, а не пропу
 Плечи C/D — fail-closed: без лаунчера и с нерабочим лаунчером мост отвечает 503,
 а net.py не исполняется (маркер отсутствует).
 
+Тест заодно проверяет файловую границу того же low-IL: medium-ребёнок A пишет
+room/protected.txt (PROTECTED_WRITE=1), low-ребёнок B не пишет (PROTECTED_WRITE=0,
+errno 13), но пишет downstream runs/net (STATE_WRITE=1). Это та же граница, что
+Linux-барьер NET-FS-WRITE-BARRIER-R1, другим механизмом.
+
 Тест только для Windows: на другой платформе печатает N/A и возвращает 2.
 Канарейка и токен синтетические; настоящие ключи и токены не читаются.
 
@@ -50,12 +55,29 @@ from pathlib import Path
 
 MARKER = Path(r"__MARKER__")
 PIDFILE = Path(r"__PIDFILE__")
+PROTECTED = Path(r"__PROTECTED__")
+STATE = Path(r"__STATE__")
 NEEDLE = "HS_BRIDGE_KEY=__CANARY__"
 
 try:
     MARKER.write_text("executed", encoding="utf-8")
 except OSError:
     pass
+
+# Файловая граница: medium-файл комнаты/репозитория писать нельзя, downstream
+# runs/net (метка Low) — можно. Это проверяет тот же low-IL барьер, что и env.
+try:
+    PROTECTED.write_text("PWNED", encoding="utf-8")
+    print("PROTECTED_WRITE=1")
+except OSError as error:
+    print("PROTECTED_WRITE=0")
+    print("PROTECTED_ERRNO=" + str(error.errno))
+try:
+    STATE.write_text("state", encoding="utf-8")
+    print("STATE_WRITE=1")
+except OSError as error:
+    print("STATE_WRITE=0")
+    print("STATE_ERRNO=" + str(error.errno))
 
 k32 = ctypes.WinDLL("kernel32", use_last_error=True)
 ntdll = ctypes.WinDLL("ntdll")
@@ -245,10 +267,16 @@ def free_port() -> int:
 def fake_net(tmp: Path) -> Path:
     marker = tmp / "runs" / "net" / "net-executed.txt"
     pidfile = tmp / "runs" / "net" / "bridge-pid.txt"
+    protected = tmp / "room" / "protected.txt"
+    state = tmp / "runs" / "net" / "write-probe.txt"
     marker.parent.mkdir(parents=True, exist_ok=True)
+    protected.parent.mkdir(parents=True, exist_ok=True)
+    protected.write_text("original\n", encoding="utf-8")
     fake = (FAKE_NET
             .replace("__MARKER__", str(marker).replace("\\", "/"))
             .replace("__PIDFILE__", str(pidfile).replace("\\", "/"))
+            .replace("__PROTECTED__", str(protected).replace("\\", "/"))
+            .replace("__STATE__", str(state).replace("\\", "/"))
             .replace("__CANARY__", CANARY))
     (tmp / "bin" / "net.py").write_text(fake, encoding="utf-8")
     return marker
@@ -353,7 +381,11 @@ def run_ab() -> None:
         check("NET_PROBE=1" in text_a, "A: подставной net.py выполнился напрямую")
         check("FOUND=1" in text_a, "A: medium-ребёнок видит HS_BRIDGE_KEY в PEB моста")
         check("FOUND_ANY=1" in text_a, "A: канарейка видна при поиске по процессам")
+        check("PROTECTED_WRITE=1" in text_a,
+              "A: medium-ребёнок пишет в комнату (канал записи воспроизведён)")
         marker.unlink(missing_ok=True)
+        (tmp / "room" / "protected.txt").write_text("original\n", encoding="utf-8")
+        (tmp / "runs" / "net" / "write-probe.txt").unlink(missing_ok=True)
 
         # B: тот же запрос через мост, Windows-ветка обязана применить low IL.
         status, body = post_net(port)
@@ -367,6 +399,12 @@ def run_ab() -> None:
         check("ERR=OpenProcess err=5" in output,
               "B: отказ именно OpenProcess (access denied), а не пропуск")
         check("FOUND_ANY=0" in output, "B: канарейка не видна при поиске по процессам")
+        check("PROTECTED_WRITE=0" in output,
+              "B: low-IL ребёнок не пишет в комнату/репозиторий")
+        check("STATE_WRITE=1" in output,
+              "B: low-IL ребёнок пишет downstream runs/net (метка Low)")
+        check((tmp / "room" / "protected.txt").read_text(encoding="utf-8") == "original\n",
+              "B: защищённый файл комнаты не изменён")
         check(marker.exists(), "B: маркер исполнения net.py создан")
         check(CANARY not in body, "B: канарейка не попала в ответ /v1/net")
         check(CANARY not in output, "B: канарейка не попала в output")
@@ -434,7 +472,7 @@ def main() -> int:
     if failed:
         print("ВЕРДИКТ: FAIL — Windows-изоляция /v1/net не сработала или не различает отказ")
     else:
-        print("ВЕРДИКТ: PASS — low-IL ребёнок не видит env моста; без рабочего лаунчера 503")
+        print("ВЕРДИКТ: PASS — low-IL ребёнок не видит env моста и не пишет в комнату; без рабочего лаунчера 503")
     return 0 if failed == 0 else 1
 
 

@@ -31,9 +31,12 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import html as htmlmod
 import json
+import os
 import pathlib
+import platform
 import re
 import ssl
 import sys
@@ -41,6 +44,10 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+# Импорт политики не должен оставлять __pycache__ вне runs/net: барьер ниже
+# разрешает запись только туда, а кэш байткода — тоже запись в репозиторий.
+sys.dont_write_bytecode = True
 
 import net_policy
 
@@ -65,15 +72,165 @@ class NetError(Exception):
         self.message = message
 
 
+# --- Барьер записи внешнего помощника (NET-FS-WRITE-BARRIER-R1) -------------
+#
+# net.py разбирает чужой HTML. Если разбор ошибётся, процесс не должен уметь
+# писать в комнату/репозиторий: Landlock оставляет запись только в runs/net,
+# downstream-состоянии (session.json, журнал). Чтение и сеть этот барьер не
+# ограничивает; сеть по-прежнему только через объявленный мост.
+#
+# Файлы состояния открываются ДО барьера. На /mnt/c (9p/drvfs в WSL) Landlock
+# не узнаёт уже существующие inode и запрещает открывать их на запись даже
+# внутри runs/net, а открытый до барьера fd писать можно (проверено пробой).
+# Барьер от этого не слабеет: новых путей запись не получает, а журнал и
+# сессия — те же два файла downstream-состояния.
+#
+# ABI < 3 не умеет TRUNCATE, поэтому не считается барьером: отказ до сети,
+# а не тихий запуск без ограничения. Windows закрыт low-IL лаунчером (C-0330),
+# Landlock там нет и не эмулируется.
+LANDLOCK_REQUIRED_ABI = 3
+LANDLOCK_RULE_PATH_BENEATH = 1
+LANDLOCK_CREATE_RULESET_VERSION = 1
+LANDLOCK_WRITE_RIGHTS = (
+    (1 << 1)    # WRITE_FILE
+    | (1 << 4)  # REMOVE_DIR
+    | (1 << 5)  # REMOVE_FILE
+    | (1 << 6)  # MAKE_CHAR
+    | (1 << 7)  # MAKE_DIR
+    | (1 << 8)  # MAKE_REG
+    | (1 << 9)  # MAKE_SOCK
+    | (1 << 10)  # MAKE_FIFO
+    | (1 << 11)  # MAKE_BLOCK
+    | (1 << 12)  # MAKE_SYM
+    | (1 << 13)  # REFER (ABI 2+)
+    | (1 << 14)  # TRUNCATE (ABI 3+)
+)
+_LANDLOCK_SYSCALLS = {
+    "x86_64": (444, 445, 446),
+    "amd64": (444, 445, 446),
+    "aarch64": (444, 445, 446),
+    "arm64": (444, 445, 446),
+}
+_FS_SANDBOXED = False
+_STATE_FDS: dict[str, int] = {}
+
+
+class _RulesetAttr(ctypes.Structure):
+    _layout_ = "ms"
+    _fields_ = [("handled_access_fs", ctypes.c_uint64)]
+
+
+class _PathBeneathAttr(ctypes.Structure):
+    _layout_ = "ms"
+    _pack_ = 1
+    _fields_ = [("allowed_access", ctypes.c_uint64), ("parent_fd", ctypes.c_int32)]
+
+
+def _landlock_abi(libc) -> int:
+    create = _LANDLOCK_SYSCALLS[platform.machine().lower()][0]
+    abi = libc.syscall(ctypes.c_long(create), None, ctypes.c_size_t(0),
+                       ctypes.c_uint32(LANDLOCK_CREATE_RULESET_VERSION))
+    if abi < 0:
+        raise NetError("fs-sandbox", f"Landlock недоступен: errno {ctypes.get_errno()}")
+    return int(abi)
+
+
+def apply_fs_sandbox(state: pathlib.Path = STATE) -> None:
+    """Разрешить запись только внутри state (runs/net); иначе — отказ.
+
+    Вызывается до разбора запроса и до сети. Барьер ставится один раз на процесс;
+    после `landlock_restrict_self` снять его нельзя (no_new_privs).
+    """
+    global _FS_SANDBOXED
+    if _FS_SANDBOXED or not sys.platform.startswith("linux"):
+        return
+    machine = platform.machine().lower()
+    numbers = _LANDLOCK_SYSCALLS.get(machine)
+    if numbers is None:
+        raise NetError("fs-sandbox",
+                       f"нет номеров Landlock для архитектуры {machine}: запись не ограничена")
+    create, add, restrict = numbers
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.syscall.restype = ctypes.c_long
+    libc.prctl.argtypes = [ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong,
+                           ctypes.c_ulong, ctypes.c_ulong]
+    libc.prctl.restype = ctypes.c_int
+
+    abi = _landlock_abi(libc)
+    if abi < LANDLOCK_REQUIRED_ABI:
+        raise NetError("fs-sandbox",
+                       f"Landlock ABI {abi} < {LANDLOCK_REQUIRED_ABI}: запись внешнего не ограничена")
+
+    state.mkdir(parents=True, exist_ok=True)
+    attr = _RulesetAttr(LANDLOCK_WRITE_RIGHTS)
+    ruleset = libc.syscall(ctypes.c_long(create), ctypes.byref(attr),
+                           ctypes.c_size_t(ctypes.sizeof(attr)), ctypes.c_uint32(0))
+    if ruleset < 0:
+        raise NetError("fs-sandbox", f"Landlock ruleset: errno {ctypes.get_errno()}")
+    try:
+        parent = os.open(str(state), os.O_PATH | os.O_CLOEXEC)
+        try:
+            rule = _PathBeneathAttr(LANDLOCK_WRITE_RIGHTS, parent)
+            if libc.syscall(ctypes.c_long(add), ctypes.c_int(ruleset),
+                            ctypes.c_uint32(LANDLOCK_RULE_PATH_BENEATH),
+                            ctypes.byref(rule), ctypes.c_uint32(0)) != 0:
+                raise NetError("fs-sandbox",
+                               f"Landlock add_rule {state}: errno {ctypes.get_errno()}")
+        finally:
+            os.close(parent)
+        if libc.prctl(38, 1, 0, 0, 0) != 0:  # PR_SET_NO_NEW_PRIVS
+            raise NetError("fs-sandbox", f"no_new_privs: errno {ctypes.get_errno()}")
+        if libc.syscall(ctypes.c_long(restrict), ctypes.c_int(ruleset),
+                        ctypes.c_uint32(0)) != 0:
+            raise NetError("fs-sandbox", f"Landlock restrict_self: errno {ctypes.get_errno()}")
+    finally:
+        os.close(ruleset)
+    _FS_SANDBOXED = True
+
+
 def now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%S")
 
 
+def prepare_state() -> None:
+    """Открыть журнал и сессию до барьера (9p: Landlock не пускает открытие).
+
+    Вызывается до `apply_fs_sandbox` и до сети. Если открыть не удалось —
+    отказ: без журнала и сессии помощник не должен ходить в сеть.
+    """
+    if _STATE_FDS:
+        return
+    flags = (getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOINHERIT", 0)
+             | getattr(os, "O_BINARY", 0))
+    STATE.mkdir(parents=True, exist_ok=True)
+    journal_fd = os.open(
+        JOURNAL, os.O_WRONLY | os.O_APPEND | os.O_CREAT | flags, 0o644)
+    try:
+        session_fd = os.open(SESSION, os.O_RDWR | os.O_CREAT | flags, 0o644)
+    except OSError:
+        os.close(journal_fd)
+        raise
+    _STATE_FDS["journal"] = journal_fd
+    _STATE_FDS["session"] = session_fd
+
+
+def _write_all(fd: int, data: bytes) -> None:
+    view = memoryview(data)
+    while view:
+        written = os.write(fd, view)
+        view = view[written:]
+
+
 def journal(event: dict) -> None:
     """Журнал переходов: адрес, код, байты, время. Содержимое не пишем."""
+    line = json.dumps({"at": now(), **event}, ensure_ascii=False) + "\n"
+    fd = _STATE_FDS.get("journal")
+    if fd is not None:
+        _write_all(fd, line.encode("utf-8"))
+        return
     STATE.mkdir(parents=True, exist_ok=True)
     with JOURNAL.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps({"at": now(), **event}, ensure_ascii=False) + "\n")
+        handle.write(line)
 
 
 def load_session() -> dict:
@@ -86,9 +243,17 @@ def load_session() -> dict:
 
 
 def save_session(session: dict) -> None:
+    text = json.dumps(session, ensure_ascii=False, indent=1) + "\n"
+    fd = _STATE_FDS.get("session")
+    if fd is not None:
+        # Переписать через уже открытый fd: на 9p повторное открытие пути
+        # после барьера запрещено, а запись в существующий fd — нет.
+        os.lseek(fd, 0, os.SEEK_SET)
+        os.ftruncate(fd, 0)
+        _write_all(fd, text.encode("utf-8"))
+        return
     STATE.mkdir(parents=True, exist_ok=True)
-    SESSION.write_text(json.dumps(session, ensure_ascii=False, indent=1) + "\n",
-                       encoding="utf-8")
+    SESSION.write_text(text, encoding="utf-8")
 
 
 def normalize_url(url: str) -> str:
@@ -424,9 +589,23 @@ def main(argv: list[str]) -> int:
     handlers = {"search": cmd_search, "open": cmd_open,
                 "links": cmd_links, "follow": cmd_follow}
     try:
+        # Состояние открывается до барьера: на 9p Landlock не пропускает
+        # открытие существующих файлов, но уже открытый fd писать можно.
+        prepare_state()
+    except OSError as error:
+        print(f"ОТКАЗ state: не удалось открыть состояние: {error}",
+              file=sys.stderr)
+        return 3
+    try:
+        # До разбора запроса и до сети: ошибка разбора чужого HTML не должна
+        # уметь писать в комнату/репозиторий (NET-FS-WRITE-BARRIER-R1).
+        apply_fs_sandbox(STATE)
         return handlers[args.cmd](args)
     except NetError as error:
-        journal({"cmd": args.cmd, "error": error.code, "message": error.message})
+        try:
+            journal({"cmd": args.cmd, "error": error.code, "message": error.message})
+        except OSError as journal_error:
+            print(f"журнал не записан: {journal_error}", file=sys.stderr)
         if getattr(args, "json", False):
             print(json.dumps({"error": error.code, "message": error.message},
                              ensure_ascii=False))

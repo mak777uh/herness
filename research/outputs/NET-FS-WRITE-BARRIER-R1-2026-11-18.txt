@@ -1,0 +1,138 @@
+NET-FS-WRITE-BARRIER-R1 — барьер записи внешнего помощника /v1/net
+Дата: 2026-11-18
+Хост: Windows 11 + WSL2 Ubuntu (Python 3.14, Landlock ABI 3), Windows Python 3.14
+Пре-регистрация: lab/prereg/NET-FS-WRITE-BARRIER-R1.json (revision 2026-11-18)
+Изменения: bin/net.py — Landlock write-rights + fd состояния, открытые до барьера;
+           tests/test_net_fs_write_barrier.py — A/B/C/D/E;
+           tests/test_bridge_win_isolation.py — файловая граница low-IL.
+Секреты: синтетическая канарейка, значения не печатаются. Настоящий ключ не использовался.
+
+=== RED: копия HEAD bin/net.py (без барьера) ===
+python3 -B probe.py (WSL, /tmp)
+SANDBOX=absent
+PROTECTED_WRITE=1
+найдено: 1
+1. X
+   https://example.com
+RC=0
+SESSION=1
+PROTECTED_TEXT='PWNED'
+
+=== A/B/C/D/E: python tests/test_net_fs_write_barrier.py (WSL) ===
+A: вывод probe
+SANDBOX=present
+PROTECTED_WRITE=0
+PROTECTED_ERRNO=13
+найдено: 1
+1. X
+   https://example.com
+RC=0
+STATE_WRITE=1
+JOURNAL=1
+SESSION_RESULTS=1
+PROTECTED_TEXT='original\n'
+B: вывод probe с ABI=0
+RC=3
+ОТКАЗ fs-sandbox: Landlock ABI 0 < 3: запись внешнего не ограничена
+C: вывод net.py links
+ОТКАЗ no-page: страница не открыта: сначала open
+D: вывод probe на каталоге рядом с репозиторием (WSL: 9p)
+SANDBOX=present
+PROTECTED_WRITE=0
+PROTECTED_ERRNO=13
+найдено: 1
+1. X
+   https://example.com
+RC=0
+JOURNAL=1
+SESSION_RESULTS=1
+PROTECTED_TEXT='original\n'
+E: вывод net.py links в 9p-дереве
+ОТКАЗ no-page: страница не открыта: сначала open
+[ok] A: барьер apply_fs_sandbox присутствует
+[ok] A: запись в room/protected.txt отвергнута
+[ok] A: отказ записи — EACCES (errno 13)
+[ok] A: в выводе нет успешной защищённой записи
+[ok] A: запись в runs/net разрешена
+[ok] A: журнал записан внутри разрешённого пути
+[ok] A: session.json создан и содержит результаты
+[ok] A: штатный путь search завершился rc=0
+[ok] A: защищённый файл не изменён
+[ok] B: старый ABI отвергнут кодом fs-sandbox
+[ok] B: при отказе fetch не вызван
+[ok] B: отказ возвращает rc=3
+[ok] C: links без сессии — rc=3 (получено 3)
+[ok] C: причина отказа — no-page, а не падение барьера
+[ok] C: журнал пополнен после прямого запуска
+[ok] C: импорт политики не оставил __pycache__ в репозитории
+[ok] D: барьер apply_fs_sandbox присутствует
+[ok] D: запись в room/protected.txt отвергнута
+[ok] D: отказ записи — EACCES (errno 13)
+[ok] D: журнал записан через fd, открытый до барьера
+[ok] D: session.json переписан через fd и содержит результаты
+[ok] D: штатный путь search завершился rc=0
+[ok] D: защищённый файл не изменён
+[ok] E: links без страницы — rc=3 (получено 3)
+[ok] E: причина отказа — no-page, а не падение записи
+[ok] E: журнал пополнен на 9p
+[ok] E: импорт политики не оставил __pycache__ на 9p
+провалов: 0
+ВЕРДИКТ: PASS — запись внешнего ограничена runs/net (в т.ч. fd на 9p); старый ABI отвергнут до сети
+
+=== C: Windows low-IL, python tests/test_bridge_win_isolation.py ===
+канарейка: sha256:c3b6915b28292310 (значение не печатается)
+[ok] A: подставной net.py выполнился напрямую
+[ok] A: medium-ребёнок видит HS_BRIDGE_KEY в PEB моста
+[ok] A: канарейка видна при поиске по процессам
+[ok] A: medium-ребёнок пишет в комнату (канал записи воспроизведён)
+[ok] B: ответ /v1/net 200 (получено 200)
+[ok] B: подставной net.py выполнился (положительный контроль)
+[ok] B: ребёнок действительно в low IL (S-1-16-4096)
+[ok] B: ребёнок не видит HS_BRIDGE_KEY напрямую
+[ok] B: отказ именно OpenProcess (access denied), а не пропуск
+[ok] B: канарейка не видна при поиске по процессам
+[ok] B: low-IL ребёнок не пишет в комнату/репозиторий
+[ok] B: low-IL ребёнок пишет downstream runs/net (метка Low)
+[ok] B: защищённый файл комнаты не изменён
+[ok] B: маркер исполнения net.py создан
+[ok] B: канарейка не попала в ответ /v1/net
+[ok] B: канарейка не попала в output
+[ok] B: канарейка не попала в error
+[ok] B: канарейка не попала в bridge.log
+[ok] B: канарейка не попала в stdout/stderr моста
+[ok] E: проба лаунчера подтверждает low IL и запись состояния
+[ok] C: ответ 503 (получено 503)
+[ok] C: причина отказа названа
+[ok] C: net.py не исполнен (fail-closed)
+[ok] C: канарейка не попала в отказ
+[ok] D: ответ 503 (получено 503)
+[ok] D: причина отказа названа
+[ok] D: net.py не исполнен (fail-closed)
+[ok] D: канарейка не попала в отказ
+провалов: 0
+ВЕРДИКТ: PASS — low-IL ребёнок не видит env моста и не пишет в комнату; без рабочего лаунчера 503
+
+=== Регрессии ===
+python tests/test_bridge.py — мост: 8/8 ok, провалов: 0
+python tests/test_bridge_key_isolation.py — ВЕРДИКТ: PASS — дочерний процесс /v1/net не получает ключ из окружения
+python tests/test_bridge_net_namespace.py — ВЕРДИКТ: PASS — /v1/net не видит ключ через /proc; без рабочего unshare отказ (16 ok)
+python bin/hs.py gates --profile auto — профиль auto: оценено 31 из 33 гейтов; N/A 2 (журналы, индекс прогонов); rc=0
+python bin/verify_claims.py --fast — утверждений: 292; провалено: 0 (быстрый режим)
+python bin/hs.py lab validate — реестр связен: экспериментов 39, следующих гипотез 7
+
+=== Границы (не покрыто) ===
+- Landlock ставится самим net.py после старта интерпретатора: код, исполнившийся
+  до барьера, и чтение файлов не ограничены.
+- На /mnt/c (9p/drvfs) Landlock не узнаёт существующие inode; журнал и сессия
+  пишутся через fd, открытые до барьера. Это проверено (D/E), но прямой путь
+  в state на 9p после барьера закрыт; барьер защищает только эти два файла.
+- Сеть барьер не ограничивает: она по-прежнему только через мост и политику;
+  это не K9.
+- Windows-барьер — low IL лаунчера, а не Landlock; прямой запуск net.py вне
+  моста на Windows не покрыт.
+- runs/net остаётся доступен внешнему помощнику на запись; это downstream-
+  состояние, а не первая комната.
+- Тест проверяет один процесс и один путь; симлинки, жёсткие ссылки и гонки
+  не покрыты.
+- Это не активация: active пуст, настоящий owner-ключ не создавался,
+  K9_proven не выдавался.
