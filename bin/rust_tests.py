@@ -52,6 +52,20 @@ def wsl_path(path: pathlib.Path) -> str:
     return text
 
 
+def parse_results(out: str) -> tuple[int, int]:
+    """Сумма passed/failed по всем тестовым бинарникам, а не первый попавшийся.
+
+    Дефект F-BRIDGE-TAINT-1 (18.11.2026): при красном интеграционном тесте
+    вывод содержал сначала «133 passed; 0 failed» (lib), потом
+    «0 passed; 2 failed» (integration). Старый код брал первый `(\\d+) failed`
+    и печатал «провалов: 0», хотя rc=1. Это не ложное зелёное (гейт красный),
+    но ложное объяснение: агент читает «0» и ищет причину не там.
+    """
+    passed = sum(int(value) for value in re.findall(r"test result: ok\. (\d+) passed", out))
+    failed = sum(int(value) for value in re.findall(r"test result: FAILED\. \d+ passed; (\d+) failed", out))
+    return passed, failed
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Rust-тесты ядра в WSL")
     parser.add_argument("--build", action="store_true", help="только сборка")
@@ -70,12 +84,13 @@ def main(argv: list[str]) -> int:
     for line in tail[-12:]:
         print(line.strip())
 
-    passed = re.findall(r"test result: ok\. (\d+) passed; 0 failed", out)
-    if passed and code == 0:
-        print(f"\n[ok] тестов пройдено: {sum(int(value) for value in passed)}, провалов 0")
+    passed, failed = parse_results(out)
+    if passed and code == 0 and failed == 0:
+        print(f"\n[ok] тестов пройдено: {passed}, провалов 0")
         return 0
-    failed = re.search(r"(\d+) failed", out)
-    print(f"\n[FAIL] провалов: {failed.group(1) if failed else 'неизвестно'}")
+    # Провал без строки `test result: FAILED` — это не «0 провалов», а ошибка
+    # сборки/запуска: причина неизвестна, и скрывать её нельзя.
+    print(f"\n[FAIL] провалов: {failed if failed else 'неизвестно'}")
     return 1
 
 
