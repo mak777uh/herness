@@ -16,7 +16,9 @@
 > [`HEAD-EDGE-R1-2026-11-17.txt`](../research/outputs/HEAD-EDGE-R1-2026-11-17.txt),
 > [`ACTIVATION-REHEARSAL-R1-2026-11-17.txt`](../research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt),
 > [`OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt`](../research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt),
-> [`HEAD-SLICE-R1-2026-11-17.txt`](../research/outputs/HEAD-SLICE-R1-2026-11-17.txt), C-0322/C-0323.
+> [`HEAD-SLICE-R1-2026-11-18.txt`](../research/outputs/HEAD-SLICE-R1-2026-11-18.txt), C-0322/C-0323.
+> Файл `HEAD-SLICE-R1-2026-11-17.txt` оставлен неизменным: его digest заморожен в
+> `PILOT-GENERATOR-R1`; повтор после добавления sha256 — отдельный файл `...-18.txt`.
 > Production `head` остаётся `candidate`, `active` пуст; настоящий owner-ключ не создавался,
 > admission не подписан, `K9_proven` не выдан, наружу ничего не публиковалось.
 > Оставшиеся границы: реестр не проверяет подпись и не имеет allowlist owner-anchor;
@@ -389,7 +391,7 @@ Q2 S1 до I/O, `K4` раньше ошибок объекта, осторожн�
 | 10 | `fe27d07`, `edbf085` | handoff, claims, push; после первого LF-CI — CRLF-пиннинг запечатанных digest | `docs/`, `CLAIMS.md`, `.gitattributes` |
 | 11 | `a95fe58`, `c063ded`, `8c30f27`, `700d516` | test-only репетиция: guard `test_only:false`, песочный реестр, promoter verify/store и launch в WSL; 33/33 PASS на тот момент (CI 31/31 без сборки; после job-проверки — 34/34, этап 13); байтовый откат проб и CRLF-пин карточки; CI `44159576484` — success | `bin/activation_rehearsal.py`, `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`, C-0317 |
 | 12 | `fe143b6` | сухая owner-церемония: эфемерный ключ с anchor `test_only:false`, promoter без `--allow-test-only`, песочный `active=[head]`; production не изменён; 30/30 WSL, 28/28 CI без `--build`, 19/19 Windows без launch (после негативных контролей — 56/56 WSL на тот момент, 45/45 Windows; сейчас 57/57 WSL после job-проверки, §1.15); CI `44163715508` — success | `bin/owner_ceremony_dry_run.py`, `research/outputs/OWNER-CEREMONY-DRY-RUN-R1-2026-11-17.txt` |
-| 13 | 18.11.2026 | promoter связывает `--job` root/fixture/checks/admission и запрещает per-case override; job идёт в launch запечатанным memfd через `--job-fd`; runtime `head` сверяет sha256 содержимого с пределом `MAX_HASH_BYTES`; 133 Rust-теста, 34/34 WSL, 22/22 Windows, HEAD-SLICE host+QEMU PASS | `bin/promoter.py`, `core-rs/src/head.rs`, `core-rs/src/bin/head_slice_host.rs`, `research/outputs/PROMOTER-JOB-BINDING-R1-2026-11-18.txt`, C-0322/C-0323 |
+| 13 | `a999037` | promoter связывает `--job` root/fixture/checks/admission и запрещает per-case override; job идёт в launch запечатанным memfd через `--job-fd`; runtime `head` сверяет sha256 содержимого с пределом `MAX_HASH_BYTES`; 133 Rust-теста, 34/34 WSL, 22/22 Windows, HEAD-SLICE host+QEMU PASS | `bin/promoter.py`, `core-rs/src/head.rs`, `core-rs/src/bin/head_slice_host.rs`, `research/outputs/PROMOTER-JOB-BINDING-R1-2026-11-18.txt`, `research/outputs/HEAD-SLICE-R1-2026-11-18.txt`, C-0322/C-0323 |
 
 CI на чистом LF checkout поймал то, чего CRLF-дерево не показывало: `lawset_digest`
 в provenance карточки head и 20 карточек кандидатов, а также SHA-256

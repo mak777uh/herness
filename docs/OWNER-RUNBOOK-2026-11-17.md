@@ -96,7 +96,7 @@ Self-test прибора: `python bin/verify_owner_package.py --self-test` → 5
 
 1. **Прочитать evidence и решить.** Минимум:
    `research/outputs/ACTIVATION-REHEARSAL-R1-2026-11-17.txt`,
-   `research/outputs/HEAD-SLICE-R1-2026-11-17.txt`,
+   `research/outputs/HEAD-SLICE-R1-2026-11-18.txt`,
    `research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt`,
    [`docs/DECISIONS-R8-2026-11-17.md`](DECISIONS-R8-2026-11-17.md).
 2. **Выбрать формат ключа.** Текущий verifier принимает raw Ed25519 RFC 8032 с доменным

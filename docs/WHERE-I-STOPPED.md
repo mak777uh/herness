@@ -12,7 +12,8 @@
 > HEAD-SLICE host+QEMU — **PASS**. Evidence:
 > `research/outputs/PROMOTER-JOB-BINDING-R1-2026-11-18.txt`,
 > `HEAD-EDGE-R1-2026-11-17.txt`, `ACTIVATION-REHEARSAL-R1-2026-11-17.txt`,
-> `HEAD-SLICE-R1-2026-11-17.txt`; C-0322/C-0323.
+> `HEAD-SLICE-R1-2026-11-18.txt`; C-0322/C-0323. Файл `...-17.txt` не менялся: его
+> digest заморожен в `PILOT-GENERATOR-R1`; повтор после sha256 — отдельный `...-18.txt`.
 > **Известные разрывы (не закрашены):** promoter не реализует полную семантику карточки;
 > реестр не проверяет подпись и не имеет allowlist owner-anchor; `run_tool_g` не имеет ветки
 > `head`; предел 8 MiB означает отказ для большой фикстуры, а не потоковое чтение.
