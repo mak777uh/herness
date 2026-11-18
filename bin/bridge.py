@@ -36,6 +36,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import socket
 import ssl
 import sys
@@ -135,6 +136,22 @@ class Bridge:
         # Сессия стабильна на весь процесс: при новом UUID на каждый запрос провайдер не отдаёт
         # prompt-cache (измерено: cache_read 512 против 0, allowance в 4,7 раза меньше).
         self.session = session or str(uuid.uuid4())
+
+    def net_command(self, argv: list[str]) -> tuple[list[str], str]:
+        """Команда /v1/net: на Linux ребёнок в PID-namespace, иначе отказ.
+
+        Allowlist окружения закрывает наследование ключа, но не same-uid чтение
+        /proc/<ppid>/environ. Namespace убирает родителя из /proc ребёнка; если
+        unshare нет — fail-closed, без тихого запуска без изоляции (C-0328).
+        На Windows поведение прежнее: /proc там нет, но остаётся отдельный канал.
+        """
+        command = [sys.executable, str(ROOT / "bin" / "net.py"), *argv]
+        if not sys.platform.startswith("linux"):
+            return command, ""
+        unshare = shutil.which("unshare")
+        if not unshare:
+            return [], "unshare не найден: /v1/net выключен (fail-closed)"
+        return [unshare, "-U", "-p", "-f", "--mount-proc", *command], ""
 
     def log(self, record: dict) -> None:
         line = json.dumps(record, ensure_ascii=False)
@@ -261,8 +278,14 @@ def make_handler(bridge: Bridge):
                         argv = shlex.split(line)
                     except ValueError:
                         argv = line.split()
+                    command, why = bridge.net_command(argv)
+                    if not command:
+                        bridge.log({"ts": time.time(), "path": self.path, "status": 503,
+                                    "reason": why})
+                        self._reject(503, why)
+                        return
                     result = subprocess.run(
-                        [sys.executable, str(ROOT / "bin" / "net.py"), *argv],
+                        command,
                         capture_output=True, text=True, encoding="utf-8",
                         errors="replace", cwd=str(ROOT), timeout=120,
                         env=net_child_env(), close_fds=True,

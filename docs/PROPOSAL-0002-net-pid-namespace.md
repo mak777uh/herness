@@ -1,8 +1,10 @@
 # PROPOSAL-0002 — PID-namespace для `/v1/net` (решение владельца)
 
-Дата: 2026-11-18. Статус: **предложение, код моста не изменён**.
+Дата: 2026-11-18. Статус: **принято владельцем (вариант A), реализовано в C-0328**.
 Измерение: `PROC-ISOLATION-R1` / C-0327,
 [`../research/outputs/PROC-ISOLATION-R1-2026-11-18.txt`](../research/outputs/PROC-ISOLATION-R1-2026-11-18.txt).
+Реализация: [`../research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt`](../research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt),
+тест `tests/test_bridge_net_namespace.py`.
 
 ## Зачем
 
@@ -10,26 +12,15 @@
 передаёт `HS_BRIDGE_KEY` ребёнку. Но на Linux ребёнок того же uid всё равно читает
 **стартовое** окружение моста через `/proc/<ppid>/environ`; это подтверждено: плечо A
 дало `FOUND=1, FOUND_ANY=1`. PID-namespace скрывает родителя: плечо B дало
-`FOUND=0, FOUND_ANY=0`. Прототип не подключён к мосту, потому что `bin/bridge.py` —
-`needs_owner` («расширение поверхности моста»).
+`FOUND=0, FOUND_ANY=0`. Прототип был не подключён к мосту; по решению владельца A
+он подключён в C-0328, Windows остаётся отдельным срезом.
 
-## Предлагаемое изменение (одно место)
+## Реализованное изменение (C-0328)
 
-В `bin/bridge.py`, в ветке `/v1/net`, заменить запуск:
-
-```python
-result = subprocess.run(
-    [sys.executable, str(ROOT / "bin" / "net.py"), *argv],
-    ...
-    env=net_child_env(), close_fds=True,
-)
-```
-
-на Linux-ветку:
+В `bin/bridge.py` добавлен `Bridge.net_command(argv)`:
 
 ```python
-def net_argv(argv: list[str]) -> tuple[list[str], str]:
-    """Linux: ребёнок в PID-namespace; иначе — текущий запуск."""
+def net_command(self, argv: list[str]) -> tuple[list[str], str]:
     command = [sys.executable, str(ROOT / "bin" / "net.py"), *argv]
     if not sys.platform.startswith("linux"):
         return command, ""
@@ -39,22 +30,22 @@ def net_argv(argv: list[str]) -> tuple[list[str], str]:
     return [unshare, "-U", "-p", "-f", "--mount-proc", *command], ""
 ```
 
-и при ошибке `net_argv` отвечать `503`/`504` с внятным текстом, **не** откатываться
-молча к неизолированному запуску. На Windows поведение остаётся прежним: там нет
-`/proc`, но остаётся чтение окружения процесса через PEB/отладчик — это отдельный
-срез, не притворяться, что namespace его закрыл.
+В обработчике `/v1/net` команда берётся из `net_command`; пустая команда — `503`, без
+запуска `net.py`. На Windows поведение прежнее: там нет `/proc`, но остаётся чтение
+окружения процесса через PEB/отладчик — это отдельный срез, не притворяться, что
+namespace его закрыл.
 
-## Тест, который должен стать красным до и зелёным после
+## Тест (red → green)
 
-Новый `tests/test_bridge_net_namespace.py` (Linux/WSL; на Windows — N/A, не «зелёный»):
+`tests/test_bridge_net_namespace.py` (Linux/WSL; на Windows делегирует в WSL):
 
 1. Поднять мост на loopback с синтетическим `HS_BRIDGE_KEY` и подставным `net.py`.
 2. Подставной `net.py` печатает `NET_PROBE=1` (положительный контроль) и ищет
    `HS_BRIDGE_KEY=<канарейка>` по всему `/proc/*/environ`; печатает `FOUND_ANY`.
-3. До изменения: `NET_PROBE=1`, `FOUND_ANY=1` — тест красный.
-4. После изменения: `NET_PROBE=1`, `FOUND_ANY=0` — тест зелёный.
-5. Проверить, что при отсутствии `unshare` мост отвечает отказом, а не запускает
-   `net.py` без изоляции (отрицательный контроль fail-closed).
+3. До изменения: `NET_PROBE=1`, `FOUND_ANY=1` — тест красный (4 провала).
+4. После изменения: `NET_PROBE=1`, `FOUND_ANY=0` — тест зелёный (11/11).
+5. При отсутствии `unshare` мост отвечает `503`, а `net.py` не исполняется
+   (отрицательный контроль fail-closed).
 
 Поддерживающее измерение — `python bin/proc_isolation.py`; оно уже показывает
 A `FOUND=1` / B `FOUND=0` и не заменяет интеграционный тест.
@@ -75,11 +66,11 @@ A `FOUND=1` / B `FOUND=0` и не заменяет интеграционный 
 
 ## Решение владельца
 
-- **A.** Разрешить изменение `bin/bridge.py` по этому проекту + тест
-  `test_bridge_net_namespace.py` (Linux fail-closed, Windows без изменений).
-- **B.** Оставить прототип как измерение; мост не трогать, остаток записан в C-0324/
-  C-0327 и в handoff.
-- **C.** Другой механизм (отдельный uid/контейнер/Windows job object) — тогда этот
-  проект не применяется, нужен новый срез.
+- **A. Выбрано 18.11.2026 («давай а»):** изменение `bin/bridge.py` по этому проекту
+  + тест `test_bridge_net_namespace.py` (Linux fail-closed, Windows без изменений).
+  Реализовано в C-0328; evidence `BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt`.
+- **B.** Оставить прототип как измерение — не выбрано.
+- **C.** Другой механизм (отдельный uid/контейнер/Windows job object) — не выбран;
+  для Windows остаётся отдельный срез H-0010.
 
-Без явного выбора владельца проект остаётся документом; `bin/bridge.py` не меняется.
+`bin/bridge.py` изменён в рамках явного решения A; это не активация и не K9.

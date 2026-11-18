@@ -1,15 +1,21 @@
 # SELF-TOOLING — след смены 16–18.11.2026
 
-> **Обновление 18.11.2026, остаток `/proc` и PID-namespace.** Allowlist окружения
-> закрывает наследование, но не same-uid чтение `/proc/<ppid>/environ`: ребёнок видит
-> `HS_BRIDGE_KEY` в стартовом окружении родителя. Прототип `python bin/proc_isolation.py`:
+> **Обновление 18.11.2026, `/v1/net` в PID-namespace — решение A реализовано.** Allowlist
+> окружения закрывал наследование, но не same-uid чтение `/proc/<ppid>/environ`: ребёнок
+> видел `HS_BRIDGE_KEY` в стартовом окружении родителя. Прототип `python bin/proc_isolation.py`:
 > A без изоляции — `FOUND=1, FOUND_ANY=1`; B в `unshare -U -p -f --mount-proc` —
-> `FOUND=0, FOUND_ANY=0`, оба probe выполнились (C-0327, E-0035,
+> `FOUND=0, FOUND_ANY=0` (C-0327, E-0035,
 > [`PROC-ISOLATION-R1-2026-11-18.txt`](../research/outputs/PROC-ISOLATION-R1-2026-11-18.txt)).
-> `bin/bridge.py` не менялся: интеграция namespace — `needs_owner`. WSL-прогон под
-> `uid=0(root)`; обычный uid и Windows не покрыты; файловая система, сеть, token-файл и
-> ptrace не изолированы. Следующее — решение владельца о Linux-namespace в мосте или
-> отдельном механизме Windows, затем запрет записи внешнего в комнату 1 и K9.
+> Владелец выбрал A («давай а»), и `bin/bridge.py` изменён: `Bridge.net_command` на Linux
+> запускает `net.py` под `unshare -U -p -f --mount-proc`; без `unshare` — `503` и `net.py`
+> не исполняется (fail-closed). Красный репро: `FOUND_ANY=1` и 200 при PATH без `unshare`
+> (4 провала); после — `NET_PROBE=1, FOUND_ANY=0`, без `unshare` 503 без маркера, 11/11;
+> регрессия allowlist на Windows PASS (C-0328, E-0036,
+> [`BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt`](../research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt),
+> [`PROPOSAL-0002`](PROPOSAL-0002-net-pid-namespace.md)). Граница: Windows не покрыт
+> (H-0010); файловая система, сеть, token-файл и ptrace не изолированы; WSL-прогон под
+> `uid=0(root)`; падение `unshare` при его наличии отдельно не тестировалось; это не K9.
+> Следующее — Windows-механизм изоляции, запрет записи внешнего в комнату 1 и K9.
 >
 > **Обновление 18.11.2026, внешняя метка в комнате и честная сводка Rust-тестов.**
 > `HttpBridge::net_request` теперь помечает ответ `/v1/net` первой строкой

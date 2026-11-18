@@ -1,0 +1,73 @@
+{
+ "schema": 2,
+ "id": "BRIDGE-NET-NAMESPACE-R1",
+ "date": "2026-11-18",
+ "question": "Закрывает ли PID-namespace вокруг дочернего /v1/net доступ ребёнка к стартовому окружению моста через /proc на Linux, и отказывает ли мост при отсутствии unshare вместо тихого запуска без изоляции",
+ "hypothesis": "Старый мост запускает bin/net.py напрямую: ребёнок того же uid читает HS_BRIDGE_KEY в /proc/<ppid>/environ (FOUND_ANY=1). Если мост на Linux запускает ребёнка через unshare -U -p -f --mount-proc, родитель не виден, FOUND_ANY=0; при отсутствии unshare мост отвечает 503 и не исполняет net.py",
+ "criterion": "Подтверждение: плечо A (старый мост) — NET_PROBE=1, FOUND_ANY=1; плечо B (новый мост) — NET_PROBE=1, FOUND_ANY=0; плечо C (PATH без unshare) — HTTP 503 и маркер исполнения net.py отсутствует. Опровержение: A не видит канарейку, B видит её, C исполняет net.py или отвечает 200. Неопределённость: WSL/unshare недоступен или мост не стартует — срез не закрыт",
+ "arms": [
+  "A: текущий bin/bridge.py, subprocess.run без namespace",
+  "B: bin/bridge.py с unshare -U -p -f --mount-proc на Linux",
+  "C: PATH без unshare, ожидается fail-closed 503 без запуска net.py"
+ ],
+ "sensitivity": "Класс различается одним фактом: виден ли родитель в /proc ребёнка; положительный контроль NET_PROBE обязателен в A и B, в C — отсутствие маркера исполнения",
+ "unit_of_analysis": "один POST /v1/net к копии моста в temp-каталоге с подставным net.py и синтетическим HS_BRIDGE_KEY",
+ "primary_metric": "FOUND_ANY в выводе подставного net.py; для C — HTTP-код и наличие маркера исполнения",
+ "test": "python tests/test_bridge_net_namespace.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при FOUND_ANY=1 в B, при исполнении net.py в C, при отсутствии NET_PROBE или 503; порог не менять",
+ "fixture": "синтетическая канарейка и синтетический локальный токен генерируются тестом; настоящие ключи и токены не читаются",
+ "environment": {
+  "host": "Windows + WSL2 Ubuntu; в WSL uid 0",
+  "network": "только loopback между тестом и мостом; upstream-заглушка на 127.0.0.1:9",
+  "real_secrets": false
+ },
+ "critical_controls": [
+  {
+   "id": "red-without-namespace",
+   "input": "плечо A, старый мост, канарейка в стартовом env моста",
+   "expect": "NET_PROBE=1, FOUND_ANY=1 (остаток воспроизведён)"
+  },
+  {
+   "id": "green-with-namespace",
+   "input": "плечо B, новый мост",
+   "expect": "NET_PROBE=1, FOUND_ANY=0"
+  },
+  {
+   "id": "fail-closed",
+   "input": "плечо C, PATH без unshare",
+   "expect": "HTTP 503, маркер исполнения net.py отсутствует"
+  },
+  {
+   "id": "no-key-in-response",
+   "input": "все плечи",
+   "expect": "значение канарейки не появляется в ответе, bridge.log и stdout/stderr"
+  }
+ ],
+ "kill_criteria": [
+  "FOUND_ANY=1 в плече B",
+  "net.py исполнен в плече C или C ответил 200",
+  "NET_PROBE отсутствует в A или B",
+  "используется настоящий ключ или токен владельца",
+  "тест ослаблен, чтобы стать зелёным"
+ ],
+ "known_limits": [
+  "Изменение bin/bridge.py разрешено владельцем вариантом A 18.11.2026; это расширение поверхности моста",
+  "Windows-путь не меняется и не покрыт: там остаётся чтение окружения процесса другим механизмом",
+  "PID-namespace не изолирует файловую систему, сеть и token-файл; путь скрывается из /proc, но файл по известному пути доступен",
+  "WSL-прогон под uid 0; успех под root не гарантия для обычного uid, поэтому fail-closed",
+  "Это не K9 и не активация: active пуст, настоящий owner-ключ не создавался"
+ ],
+ "owner_decision": "вариант A: разрешено изменить bin/bridge.py и добавить тест; «давай а» 18.11.2026",
+ "closed": true,
+ "conclusion": "PASS: до изменения подставной net.py видел HS_BRIDGE_KEY в /proc (FOUND_ANY=1), а PATH без unshare давал 200 и исполнял net.py (4 провала); после Bridge.net_command с unshare -U -p -f --mount-proc — FOUND_ANY=0 при NET_PROBE=1, без unshare — 503 и маркер исполнения отсутствует; allowlist-регрессия на Windows PASS. Evidence research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt; Windows, файловая система/сеть/токен и K9 не покрыты; настоящий ключ не использовался, active пуст, K9_proven нет",
+ "result": {
+  "verdict": "PASS — /v1/net не видит ключ через /proc; без unshare отказ",
+  "before": "canary_sha256=80cea0fd2d05668d; B: NET_PROBE=1, FOUND_ANY=1; C: 200, net.py исполнен; rc=1; 4 провала",
+  "after": "canary_sha256=694120630264384d; B: NET_PROBE=1, FOUND_ANY=0; C: 503, net.py не исполнен; rc=0; 11/11 ok",
+  "positive_control": "NET_PROBE=1 в B; маркер исполнения net.py в B; в C маркер отсутствует",
+  "regression": "python tests/test_bridge_key_isolation.py — PASS на Windows",
+  "evidence": "research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt",
+  "residual": "Windows не покрыт; файловая система, сеть, token-файл и ptrace не изолированы; WSL uid 0; падение unshare при наличии не тестировалось отдельно; K9 не доказан"
+ },
+ "updated": "2026-11-18"
+}

@@ -12,7 +12,7 @@
    "H-0006: правила автономии как данные (lab/autonomy-rules.json) + гейт с --staged, падающий на защищённом пути без записи в журнал решений, снизят долю изменений, протащенных по привычке. Проверка: инъекция защищённого файла в индекс — гейт обязан отказать (отрицательный контроль). Источник — описание механики в dsh-superagent-prototype; в main этого репозитория файла нет (404).",
    "H-0007: одностраничный lab/ATTENTION.md, генерируемый из реестра, с --check, падающим при исчезновении пункта, ждущего человека, уменьшит число решений, потерянных молча. Проверка: убрать пункт со страницы — гейт обязан отказать.",
    "H-0008: объём негативных тестов на политику и авторизацию связан с числом дефектов прибора. У изучаемого репозитория tests/policy.spec.ts около 45 КБ, у нас существенно меньше. Проверка: нарастить тесты и посмотреть, сколько отказов класса «дефект прибора» (F-0028…F-0032) ловится до прогона, а не после.",
-   "H-0009: PID-namespace вокруг /v1/net закрывает same-uid чтение /proc на Linux, не ломая allowlist-путь; проверка — A FOUND=1, B FOUND=0, положительный контроль probe; Windows требует отдельного механизма, успех WSL под root не считать гарантией для обычного uid."
+   "H-0010: Windows-механизм изоляции /v1/net (job object/AppContainer/отдельный uid) закрывает чтение окружения процесса, которое PID-namespace не покрывает; проверка — подставной net.py не видит HS_BRIDGE_KEY, положительный контроль выполняется, отказ при недоступном механизме. WSL-успех не считать доказательством для Windows."
   ]
  },
  "experiments": [
@@ -326,7 +326,7 @@
    "status": "closed",
    "conclusion": "research/outputs/BRIDGE-KEY-ISOLATION-R1-2026-11-18.txt",
    "claim": "C-0324",
-   "note": "PASS: до фикса подставной net.py печатал синтетическую канарейку из HS_BRIDGE_KEY (response=1, output=1, 3 провала), после allowlist-окружения и close_fds=True — 0 вхождений во всех каналах (7/7 ok), положительный контроль NET_PROBE сработал. Граница: allowlist закрывает наследование, но не same-uid чтение /proc/<ppid>/environ (подтверждено отдельно, C-0327); путь к token-файлу остаётся в argv и доступен процессу того же uid через /proc/<ppid>/cmdline; same-uid память, командная строка Windows и изоляция процессов не проверялись; SSRF-политика не перемерялась. Настоящий ключ не использовался, active пуст, K9_proven нет."
+   "note": "PASS: до фикса подставной net.py печатал синтетическую канарейку из HS_BRIDGE_KEY (response=1, output=1, 3 провала), после allowlist-окружения и close_fds=True — 0 вхождений во всех каналах (7/7 ok), положительный контроль NET_PROBE сработал. Граница: allowlist закрывает наследование, но не same-uid чтение /proc/<ppid>/environ (подтверждено отдельно, C-0327; на Linux закрыто PID-namespace в C-0328, на Windows — нет); путь к token-файлу остаётся в argv и доступен процессу того же uid через /proc/<ppid>/cmdline; same-uid память, командная строка Windows и изоляция процессов не проверялись; SSRF-политика не перемерялась. Настоящий ключ не использовался, active пуст, K9_proven нет."
   },
   {
    "id": "E-0033",
@@ -354,7 +354,17 @@
    "status": "closed",
    "conclusion": "research/outputs/PROC-ISOLATION-R1-2026-11-18.txt",
    "claim": "C-0327",
-   "note": "PASS: плечо A (без изоляции) — PROBE_RAN=1, FOUND=1, FOUND_ANY=1; плечо B (unshare) — PROBE_RAN=1, FOUND=0, FOUND_ANY=0. WSL2 Ubuntu, uid 0; bin/bridge.py не менялся. Граница: это прототип, а не защита Windows и не K9; файловая система, сеть, токен-файл и ptrace не изолированы; интеграция namespace в мост — needs_owner. Настоящий ключ не использовался, active пуст, K9_proven нет."
+   "note": "PASS: плечо A (без изоляции) — PROBE_RAN=1, FOUND=1, FOUND_ANY=1; плечо B (unshare) — PROBE_RAN=1, FOUND=0, FOUND_ANY=0. WSL2 Ubuntu, uid 0; в этом срезе bin/bridge.py не менялся, интеграция — C-0328 (E-0036). Граница: это прототип, а не защита Windows и не K9; файловая система, сеть, токен-файл и ptrace не изолированы. Настоящий ключ не использовался, active пуст, K9_proven нет."
+  },
+  {
+   "id": "E-0036",
+   "title": "BRIDGE-NET-NAMESPACE-R1: /v1/net в PID-namespace и fail-closed без unshare",
+   "hypothesis": "Старый мост запускает bin/net.py напрямую, и ребёнок того же uid читает HS_BRIDGE_KEY в /proc/<ppid>/environ; запуск через unshare -U -p -f --mount-proc скрывает родителя, а отсутствие unshare обязано давать 503 без исполнения net.py.",
+   "prereg": "lab/prereg/BRIDGE-NET-NAMESPACE-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt",
+   "claim": "C-0328",
+   "note": "PASS: до изменения подставной net.py видел канарейку (NET_PROBE=1, FOUND_ANY=1), PATH без unshare давал 200 и исполнял net.py (4 провала); после Bridge.net_command с unshare — FOUND_ANY=0 при NET_PROBE=1, без unshare — 503 и маркер исполнения отсутствует (11/11); регрессия allowlist на Windows PASS. Владелец выбрал вариант A («давай а»). Граница: Windows не покрыт; файловая система, сеть, token-файл и ptrace не изолированы; падение unshare при наличии отдельно не тестировалось; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
   }
  ]
 }
