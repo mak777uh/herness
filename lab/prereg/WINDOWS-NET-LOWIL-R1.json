@@ -1,0 +1,82 @@
+{
+ "schema": 2,
+ "id": "WINDOWS-NET-LOWIL-R1",
+ "date": "2026-11-18",
+ "question": "Закрывает ли запуск /v1/net в токене низкой целостности (S-1-16-4096) чтение окружения моста через PEB на Windows, и отказывает ли мост явным 503, если лаунчер отсутствует или не работает",
+ "hypothesis": "Same-uid medium-ребёнок открывает моста через OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ), читает PEB → RTL_USER_PROCESS_PARAMETERS → Environment и видит HS_BRIDGE_KEY даже при allowlist-окружении. Low-IL ребёнок не может открыть medium-родителя для чтения памяти (мандатный контроль), поэтому ключ не виден; net.py сохраняет работу за счёт метки Low на runs/net. Без рабочего лаунчера мост обязан ответить 503 и не исполнять net.py.",
+ "criterion": "Подтверждение: плечо A (medium-ребёнок напрямую) — NET_PROBE=1, FOUND=1, FOUND_ANY=1; плечо B (через мост) — 200, NET_PROBE=1, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5, маркер исполнения создан, канарейки нет в ответе/log/stdout; C (нет лаунчера) — 503, причина «не найден», маркера нет; D (подставной лаунчер exit 1) — 503, причина «не работает», маркера нет; E — проба лаунчера LOWIL_PROBE=1. Опровержение: B даёт FOUND=1 или не low IL; C/D исполняют net.py; A не видит канарейку (тогда канал не воспроизведён и B ничего не доказывает). Неопределённость: CreateProcessAsUser недоступен, icacls не может опустить метку, мост не стартует.",
+ "arms": [
+  "A: тот же подставной net.py запущен напрямую в medium — ожидается FOUND=1/FOUND_ANY=1 (положительный контроль канала)",
+  "B: POST /v1/net через мост с win_lowil.py — ожидается 200, IL_RID=4096, FOUND=0, FOUND_ANY=0, OpenProcess err=5",
+  "C: в копии дерева нет bin/win_lowil.py — ожидается 503 «не найден», net.py не исполнен",
+  "D: bin/win_lowil.py — заглушка с exit 1 — ожидается 503 «не работает», net.py не исполнен",
+  "E: прямой вызов bin/win_lowil.py --probe — ожидается LOWIL_PROBE=1"
+ ],
+ "sensitivity": "Плечо A отличает «канал не воспроизведён» от «изоляция сработала»: если A не видит канарейку, B не считается доказательством. Плечо B проверяет не только FOUND=0, но и собственный IL ребёнка (4096) и код отказа OpenProcess err=5, чтобы не принять за изоляцию пропуск проверки или другой отказ. C и D различают «файла нет» и «файл есть, но не работает».",
+ "unit_of_analysis": "один POST /v1/net к копии моста в temp-каталоге с подставным net.py, синтетическим HS_BRIDGE_KEY, синтетическим токеном и копией/заглушкой win_lowil.py",
+ "primary_metric": "FOUND/FOUND_ANY и IL_RID подставного net.py; HTTP-код и маркер исполнения в C/D",
+ "test": "python tests/test_bridge_win_isolation.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при FOUND=1 или отсутствии low IL в B, при исполнении net.py в C/D, при невоспроизведённом канале в A; порог и критерий не менять",
+ "fixture": "синтетическая канарейка, синтетический локальный токен, подставной net.py с PEB-читателем и подставной лаунчер (exit 1) генерируются тестом; настоящие ключи и токены не читаются",
+ "environment": {
+  "host": "Windows 11, Python x64, обычный пользователь без администратора",
+  "network": "только loopback между тестом и мостом; upstream-заглушка на 127.0.0.1:9",
+  "real_secrets": false
+ },
+ "prior_observation": "Прототипы в %TEMP% до изменения: medium-ребёнок с PEB-читателем видел HS_TEST_CANARY в окружении родителя (FOUND=1); тот же читатель, запущенный через CreateProcessAsUser с low-IL токеном, получал OpenProcess err=5 и FOUND=0. SAFER NORMALUSER не закрывал чтение; CONSTRAINED-токен ломал запуск Python (0xC0000135). AppContainer-профиль создавался, но запуск не реализован. Это наблюдение, а не результат R1; официальный batch — повторный прогон теста после этой пре-регистрации.",
+ "critical_controls": [
+  {
+   "id": "medium-channel-reproduced",
+   "input": "плечо A, прямой medium-запуск подставного net.py",
+   "expect": "NET_PROBE=1, FOUND=1, FOUND_ANY=1"
+  },
+  {
+   "id": "low-il-blocks-peb",
+   "input": "плечо B, POST /v1/net через мост",
+   "expect": "200, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5"
+  },
+  {
+   "id": "missing-launcher-refused",
+   "input": "плечо C, нет bin/win_lowil.py",
+   "expect": "503, причина «не найден», маркер исполнения отсутствует"
+  },
+  {
+   "id": "broken-launcher-refused",
+   "input": "плечо D, подставной win_lowil.py с exit 1",
+   "expect": "503, причина «не работает», маркер исполнения отсутствует"
+  },
+  {
+   "id": "no-key-in-channels",
+   "input": "все плечи",
+   "expect": "значение канарейки не появляется в ответе, output, bridge.log и stdout/stderr"
+  }
+ ],
+ "kill_criteria": [
+  "плечо B видит канарейку (FOUND=1 или FOUND_ANY=1) или ребёнок не в low IL",
+  "плечо A не воспроизводит канал (FOUND=0) — тогда результат B недействителен",
+  "плечо C или D исполняет net.py",
+  "используется настоящий ключ или токен владельца",
+  "тест ослаблен, чтобы стать зелёным"
+ ],
+ "known_limits": [
+  "Low IL закрывает чтение окружения/памяти medium-родителя через PEB; файловая система, сеть, token-файл и командная строка процесса не изолированы",
+  "runs/net опускается до метки Low, чтобы net.py мог писать журнал; это downstream-состояние, доступное low-процессам на запись, не первая комната",
+  "Проба лаунчера кэшируется на процесс; смена условий после первого запроса не перепроверяется; per-run prepare_state повторяет метку",
+  "Job object с kill-on-close предотвращает сирот при таймауте, но не является изоляцией окружения",
+  "WSL-прогон namespace-теста под uid 0 не доказывает Windows; Windows-тест запускается только на Windows",
+  "Это не K9 и не активация: active пуст, настоящий owner-ключ не создавался, K9_proven не выдавался"
+ ],
+ "owner_decision": "продолжение H-0010 по решению владельца «давай» 18.11.2026 (после «Следующее — Windows-механизм изоляции...»); изменение bin/bridge.py — расширение поверхности моста, разрешено этим решением",
+ "closed": true,
+ "result": {
+  "verdict": "PASS — low-IL ребёнок не видит env моста через PEB; без рабочего лаунчера 503",
+  "before": "A (medium напрямую): NET_PROBE=1, FOUND=1, FOUND_ANY=1 — канал воспроизведён; это измерение канала, не старой копии моста",
+  "after": "B через мост: 200, NET_PROBE=1, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5; C/D: 503, net.py не исполнен; E: LOWIL_PROBE=1; 24 ok, 0 провалов",
+  "positive_control": "A видит канарейку в PEB моста; B подтверждает реальный low IL и код отказа OpenProcess; маркер исполнения в B есть, в C/D отсутствует",
+  "regression": "python tests/test_bridge_key_isolation.py — PASS на Windows (allowlist; low IL); python tests/test_bridge.py — 8/8; python tests/test_bridge_net_namespace.py — PASS в WSL (Linux-ветка не менялась); python bin/win_lowil.py -- python bin/net.py links — rc=3 no-page, журнал пишется",
+  "evidence": "research/outputs/WINDOWS-NET-LOWIL-R1-2026-11-18.txt",
+  "residual": "Windows-only; token-файл, командная строка, файловая система, сеть и K9 не изолированы; runs/net с меткой Low; проба кэшируется; low IL может отказать в обслуживании; настоящий ключ не использовался, active пуст, K9_proven нет"
+ },
+ "updated": "2026-11-18",
+ "conclusion": "PASS: medium-ребёнок напрямую читает HS_BRIDGE_KEY из PEB моста (A: FOUND=1, FOUND_ANY=1), а через мост low-IL ребёнок не может открыть родителя (B: 200, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5); без лаунчера C — 503 «не найден», с нерабочим D — 503 «не работает», net.py не исполнен; E — LOWIL_PROBE=1; 24 ok, 0 провалов. Evidence research/outputs/WINDOWS-NET-LOWIL-R1-2026-11-18.txt; Windows-only, token-файл/командная строка/файловая система/сеть и K9 не покрыты; runs/net с меткой Low; настоящий ключ не использовался, active пуст, K9_proven нет"
+}

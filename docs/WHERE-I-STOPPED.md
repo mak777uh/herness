@@ -1,5 +1,24 @@
 # ГДЕ ОСТАНОВИЛСЯ — 18.11.2026 (rolling-карта смены)
 
+> **Обновление 18.11.2026, Windows-изоляция `/v1/net` — low-IL (H-0010).**
+> Windows-ветка больше не запускает `net.py` обычным ребёнком: `bin/win_lowil.py`
+> создаёт restricted-токен, ставит `TokenIntegrityLevel = S-1-16-4096` (Low),
+> запускает `CreateProcessAsUserW` с pipes, NUL на stdin и job object
+> kill-on-close; `runs/net` опускается до метки Low, иначе low-процесс не запишет
+> журнал (это downstream-данные, не первая комната). Плечо A (medium напрямую)
+> видит канарейку в PEB моста — `FOUND=1, FOUND_ANY=1`; плечо B через мост —
+> `200, NET_PROBE=1, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5`;
+> C без лаунчера — 503 «не найден», D с нерабочим — 503 «не работает», `net.py`
+> в C/D не исполняется; 24 ok, провалов 0 (C-0330, E-0038,
+> `research/outputs/WINDOWS-NET-LOWIL-R1-2026-11-18.txt`).
+> Регрессия: `test_bridge_key_isolation.py` PASS на Windows (allowlist; теперь
+> через low IL), `test_bridge.py` 8/8, `test_bridge_net_namespace.py` PASS в WSL
+> (Linux-ветка не менялась), реальный `net.py links` под low IL — rc=3 no-page,
+> журнал пишется. Граница: Windows-only; token-файл, командная строка, файловая
+> система, сеть, ptrace-аналог и K9 не покрыты; проба кэшируется; low-состояние
+> `runs/net` доступно low-процессам; настоящий ключ не использовался, active пуст,
+> K9_proven нет. Следующее — запрет записи внешнего в комнату 1 и K9.
+
 > **Обновление 18.11.2026, гигиена EOL и названная причина 503.**
 > Пять JSON переписывались с CRLF при неизменном содержимом: `verify_claims --fast`
 > внутри гейтов запускал `score_h2`, `build_reviews_index`, `review_debt` и

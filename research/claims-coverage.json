@@ -1,12 +1,12 @@
 {
- "total": 322,
- "closed": 322,
+ "total": 323,
+ "closed": 323,
  "malformed": 0,
  "coverage": 1.0,
  "verdict": "ANCHORED_WEAK",
  "strict_closed": 178,
- "strict_coverage": 0.558,
- "weak_expects": 118,
+ "strict_coverage": 0.556,
+ "weak_expects": 119,
  "descriptive_artifacts": 32,
  "open": []
 }

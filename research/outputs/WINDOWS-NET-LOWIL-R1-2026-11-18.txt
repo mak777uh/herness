@@ -1,0 +1,109 @@
+WINDOWS-NET-LOWIL-R1 — /v1/net в токене низкой целостности на Windows
+Дата: 2026-11-18
+Пре-регистрация: lab/prereg/WINDOWS-NET-LOWIL-R1.json
+Команда: python tests/test_bridge_win_isolation.py
+Окружение: Windows 11, Python x64, обычный пользователь без администратора;
+low IL SID S-1-16-4096; только loopback; канарейка и токен синтетические.
+
+Зачем
+-----
+PID-namespace закрыл /proc/<ppid>/environ на Linux (C-0328/C-0329), но на Windows
+того же канала нет в /proc. Same-uid ребёнок открывает моста через
+OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ), читает PEB →
+RTL_USER_PROCESS_PARAMETERS → Environment и видит HS_BRIDGE_KEY, даже если
+allowlist не передал ключ при старте. До изменения Windows-ветка net_command
+запускала net.py обычным ребёнком; этот канал измерен прямым medium-запуском
+(плечо A), а не старой копией моста.
+
+Наблюдение до изменения (прототип, %TEMP%)
+------------------------------------------
+medium-ребёнок с PEB-читателем:     PROBE_RAN=1, FOUND=1
+low-IL через CreateProcessAsUser:   PROBE_RAN=1, FOUND=0, ERR=OpenProcess err=5
+SAFER NORMALUSER чтение не закрывал; CONSTRAINED-токен ломал запуск Python
+(0xC0000135); AppContainer-профиль создавался, запуск не реализован.
+Итог прототипа: low IL — рабочий кандидат; это наблюдение, не результат R1.
+
+Изменение
+---------
+bin/win_lowil.py — лаунчер:
+  * OpenProcessToken текущего процесса → CreateRestrictedToken(DISABLE_MAX_PRIVILEGE)
+    → SetTokenInformation(TokenIntegrityLevel, S-1-16-4096);
+  * CreateProcessAsUserW с CREATE_SUSPENDED, отдельные pipes stdout/stderr,
+    NUL на stdin, allowlist-окружение лаунчера;
+  * job object с JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE: при таймауте/смерти
+    лаунчера ребёнок не остаётся сиротой;
+  * runs/net опускается до метки Low (иначе low-процесс не запишет session.json
+    и журнал); это downstream-состояние, не секреты и не первая комната;
+  * --probe запускает low-ребёнка, требует IL_RID=4096 и запись в runs/net;
+    если токен или запись не работают — LOWIL_REFUSED=1 и отказ.
+
+bin/bridge.py — Windows-ветка net_command:
+  * нет bin/win_lowil.py → 503 «не найден»;
+  * проба лаунчера один раз; не прошла → 503 «не работает»;
+  * иначе команда идёт через win_lowil.py; если лаунчер откажет уже после
+    пробы, обработчик видит LOWIL_REFUSED=1 и отвечает 503, а не 200 с error.
+Linux-ветка (unshare) не менялась; прочие платформы — fail-closed.
+tests/test_bridge_key_isolation.py копирует win_lowil.py на Windows.
+
+Зелёный прогон (после пре-регистрации)
+--------------------------------------
+канарейка: sha256:bdf6280f44f24966 (значение не печатается)
+[ok] A: подставной net.py выполнился напрямую
+[ok] A: medium-ребёнок видит HS_BRIDGE_KEY в PEB моста
+[ok] A: канарейка видна при поиске по процессам
+[ok] B: ответ /v1/net 200 (получено 200)
+[ok] B: подставной net.py выполнился (положительный контроль)
+[ok] B: ребёнок действительно в low IL (S-1-16-4096)
+[ok] B: ребёнок не видит HS_BRIDGE_KEY напрямую
+[ok] B: отказ именно OpenProcess (access denied), а не пропуск
+[ok] B: канарейка не видна при поиске по процессам
+[ok] B: маркер исполнения net.py создан
+[ok] B: канарейка не попала в ответ /v1/net
+[ok] B: канарейка не попала в output
+[ok] B: канарейка не попала в error
+[ok] B: канарейка не попала в bridge.log
+[ok] B: канарейка не попала в stdout/stderr моста
+[ok] E: проба лаунчера подтверждает low IL и запись состояния
+[ok] C: ответ 503 (получено 503)
+[ok] C: причина отказа названа
+[ok] C: net.py не исполнен (fail-closed)
+[ok] C: канарейка не попала в отказ
+[ok] D: ответ 503 (получено 503)
+[ok] D: причина отказа названа
+[ok] D: net.py не исполнен (fail-closed)
+[ok] D: канарейка не попала в отказ
+провалов: 0
+ВЕРДИКТ: PASS — low-IL ребёнок не видит env моста; без рабочего лаунчера 503
+
+Регрессия
+---------
+python tests/test_bridge_key_isolation.py — PASS на Windows: allowlist-окружение
+не содержит ключ, канарейка не попала в ответ, output, bridge.log и proc.log.
+python tests/test_bridge.py — 8/8 ok, провалов 0.
+python tests/test_net_policy.py — rc=0.
+python tests/test_bridge_net_namespace.py — PASS в WSL Ubuntu: B NET_PROBE=1,
+FOUND_ANY=0; C/D — 503 с названной причиной, net.py не исполнен; порог не менялся.
+Функционально: python bin/win_lowil.py -- python bin/net.py links — rc=3
+«ОТКАЗ no-page», то есть настоящий net.py запускается в low IL и пишет журнал;
+--help — rc=0.
+
+Что это НЕ доказывает
+---------------------
+- Это один канал: чтение окружения/памяти medium-родителя через PEB. Low IL не
+  изолирует файловую систему, сеть, token-файл и командную строку процесса.
+  Токен моста по известному пути и командная строка остаются доступны.
+- runs/net с меткой Low может быть изменён другим low-процессом; это
+  downstream-данные, они и раньше были недоверенными.
+- Проба кэшируется на процесс; per-run prepare_state повторяет метку, но смену
+  политики Windows после старта это не мониторит.
+- Job object — защита от сирот, а не изоляция окружения.
+- Тест запускается только на Windows; WSL-успех namespace не является
+  доказательством для Windows.
+- Это не K9, не активация и не approval: настоящий owner-ключ не создавался,
+  active пуст, K9_proven не выдавался.
+
+Решение владельца
+-----------------
+Продолжение H-0010 по решению «давай» 18.11.2026 после перечня следующего шага
+(Windows-механизм изоляции). Изменение bin/bridge.py — расширение поверхности
+моста, разрешено этим решением.

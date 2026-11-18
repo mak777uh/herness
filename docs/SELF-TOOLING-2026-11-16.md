@@ -1,5 +1,19 @@
 # SELF-TOOLING — след смены 16–18.11.2026
 
+> **Обновление 18.11.2026, Windows-изоляция `/v1/net` — low-IL (H-0010).**
+> `bin/win_lowil.py` запускает `net.py` в restricted-токене с
+> `TokenIntegrityLevel = S-1-16-4096`; job object убивает ребёнка при смерти
+> лаунчера, `runs/net` получает метку Low для записи журнала. Плечо A (medium
+> напрямую) видит канарейку в PEB моста (`FOUND=1, FOUND_ANY=1`), плечо B через
+> мост — `200, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5`;
+> C/D — 503 «не найден»/«не работает» без исполнения `net.py`; 24 ok, провалов 0
+> (C-0330, E-0038,
+> [`WINDOWS-NET-LOWIL-R1-2026-11-18.txt`](../research/outputs/WINDOWS-NET-LOWIL-R1-2026-11-18.txt)).
+> Регрессия: allowlist-тест PASS на Windows, `test_bridge.py` 8/8, namespace-тест
+> PASS в WSL (Linux-ветка не менялась). Граница: Windows-only; token-файл,
+> командная строка, файловая система, сеть и K9 не покрыты; проба кэшируется;
+> настоящий ключ не использовался, active пуст, K9_proven нет.
+
 > **Обновление 18.11.2026, `/v1/net` в PID-namespace — решение A реализовано.** Allowlist
 > окружения закрывал наследование, но не same-uid чтение `/proc/<ppid>/environ`: ребёнок
 > видел `HS_BRIDGE_KEY` в стартовом окружении родителя. Прототип `python bin/proc_isolation.py`:

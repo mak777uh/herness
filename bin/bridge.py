@@ -138,6 +138,7 @@ class Bridge:
         # prompt-cache (измерено: cache_read 512 против 0, allowance в 4,7 раза меньше).
         self.session = session or str(uuid.uuid4())
         self._unshare_ok: bool | None = None
+        self._win_lowil_ok: bool | None = None
 
     def unshare_works(self, unshare: str) -> bool:
         """Рабочий ли unshare, а не только найденный в PATH.
@@ -158,26 +159,53 @@ class Bridge:
             return False
         return probe.returncode == 0
 
+    def win_lowil_works(self, launcher: Path) -> bool:
+        """Работает ли Windows-изоляция, а не только существует файл лаунчера.
+
+        Проба запускает low-IL ребёнка и требует от него две вещи: собственный
+        уровень целостности Low (S-1-16-4096) и запись в runs/net (иначе net.py
+        упадёт на журнале). Наличие win_lowil.py без рабочего токена — отказ.
+        """
+        try:
+            probe = subprocess.run(
+                [sys.executable, str(launcher), "--probe"],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace", timeout=60, env=net_child_env(),
+                close_fds=True,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        return probe.returncode == 0 and "LOWIL_PROBE=1" in (probe.stdout or "")
+
     def net_command(self, argv: list[str]) -> tuple[list[str], str]:
-        """Команда /v1/net: на Linux ребёнок в PID-namespace, иначе отказ.
+        """Команда /v1/net: Linux — PID-namespace, Windows — low IL, иначе отказ.
 
         Allowlist окружения закрывает наследование ключа, но не same-uid чтение
-        /proc/<ppid>/environ. Namespace убирает родителя из /proc ребёнка; если
-        unshare нет или он не работает — fail-closed, без тихого запуска без
-        изоляции (C-0328, C-0329). На Windows поведение прежнее: /proc там нет,
-        но остаётся отдельный канал.
+        окружения родителя. На Linux это делает PID-namespace (C-0328/C-0329),
+        на Windows — low-integrity токен: medium-родителя нельзя открыть для
+        чтения памяти через PEB (C-0330). Если механизма нет или он не работает,
+        fail-closed без тихого запуска без изоляции. Это один канал, не K9.
         """
         command = [sys.executable, str(ROOT / "bin" / "net.py"), *argv]
-        if not sys.platform.startswith("linux"):
-            return command, ""
-        unshare = shutil.which("unshare")
-        if not unshare:
-            return [], "unshare не найден: /v1/net выключен (fail-closed)"
-        if self._unshare_ok is None:
-            self._unshare_ok = self.unshare_works(unshare)
-        if not self._unshare_ok:
-            return [], "unshare не работает: /v1/net выключен (fail-closed)"
-        return [unshare, "-U", "-p", "-f", "--mount-proc", *command], ""
+        if sys.platform.startswith("linux"):
+            unshare = shutil.which("unshare")
+            if not unshare:
+                return [], "unshare не найден: /v1/net выключен (fail-closed)"
+            if self._unshare_ok is None:
+                self._unshare_ok = self.unshare_works(unshare)
+            if not self._unshare_ok:
+                return [], "unshare не работает: /v1/net выключен (fail-closed)"
+            return [unshare, "-U", "-p", "-f", "--mount-proc", *command], ""
+        if not sys.platform.startswith("win"):
+            return [], "нет механизма изоляции: /v1/net выключен (fail-closed)"
+        launcher = ROOT / "bin" / "win_lowil.py"
+        if not launcher.is_file():
+            return [], "win_lowil не найден: /v1/net выключен (fail-closed)"
+        if self._win_lowil_ok is None:
+            self._win_lowil_ok = self.win_lowil_works(launcher)
+        if not self._win_lowil_ok:
+            return [], "win_lowil не работает: /v1/net выключен (fail-closed)"
+        return [sys.executable, str(launcher), "--", *command], ""
 
     def log(self, record: dict) -> None:
         line = json.dumps(record, ensure_ascii=False)
@@ -322,6 +350,13 @@ def make_handler(bridge: Bridge):
                     return
                 output = (result.stdout or "").strip()
                 error = (result.stderr or "").strip()
+                # Лаунчер не смог поднять изоляцию уже после успешной пробы:
+                # это отказ механизма, а не ошибка net.py; вызывающий видит 503.
+                if result.returncode != 0 and "LOWIL_REFUSED=1" in error:
+                    bridge.log({"ts": time.time(), "path": self.path, "status": 503,
+                                "reason": "win_lowil отказал"})
+                    self._reject(503, "win_lowil не смог запустить изоляцию (fail-closed)")
+                    return
                 bridge.log({"ts": time.time(), "path": self.path, "status": 200,
                             "cmd": line.split()[0], "code": result.returncode,
                             "bytes": len(output)})

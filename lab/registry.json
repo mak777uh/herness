@@ -375,6 +375,16 @@
    "conclusion": "research/outputs/BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt",
    "claim": "C-0329",
    "note": "PASS: до пробы плечо D (подставной unshare exit 1) — 200 с error, net.py не исполнен (1 провал); после Bridge.unshare_works — 503 без маркера, B сохраняет NET_PROBE=1/FOUND_ANY=0, C — 503 (14 ok, провалов 0; после усиления 16 ok — причина отказа названа в обоих плечах). C-0324 на Linux использует shim launcher'а: предмет — окружение, namespace закрыт C-0328/C-0329. CI 44301185581 был красным по C-0324 после включения namespace; полный вывод не детализирован. Граница: Windows, файловая система, сеть, token-файл и ptrace не покрыты; проба кэшируется; WSL под root; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
+  },
+  {
+   "id": "E-0038",
+   "title": "WINDOWS-NET-LOWIL-R1: /v1/net в low-IL токене не видит env моста через PEB",
+   "hypothesis": "На Windows same-uid medium-ребёнок читает окружение моста через PEB (OpenProcess + NtQueryInformationProcess + ReadProcessMemory), даже если allowlist не передал ключ; low-IL токен (S-1-16-4096) не даёт открыть medium-родителя для чтения памяти, а метка Low на runs/net сохраняет запись журнала.",
+   "prereg": "lab/prereg/WINDOWS-NET-LOWIL-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/WINDOWS-NET-LOWIL-R1-2026-11-18.txt",
+   "claim": "C-0330",
+   "note": "PASS: A (medium напрямую) — FOUND=1, FOUND_ANY=1; B через мост — 200, IL_RID=4096, FOUND=0, FOUND_ANY=0, ERR=OpenProcess err=5; C без лаунчера — 503 «не найден»; D с заглушкой exit 1 — 503 «не работает»; net.py в C/D не исполнен; E — LOWIL_PROBE=1; 24 ok, 0 провалов. bin/win_lowil.py: restricted low-IL токен, pipes, job kill-on-close, --probe; bin/bridge.py: Windows-ветка net_command + 503 по LOWIL_REFUSED. runs/net опускается до Low для записи журнала. Решение владельца «давай» 18.11.2026 (H-0010). Граница: Windows-only; token-файл, командная строка, файловая система, сеть и K9 не покрыты; проба кэшируется; A измеряет канал, не старую копию моста; настоящий ключ не использовался, active пуст, K9_proven нет."
   }
  ]
 }

@@ -76,6 +76,9 @@ def start_bridge(tmp: Path, port: int) -> tuple[subprocess.Popen, object]:
     bin_dir = tmp / "bin"
     bin_dir.mkdir()
     shutil.copy2(ROOT / "bin" / "bridge.py", bin_dir / "bridge.py")
+    if sys.platform.startswith("win"):
+        # Windows-ветка /v1/net запускает помощника через low-IL лаунчер.
+        shutil.copy2(ROOT / "bin" / "win_lowil.py", bin_dir / "win_lowil.py")
     (bin_dir / "net.py").write_text(FAKE_NET, encoding="utf-8")
     token_path = tmp / "token.txt"
     token_path.write_text(TOKEN, encoding="utf-8")
