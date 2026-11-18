@@ -55,7 +55,8 @@ def write_index(entries: list[dict]) -> Path:
                "entries": [{"id": item.get("id"), "date": item.get("date"),
                             "verdict": item.get("verdict"), "file": item.get("file")}
                            for item in entries]}
-    target.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n",
+                      encoding="utf-8", newline="\n")
     return target
 
 

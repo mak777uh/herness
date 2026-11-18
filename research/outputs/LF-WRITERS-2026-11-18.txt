@@ -1,0 +1,68 @@
+LF-WRITERS — гейты больше не пачкают JSON переводами строк
+Дата: 2026-11-18
+Команда: python bin/hs.py gates --profile auto
+Окружение: Windows, Git Bash, core.autocrlf=true; файлы `*.json` объявлены `text eol=lf`.
+
+Симптом
+-------
+После прогона гейтов в рабочем дереве оставались изменёнными пять JSON:
+lab/h2/scores.json
+lab/reviews/index.json
+research/review-debt.json
+tests/vectors/journal.json
+tests/vectors/seal.json
+
+При этом `git diff` и `git diff --ignore-cr-at-eol` пусты, а
+`git hash-object --path=<файл>` совпадает с hash в индексе. То есть содержимое
+семантически не менялось: файлы переписывались с CRLF вместо LF, и git видел
+расхождение представления, а не результата. В рабочей копии стояли CRLF.
+
+Причина
+-------
+Четыре писателя использовали `Path.write_text(...)` без `newline`, а в текстовом
+режиме Python на Windows переводит `\n` в `\r\n`:
+- bin/score_h2.py — lab/h2/scores.json
+- bin/build_reviews_index.py — lab/reviews/index.json
+- bin/review_debt.py — research/review-debt.json
+- bin/make_vectors.py — tests/vectors/journal.json и tests/vectors/seal.json
+
+Эти команды выполняются проверкой утверждений (`python bin/verify_claims.py --fast`),
+которая входит в гейты. Поэтому гейт, оставаясь зелёным, оставлял дерево грязным.
+
+Изменение
+---------
+В четыре писателя добавлен явный `newline="\n"`. Содержимое и формат JSON не
+менялись; меняется только представление переводов строк. Запинненные CRLF файлы
+(`docs/CONSTITUTION-v0-2026-11-16.md`, `lab/prereg/HEAD-SLICE-R1.json`,
+`lab/tools/drafts/head-v1.draft.json`) не тронуты.
+
+Проверка
+--------
+1. Пять файлов восстановлены из HEAD.
+2. Повторно выполнены четыре писателя:
+   python bin/score_h2.py
+   python bin/build_reviews_index.py
+   python bin/review_debt.py
+   python bin/make_vectors.py
+3. Сверка байтов с HEAD:
+   lab/h2/scores.json: crlf=0 bytes_equal_head=True
+   lab/reviews/index.json: crlf=0 bytes_equal_head=True
+   research/review-debt.json: crlf=0 bytes_equal_head=True
+   tests/vectors/journal.json: crlf=0 bytes_equal_head=True
+   tests/vectors/seal.json: crlf=0 bytes_equal_head=True
+4. python bin/hs.py gates --profile auto:
+   профиль auto: оценено 31 из 33 гейтов; N/A 2 (журналы, индекс прогонов)
+   пробы: поймали 17 из 17
+   rc=0; после прогона изменены только файлы самого исправления, JSON — нет.
+
+Что это НЕ доказывает
+---------------------
+- Это не общий страж переводов строк: другой писатель может снова использовать
+  `write_text` без `newline` и опять оставить CRLF.
+- Проверка не запускалась на чистом клоне; она выполнена в рабочей копии с
+  core.autocrlf=true. На Linux поведение по умолчанию совпадает с LF, поэтому
+  дефект был бы невидим.
+- Сгенерированные `.txt`-отчёты под `* text=auto` на Windows по-прежнему могут
+  быть CRLF; их digest не заморожен, и это отдельный класс.
+- Это не ослабление гейта и не изменение порогов; утверждения и улики не
+  переписывались.

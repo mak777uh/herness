@@ -84,7 +84,7 @@ def main() -> int:
     data = json.loads((H2 / "results.json").read_text(encoding="utf-8"))
     rows = [score(record) for record in data["records"]]
     (H2 / "scores.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1) + "\n",
-                                    encoding="utf-8")
+                                    encoding="utf-8", newline="\n")
 
     print(f"{'плечо':<6}{'прогон':<8}{'утв.':<6}{'со ссылкой':<12}{'recall':<8}{'ссылок':<8}"
           f"{'precision':<12}{'выдумано':<9}")

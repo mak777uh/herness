@@ -58,7 +58,8 @@ def main() -> int:
     out.write_text(json.dumps({"total": len(latest), "debt": len(debt),
                                "items": [{key: item.get(key) for key in
                                           ("id", "verdict", "claim", "reasons")} for item in debt]},
-                              ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+                              ensure_ascii=False, indent=1) + "\n",
+                   encoding="utf-8", newline="\n")
     print(f"\nзаписано: {out}")
     return 0
 

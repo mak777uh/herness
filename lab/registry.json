@@ -374,7 +374,7 @@
    "status": "closed",
    "conclusion": "research/outputs/BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt",
    "claim": "C-0329",
-   "note": "PASS: до пробы плечо D (подставной unshare exit 1) — 200 с error, net.py не исполнен (1 провал); после Bridge.unshare_works — 503 без маркера, B сохраняет NET_PROBE=1/FOUND_ANY=0, C — 503 (14 ok, провалов 0). C-0324 на Linux использует shim launcher'а: предмет — окружение, namespace закрыт C-0328/C-0329. CI 44301185581 был красным по C-0324 после включения namespace; полный вывод не детализирован. Граница: Windows, файловая система, сеть, token-файл и ptrace не покрыты; проба кэшируется; WSL под root; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
+   "note": "PASS: до пробы плечо D (подставной unshare exit 1) — 200 с error, net.py не исполнен (1 провал); после Bridge.unshare_works — 503 без маркера, B сохраняет NET_PROBE=1/FOUND_ANY=0, C — 503 (14 ok, провалов 0; после усиления 16 ok — причина отказа названа в обоих плечах). C-0324 на Linux использует shim launcher'а: предмет — окружение, namespace закрыт C-0328/C-0329. CI 44301185581 был красным по C-0324 после включения namespace; полный вывод не детализирован. Граница: Windows, файловая система, сеть, token-файл и ptrace не покрыты; проба кэшируется; WSL под root; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
   }
  ]
 }

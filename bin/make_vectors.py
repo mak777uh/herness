@@ -40,7 +40,7 @@ def main() -> int:
     ]
     (VECTORS / "journal.json").write_text(
         json.dumps({"canonical": canonical_json(events[1]), "chain": chain(events)},
-                   ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+                   ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
 
     seal_cases = [
         ("простое тело", "тело\n## Seal\nпечать"),
@@ -52,7 +52,7 @@ def main() -> int:
         json.dumps([{"name": name, "input": text, "canonical": canonical(text),
                      "sha256": hashlib.sha256(canonical(text).encode("utf-8")).hexdigest()}
                     for name, text in seal_cases], ensure_ascii=False, indent=1) + "\n",
-        encoding="utf-8")
+        encoding="utf-8", newline="\n")
     print("векторы записаны в", VECTORS)
     return 0
 

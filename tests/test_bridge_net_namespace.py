@@ -198,6 +198,7 @@ def run_arm_c() -> None:
             return
         status, body = post_net(port)
         check(status == 503, f"C: без unshare мост отказывает 503 (получено {status})")
+        check("не найден" in body, "C: причина отказа — unshare не найден, а не другое")
         check(not marker.exists(), "C: net.py не исполнен без unshare (fail-closed)")
         check(CANARY not in body, "C: канарейка не попала в отказ")
     finally:
@@ -223,6 +224,7 @@ def run_arm_d() -> None:
             return
         status, body = post_net(port)
         check(status == 503, f"D: нерабочий unshare отвергнут 503 (получено {status})")
+        check("не работает" in body, "D: причина отказа — unshare не работает, а не не найден")
         check(not marker.exists(), "D: net.py не исполнен при нерабочем unshare")
         check(CANARY not in body, "D: канарейка не попала в отказ")
     finally:
