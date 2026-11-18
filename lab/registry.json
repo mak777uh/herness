@@ -364,7 +364,17 @@
    "status": "closed",
    "conclusion": "research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt",
    "claim": "C-0328",
-   "note": "PASS: до изменения подставной net.py видел канарейку (NET_PROBE=1, FOUND_ANY=1), PATH без unshare давал 200 и исполнял net.py (4 провала); после Bridge.net_command с unshare — FOUND_ANY=0 при NET_PROBE=1, без unshare — 503 и маркер исполнения отсутствует (11/11); регрессия allowlist на Windows PASS. Владелец выбрал вариант A («давай а»). Граница: Windows не покрыт; файловая система, сеть, token-файл и ptrace не изолированы; падение unshare при наличии отдельно не тестировалось; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
+   "note": "PASS: до изменения подставной net.py видел канарейку (NET_PROBE=1, FOUND_ANY=1), PATH без unshare давал 200 и исполнял net.py (4 провала); после Bridge.net_command с unshare — FOUND_ANY=0 при NET_PROBE=1, без unshare — 503 и маркер исполнения отсутствует (11/11); регрессия allowlist на Windows PASS. Владелец выбрал вариант A («давай а»). Граница: Windows не покрыт; файловая система, сеть, token-файл и ptrace не изолированы; нерабочий unshare при наличии закрыт отдельно в E-0037/C-0329; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
+  },
+  {
+   "id": "E-0037",
+   "title": "BRIDGE-NET-NAMESPACE-R2: нерабочий unshare отвергается 503",
+   "hypothesis": "unshare может быть найден, но user namespace запрещён; без пробы мост отвечает 200 с error (net.py не исполнен), а после пробы unshare с python -c pass обязан отвечать 503 и не запускать net.py.",
+   "prereg": "lab/prereg/BRIDGE-NET-NAMESPACE-R2.json",
+   "status": "closed",
+   "conclusion": "research/outputs/BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt",
+   "claim": "C-0329",
+   "note": "PASS: до пробы плечо D (подставной unshare exit 1) — 200 с error, net.py не исполнен (1 провал); после Bridge.unshare_works — 503 без маркера, B сохраняет NET_PROBE=1/FOUND_ANY=0, C — 503 (14 ok, провалов 0). C-0324 на Linux использует shim launcher'а: предмет — окружение, namespace закрыт C-0328/C-0329. CI 44301185581 был красным по C-0324 после включения namespace; полный вывод не детализирован. Граница: Windows, файловая система, сеть, token-файл и ptrace не покрыты; проба кэшируется; WSL под root; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
   }
  ]
 }

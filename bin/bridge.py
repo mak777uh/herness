@@ -39,6 +39,7 @@ import os
 import shutil
 import socket
 import ssl
+import subprocess
 import sys
 import time
 import urllib.error
@@ -136,14 +137,35 @@ class Bridge:
         # Сессия стабильна на весь процесс: при новом UUID на каждый запрос провайдер не отдаёт
         # prompt-cache (измерено: cache_read 512 против 0, allowance в 4,7 раза меньше).
         self.session = session or str(uuid.uuid4())
+        self._unshare_ok: bool | None = None
+
+    def unshare_works(self, unshare: str) -> bool:
+        """Рабочий ли unshare, а не только найденный в PATH.
+
+        Наличие файла не значит, что user namespace разрешён: Ubuntu 24.04
+        с apparmor_restrict_unprivileged_userns и CI-раннеры дают EPERM.
+        Проба один раз; без рабочего namespace net.py не запускается (C-0329).
+        """
+        try:
+            probe = subprocess.run(
+                [unshare, "-U", "-p", "-f", "--mount-proc",
+                 sys.executable, "-c", "pass"],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace", timeout=15, env=net_child_env(),
+                close_fds=True,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        return probe.returncode == 0
 
     def net_command(self, argv: list[str]) -> tuple[list[str], str]:
         """Команда /v1/net: на Linux ребёнок в PID-namespace, иначе отказ.
 
         Allowlist окружения закрывает наследование ключа, но не same-uid чтение
         /proc/<ppid>/environ. Namespace убирает родителя из /proc ребёнка; если
-        unshare нет — fail-closed, без тихого запуска без изоляции (C-0328).
-        На Windows поведение прежнее: /proc там нет, но остаётся отдельный канал.
+        unshare нет или он не работает — fail-closed, без тихого запуска без
+        изоляции (C-0328, C-0329). На Windows поведение прежнее: /proc там нет,
+        но остаётся отдельный канал.
         """
         command = [sys.executable, str(ROOT / "bin" / "net.py"), *argv]
         if not sys.platform.startswith("linux"):
@@ -151,6 +173,10 @@ class Bridge:
         unshare = shutil.which("unshare")
         if not unshare:
             return [], "unshare не найден: /v1/net выключен (fail-closed)"
+        if self._unshare_ok is None:
+            self._unshare_ok = self.unshare_works(unshare)
+        if not self._unshare_ok:
+            return [], "unshare не работает: /v1/net выключен (fail-closed)"
         return [unshare, "-U", "-p", "-f", "--mount-proc", *command], ""
 
     def log(self, record: dict) -> None:
@@ -269,7 +295,6 @@ def make_handler(bridge: Bridge):
                     self._reject(400, "пустой запрос")
                     return
                 try:
-                    import subprocess
                     # Разбор строки — как у оболочки, но без оболочки: shlex
                     # сохраняет кавычки («search "два слова"»), а split() их
                     # съедал, и запрос из трёх слов разваливался на три аргумента.

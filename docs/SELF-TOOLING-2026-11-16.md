@@ -12,9 +12,14 @@
 > (4 провала); после — `NET_PROBE=1, FOUND_ANY=0`, без `unshare` 503 без маркера, 11/11;
 > регрессия allowlist на Windows PASS (C-0328, E-0036,
 > [`BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt`](../research/outputs/BRIDGE-NET-NAMESPACE-R1-2026-11-18.txt),
-> [`PROPOSAL-0002`](PROPOSAL-0002-net-pid-namespace.md)). Граница: Windows не покрыт
-> (H-0010); файловая система, сеть, token-файл и ptrace не изолированы; WSL-прогон под
-> `uid=0(root)`; падение `unshare` при его наличии отдельно не тестировалось; это не K9.
+> [`PROPOSAL-0002`](PROPOSAL-0002-net-pid-namespace.md)). CI этого среза упал по C-0324:
+> на Linux-раннере namespace не дал `net.py` исполниться. Добавлена одноразовая проба
+> `unshare` (C-0329, E-0037): найденный, но нерабочий `unshare` даёт `503` без запуска
+> `net.py` (до — 200 с error, 1 провал; после — 14 ok, провалов 0,
+> [`BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt`](../research/outputs/BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt)).
+> Env-тест C-0324 на Linux использует shim launcher'а: его предмет — окружение, а не
+> namespace. Граница: Windows не покрыт (H-0010); файловая система, сеть, token-файл и
+> ptrace не изолированы; WSL-прогон под `uid=0(root)`; проба кэшируется; это не K9.
 > Следующее — Windows-механизм изоляции, запрет записи внешнего в комнату 1 и K9.
 >
 > **Обновление 18.11.2026, внешняя метка в комнате и честная сводка Rust-тестов.**

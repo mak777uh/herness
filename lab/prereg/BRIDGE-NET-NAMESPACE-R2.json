@@ -1,0 +1,74 @@
+{
+ "schema": 2,
+ "id": "BRIDGE-NET-NAMESPACE-R2",
+ "date": "2026-11-18",
+ "question": "Отказывает ли мост явным 503, если unshare найден в PATH, но не работает (user namespace запрещён), и не исполняется ли net.py в этом случае",
+ "hypothesis": "Наличие unshare не значит рабочую изоляцию: без пробы мост запускает unshare, тот падает, net.py не исполняется, но ответ — 200 с error, а не явный отказ. После пробы unshare -U -p -f --mount-proc с python -c pass мост обязан ответить 503 и не запускать net.py.",
+ "criterion": "Подтверждение: плечо D (подставной unshare с exit 1) — HTTP 503, маркер исполнения net.py отсутствует, канарейки нет в ответе; регрессия B — 200, NET_PROBE=1, FOUND_ANY=0; C — 503 без маркера. Опровержение: D даёт 200 или исполняет net.py; B теряет NET_PROBE или видит канарейку; C исполняет net.py. Неопределённость: подставной unshare не подхватывается или мост не стартует",
+ "arms": [
+  "B: рабочий unshare — регрессия namespace, ожидается 200/NET_PROBE=1/FOUND_ANY=0",
+  "C: PATH без unshare — 503 без запуска net.py",
+  "D: PATH с подставным unshare, который сразу выходит с кодом 1 — 503 без запуска net.py"
+ ],
+ "sensitivity": "Плечо D отличает «бинарник найден» от «изоляция работает»; положительный контроль — B, где net.py действительно исполняется; в D и C маркер исполнения обязан отсутствовать",
+ "unit_of_analysis": "один POST /v1/net к копии моста в temp-каталоге с подставным net.py, синтетическим HS_BRIDGE_KEY и подставным unshare",
+ "primary_metric": "HTTP-код ответа и наличие маркера исполнения net.py в плече D",
+ "test": "python tests/test_bridge_net_namespace.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при 200 или исполнении net.py в D, при утечке в B, при исполнении в C; порог не менять",
+ "fixture": "синтетическая канарейка, синтетический локальный токен и подставной unshare (exit 1) генерируются тестом; настоящие ключи и токены не читаются",
+ "environment": {
+  "host": "Windows + WSL2 Ubuntu; в WSL uid 0",
+  "network": "только loopback между тестом и мостом; upstream-заглушка на 127.0.0.1:9",
+  "real_secrets": false
+ },
+ "prior_observation": "CI run 44301185581 (ubuntu-latest): C-0324 упал после включения namespace; полный вывод теста в логе не детализирован. Локальный диагностический прогон плеча D до пробы дал HTTP 200 с error (net.py не исполнен), то есть изоляция не запускалась, но явного отказа не было. Это наблюдение, а не результат R2.",
+ "critical_controls": [
+  {
+   "id": "broken-unshare-refused",
+   "input": "плечо D, подставной unshare с exit 1",
+   "expect": "HTTP 503, маркер исполнения net.py отсутствует"
+  },
+  {
+   "id": "namespace-regression",
+   "input": "плечо B, рабочий unshare",
+   "expect": "HTTP 200, NET_PROBE=1, FOUND_ANY=0"
+  },
+  {
+   "id": "missing-unshare-refused",
+   "input": "плечо C, PATH без unshare",
+   "expect": "HTTP 503, маркер исполнения net.py отсутствует"
+  },
+  {
+   "id": "no-key-in-response",
+   "input": "все плечи",
+   "expect": "значение канарейки не появляется в ответе, bridge.log и stdout/stderr"
+  }
+ ],
+ "kill_criteria": [
+  "плечо D ответило 200 или исполнило net.py",
+  "плечо B потеряло NET_PROBE или увидело канарейку",
+  "плечо C исполнило net.py",
+  "используется настоящий ключ или токен владельца",
+  "тест ослаблен, чтобы стать зелёным"
+ ],
+ "known_limits": [
+  "Проба unshare выполняется один раз на процесс и кэшируется; смена условий после старта не перепроверяется",
+  "Windows-путь не меняется и не покрыт",
+  "PID-namespace не изолирует файловую систему, сеть и token-файл; путь скрывается из /proc, но файл по известному пути доступен",
+  "WSL-прогон под uid 0; успех под root не гарантия для обычного uid",
+  "Это не K9 и не активация: active пуст, настоящий owner-ключ не создавался"
+ ],
+ "owner_decision": "в рамках варианта A: fail-closed при нерабочем unshare — продолжение решения владельца «давай а» 18.11.2026",
+ "closed": true,
+ "conclusion": "PASS: до пробы плечо D отвечало 200 с error (1 провал, net.py не исполнен); после пробы unshare в net_command — D отвечает 503 без маркера, B сохраняет NET_PROBE=1/FOUND_ANY=0, C — 503; 14/14. Evidence research/outputs/BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt; Windows, файловая система/сеть/токен и K9 не покрыты; настоящий ключ не использовался, active пуст, K9_proven нет",
+ "result": {
+  "verdict": "PASS — нерабочий unshare отвергается 503, net.py не исполняется",
+  "before": "D: HTTP 200 с error, net.py не исполнен; 13 ok, 1 FAIL; rc=1",
+  "after": "D: HTTP 503, net.py не исполнен; B: NET_PROBE=1, FOUND_ANY=0; C: 503; 14/14 ok; rc=0",
+  "positive_control": "NET_PROBE=1 и маркер исполнения в B; в C и D маркер отсутствует",
+  "regression": "python tests/test_bridge_key_isolation.py — PASS на Windows и в WSL (на Linux PATH с shim launcher'а: предмет — env, не namespace)",
+  "evidence": "research/outputs/BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt",
+  "residual": "Windows не покрыт; файловая система, сеть, token-файл и ptrace не изолированы; WSL uid 0; проба кэшируется; K9 не доказан"
+ },
+ "updated": "2026-11-18"
+}

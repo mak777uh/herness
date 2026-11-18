@@ -7,6 +7,9 @@
 Плечо C: PATH без unshare; мост обязан ответить 503 и не исполнять net.py (fail-closed),
 а не запускать его без изоляции. Маркер исполнения — файл, который пишет net.py.
 
+Плечо D: unshare есть, но не работает (подставной бинарник с exit 1); мост обязан
+ответить 503 и не исполнять net.py — наличие файла не считается рабочей изоляцией.
+
 Канарейка и токен синтетические; настоящие ключи не читаются.
 
     python tests/test_bridge_net_namespace.py   # Windows: делегирует в WSL Ubuntu
@@ -203,10 +206,36 @@ def run_arm_c() -> None:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def run_arm_d() -> None:
+    tmp = Path(tempfile.mkdtemp(prefix="herness-netns-d-"))
+    port = free_port()
+    fake_bin = tmp / "fake-bin"
+    fake_bin.mkdir()
+    broken = fake_bin / "unshare"
+    broken.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    broken.chmod(0o755)
+    proc = None
+    proc_log = None
+    try:
+        proc, proc_log, marker = start_bridge(tmp, port, path_env=str(fake_bin))
+        if not wait_health(port, proc, proc_log, tmp):
+            check(False, "D: мост поднялся с нерабочим unshare")
+            return
+        status, body = post_net(port)
+        check(status == 503, f"D: нерабочий unshare отвергнут 503 (получено {status})")
+        check(not marker.exists(), "D: net.py не исполнен при нерабочем unshare")
+        check(CANARY not in body, "D: канарейка не попала в отказ")
+    finally:
+        if proc is not None:
+            stop(proc, proc_log)
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def run_tests() -> int:
     print(f"канарейка: {fingerprint(CANARY)} (значение не печатается)")
     run_arm_b()
     run_arm_c()
+    run_arm_d()
 
     failed = 0
     for flag, message in RESULTS:
@@ -216,7 +245,7 @@ def run_tests() -> int:
     if failed:
         print("ВЕРДИКТ: FAIL — /v1/net не изолирован или fail-closed не сработал")
         return 1
-    print("ВЕРДИКТ: PASS — /v1/net не видит ключ через /proc; без unshare отказ")
+    print("ВЕРДИКТ: PASS — /v1/net не видит ключ через /proc; без рабочего unshare отказ")
     return 0
 
 

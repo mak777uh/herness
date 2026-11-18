@@ -8,6 +8,12 @@
 Тест подкладывает в копию дерева подставной net.py, который печатает значение
 HS_BRIDGE_KEY. Канарейка синтетическая; настоящие ключи и токены не читаются.
 
+На Linux мост запускает net.py только под рабочим unshare (C-0328/C-0329).
+Здесь предмет — наследование окружения, а не namespace, поэтому на Linux в PATH
+подставляется shim `unshare`, который лишь исполняет команду: иначе на раннере
+с запрещёнными user namespace тест мерил бы не тот канал. Namespace проверяет
+tests/test_bridge_net_namespace.py.
+
     python tests/test_bridge_key_isolation.py
 """
 
@@ -56,6 +62,16 @@ def free_port() -> int:
         return int(probe.getsockname()[1])
 
 
+def unshare_shim(tmp: Path) -> Path:
+    """Заглушка launcher'а: исполняет команду без namespace (только для env-теста)."""
+    shim_dir = tmp / "shim-bin"
+    shim_dir.mkdir()
+    shim = shim_dir / "unshare"
+    shim.write_text('#!/bin/sh\nshift 4\nexec "$@"\n', encoding="utf-8")
+    shim.chmod(0o755)
+    return shim_dir
+
+
 def start_bridge(tmp: Path, port: int) -> tuple[subprocess.Popen, object]:
     bin_dir = tmp / "bin"
     bin_dir.mkdir()
@@ -65,6 +81,8 @@ def start_bridge(tmp: Path, port: int) -> tuple[subprocess.Popen, object]:
     token_path.write_text(TOKEN, encoding="utf-8")
     proc_log = open(tmp / "proc.log", "wb")
     env = {**os.environ, "HS_BRIDGE_KEY": CANARY}
+    if sys.platform.startswith("linux"):
+        env["PATH"] = str(unshare_shim(tmp)) + os.pathsep + env.get("PATH", "")
     command = [
         sys.executable,
         str(bin_dir / "bridge.py"),
