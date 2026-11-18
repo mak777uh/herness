@@ -15,11 +15,19 @@
 > [`PROPOSAL-0002`](PROPOSAL-0002-net-pid-namespace.md)). CI этого среза упал по C-0324:
 > на Linux-раннере namespace не дал `net.py` исполниться. Добавлена одноразовая проба
 > `unshare` (C-0329, E-0037): найденный, но нерабочий `unshare` даёт `503` без запуска
-> `net.py` (до — 200 с error, 1 провал; после — 14 ok, провалов 0,
+> `net.py` (до — 200 с error, 1 провал; после — 16 ok, провалов 0: плечи C и D
+> проверяют ещё и названную причину — «unshare не найден» и «unshare не работает»,
 > [`BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt`](../research/outputs/BRIDGE-NET-NAMESPACE-R2-2026-11-18.txt)).
 > Env-тест C-0324 на Linux использует shim launcher'а: его предмет — окружение, а не
 > namespace. Граница: Windows не покрыт (H-0010); файловая система, сеть, token-файл и
 > ptrace не изолированы; WSL-прогон под `uid=0(root)`; проба кэшируется; это не K9.
+> Гигиена дерева: `Path.write_text` без `newline` писал CRLF на Windows, и
+> `verify_claims --fast` внутри гейтов переписывал пять JSON при неизменном
+> содержимом. В `score_h2`, `build_reviews_index`, `review_debt` и `make_vectors`
+> добавлен `newline="\n"`; после повторного прогона `crlf=0, bytes_equal_head=True`,
+> гейты 31/33 N/A 2, пробы 17/17
+> ([`LF-WRITERS-2026-11-18.txt`](../research/outputs/LF-WRITERS-2026-11-18.txt)).
+> Проверенный handoff-коммит — `08583f8`; docs-правки после него не меняют код.
 > Следующее — Windows-механизм изоляции, запрет записи внешнего в комнату 1 и K9.
 >
 > **Обновление 18.11.2026, внешняя метка в комнате и честная сводка Rust-тестов.**
