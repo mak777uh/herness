@@ -1,0 +1,146 @@
+# K9-COMPOSITION-R1 — композиция шагов и цепочка мостов (21.11.2026)
+
+## Что проверялось
+Модель композиции: замыкания складываются (T1), пошаговой проверки недостаточно (T2),
+утечка отвергается (T3), безопасная композиция исполняется (T4), downstream без
+доказательства отвергается (T5/T6). Checker: policy-only, объявленные замыкания и
+адреса, не код downstream.
+
+## python tests/test_chain.py
+[ok] допустимая цепочка проходит
+[ok] достижимый адрес назван (наблюдение ['allowed.local'])
+[ok] граница проверки названа в отчёте
+[ok] непроверенный downstream отвергнут (K9_CHAIN_UNPROVEN)
+[ok] пропущенный адрес отвергнут (K9_DOWNSTREAM_MISSING_DEST)
+[ok] пропущенный метод отвергнут (K9_DOWNSTREAM_MISSING_METHOD)
+[ok] по отдельности шаги не утекают (контроль T2)
+[ok] композиция секрет+сеть отвергнута (K9_TAINT_ESCAPE)
+[ok] пошаговая проверка утечки пуста — глобальная ловит
+[ok] цепочка без adjacent отвергнута (K9_ADJACENT_REQUIRED)
+[ok] более широкий downstream не ломает допустимую цепочку
+[ok] недостижимый адрес назван, а не скрыт
+[ok] CLI: допустимая цепочка rc=0 (наблюдение rc=0)
+[ok] CLI: допустимая цепочка печатает ok=true
+[ok] CLI: отказ rc=3 (наблюдение rc=3)
+[ok] CLI: код отказа назван
+провалов: 0
+rc=0
+
+## python bin/chain.py check lab/fixtures/chain/allowed.json
+{
+ "law": "K9",
+ "ok": true,
+ "problems": [],
+ "caveat": "policy-only check; it does not inspect downstream code or its own egress",
+ "reachable_through_chain": [
+  "allowed.local"
+ ],
+ "downstream_broader_unreachable": [],
+ "reads_secret": [],
+ "sends_external": [
+  "send"
+ ],
+ "steps": 2,
+ "per_step_leaks": []
+}
+rc=0
+
+## python bin/chain.py check lab/fixtures/chain/taint.json
+{
+ "law": "K9",
+ "ok": false,
+ "problems": [
+  {
+   "code": "K9_TAINT_ESCAPE",
+   "message": "composition reads a secret and sends external; refused",
+   "readers": [
+    "read-secret"
+   ],
+   "senders": [
+    "send"
+   ]
+  }
+ ],
+ "caveat": "policy-only check; it does not inspect downstream code or its own egress",
+ "reachable_through_chain": [
+  "allowed.local"
+ ],
+ "downstream_broader_unreachable": [],
+ "reads_secret": [
+  "read-secret"
+ ],
+ "sends_external": [
+  "send"
+ ],
+ "steps": 2,
+ "per_step_leaks": []
+}
+rc=3
+
+## python bin/check_lean_imports.py
+[ok] все 10 модулей достижимы из 6 корней
+rc=0
+
+## python bin/lean_wsl.py
+# Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side, F-0080)
+
+proofs (резолвер): `C:\111\harness\proofs`
+WSL: `/mnt/c/111/harness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
+
+## Агрегат Proofs: СОБРАН (rc=0)
+   Build completed successfully (12 jobs).
+
+## Контур политики: СОБРАН (rc=0)
+
+## Контур моста частей: СОБРАН (rc=0)
+
+## Контур композиции K9: СОБРАН (rc=0)
+
+## Аксиомы каждой теоремы
+- `Policy.deny_beats_allow`: Classical.choice, Quot.sound, propext
+- `Policy.deny_means_not_allowed`: Classical.choice, Quot.sound, propext
+- `Policy.no_allow_means_denied`: Classical.choice, Quot.sound, propext
+- `Policy.empty_policy_denies`: Classical.choice, Quot.sound, propext
+- `Policy.mediator_refuses`: Classical.choice, Quot.sound, propext
+- `Policy.mediator_performs`: Classical.choice, Quot.sound, propext
+- `PartBridge.no_bridge_of_incompatible`: Classical.choice, Quot.sound, propext
+- `PartBridge.hasDeny_append_left`: Classical.choice, Quot.sound, propext
+- `PartBridge.hasDeny_append_right`: Classical.choice, Quot.sound, propext
+- `PartBridge.deny_survives`: Classical.choice, Quot.sound, propext
+- `PartBridge.bridge_allow_no_deny`: Classical.choice, Quot.sound, propext
+- `Composition.comp_within`: propext
+- `Composition.leak_created_by_composition`: propext
+- `Composition.runChain_refuses_leak`: propext
+- `Composition.runChain_performs_safe`: propext
+- `Composition.unproven_refused`: Classical.choice, Quot.sound, propext
+- `Composition.chainOk_all_proven`: Classical.choice, Quot.sound, propext
+
+## NC политики (Proofs.Negative): отвергнут (rc≠0)
+   error: Proofs/Negative.lean:19:79: unsolved goals
+   error: Proofs/Negative.lean:25:62: unsolved goals
+
+## NC моста (Proofs.PartBridgeNegative): отвергнут (rc≠0)
+   error: Proofs/PartBridgeNegative.lean:24:47: unsolved goals
+
+## NC композиции (Proofs.CompositionNegative): отвергнут (rc≠0)
+   error: Proofs/CompositionNegative.lean:24:2: Tactic `decide` proved that the proposition
+   error: Proofs/CompositionNegative.lean:28:2: Tactic `decide` proved that the proposition
+   error: Proofs/CompositionNegative.lean:37:2: Tactic `decide` proved that the proposition
+
+## Итог: агрегат собран, доказательства приняты, ложь отвергнута, аксиомы стандартные
+
+Граница: доказаны свойства моделей, не соответствие Rust-кода моделям.
+K9: модель проверяет объявленные замыкания и цепочку мостов; это K9_model_checked, не K9_proven.
+F-0080 закрыт (ADR-0061): namespace Policy/PartBridge, агрегат Proofs собирается.
+N4 proof-side: путь резолвера динамически проверен сборкой rc2 в WSL (не только статика).
+Исполнитель host-only: в CI (ubuntu-latest) WSL нет; сборка в CI требует установки Lean rc2.
+
+rc=0
+
+## Граница
+Модель конечная и декларативная: проверяются объявленные замыкания, а не фактическое
+поведение кода downstream. Checker не инспектирует код downstream и его собственный
+egress. Taint различает только secret:* и net:*; произвольные секреты и скрытые каналы
+не покрыты. Соответствие Lean-модели и checker'у проверяется тестом и сверкой кодов,
+а не доказательством. Это K9_model_checked, а не K9_proven: active пуст, настоящий
+owner-ключ не создавался, наружу ничего не публиковалось.

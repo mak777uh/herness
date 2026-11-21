@@ -50,6 +50,14 @@ BRIDGE_THEOREMS = [
     "PartBridge.deny_survives",
     "PartBridge.bridge_allow_no_deny",
 ]
+COMPOSITION_THEOREMS = [
+    "Composition.comp_within",
+    "Composition.leak_created_by_composition",
+    "Composition.runChain_refuses_leak",
+    "Composition.runChain_performs_safe",
+    "Composition.unproven_refused",
+    "Composition.chainOk_all_proven",
+]
 
 
 def to_wsl(p: Path) -> str:
@@ -114,10 +122,14 @@ def main() -> int:
     ok_bridge = rc == 0
     lines.append(f"## Контур моста частей: {'СОБРАН (rc=0)' if ok_bridge else f'НЕ СОБРАН (rc={rc})'}")
     lines.append("")
+    rc, _ = run_wsl(f"{base} && lake build Proofs.Composition")
+    ok_composition = rc == 0
+    lines.append(f"## Контур композиции K9: {'СОБРАН (rc=0)' if ok_composition else f'НЕ СОБРАН (rc={rc})'}")
+    lines.append("")
 
     # 5. аксиомы теорем — только стандартные (scratch в /tmp, репо Probe.lean не трогаем)
-    all_theorems = THEOREMS + BRIDGE_THEOREMS
-    probe_body = ("import Proofs.Policy\nimport Proofs.PartBridge\n"
+    all_theorems = THEOREMS + BRIDGE_THEOREMS + COMPOSITION_THEOREMS
+    probe_body = ("import Proofs.Policy\nimport Proofs.PartBridge\nimport Proofs.Composition\n"
                   + "\n".join(f"#print axioms {t}" for t in all_theorems) + "\n")
     ax_cmd = (f"{base} && cat > /tmp/ProbeWsl.lean <<'EOF'\n{probe_body}EOF\n"
               f"lean /tmp/ProbeWsl.lean\nrc=$?\nrm -f /tmp/ProbeWsl.lean\nexit $rc")
@@ -139,7 +151,7 @@ def main() -> int:
         lines.append(f"   проба аксиом не выполнилась (rc={rc})")
     lines.append("")
 
-    # 6. отрицательные контроли обязаны УПАСТЬ (оба)
+    # 6. отрицательные контроли обязаны УПАСТЬ (все три)
     rc, text = run_wsl(f"{base} && lake build Proofs.Negative")
     rejected_policy = rc != 0
     lines.append(f"## NC политики (Proofs.Negative): {'отвергнут (rc≠0)' if rejected_policy else 'ПРИНЯТ — ПРОВЕРКА НЕ РАБОТАЕТ'}")
@@ -154,11 +166,20 @@ def main() -> int:
         if "unsolved goals" in ln:
             lines.append(f"   {ln.strip()}")
     lines.append("")
+    rc, text = run_wsl(f"{base} && lake build Proofs.CompositionNegative")
+    rejected_composition = rc != 0
+    lines.append(f"## NC композиции (Proofs.CompositionNegative): {'отвергнут (rc≠0)' if rejected_composition else 'ПРИНЯТ — ПРОВЕРКА НЕ РАБОТАЕТ'}")
+    for ln in text.splitlines():
+        if "proved that the proposition" in ln or "unsolved goals" in ln:
+            lines.append(f"   {ln.strip()}")
+    lines.append("")
 
-    verdict = ok_aggregate and ok_proof and ok_bridge and clean and rejected_policy and rejected_bridge
+    verdict = (ok_aggregate and ok_proof and ok_bridge and ok_composition and clean
+               and rejected_policy and rejected_bridge and rejected_composition)
     lines.append(f"## Итог: {'агрегат собран, доказательства приняты, ложь отвергнута, аксиомы стандартные' if verdict else 'ЕСТЬ ПРОБЛЕМА'}")
     lines.append("")
     lines.append("Граница: доказаны свойства моделей, не соответствие Rust-кода моделям.")
+    lines.append("K9: модель проверяет объявленные замыкания и цепочку мостов; это K9_model_checked, не K9_proven.")
     lines.append("F-0080 закрыт (ADR-0061): namespace Policy/PartBridge, агрегат Proofs собирается.")
     lines.append("N4 proof-side: путь резолвера динамически проверен сборкой rc2 в WSL (не только статика).")
     lines.append("Исполнитель host-only: в CI (ubuntu-latest) WSL нет; сборка в CI требует установки Lean rc2.")

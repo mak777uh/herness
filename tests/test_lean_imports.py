@@ -34,6 +34,7 @@ def main() -> int:
             "Proofs.Policy": "theorem a : True := trivial\n",
             "Proofs.Negative": "import Proofs.Policy\n",
             "Proofs.PartBridgeNegative": "import Proofs.Policy\n",
+            "Proofs.CompositionNegative": "import Proofs.Policy\n",
             "Proofs.BridgeNegative": "import Proofs.Policy\n",
             "Probe": "import Proofs.Policy\n",
         })

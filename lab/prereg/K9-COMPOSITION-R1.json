@@ -1,0 +1,91 @@
+{
+ "schema": 2,
+ "id": "K9-COMPOSITION-R1",
+ "date": "2026-11-21",
+ "question": "Можно ли объявить композицию шагов и цепочку мостов так, чтобы K9 проверялся до исполнения: замыкания складываются, утечка «секрет + сеть» отвергается, downstream-мост без доказательства отвергается?",
+ "hypothesis": "Композиция шагов — объединение замыканий; если каждый шаг внутри границы, объединение тоже внутри (T1). Пошаговой проверки недостаточно: шаг «прочитать секрет» и шаг «отправить в сеть» по отдельности не утекают, а их композиция утекает (T2). Поэтому K9 — глобальная проверка композиции: при утечке исполнитель отказывает (T3), без утечки исполняет (T4). Для мостов: downstream-мост без доказательства делает цепочку недопустимой (T5), допустимая цепочка требует доказательства у всех downstream (T6).",
+ "criterion": "PASS: Lean-агрегат собирается, теоремы Composition приняты только со стандартными аксиомами (propext, Classical.choice, Quot.sound), CompositionNegative отвергнут; python tests/test_chain.py — 0 провалов: допустимая цепочка проходит, а непроверенный downstream, отсутствующий адрес, утечка секрет+сеть и цепочка без adjacent отвергаются точными кодами K9_*; контроль T2 воспроизведён и в Python (по отдельности 0 утечек, вместе 1). Опровержение: Lean принимает NC, checker пропускает непроверенную цепочку или утечку, тест ослаблен. Неопределённость: Lean rc2 недоступен в WSL; checker не разбирает код downstream.",
+ "arms": [
+  "A: Lean Proofs.Composition — T1/T2/T3/T4/T5/T6, аксиомы стандартные",
+  "B: Lean Proofs.CompositionNegative — три ложных утверждения обязаны быть отвергнуты",
+  "C: checker на допустимой цепочке — ok=true, rc=0",
+  "D: checker на downstream proven=false — K9_CHAIN_UNPROVEN, rc=3",
+  "E: checker на downstream без адреса adjacent — K9_DOWNSTREAM_MISSING_DEST, rc=3",
+  "F: checker на шагах secret+net — K9_TAINT_ESCAPE, rc=3; по отдельности каждый шаг без утечки (контроль T2)",
+  "G: checker без adjacent — K9_ADJACENT_REQUIRED, rc=3"
+ ],
+ "sensitivity": "Плечо F отличает глобальную проверку от пошаговой: если checker смотрит только на каждый шаг, он пропустит композицию read-secret + send-net. Плечо D отличает «мост есть» от «мост доказан». Плечо E отличает объявленный адрес от фактически форварднутого.",
+ "unit_of_analysis": "одна JSON-декларация цепочки (adjacent + downstream + шаги) и одна Lean-модель композиции",
+ "primary_metric": "Lean rc и список аксиом; ok/коды отказа checker'а; число провалов теста",
+ "test": "python tests/test_chain.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при принятии NC, при пропуске непроверенной цепочки/утечки, при нестандартных аксиомах; порог и критерий не менять",
+ "fixture": "синтетические имена allowed.local, other.local, secret:key; настоящие адреса, ключи и секреты не используются",
+ "environment": {
+  "host": "Windows 11, Python 3.13, Lean 4.36.0-rc2 в WSL Ubuntu",
+  "network": "не требуется; checker работает офлайн",
+  "real_secrets": false
+ },
+ "critical_controls": [
+  {
+   "id": "lean-standard-axioms",
+   "input": "Proofs.Composition",
+   "expect": "только propext, Classical.choice, Quot.sound"
+  },
+  {
+   "id": "lean-nc-rejected",
+   "input": "Proofs.CompositionNegative",
+   "expect": "rc≠0"
+  },
+  {
+   "id": "chain-positive",
+   "input": "допустимая цепочка",
+   "expect": "ok=true, rc=0"
+  },
+  {
+   "id": "unproven-refused",
+   "input": "downstream proven=false",
+   "expect": "K9_CHAIN_UNPROVEN, rc=3"
+  },
+  {
+   "id": "missing-dest-refused",
+   "input": "downstream не содержит адрес adjacent",
+   "expect": "K9_DOWNSTREAM_MISSING_DEST, rc=3"
+  },
+  {
+   "id": "taint-refused",
+   "input": "шаг secret + шаг net",
+   "expect": "K9_TAINT_ESCAPE, rc=3; каждый шаг по отдельности без утечки"
+  },
+  {
+   "id": "adjacent-required",
+   "input": "нет adjacent",
+   "expect": "K9_ADJACENT_REQUIRED, rc=3"
+  }
+ ],
+ "kill_criteria": [
+  "Lean принимает хотя бы одно ложное утверждение CompositionNegative",
+  "checker пропускает downstream proven=false или утечку secret+net",
+  "тест ослаблен, чтобы стать зелёным",
+  "используется настоящий секрет или адрес",
+  "K9_proven или синоним выдаётся в отчёте"
+ ],
+ "known_limits": [
+  "Модель конечная и декларативная: она проверяет объявленные замыкания, а не фактическое поведение кода downstream",
+  "Соответствие Lean-модели и checker'у проверяется тестом и сверкой кодов, а не доказательством",
+  "Checker не инспектирует код downstream и его собственный egress; это policy-only проверка",
+  "Taint-модель различает только secret:* и net:*; произвольные секреты и скрытые каналы не покрыты",
+  "Это K9_model_checked, а не K9_proven; active пуст, настоящий owner-ключ не создавался"
+ ],
+ "owner_decision": "продолжение по handoff docs/WHERE-I-STOPPED.md («Следующее — K9 (composition_preserves)») и выбору владельца 21.11.2026",
+ "closed": true,
+ "result": {
+  "verdict": "PASS — модель K9 собрана, NC отвергнут, checker отказывает непроверенной цепочке и утечке",
+  "lean": "Proofs.Composition собран; T1/T2/T3/T4/T5/T6 приняты, аксиомы только propext/Classical.choice/Quot.sound; Proofs.CompositionNegative отвергнут (3 ошибки decide)",
+  "checker": "допустимая цепочка — ok=true, rc=0; K9_CHAIN_UNPROVEN, K9_DOWNSTREAM_MISSING_DEST, K9_DOWNSTREAM_MISSING_METHOD, K9_TAINT_ESCAPE, K9_ADJACENT_REQUIRED — rc=3; 16/16 проверок",
+  "control": "T2: secretStep и netStep по отдельности leaks=false, comp — leaks=true; в Python step_leaks каждого false, check_chain — K9_TAINT_ESCAPE",
+  "evidence": "research/outputs/K9-COMPOSITION-R1-2026-11-21.txt",
+  "residual": "policy-only; объявленные замыкания, не код downstream; taint только secret:* и net:*; это K9_model_checked, не K9_proven; active пуст"
+ },
+ "conclusion": "PASS: Lean-модель композиции собрана, ложные утверждения отвергнуты, аксиомы стандартные; checker bin/chain.py пропускает допустимую цепочку и отказывает непроверенному downstream, пропущенному адресу/методу, утечке secret+net и цепочке без adjacent; 16/16 проверок. Граница: policy-only, объявленные замыкания, не код downstream; taint только secret:* и net:*; это K9_model_checked, а не K9_proven; active пуст, настоящий owner-ключ не создавался",
+ "updated": "2026-11-21"
+}

@@ -1,0 +1,21 @@
+{
+ "id": "chain:allowed",
+ "adjacent": {
+  "id": "adjacent-1",
+  "allowed_destinations": ["allowed.local"],
+  "allowed_methods": ["GET"],
+  "proven": true
+ },
+ "downstream": [
+  {
+   "id": "downstream-1",
+   "allowed_destinations": ["allowed.local"],
+   "allowed_methods": ["GET"],
+   "proven": true
+  }
+ ],
+ "steps": [
+  {"id": "read-room", "reads": ["/room/public.txt"], "sends": []},
+  {"id": "send", "reads": [], "sends": ["allowed.local"]}
+ ]
+}

@@ -1,14 +1,16 @@
 # Динамическая проверка Lean-контура через WSL rc2 (N4 proof-side, F-0080)
 
-proofs (резолвер): `C:\Users\Admin\Documents\Qoder\2026-11-16\7e4ba6fe\herness\proofs`
-WSL: `/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
+proofs (резолвер): `C:\111\harness\proofs`
+WSL: `/mnt/c/111/harness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
 
 ## Агрегат Proofs: СОБРАН (rc=0)
-   Build completed successfully (10 jobs).
+   Build completed successfully (12 jobs).
 
 ## Контур политики: СОБРАН (rc=0)
 
 ## Контур моста частей: СОБРАН (rc=0)
+
+## Контур композиции K9: СОБРАН (rc=0)
 
 ## Аксиомы каждой теоремы
 - `Policy.deny_beats_allow`: Classical.choice, Quot.sound, propext
@@ -22,6 +24,12 @@ WSL: `/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/proofs`, to
 - `PartBridge.hasDeny_append_right`: Classical.choice, Quot.sound, propext
 - `PartBridge.deny_survives`: Classical.choice, Quot.sound, propext
 - `PartBridge.bridge_allow_no_deny`: Classical.choice, Quot.sound, propext
+- `Composition.comp_within`: propext
+- `Composition.leak_created_by_composition`: propext
+- `Composition.runChain_refuses_leak`: propext
+- `Composition.runChain_performs_safe`: propext
+- `Composition.unproven_refused`: Classical.choice, Quot.sound, propext
+- `Composition.chainOk_all_proven`: Classical.choice, Quot.sound, propext
 
 ## NC политики (Proofs.Negative): отвергнут (rc≠0)
    error: Proofs/Negative.lean:19:79: unsolved goals
@@ -30,9 +38,15 @@ WSL: `/mnt/c/Users/Admin/Documents/Qoder/2026-11-16/7e4ba6fe/herness/proofs`, to
 ## NC моста (Proofs.PartBridgeNegative): отвергнут (rc≠0)
    error: Proofs/PartBridgeNegative.lean:24:47: unsolved goals
 
+## NC композиции (Proofs.CompositionNegative): отвергнут (rc≠0)
+   error: Proofs/CompositionNegative.lean:24:2: Tactic `decide` proved that the proposition
+   error: Proofs/CompositionNegative.lean:28:2: Tactic `decide` proved that the proposition
+   error: Proofs/CompositionNegative.lean:37:2: Tactic `decide` proved that the proposition
+
 ## Итог: агрегат собран, доказательства приняты, ложь отвергнута, аксиомы стандартные
 
 Граница: доказаны свойства моделей, не соответствие Rust-кода моделям.
+K9: модель проверяет объявленные замыкания и цепочку мостов; это K9_model_checked, не K9_proven.
 F-0080 закрыт (ADR-0061): namespace Policy/PartBridge, агрегат Proofs собирается.
 N4 proof-side: путь резолвера динамически проверен сборкой rc2 в WSL (не только статика).
 Исполнитель host-only: в CI (ubuntu-latest) WSL нет; сборка в CI требует установки Lean rc2.

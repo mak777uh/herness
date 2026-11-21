@@ -395,6 +395,16 @@
    "conclusion": "research/outputs/NET-FS-WRITE-BARRIER-R1-2026-11-18.txt",
    "claim": "C-0331",
    "note": "PASS: RED (HEAD) — SANDBOX=absent, PROTECTED_WRITE=1, protected=PWNED; A — PROTECTED_WRITE=0 errno 13, STATE_WRITE=1, JOURNAL=1, SESSION_RESULTS=1, RC=0; B ABI=0 — отказ fs-sandbox до fetch, rc=3; D/E 9p — защищённая запись 0, журнал/сессия через fd, rc=0/3; Windows C — low-IL PROTECTED_WRITE=0, STATE_WRITE=1, 28 ok. Регрессии: test_bridge 8/8, key isolation PASS, namespace PASS. Границы: Landlock после старта, чтение и сеть не ограничены; 9p fd-канал для двух файлов состояния; Windows прямой запуск вне моста не покрыт; runs/net остаётся записываемым downstream; симлинки/гонки не покрыты; это не K9; настоящий ключ не использовался, active пуст, K9_proven нет."
+  },
+  {
+   "id": "E-0040",
+   "title": "K9-COMPOSITION-R1: композиция шагов и цепочка мостов",
+   "hypothesis": "Композиция шагов — объединение замыканий; пошаговой проверки недостаточно (secret+net по отдельности не утекают, вместе утекают), поэтому K9 проверяет композицию глобально и отказывает при утечке; downstream-мост без доказательства делает цепочку недопустимой.",
+   "prereg": "lab/prereg/K9-COMPOSITION-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/K9-COMPOSITION-R1-2026-11-21.txt",
+   "claim": "C-0332",
+   "note": "PASS: Lean Proofs.Composition — T1/T2/T3/T4/T5/T6, аксиомы стандартные, CompositionNegative отвергнут; bin/chain.py — допустимая цепочка ok/rc=0, отказы K9_CHAIN_UNPROVEN/K9_DOWNSTREAM_MISSING_DEST/K9_DOWNSTREAM_MISSING_METHOD/K9_TAINT_ESCAPE/K9_ADJACENT_REQUIRED rc=3; 16/16. Граница: policy-only, объявленные замыкания, не код downstream; taint только secret:* и net:*; это K9_model_checked, не K9_proven; active пуст."
   }
  ]
 }
