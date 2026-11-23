@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>herness — опросник решений владельца</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #111821;
+      --panel-2: #151e29;
+      --line: #263241;
+      --line-strong: #35465a;
+      --text: #e8eef5;
+      --muted: #9aabba;
+      --faint: #6f8192;
+      --accent: #8ce0bd;
+      --accent-strong: #57c99a;
+      --accent-soft: rgba(140, 224, 189, 0.1);
+      --warning: #f1c675;
+      --danger: #ef8f8f;
+      --radius: 18px;
+      --shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% -10%, rgba(87, 201, 154, 0.13), transparent 32rem),
+        radial-gradient(circle at 92% 8%, rgba(91, 139, 205, 0.1), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    button, textarea, input { font: inherit; }
+
+    button {
+      border: 1px solid var(--line-strong);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 11px;
+      padding: 9px 13px;
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+    }
+
+    button:hover { border-color: var(--accent-strong); background: #192634; }
+    button:active { transform: translateY(1px); }
+    button:focus-visible, textarea:focus-visible, input:focus-visible, a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #082017;
+      font-weight: 700;
+    }
+
+    button.primary:hover { background: #a3ebcf; border-color: #a3ebcf; }
+    button.ghost { background: transparent; }
+    button.danger { color: var(--danger); }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(11, 15, 20, 0.9);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: grid;
+      grid-template-columns: minmax(190px, 0.8fr) minmax(260px, 1.25fr) auto;
+      gap: 22px;
+      align-items: center;
+    }
+
+    .brand { min-width: 0; }
+    .brand-title { font-weight: 800; letter-spacing: -0.02em; font-size: 17px; }
+    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 7px;
+    }
+
+    .progress-row strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+    .progress-track {
+      height: 7px;
+      border-radius: 999px;
+      background: #202c38;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+      transition: width 220ms ease;
+    }
+
+    .top-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .top-actions button { padding: 8px 11px; font-size: 13px; }
+
+    main { max-width: 1080px; margin: 0 auto; padding: 38px 24px 90px; }
+
+    .intro {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(21, 30, 41, 0.96), rgba(17, 24, 33, 0.96));
+      padding: 26px 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    h1 { margin: 0 0 10px; font-size: clamp(27px, 4vw, 39px); line-height: 1.12; letter-spacing: -0.035em; }
+    .intro p { margin: 0; color: var(--muted); max-width: 850px; }
+    .intro p + p { margin-top: 10px; }
+
+    .privacy-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 17px;
+      padding: 7px 11px;
+      border: 1px solid rgba(140, 224, 189, 0.25);
+      background: var(--accent-soft);
+      border-radius: 999px;
+      color: #c9f4e2;
+      font-size: 12px;
+    }
+
+    .privacy-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+    .section-nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 22px 0 26px;
+    }
+
+    .section-nav a {
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 24, 33, 0.7);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+    }
+
+    .section-nav a:hover { color: var(--text); border-color: var(--line-strong); }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .save-state { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+    .save-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-strong); }
+    .save-state.error::before { background: var(--warning); }
+
+    .section { margin-top: 32px; scroll-margin-top: 100px; }
+    .section-heading { display: flex; align-items: baseline; gap: 12px; margin-bottom: 13px; }
+    .section-number { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; }
+    .section h2 { margin: 0; font-size: 21px; letter-spacing: -0.02em; }
+    .section-description { color: var(--muted); font-size: 13px; margin: -5px 0 15px; }
+
+    .question {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 22px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      transition: border-color 180ms ease, background 180ms ease;
+    }
+
+    .question.answered { border-color: rgba(140, 224, 189, 0.38); background: linear-gradient(145deg, #121c24, #111821); }
+    .question[hidden] { display: none; }
+
+    .question-head { display: flex; align-items: flex-start; gap: 13px; }
+    .question-id {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 47px;
+      height: 28px;
+      padding: 0 9px;
+      border-radius: 8px;
+      border: 1px solid var(--line-strong);
+      color: var(--accent);
+      background: #0e151d;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+
+    .question-title { margin: 1px 0 0; font-size: 17px; line-height: 1.4; font-weight: 720; }
+    .question-status {
+      margin-left: auto;
+      flex: 0 0 auto;
+      color: var(--faint);
+      font-size: 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
+
+    .answered .question-status { color: var(--accent); border-color: rgba(140, 224, 189, 0.3); background: var(--accent-soft); }
+
+    fieldset { border: 0; padding: 0; margin: 17px 0 0; }
+    legend { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    .options { display: grid; gap: 9px; }
+
+    .option {
+      position: relative;
+      display: grid;
+      grid-template-columns: 25px 1fr auto;
+      gap: 11px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 13px;
+      background: #0e151d;
+      cursor: pointer;
+      transition: border-color 150ms ease, background 150ms ease;
+    }
+
+    .option:hover { border-color: var(--line-strong); background: #121c26; }
+    .option.selected { border-color: var(--accent-strong); background: var(--accent-soft); }
+
+    .option input { position: absolute; opacity: 0; pointer-events: none; }
+
+    .option-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      border: 1px solid var(--line-strong);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 1px;
+    }
+
+    .selected .option-letter { background: var(--accent); border-color: var(--accent); color: #082017; }
+    .option-text { color: #d8e2ec; font-size: 14px; }
+    .default-badge { color: var(--faint); font-size: 10px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 7px; white-space: nowrap; }
+    .selected .default-badge { color: var(--accent); border-color: rgba(140, 224, 189, 0.3); }
+
+    .free-answer { margin-top: 17px; }
+    .free-answer label { display: block; color: var(--muted); font-size: 12px; font-weight: 650; margin-bottom: 7px; }
+    textarea {
+      width: 100%;
+      min-height: 82px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0b1219;
+      color: var(--text);
+      padding: 12px 13px;
+      line-height: 1.5;
+    }
+
+    textarea::placeholder { color: #627485; }
+    textarea:focus { border-color: var(--accent-strong); }
+
+    .question-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; }
+    .question-actions button { font-size: 12px; padding: 7px 10px; }
+
+    .empty-state {
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius);
+      color: var(--muted);
+      padding: 28px;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .summary {
+      margin-top: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 24px;
+    }
+
+    .summary h2 { margin: 0 0 8px; font-size: 21px; }
+    .summary p { margin: 0 0 17px; color: var(--muted); font-size: 13px; }
+    .summary-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+
+    footer { color: var(--faint); font-size: 11px; text-align: center; margin-top: 34px; }
+
+    .toast {
+      position: fixed;
+      z-index: 50;
+      left: 50%;
+      bottom: 24px;
+      transform: translate(-50%, 16px);
+      opacity: 0;
+      pointer-events: none;
+      background: #1a2733;
+      border: 1px solid var(--line-strong);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 11px 16px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      transition: opacity 180ms ease, transform 180ms ease;
+      max-width: min(90vw, 520px);
+      text-align: center;
+    }
+
+    .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 860px) {
+      .topbar-inner { grid-template-columns: 1fr; gap: 12px; padding: 12px 18px; }
+      .brand { display: flex; align-items: baseline; gap: 10px; }
+      .brand-sub { margin: 0; }
+      .top-actions { justify-content: flex-start; }
+      main { padding: 26px 18px 70px; }
+      .intro { padding: 22px; }
+    }
+
+    @media (max-width: 560px) {
+      .top-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .top-actions button { width: 100%; }
+      .question { padding: 17px; }
+      .question-head { gap: 9px; }
+      .question-title { font-size: 15px; }
+      .question-status { display: none; }
+      .option { grid-template-columns: 24px 1fr; }
+      .default-badge { display: none; }
+      .section h2 { font-size: 18px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-title">herness / owner decisions</div>
+        <div class="brand-sub">D01–D21 · локальный опросник</div>
+      </div>
+
+      <div>
+        <div class="progress-row">
+          <span>Отвечено</span>
+          <strong id="progressText">0 / 21</strong>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="primary" id="copyButton" type="button">Скопировать ответы</button>
+        <button id="downloadMdButton" type="button">Скачать MD</button>
+        <button id="downloadJsonButton" type="button">Скачать JSON</button>
+        <button class="ghost danger" id="resetButton" type="button">Сбросить</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div class="eyebrow">Decision questionnaire</div>
+      <h1>Решения владельца перед новым брифом</h1>
+      <p>Выбери вариант под каждым вопросом и при необходимости добавь свободный ответ. Вариант <strong>A</strong> повторяет текущий безопасный default из брифа; кнопка «Выбрать default» делает этот выбор явно.</p>
+      <p>Можно отвечать по частям. Ответы сохраняются только в этом браузере и никуда не отправляются.</p>
+      <div class="privacy-note"><span class="privacy-dot"></span>Не вставляй секреты, ключи, токены или личные данные</div>
+    </section>
+
+    <nav class="section-nav" id="sectionNav" aria-label="Разделы опросника"></nav>
+
+    <div class="toolbar">
+      <div class="save-state" id="saveState">Сохранение включено</div>
+      <button class="ghost" id="unansweredButton" type="button" aria-pressed="false">Показать только без ответа</button>
+    </div>
+
+    <div id="questionSections"></div>
+
+    <div class="empty-state" id="emptyState" hidden>В этом фильтре вопросов нет.</div>
+
+    <section class="summary">
+      <h2>Забрать ответы</h2>
+      <p>Скопируй ответы в чат или скачай файл. После этого можно передать результат агенту для анализа и сборки новой версии брифа.</p>
+      <div class="summary-actions">
+        <button class="primary" id="summaryCopyButton" type="button">Скопировать все ответы</button>
+        <button id="summaryMdButton" type="button">Скачать Markdown</button>
+        <button id="summaryJsonButton" type="button">Скачать JSON</button>
+      </div>
+    </section>
+
+    <footer>Standalone HTML · без внешних запросов · данные остаются на устройстве</footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    const sections = [
+      {
+        id: "product",
+        number: "01",
+        title: "Продукт и первый пользователь",
+        description: "Кто использует herness, от чьего имени действует агент и какая задача проверяется первой."
+      },
+      {
+        id: "authority",
+        number: "02",
+        title: "Полномочия, отзыв и внешние эффекты",
+        description: "Где проходит граница доверия, как выдаются и отзываются права и что разрешено делать наружу."
+      },
+      {
+        id: "runtime",
+        number: "03",
+        title: "Исполнение, автономия и память",
+        description: "Какие возможности получает агент, что он может менять и какие внешние связи входят в v1."
+      },
+      {
+        id: "evidence",
+        number: "04",
+        title: "Проверка, доказательства и первый эксперимент",
+        description: "Кто выносит вердикт и что именно должен доказать первый Controlled эксперимент."
+      }
+    ];
+
+    const questions = [
+      {
+        id: "D01",
+        section: "product",
+        title: "Кто первый пользователь herness и какие задачи должны решаться первыми?",
+        options: [
+          "Разработчик или исследователь: локальные инженерные задачи в отделяемом репозитории.",
+          "Оператор или аналитик: работа с данными, отчётами и автоматизация без публикации.",
+          "Широкий пользователь: разные бытовые и рабочие задачи, включая внешние сервисы."
+        ],
+        placeholder: "Например: первый пользователь — я; задачи — исправление ошибок в локальных проектах."
+      },
+      {
+        id: "D02",
+        section: "product",
+        title: "Какая первая продуктовая вертикаль?",
+        options: [
+          "inspect → patch → test → artifact в локальном fixture с fake R3.",
+          "Только узкий read → filter → count как первый полноценный пилот.",
+          "Обе вертикали, но с раздельными критериями и вердиктами."
+        ],
+        placeholder: "Что важнее доказать в первую очередь?"
+      },
+      {
+        id: "D03",
+        section: "product",
+        title: "От чьего имени действует агент и где корень полномочий?",
+        options: [
+          "Все полномочия коренятся в owner anchor; agent_self — отдельная идентичность, но не независимый суверенитет. Инициатор, issuer, subject, executor и participant разделены.",
+          "У агента есть независимый собственный ключ и собственный объём полномочий, который владелец может ограничивать и отзывать.",
+          "Гибрид: часть полномочий собственная, часть делегированная владельцем."
+        ],
+        placeholder: "Как трактовать собственную агентскую идентичность и суверенитет?"
+      },
+      {
+        id: "D04",
+        section: "product",
+        title: "Что означает режим joint в первой версии?",
+        options: [
+          "Только fake two-party fixture: две стороны явно подписывают общие ограниченные полномочия. Реальная совместная деятельность отложена.",
+          "Сразу полноценные Negotiated joint-полномочия, расходы и распределение ответственности.",
+          "Исключить joint из v1."
+        ],
+        placeholder: "Нужна ли совместная субъектность уже в первой версии?"
+      },
+      {
+        id: "D05",
+        section: "product",
+        title: "Может ли агент иметь собственную внешнюю идентичность?",
+        options: [
+          "Сейчас только test-only identity и fake services. Реальные аккаунты, ключи, проекты и репутация — после отдельного решения владельца.",
+          "Разрешить собственные реальные аккаунты и ключи сразу, но с отдельной операционной и юридической ответственностью.",
+          "Не вводить собственную идентичность; агент всегда действует только по поручению человека."
+        ],
+        placeholder: "Какие реальные проявления собственной идентичности допустимы и когда?"
+      },
+      {
+        id: "D06",
+        section: "authority",
+        title: "От каких угроз первая версия обязана защищать?",
+        options: [
+          "От внешних инструкций, prompt injection, ошибочного поведения R2 и компрометации одного адаптера в пределах явно доказанной изоляции. Прямой egress R2 запрещён Enforcement-механизмом. Защита от host/kernel не заявляется.",
+          "Пока только логические и policy-границы; OS-зависимые контроли отмечаются N/A, а полный PASS для таких экспериментов недоступен.",
+          "Сразу включить компрометацию host, соседних процессов и kernel в модель угроз."
+        ],
+        placeholder: "Перечисли компоненты, компрометация которых должна блокироваться уже в v1."
+      },
+      {
+        id: "D07",
+        section: "authority",
+        title: "Как агент получает доступ к модели и какие данные видит provider?",
+        options: [
+          "Только через host-side model gateway: R2 не имеет прямого Internet egress, передаются спроецированные разрешённые поля, есть meter и refs-only journal. Provider — инфраструктурный получатель, не R3-participant.",
+          "Разрешить R2 прямые вызовы provider через узкий allowlist.",
+          "В первом эксперименте использовать scripted-агента без model inference."
+        ],
+        placeholder: "Кто медиирует model-calls, какие поля разрешены и как учитывается стоимость?"
+      },
+      {
+        id: "D08",
+        section: "authority",
+        title: "Как устроен authority envelope и его проверка?",
+        options: [
+          "R3 проверяет подписанный envelope по публичному anchor без доступа к R1. Обязательны issuer/subject/principal, action+object, recipient, data scope, purpose, effect, budget, expiry, revocation, operation/idempotency ID, kid/anchor_epoch, алгоритм канонизации и правило digest.",
+          "R3 онлайн запрашивает R1 перед каждой операцией.",
+          "Использовать простой статический token без независимой криптографической проверки."
+        ],
+        placeholder: "Какие поля должны быть защищены подписью и кто именно их проверяет?"
+      },
+      {
+        id: "D09",
+        section: "authority",
+        title: "Как работают отзыв, свежесть, время и защита от replay?",
+        options: [
+          "Короткий expiry, подписанные revocation bulletins с монотонной эпохой через явно названный relay, доверенное время, durable replay-store. Неизвестный или устаревший статус запрещает изменяющие операции.",
+          "Только онлайн-проверка отзыва через отдельный канал.",
+          "Запретить все изменяющие внешние операции, пока механизм отзыва не доказан."
+        ],
+        placeholder: "Допустимая свежесть, транспорт bulletin, поведение при сбое часов и восстановлении."
+      },
+      {
+        id: "D10",
+        section: "authority",
+        title: "Какие внешние эффекты можно выполнять без отдельного подтверждения?",
+        options: [
+          "Наблюдение — в выданном scope; обратимое изменение — по action+object grant; платёж, удаление, публикация и сообщение от имени человека — только отдельное подтверждение или узкое заранее заданное правило. Запрос подтверждения использует закрытую схему и provenance.",
+          "Любое внешнее изменение требует подтверждения каждую операцию.",
+          "Все изменения внутри широкого предварительного разрешения выполняются автономно."
+        ],
+        placeholder: "Какие классы эффектов и какие правила подтверждения допустимы?"
+      },
+      {
+        id: "D11",
+        section: "authority",
+        title: "Где хранятся секреты и когда создаётся настоящий owner key?",
+        options: [
+          "Пока только synthetic canaries. Production secrets остаются вне R2; broker выдаёт operation-scoped capability конкретному adapter/destination/action. Настоящая owner ceremony отложена.",
+          "Сейчас создать реальный owner key, protected anchor и production secret store.",
+          "Разрешить хранение зашифрованных секретов непосредственно в R2."
+        ],
+        placeholder: "Где должен находиться trusted store и когда разрешена реальная ceremony?"
+      },
+      {
+        id: "D12",
+        section: "authority",
+        title: "Как модель данных представляет чувствительность, происхождение и экспорт?",
+        options: [
+          "Раздельные оси: sensitivity, provenance, allowed_sinks, validation_state, purpose, retention. Семь прежних labels — compatibility aliases. validated_export — маркер проверенного экспорта с evidence, а не класс чувствительности. Производные данные наследуют строгие ограничения источников.",
+          "Оставить семь значений как единый runtime enum.",
+          "Упростить до public / private / secret."
+        ],
+        placeholder: "Как классифицировать summary, patch, report и данные от внешних участников?"
+      },
+      {
+        id: "D13",
+        section: "authority",
+        title: "Что хранится в журнале и как работают удаление и retraction?",
+        options: [
+          "Append-only operational journal хранит refs/digests, но не сырой контент. Содержимое находится в отдельном deletable store. Для низкоэнтропийных данных используются HMAC/opaque refs. Retention, физическое удаление и удаление из индексов задаются отдельно.",
+          "Хранить всё содержимое в append-only журнале.",
+          "Хранить содержимое в журнале, но зашифрованным."
+        ],
+        placeholder: "Что удаляется физически, что остаётся в аудите и как защищать низкоэнтропийные данные?"
+      },
+      {
+        id: "D14",
+        section: "runtime",
+        title: "Какая модель исполнения допустима в R2?",
+        options: [
+          "Контролируемые primitives: read/write/patch/execute/test/build внутри sandbox. Unrestricted shell не выдаётся по умолчанию; false denials измеряются.",
+          "Unrestricted shell внутри disposable workspace.",
+          "Только анализ и чтение, без исполнения кода."
+        ],
+        placeholder: "Какие операции нужны для полезной работы и где проходит их sandbox-граница?"
+      },
+      {
+        id: "D15",
+        section: "runtime",
+        title: "Может ли агент предлагать или менять собственные инструменты и правила?",
+        options: [
+          "Может предлагать patch и новые инструменты, но не может self-grant/self-activate. Изменения проходят negative controls и owner admission.",
+          "Может самостоятельно менять себя внутри заранее широко выданного scope.",
+          "Самоизменение полностью запрещено."
+        ],
+        placeholder: "Где граница между предложением изменения и правом применить его?"
+      },
+      {
+        id: "D16",
+        section: "runtime",
+        title: "Какая память и recovery нужны первой версии?",
+        options: [
+          "Только task-scoped memory и durable checkpoints. Восстановление локальной работы отделено от восстановления внешнего эффекта. Cross-task semantic memory отложена.",
+          "Сразу ввести долговременную semantic memory между задачами.",
+          "Только stateless-выполнение без recovery."
+        ],
+        placeholder: "Что должно переживать crash и что запрещено переносить между задачами?"
+      },
+      {
+        id: "D17",
+        section: "runtime",
+        title: "Что входит в первую версию R3?",
+        options: [
+          "Fake R3 gateway и fake participant: identity, principal, envelopes, revocation, replay и structured results. Никаких реальных аккаунтов и отправок.",
+          "Реальные read-only API после отдельного разрешения.",
+          "Сразу включить реальные изменяющие операции."
+        ],
+        placeholder: "Какие участники и операции должны быть в первом conformance corpus?"
+      },
+      {
+        id: "D18",
+        section: "runtime",
+        title: "Можно ли делегировать работу другим агентам?",
+        options: [
+          "Пока только fake agents. Делегируется явный subset полномочий с отдельным principal, бюджетом, сроком и независимой приёмкой.",
+          "Разрешить реальную делегацию другим агентам в узких grants.",
+          "Делегирование запрещено."
+        ],
+        placeholder: "Кто может выбирать исполнителя и какие полномочия нельзя передавать?"
+      },
+      {
+        id: "D19",
+        section: "runtime",
+        title: "Как хранить память отношений и репутацию?",
+        options: [
+          "Append-only provenance log с scope, сроком и retraction. Успех не повышает authority автоматически; cross-service transfer репутации запрещён.",
+          "Репутационные scores могут влиять на будущие полномочия.",
+          "Сразу ввести полноценную semantic relationship memory."
+        ],
+        placeholder: "Что можно помнить об участниках и как это не должно превращаться в новые права?"
+      },
+      {
+        id: "D20",
+        section: "evidence",
+        title: "Кто проверяет результат и что означает verified?",
+        options: [
+          "Host-side executable verifier; criteria/fixtures находятся вне agent-writable workspace; digest фиксируется до verdict. Разделяются artifact integrity, acceptance и task validity. LLM-judge даёт только более слабый статус. Незакоммиченный срез помечается ANCHORED_WEAK.",
+          "Verifier работает внутри R2.",
+          "Основной product PASS выставляет другая AI-модель."
+        ],
+        placeholder: "Кто может менять criteria, fixture и verifier и что именно означает verified?"
+      },
+      {
+        id: "D21",
+        section: "evidence",
+        title: "Что должен доказать первый эксперимент и как сравнивать herness?",
+        options: [
+          "Два этапа: сначала feasibility/security на одном fixture; затем frozen task suite с повторами. A0 — текущий harness с той же моделью и бюджетом, A — herness с минимальными controls, B — выбранная вариация. Нарушение границы = FAIL, а не штраф. Продуктовая польза измеряется отдельно от технической выполнимости.",
+          "Ограничиться одним fixture без сравнения с baseline.",
+          "Сразу провести полный A0/A/B до feasibility-проверки."
+        ],
+        placeholder: "Определи A0/A/B, число задач и повторов, главную метрику и порог успеха."
+      }
+    ];
+
+    const STORAGE_KEY = "herness-owner-questionnaire-v1";
+    const letters = ["A", "B", "C"];
+    let answers = Object.fromEntries(questions.map((question) => [question.id, { choice: "", free: "" }]));
+    let showOnlyUnanswered = false;
+    let saveTimer = null;
+    let toastTimer = null;
+
+    const sectionRoot = document.getElementById("questionSections");
+    const sectionNav = document.getElementById("sectionNav");
+    const progressText = document.getElementById("progressText");
+    const progressFill = document.getElementById("progressFill");
+    const saveState = document.getElementById("saveState");
+    const unansweredButton = document.getElementById("unansweredButton");
+    const emptyState = document.getElementById("emptyState");
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function normalizeLoadedAnswers(value) {
+      const normalized = Object.fromEntries(questions.map((question) => [question.id, { choice: "", free: "" }]));
+      if (!value || typeof value !== "object") return normalized;
+
+      for (const question of questions) {
+        const item = value[question.id];
+        if (!item || typeof item !== "object") continue;
+        const choice = letters.includes(item.choice) ? item.choice : "";
+        const free = typeof item.free === "string" ? item.free : "";
+        normalized[question.id] = { choice, free };
+      }
+      return normalized;
+    }
+
+    function loadAnswers() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        answers = normalizeLoadedAnswers(parsed.answers ?? parsed);
+        saveState.textContent = "Загружено сохранённое состояние";
+      } catch (error) {
+        saveState.textContent = "Локальное сохранение недоступно";
+        saveState.classList.add("error");
+      }
+    }
+
+    function saveAnswers(immediate = false) {
+      clearTimeout(saveTimer);
+      const write = () => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: 1,
+            updatedAt: new Date().toISOString(),
+            answers
+          }));
+          saveState.textContent = "Сохранено локально";
+          saveState.classList.remove("error");
+        } catch (error) {
+          saveState.textContent = "Не удалось сохранить в браузере — скачай ответы";
+          saveState.classList.add("error");
+        }
+      };
+
+      if (immediate) write();
+      else {
+        saveState.textContent = "Сохраняю…";
+        saveTimer = setTimeout(write, 220);
+      }
+    }
+
+    function buildNavigation() {
+      sectionNav.innerHTML = sections.map((section) => (
+        `<a href="#${section.id}">${section.number} · ${escapeHtml(section.title)}</a>`
+      )).join("");
+    }
+
+    function buildSections() {
+      sectionRoot.innerHTML = sections.map((section) => {
+        const sectionQuestions = questions.filter((question) => question.section === section.id);
+        const cards = sectionQuestions.map((question) => buildQuestion(question)).join("");
+        return `
+          <section class="section" id="${section.id}" data-section="${section.id}">
+            <div class="section-heading">
+              <span class="section-number">${section.number}</span>
+              <h2>${escapeHtml(section.title)}</h2>
+            </div>
+            <p class="section-description">${escapeHtml(section.description)}</p>
+            ${cards}
+          </section>
+        `;
+      }).join("");
+    }
+
+    function buildQuestion(question) {
+      const current = answers[question.id];
+      const options = question.options.map((option, index) => {
+        const letter = letters[index];
+        const selected = current.choice === letter;
+        return `
+          <label class="option${selected ? " selected" : ""}" data-option-for="${question.id}" data-letter="${letter}">
+            <input type="radio" name="${question.id}" value="${letter}"${selected ? " checked" : ""}>
+            <span class="option-letter">${letter}</span>
+            <span class="option-text">${escapeHtml(option)}</span>
+            ${index === 0 ? '<span class="default-badge">default</span>' : ""}
+          </label>
+        `;
+      }).join("");
+
+      return `
+        <article class="question${isAnswered(question.id) ? " answered" : ""}" id="question-${question.id}" data-question="${question.id}">
+          <div class="question-head">
+            <span class="question-id">${question.id}</span>
+            <h3 class="question-title">${escapeHtml(question.title)}</h3>
+            <span class="question-status">без ответа</span>
+          </div>
+          <fieldset>
+            <legend>${escapeHtml(question.title)}</legend>
+            <div class="options">${options}</div>
+          </fieldset>
+          <div class="free-answer">
+            <label for="free-${question.id}">Свободный ответ</label>
+            <textarea id="free-${question.id}" data-free-for="${question.id}" placeholder="${escapeHtml(question.placeholder)}">${escapeHtml(current.free)}</textarea>
+          </div>
+          <div class="question-actions">
+            <button type="button" data-default-for="${question.id}">Выбрать default (A)</button>
+            <button class="ghost danger" type="button" data-clear-for="${question.id}">Очистить вопрос</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function isAnswered(id) {
+      const answer = answers[id];
+      return Boolean(answer.choice || answer.free.trim());
+    }
+
+    function updateQuestionCard(id) {
+      const card = document.querySelector(`[data-question="${id}"]`);
+      if (!card) return;
+      const answer = answers[id];
+      const answered = isAnswered(id);
+      card.classList.toggle("answered", answered);
+      card.querySelector(".question-status").textContent = answered ? "отвечено" : "без ответа";
+
+      card.querySelectorAll(".option").forEach((option) => {
+        const selected = option.dataset.letter === answer.choice;
+        option.classList.toggle("selected", selected);
+        option.querySelector("input").checked = selected;
+      });
+    }
+
+    function updateProgress() {
+      const count = questions.filter((question) => isAnswered(question.id)).length;
+      const percent = Math.round((count / questions.length) * 100);
+      progressText.textContent = `${count} / ${questions.length}`;
+      progressFill.style.width = `${percent}%`;
+      applyFilter();
+    }
+
+    function applyFilter() {
+      let visible = 0;
+      for (const question of questions) {
+        const card = document.getElementById(`question-${question.id}`);
+        const hidden = showOnlyUnanswered && isAnswered(question.id);
+        card.hidden = hidden;
+        if (!hidden) visible += 1;
+      }
+
+      for (const section of sections) {
+        const root = document.getElementById(section.id);
+        const hasVisible = questions.some((question) => question.section === section.id && !document.getElementById(`question-${question.id}`).hidden);
+        root.hidden = !hasVisible;
+      }
+      emptyState.hidden = visible !== 0;
+    }
+
+    function chooseOption(id, choice, shouldSave = true) {
+      answers[id].choice = choice;
+      updateQuestionCard(id);
+      updateProgress();
+      if (shouldSave) saveAnswers();
+    }
+
+    function chooseDefault(id) {
+      chooseOption(id, "A");
+      showToast(`${id}: выбран default A`);
+    }
+
+    function clearQuestion(id) {
+      answers[id] = { choice: "", free: "" };
+      const textarea = document.querySelector(`[data-free-for="${id}"]`);
+      if (textarea) textarea.value = "";
+      updateQuestionCard(id);
+      updateProgress();
+      saveAnswers();
+      showToast(`${id}: ответ очищен`);
+    }
+
+    function getSelectedOption(question) {
+      const index = letters.indexOf(answers[question.id].choice);
+      return index >= 0 ? question.options[index] : "";
+    }
+
+    function buildMarkdown() {
+      const createdAt = new Date().toLocaleString("ru-RU");
+      const answeredCount = questions.filter((question) => isAnswered(question.id)).length;
+      const lines = [
+        "# Ответы владельца herness",
+        "",
+        `Сформировано: ${createdAt}`,
+        `Отвечено: ${answeredCount} / ${questions.length}`,
+        "",
+        "> Ответы экспортированы из локального HTML-опросника. Секреты и ключи не должны вноситься в этот файл.",
+        ""
+      ];
+
+      for (const section of sections) {
+        lines.push(`## ${section.number}. ${section.title}`, "");
+        for (const question of questions.filter((item) => item.section === section.id)) {
+          const answer = answers[question.id];
+          lines.push(`### ${question.id}. ${question.title}`, "");
+          if (answer.choice) {
+            lines.push(`**Выбранный вариант:** ${answer.choice} — ${getSelectedOption(question)}`, "");
+          } else {
+            lines.push("**Выбранный вариант:** не выбран", "");
+          }
+          lines.push("**Свободный ответ:**", "", answer.free.trim() || "—", "");
+        }
+      }
+      return lines.join("\n");
+    }
+
+    function buildJson() {
+      return JSON.stringify({
+        schema: "herness-owner-answers-v1",
+        exportedAt: new Date().toISOString(),
+        source: "owner-questionnaire.html",
+        answered: questions.filter((question) => isAnswered(question.id)).length,
+        total: questions.length,
+        answers: Object.fromEntries(questions.map((question) => [question.id, {
+          choice: answers[question.id].choice,
+          selectedOption: getSelectedOption(question),
+          freeAnswer: answers[question.id].free,
+          answered: isAnswered(question.id)
+        }]))
+      }, null, 2);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("visible"), 2600);
+    }
+
+    async function copyAnswers() {
+      const text = buildMarkdown();
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const helper = document.createElement("textarea");
+          helper.value = text;
+          helper.style.position = "fixed";
+          helper.style.opacity = "0";
+          document.body.appendChild(helper);
+          helper.select();
+          const copied = document.execCommand("copy");
+          helper.remove();
+          if (!copied) throw new Error("copy failed");
+        }
+        showToast("Ответы скопированы в буфер обмена");
+      } catch (error) {
+        showToast("Не удалось скопировать — используй «Скачать MD»");
+      }
+    }
+
+    function downloadFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast(`Файл ${filename} подготовлен`);
+    }
+
+    function downloadMarkdown() {
+      downloadFile("herness-owner-answers.md", buildMarkdown(), "text/markdown;charset=utf-8");
+    }
+
+    function downloadJson() {
+      downloadFile("herness-owner-answers.json", buildJson(), "application/json;charset=utf-8");
+    }
+
+    function resetAnswers() {
+      const confirmed = window.confirm("Очистить все ответы? Это удалит локально сохранённый прогресс.");
+      if (!confirmed) return;
+      answers = Object.fromEntries(questions.map((question) => [question.id, { choice: "", free: "" }]));
+      for (const question of questions) {
+        const textarea = document.querySelector(`[data-free-for="${question.id}"]`);
+        if (textarea) textarea.value = "";
+        updateQuestionCard(question.id);
+      }
+      updateProgress();
+      saveAnswers(true);
+      showToast("Все ответы очищены");
+    }
+
+    sectionRoot.addEventListener("change", (event) => {
+      const input = event.target.closest('input[type="radio"]');
+      if (!input) return;
+      chooseOption(input.name, input.value);
+    });
+
+    sectionRoot.addEventListener("input", (event) => {
+      const textarea = event.target.closest("[data-free-for]");
+      if (!textarea) return;
+      const id = textarea.dataset.freeFor;
+      answers[id].free = textarea.value;
+      updateQuestionCard(id);
+      updateProgress();
+      saveAnswers();
+    });
+
+    sectionRoot.addEventListener("click", (event) => {
+      const defaultButton = event.target.closest("[data-default-for]");
+      if (defaultButton) {
+        chooseDefault(defaultButton.dataset.defaultFor);
+        return;
+      }
+      const clearButton = event.target.closest("[data-clear-for]");
+      if (clearButton) clearQuestion(clearButton.dataset.clearFor);
+    });
+
+    unansweredButton.addEventListener("click", () => {
+      showOnlyUnanswered = !showOnlyUnanswered;
+      unansweredButton.setAttribute("aria-pressed", String(showOnlyUnanswered));
+      unansweredButton.textContent = showOnlyUnanswered ? "Показать все вопросы" : "Показать только без ответа";
+      applyFilter();
+    });
+
+    document.getElementById("copyButton").addEventListener("click", copyAnswers);
+    document.getElementById("summaryCopyButton").addEventListener("click", copyAnswers);
+    document.getElementById("downloadMdButton").addEventListener("click", downloadMarkdown);
+    document.getElementById("summaryMdButton").addEventListener("click", downloadMarkdown);
+    document.getElementById("downloadJsonButton").addEventListener("click", downloadJson);
+    document.getElementById("summaryJsonButton").addEventListener("click", downloadJson);
+    document.getElementById("resetButton").addEventListener("click", resetAnswers);
+
+    window.addEventListener("beforeunload", () => saveAnswers(true));
+
+    loadAnswers();
+    buildNavigation();
+    buildSections();
+    updateProgress();
+  </script>
+</body>
+</html>

@@ -1857,7 +1857,28 @@ def cmd_gates(args) -> int:
     return 0 if total == 0 else 1
 
 
-# ---------------------------------------------------------------- selftest
+# ---------------------------------------------------------------- tests / selftest
+
+def cmd_tests(args) -> int:
+    """Запустить единый manifest; неизвестный selection не превращается в пустой зелёный."""
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from bin.test_manifest import main as manifest_main
+
+    command = ["--root", str(ROOT)]
+    if args.manifest:
+        command += ["--manifest", str(args.manifest)]
+    command.append("--check" if args.check else "--list" if args.list else "--run")
+    if args.python_only:
+        command.append("--python-only")
+    if args.rust_only:
+        command.append("--rust-only")
+    for suite_id in args.only:
+        command += ["--only", suite_id]
+    if args.timeout:
+        command += ["--timeout", str(args.timeout)]
+    return manifest_main(command)
+
 
 def cmd_selftest(args) -> int:
     """Negative tests: a gate that cannot fail proves nothing."""
@@ -1912,13 +1933,20 @@ def cmd_selftest(args) -> int:
         else:
             os.environ["DSH_CLI"] = old
 
-    for suite in ("test_contracts.py", "test_m1_journal.py", "test_provider.py", "test_http_provider.py", "test_report.py", "test_audit.py", "test_failures.py", "test_hohfeld.py", "test_propagation.py", "test_reply.py", "test_budget.py", "test_live.py", "test_tools.py", "test_webfetch.py", "test_browser_search.py", "test_anchor.py", "test_capabilities.py", "test_loop_flail.py", "test_journal_chain.py", "test_assert_bound.py", "test_coverage.py", "test_seal.py", "test_store.py", "test_evidence.py", "test_selfref.py", "test_bridge.py", "test_bridge_redirects.py", "test_accept.py", "test_host_journal.py", "test_false_done.py", "test_forgery.py", "test_new_criterion.py", "test_compile.py", "test_hohfeld.py", "test_registry_state.py", "test_chain.py", "test_head_cards.py", "test_tool_card.py", "test_card_atoms.py", "test_r8_repros.py", "test_new_tool.py"):
-        path = ROOT / "tests" / suite
-        if path.exists():
-            proc = subprocess.run([sys.executable, str(path)], capture_output=True, text=True,
-                                  encoding="utf-8", errors="replace")
-            tail = (proc.stdout.strip().splitlines() or ["нет вывода"])[-1]
-            results.append((proc.returncode == 0, f"{suite}: {tail}"))
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from bin.test_manifest import load_manifest, run_manifest, validate_manifest
+
+    manifest = load_manifest(ROOT / "tests" / "test-manifest.json")
+    manifest_problems = validate_manifest(ROOT, manifest)
+    if manifest_problems:
+        results.append((False, "test manifest: " + "; ".join(manifest_problems[:3])))
+    else:
+        suite_results, problems = run_manifest(ROOT, manifest, python=True, rust=False)
+        if problems:
+            results.append((False, "test manifest: " + "; ".join(problems)))
+        for result in suite_results:
+            results.append((result.ok, f"{result.id}: {result.summary()}"))
 
     with tempfile.TemporaryDirectory() as tmp3:
         docs = Path(tmp3) / "docs"
@@ -2143,6 +2171,18 @@ def main(argv: list[str]) -> int:
 
     sub.add_parser("criteria", help="реестр критериев и их статусов").set_defaults(func=cmd_criteria)
     sub.add_parser("tools", help="инвентарь тулчейнов: размеры, версии, поломки").set_defaults(func=cmd_tools)
+
+    p = sub.add_parser("tests", help="единый manifest тестов с ненулевыми счётчиками")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="только проверить покрытие manifest")
+    mode.add_argument("--list", action="store_true", help="напечатать suites")
+    surface = p.add_mutually_exclusive_group()
+    surface.add_argument("--python-only", action="store_true")
+    surface.add_argument("--rust-only", action="store_true")
+    p.add_argument("--only", action="append", default=[], metavar="ID")
+    p.add_argument("--manifest")
+    p.add_argument("--timeout", type=int, default=900)
+    p.set_defaults(func=cmd_tests)
 
     sub.add_parser("selftest", help="негативные тесты инструмента").set_defaults(func=cmd_selftest)
 

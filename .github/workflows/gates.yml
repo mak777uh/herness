@@ -24,6 +24,8 @@ jobs:
           python-version: "3.13"
       - name: Зависимость jsonschema
         run: python -m pip install jsonschema==4.26.0
+      - name: Покрытие test manifest
+        run: python bin/test_manifest.py --check
       # Профиль auto: гейты, которым нужны runs/ или core-rs/target/, печатаются как N/A
       # с причиной (этих каталогов нет в git). Профиль full считает их провалом и
       # запускается на машине, где есть журналы и сборка: python bin/hs.py gates --profile full
@@ -58,8 +60,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Зависимость jsonschema
-        run: python -m pip install jsonschema==4.26.0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Зависимости Python
+        run: python -m pip install jsonschema==4.26.0 pytest==9.1.1
+      - name: Покрытие test manifest
+        run: python bin/test_manifest.py --check
       - name: Selftest
         run: python bin/hs.py selftest
 
@@ -108,9 +113,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: cargo test --lib
-        working-directory: core-rs
-        run: cargo test --lib
+      - name: "Rust manifest: lib, integration и binary smoke"
+        run: python bin/test_manifest.py --run --rust-only
 
   plugin:
     name: плагин (кадры HSJ2)

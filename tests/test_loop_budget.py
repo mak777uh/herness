@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import re
+import shlex
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from bin import rust_tests  # noqa: E402
 
 
 def cargo_test(filter_word: str) -> tuple[int, str]:
@@ -20,14 +26,10 @@ def cargo_test(filter_word: str) -> tuple[int, str]:
     if sys.platform == "win32":
         if shutil.which("wsl") is None:
             return 2, "нет wsl: Rust-тесты не запустить на Windows"
-        root = pathlib.Path(__file__).resolve().parents[1]
-        wsl_root = "/mnt/" + root.drive[0].lower() + root.as_posix()[2:]
-        command = (f"cd {wsl_root}/core-rs && CARGO_NET_OFFLINE=true "
-                   f"rustup run stable cargo test --release --lib {filter_word} 2>&1")
-        result = subprocess.run(["wsl", "-d", "Ubuntu", "--exec", "bash", "-lc", command],
-                                capture_output=True, text=True, encoding="utf-8",
-                                errors="replace")
-        return result.returncode, (result.stdout or "") + (result.stderr or "")
+        core_wsl = shlex.quote(rust_tests.wsl_path(ROOT / "core-rs"))
+        command = (f"cd {core_wsl} && {rust_tests.CLEAN} && CARGO_NET_OFFLINE=true "
+                   f"rustup run stable cargo test --release --lib {shlex.quote(filter_word)} 2>&1")
+        return rust_tests.wsl(command)
 
     result = subprocess.run(["cargo", "test", "--release", "--lib", filter_word],
                             cwd=ROOT / "core-rs", capture_output=True, text=True,
@@ -39,11 +41,13 @@ def main() -> int:
     # Бюджет проверяется сборочными тестами Rust: денежный, временной и по шагам.
     code, out = cargo_test("бюджет")
     tail = out.strip().splitlines()
-    failed = 0 if code == 0 else 1
+    matches = re.findall(r"test result: ok\. (\d+) passed;", out)
+    passed = sum(int(value) for value in matches)
+    ok = code == 0 and passed > 0
     print("\n".join(tail[-6:]))
-    print(f"провалов: {failed}")
-    return 0 if failed == 0 else 1
-    return 0 if failed == 0 else 1
+    print(f"[{'ok' if ok else 'FAIL'}] Rust budget tests: {passed} passed, rc={code}")
+    print(f"провалов: {0 if ok else 1}")
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
