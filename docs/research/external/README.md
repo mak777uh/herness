@@ -76,6 +76,16 @@
 статусам и манифесту. Сводка, проверка утверждений и развилки —
 [`docs/R8-SYNTHESIS.md`](../../R8-SYNTHESIS.md).
 
+## R9 — 23.11.2026
+
+Вопросы: [`docs/EXTERNAL-QUESTIONS-R9-BRIDGES.md`](../../EXTERNAL-QUESTIONS-R9-BRIDGES.md) (31 вопрос, 8 блоков, снимок `ce7c64d`).
+Дополнение после первого ответа: [`docs/EXTERNAL-QUESTIONS-R9-ADDENDUM.md`](../../EXTERNAL-QUESTIONS-R9-ADDENDUM.md).
+
+| файл | размер | SHA-256 | что внутри |
+|---|---:|---|---|
+| [`2026-11-23-R9-answer-A.md`](2026-11-23-R9-answer-A.md) | 89 628 Б | `cf36482b7b66748d95d002b0060f3b245856b19f266272125a962439f137f275` | все 31 вопрос R9; реестр открытых ссылок (BRIDGE/COMP/CHAIN/PDIFF/PROP/CONST/NC/ROOT); сквозная линия «один IR → одно ядро → три формы законов → конформность-гейт»; 3 repro-кандидата (пустой allowed_methods, транскрипция в policy_diff, шестой код K9_SCHEMA) |
+
+
 Хеши проверяются командами:
 
 ```bash
@@ -83,4 +93,5 @@ sha256sum docs/research/external/2026-11-16-R5-answer-*.md
 sha256sum docs/research/external/2026-11-17-R6-answer-*
 sha256sum docs/research/external/2026-11-17-R7-answer-*
 sha256sum docs/research/external/2026-11-17-R8-answer-*
+sha256sum docs/research/external/2026-11-23-R9-answer-*
 ```

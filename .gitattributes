@@ -65,3 +65,5 @@ docs/research/external/2026-11-17-R7-answer-* -text -eol
 # то же для R8: пять сырых ответов (A-C, E .txt; D .md) коммитятся байт-в-байт,
 # иначе sha256 в README перестанет совпадать с файлом
 docs/research/external/2026-11-17-R8-answer-* -text -eol
+# то же для R9: первый ответ A коммитится байт-в-байт,
+docs/research/external/2026-11-23-R9-answer-* -text -eol
