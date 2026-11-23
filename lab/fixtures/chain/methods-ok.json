@@ -1,0 +1,8 @@
+{
+ "id": "chain:methods-ok",
+ "adjacent": {"id": "adjacent-1", "allowed_destinations": ["allowed.local"],
+  "allowed_methods": ["GET", "POST"], "proven": true},
+ "downstream": [{"id": "downstream-1", "allowed_destinations": ["allowed.local"],
+  "allowed_methods": ["GET", "POST"], "proven": true}],
+ "steps": []
+}

@@ -1,0 +1,8 @@
+{
+ "id": "chain:methods-absent",
+ "adjacent": {"id": "adjacent-1", "allowed_destinations": ["allowed.local"],
+  "allowed_methods": ["GET"], "proven": true},
+ "downstream": [{"id": "downstream-1", "allowed_destinations": ["allowed.local"],
+  "proven": true}],
+ "steps": []
+}

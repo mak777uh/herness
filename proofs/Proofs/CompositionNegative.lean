@@ -29,9 +29,18 @@ example : leaks (comp secretStep netStep) = false := by
 
 /-- Цепочка с непроверенным downstream. -/
 def controlChain : Chain :=
-  ⟨⟨"adjacent", ["allowed.local"], true⟩,
-   [⟨"downstream", ["allowed.local"], false⟩]⟩
+  ⟨⟨"adjacent", ["allowed.local"], ["GET"], true⟩,
+   [⟨"downstream", ["allowed.local"], ["GET"], false⟩]⟩
 
 /-- Ложь: цепочка с непроверенным downstream допустима. -/
 example : chainOk controlChain = true := by
+  decide
+
+/-- Цепочка, где adjacent разрешает метод, а downstream не покрывает (V1). -/
+def controlChainMethods : Chain :=
+  ⟨⟨"adjacent", ["allowed.local"], ["POST"], true⟩,
+   [⟨"downstream", ["allowed.local"], [], true⟩]⟩
+
+/-- Ложь: пустое покрытие методов downstream всё ещё допустимо. -/
+example : chainOk controlChainMethods = true := by
   decide

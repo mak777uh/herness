@@ -40,9 +40,9 @@ def codes(report: dict) -> list[str]:
 
 def bridge(name: str, destinations: list[str], proven: bool = True,
            methods: list[str] | None = None) -> dict:
-    item = {"id": name, "allowed_destinations": destinations, "proven": proven}
-    if methods is not None:
-        item["allowed_methods"] = methods
+    # V1: allowed_methods обязателен; default ["GET"] — явный coverage-набор.
+    item = {"id": name, "allowed_destinations": destinations, "proven": proven,
+            "allowed_methods": ["GET"] if methods is None else methods}
     return item
 
 
@@ -133,6 +133,31 @@ def main() -> int:
                               capture_output=True, text=True, encoding="utf-8", cwd=ROOT)
         check(proc.returncode == 3, f"CLI: отказ rc=3 (наблюдение rc={proc.returncode})")
         check("K9_CHAIN_UNPROVEN" in proc.stdout, "CLI: код отказа назван")
+
+    # 9. V1: пустой downstream allowed_methods при непустом adjacent — отказ.
+    report = chain.check_chain(chain_decl(
+        adjacent=bridge("adjacent-1", ["allowed.local"], methods=["POST"]),
+        downstream=[bridge("downstream-1", ["allowed.local"], methods=[])],
+    ))
+    check(report["ok"] is False and "K9_DOWNSTREAM_MISSING_METHOD" in codes(report),
+          "пустой downstream methods при непустом adjacent отвергнут (V1, coverage)")
+
+    # 10. V1: отсутствие allowed_methods — K9_SCHEMA.
+    report = chain.check_chain(chain_decl(
+        adjacent=bridge("adjacent-1", ["allowed.local"], methods=["GET"]),
+        downstream=[{"id": "downstream-1",
+                     "allowed_destinations": ["allowed.local"], "proven": True}],
+    ))
+    check(report["ok"] is False and "K9_SCHEMA" in codes(report),
+          "отсутствующее allowed_methods отвергнуто (V1, K9_SCHEMA)")
+
+    # 11. V1: пустой adjacent methods ничего не пересылает — покрытие тривиально.
+    report = chain.check_chain(chain_decl(
+        adjacent=bridge("adjacent-1", ["allowed.local"], methods=[]),
+        downstream=[bridge("downstream-1", ["allowed.local"], methods=["GET"])],
+    ))
+    check(report["ok"] is True,
+          "пустой adjacent methods — покрытие выполнено тривиально (V1)")
 
     for ok, message in RESULTS:
         print(f"[{'ok' if ok else 'FAIL'}] {message}")

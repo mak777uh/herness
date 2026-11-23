@@ -57,6 +57,7 @@ COMPOSITION_THEOREMS = [
     "Composition.runChain_performs_safe",
     "Composition.unproven_refused",
     "Composition.chainOk_all_proven",
+    "Composition.methods_coverage_refused",
 ]
 
 

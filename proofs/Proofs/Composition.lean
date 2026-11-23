@@ -14,7 +14,8 @@ module
   T1 — объединение замыканий внутри границы;
   T2 — нет: чтение секрета и сеть по отдельности не утекают, вместе — утекают;
   T3 — исполнитель отказывает при утечке; T4 — исполняет без утечки;
-  T5/T6 — downstream-мост без доказательства делает цепочку недопустимой.
+  T5/T6 — downstream-мост без доказательства делает цепочку недопустимой;
+  T7 — пустое покрытие методов downstream при непустом adjacent — отказ (V1).
 
 Граница модели: проверяются объявленные замыкания, а не поведение кода.
 Это `K9_model_checked`, а не `K9_proven`.
@@ -125,6 +126,7 @@ public theorem runChain_performs_safe (s : Step) (h : leaks s = false) :
 public structure Bridge where
   id : String
   destinations : List String
+  methods : List String
   proven : Bool
   deriving Repr
 
@@ -142,9 +144,14 @@ public def allProven (bs : List Bridge) : Bool :=
 public def forwards (adj : Bridge) (b : Bridge) : Bool :=
   adj.destinations.all (fun d => b.destinations.contains d)
 
-/-- Цепочка допустима: все downstream доказаны и форвардят адреса adjacent. -/
+/-- Downstream обязан покрывать каждый метод adjacent (coverage, V1). -/
+public def forwardsMethods (adj : Bridge) (b : Bridge) : Bool :=
+  adj.methods.all (fun m => b.methods.contains m)
+
+/-- Цепочка допустима: все downstream доказаны, форвардят адреса и покрывают методы adjacent. -/
 public def chainOk (c : Chain) : Bool :=
   allProven c.downstream && c.downstream.all (forwards c.adjacent)
+    && c.downstream.all (forwardsMethods c.adjacent)
 
 /-- T5: непроверенный downstream делает цепочку недопустимой. -/
 public theorem unproven_refused (c : Chain) (h : allProven c.downstream = false) :
@@ -154,7 +161,25 @@ public theorem unproven_refused (c : Chain) (h : allProven c.downstream = false)
 /-- T6: допустимая цепочка требует доказательства у всех downstream. -/
 public theorem chainOk_all_proven (c : Chain) (h : chainOk c = true) :
     allProven c.downstream = true := by
-  simp [chainOk] at h
-  exact h.1
+  simp only [chainOk, Bool.and_eq_true] at h
+  exact h.1.1
+
+/-- T7: пустое покрытие методов downstream при непустом adjacent — отказ. -/
+public theorem methods_coverage_refused (c : Chain) (b : Bridge)
+    (hb : b ∈ c.downstream) (he : b.methods = []) (ha : c.adjacent.methods ≠ []) :
+    chainOk c = false := by
+  have hfb : forwardsMethods c.adjacent b = false := by
+    show c.adjacent.methods.all (fun m => b.methods.contains m) = false
+    cases hd : c.adjacent.methods with
+    | nil => exact absurd hd ha
+    | cons head tail => simp [he]
+  have hnot : ¬ (c.downstream.all (forwardsMethods c.adjacent) = true) := by
+    intro htrue
+    have h1 := (List.all_eq_true (l := c.downstream)
+      (p := forwardsMethods c.adjacent)).mp htrue b hb
+    simp [hfb] at h1
+  cases hh : c.downstream.all (forwardsMethods c.adjacent) with
+  | false => simp [chainOk, hh]
+  | true => exact absurd hh hnot
 
 end Composition

@@ -405,6 +405,16 @@
    "conclusion": "research/outputs/K9-COMPOSITION-R1-2026-11-21.txt",
    "claim": "C-0332",
    "note": "PASS: Lean Proofs.Composition — T1/T2/T3/T4/T5/T6, аксиомы стандартные, CompositionNegative отвергнут; bin/chain.py — допустимая цепочка ok/rc=0, отказы K9_CHAIN_UNPROVEN/K9_DOWNSTREAM_MISSING_DEST/K9_DOWNSTREAM_MISSING_METHOD/K9_TAINT_ESCAPE/K9_ADJACENT_REQUIRED rc=3; 16/16. Граница: policy-only, объявленные замыкания, не код downstream; taint только secret:* и net:*; это K9_model_checked, не K9_proven; active пуст."
+  },
+  {
+   "id": "E-0041",
+   "title": "V1-METHODS-R1: покрытие методов на каждом ребре композиции мостов",
+   "hypothesis": "Семантика allowlist: эффективная возможность цепочки — пересечение объявленных наборов; пересечение с пустым множеством пусто, а не универсум. Охрана `if adjacent_methods and methods:` делала пустой список downstream молчаливым пропуском проверки (F1).",
+   "prereg": "lab/prereg/V1-METHODS-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/V1-METHODS-R1-2026-11-23.txt",
+   "claim": "C-0333",
+   "note": "PASS: красное-до — methods-empty ok=true rc=0; A — K9_DOWNSTREAM_MISSING_METHOD rc=3; B — K9_SCHEMA rc=3; C — ok=true rc=0; D — allowed/taint вердикты без изменений; E — Lean агрегат собран, methods_coverage_refused принята (аксиомы стандартные); F — CompositionNegative 4 контроля отвергнуты; G — мутант «вернуть охрану and methods» даёт провал теста; H — gates 33/33 rc=0 после регистрации E-0041. Граница: policy-only, методы не исполняются в runtime downstream; направление coverage — консенсус A/B/C (docs/R9-SYNTHESIS.md); это K9_model_checked, не K9_proven."
   }
  ]
 }

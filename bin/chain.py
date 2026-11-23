@@ -10,7 +10,9 @@
   K9_ADJACENT_REQUIRED          — в цепочке нет adjacent-моста
   K9_CHAIN_UNPROVEN             — downstream-мост без доказательства композиции
   K9_DOWNSTREAM_MISSING_DEST    — adjacent форвардит адрес, downstream его не пропускает
-  K9_DOWNSTREAM_MISSING_METHOD  — adjacent разрешает метод, downstream его не пропускает
+  K9_DOWNSTREAM_MISSING_METHOD  — adjacent разрешает метод, downstream его не покрывает
+                                  (coverage: [] = deny-all на своей стороне,
+                                   отсутствие поля — K9_SCHEMA)
   K9_TAINT_ESCAPE               — в композиции есть и секрет, и сеть
   K9_SCHEMA                     — декларация не того типа
 
@@ -85,6 +87,12 @@ def check_chain(decl: dict) -> dict:
 
     adjacent_destinations = _destinations(adjacent) if adjacent else []
     adjacent_methods = _methods(adjacent) if adjacent else []
+    if adjacent and "allowed_methods" not in adjacent:
+        problems.append(_problem(
+            "K9_SCHEMA",
+            f"adjacent bridge {adjacent.get('id', '?')!r} has no allowed_methods",
+            bridge=adjacent.get("id", "?"),
+        ))
     for bridge in downstream:
         if not isinstance(bridge, dict):
             continue
@@ -99,7 +107,14 @@ def check_chain(decl: dict) -> dict:
                     bridge=bridge.get("id", "?"),
                 ))
         methods = _methods(bridge)
-        if adjacent_methods and methods:
+        if "allowed_methods" not in bridge:
+            problems.append(_problem(
+                "K9_SCHEMA",
+                f"downstream bridge {bridge.get('id', '?')!r} has no allowed_methods",
+                bridge=bridge.get("id", "?"),
+            ))
+            continue
+        if adjacent_methods:
             for method in adjacent_methods:
                 if method not in methods:
                     problems.append(_problem(

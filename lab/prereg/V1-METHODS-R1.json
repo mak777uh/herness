@@ -1,0 +1,106 @@
+{
+ "schema": 2,
+ "id": "V1-METHODS-R1",
+ "date": "2026-11-23",
+ "question": "Проверяются ли методы на каждом ребре композиции мостов: пустой allowed_methods у downstream при непустом adjacent обязан отказывать (coverage), отсутствие поля — отказ схемы, [] — deny-all на своей стороне?",
+ "hypothesis": "Семантика allowlist алгебраически однозначна: эффективная возможность цепочки — пересечение объявленных наборов; пересечение с пустым множеством пусто, а не универсум. Охрана `if adjacent_methods and methods:` в bin/chain.py превращала пустой список downstream в молчаливый пропуск проверки (F1) — разрешение цепочки без проверки ограничения, заявленного в контракте. Coverage-семантика: downstream обязан покрывать каждый метод adjacent; [] у downstream при непустом adjacent — отказ; [] у adjacent — ничего не пересылает, покрытие тривиально; отсутствие поля — K9_SCHEMA; «любой» в v1 не кодируется (полное перечисление вместо sentinel).",
+ "criterion": "PASS: красное-до воспроизведено (checker даёт ok=true на пустом покрытии методов); после фикса methods-empty даёт K9_DOWNSTREAM_MISSING_METHOD rc=3; methods-absent даёт K9_SCHEMA rc=3; methods-ok даёт ok=true rc=0; существующие allowed.json (ok=true) и taint.json (K9_TAINT_ESCAPE rc=3) не меняют вердикт; python tests/test_chain.py — 0 провалов (14 проверок); Lean-агрегат собирается с Bridge.methods, теорема methods_coverage_refused принята со стандартными аксиомами, CompositionNegative с четвёртым контролем отвергнут; мутант «вернуть охрану and methods» даёт провал теста; gates 33/33 rc=0. Опровержение: пустое покрытие проходит, absent проходит, тест ослаблен, Lean принимает NC, аксиомы нестандартные, гейты красные. Неопределённость: checker policy-only — методы в runtime не исполняются; направление coverage — выбор семантики, обоснованный в R9-SYNTHESIS.",
+ "arms": [
+  "A0 (красное-до): checker на methods-empty — ok=true, rc=0 (воспроизведено 23.11.2026 до фикса)",
+  "A: checker methods-empty — K9_DOWNSTREAM_MISSING_METHOD, rc=3",
+  "B: checker methods-absent — K9_SCHEMA, rc=3",
+  "C: checker methods-ok — ok=true, rc=0",
+  "D: allowed.json — ok=true rc=0; taint.json — K9_TAINT_ESCAPE rc=3 (без изменений вердиктов)",
+  "E: Lean: агрегат собирается, methods_coverage_refused принята, аксиомы стандартные",
+  "F: Lean: CompositionNegative (4 контроля) отвергнут, rc≠0",
+  "G: мутант «вернуть охрану and methods» — провал tests/test_chain.py",
+  "H: python bin/hs.py gates — 33/33, rc=0"
+ ],
+ "sensitivity": "Плечо A0/A отличает fail-open от fail-closed: охрана `and methods` — точный механизм дефекта, её удаление — точный фикс. Плечо G отличает фикс от случайной зелённости: мутант, возвращающий дефект, обязан ловиться тестом. Плечо F отличает работу Lean-отрицания от пустой проверки.",
+ "unit_of_analysis": "одна JSON-декларация цепочки и одна Lean-модель Bridge/chainOk",
+ "primary_metric": "ok/коды отказа checker'а; rc; число провалов теста; Lean rc и аксиомы; gates rc",
+ "test": "python tests/test_chain.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при прохождении пустого покрытия, пропуске absent, ослаблении теста, принятии NC или нестандартных аксиомах; порог и критерий не менять",
+ "fixture": "синтетические имена allowed.local, методы GET/POST; настоящие адреса, ключи и секреты не используются",
+ "environment": {
+  "host": "Windows 11, Python 3.13, Lean 4.36.0-rc2 в WSL Ubuntu",
+  "network": "не требуется; checker работает офлайн",
+  "real_secrets": false
+ },
+ "critical_controls": [
+  {
+   "id": "red-before-reproduced",
+   "input": "methods-empty-red.json",
+   "expect": "ok=true, rc=0 до фикса"
+  },
+  {
+   "id": "empty-refused",
+   "input": "lab/fixtures/chain/methods-empty.json",
+   "expect": "K9_DOWNSTREAM_MISSING_METHOD, rc=3"
+  },
+  {
+   "id": "absent-schema",
+   "input": "lab/fixtures/chain/methods-absent.json",
+   "expect": "K9_SCHEMA, rc=3"
+  },
+  {
+   "id": "positive-ok",
+   "input": "lab/fixtures/chain/methods-ok.json",
+   "expect": "ok=true, rc=0"
+  },
+  {
+   "id": "existing-verdicts-stable",
+   "input": "allowed.json / taint.json",
+   "expect": "ok=true / K9_TAINT_ESCAPE"
+  },
+  {
+   "id": "lean-theorem",
+   "input": "Proofs.Composition.methods_coverage_refused",
+   "expect": "принята, стандартные аксиомы"
+  },
+  {
+   "id": "lean-nc-rejected",
+   "input": "Proofs.CompositionNegative",
+   "expect": "rc≠0 (4 контроля)"
+  },
+  {
+   "id": "mutant-guard",
+   "input": "вернуть охрану `and methods`",
+   "expect": "провал tests/test_chain.py"
+  },
+  {
+   "id": "gates-green",
+   "input": "python bin/hs.py gates",
+   "expect": "33/33, rc=0"
+  }
+ ],
+ "kill_criteria": [
+  "пустое покрытие методов проходит после фикса",
+  "absent-поле проходит без K9_SCHEMA",
+  "тест ослаблен, чтобы стать зелёным",
+  "Lean принимает хотя бы одно ложное утверждение CompositionNegative",
+  "аксиомы теорем нестандартные",
+  "гейты красные или ослаблены",
+  "выдаётся K9_proven или синоним"
+ ],
+ "known_limits": [
+  "checker policy-only: методы не исполняются в runtime downstream; это декларация",
+  "направление coverage (adjacent ⊆ downstream) — выбор семантики, обоснованный в docs/R9-SYNTHESIS.md (консенсус A/B/C)",
+  "«любой» не выражается в v1-грамматике: полный перечислительный набор вместо sentinel/wildcard",
+  "Lean-модель — объявления, не поведение кода; это K9_model_checked, не K9_proven"
+ ],
+ "owner_decision": "R9-SYNTHESIS (docs/R9-SYNTHESIS.md), решение владельца «делай» 23.11.2026, этап 0 шаг 1",
+ "closed": true,
+ "result": {
+  "verdict": "PASS — красное-до воспроизведено; после фикса пустое покрытие и absent отвергаются точными кодами, существующие вердикты стабильны, Lean собран с новой теоремой и 4-м негативным контролем, мутант ловится тестом, гейты 33/33",
+  "checker": "A0 (красное-до): methods-empty — ok=true rc=0; A: K9_DOWNSTREAM_MISSING_METHOD rc=3; B: K9_SCHEMA rc=3; C: ok=true rc=0; D: allowed.json ok=true rc=0, taint.json K9_TAINT_ESCAPE rc=3 (стабильно)",
+  "tests": "python tests/test_chain.py — провалов: 0 (19 проверок; в критерии предсказано 14 — счёт по check()-вызовам, порог «0 провалов» не менялся)",
+  "lean": "агрегат Proofs собран; methods_coverage_refused принята (аксиомы propext, Classical.choice, Quot.sound); CompositionNegative отвергнут (4 контроля, включая пустое покрытие методов)",
+  "mutant": "мутант «вернуть охрану `and methods`» — tests/test_chain.py провалов: 1; после отката chain.py восстановлен байт-в-байт",
+  "gates": "python bin/hs.py gates — 33/33, rc=0 (после регистрации E-0041)",
+  "evidence": "research/outputs/V1-METHODS-R1-2026-11-23.txt",
+  "residual": "policy-only; методы не исполняются в runtime downstream; направление coverage — консенсус A/B/C (docs/R9-SYNTHESIS.md); «любой» не выражается в v1; это K9_model_checked, не K9_proven"
+ },
+ "conclusion": "PASS: методы проверяются на каждом ребре композиции; пустой downstream allowed_methods при непустом adjacent отвергается K9_DOWNSTREAM_MISSING_METHOD, отсутствие поля — K9_SCHEMA, [] — deny-all; Lean-модель расширена Bridge.methods + forwardsMethods + T7; негативный контроль отвергнут; мутант ловится. Граница: policy-only; это K9_model_checked, не K9_proven",
+ "updated": "2026-11-23"
+}

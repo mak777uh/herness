@@ -30,6 +30,7 @@ WSL: `/mnt/c/111/harness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
 - `Composition.runChain_performs_safe`: propext
 - `Composition.unproven_refused`: Classical.choice, Quot.sound, propext
 - `Composition.chainOk_all_proven`: Classical.choice, Quot.sound, propext
+- `Composition.methods_coverage_refused`: Classical.choice, Quot.sound, propext
 
 ## NC политики (Proofs.Negative): отвергнут (rc≠0)
    error: Proofs/Negative.lean:19:79: unsolved goals
@@ -42,6 +43,7 @@ WSL: `/mnt/c/111/harness/proofs`, toolchain: `leanprover--lean4---v4.36.0-rc2`
    error: Proofs/CompositionNegative.lean:24:2: Tactic `decide` proved that the proposition
    error: Proofs/CompositionNegative.lean:28:2: Tactic `decide` proved that the proposition
    error: Proofs/CompositionNegative.lean:37:2: Tactic `decide` proved that the proposition
+   error: Proofs/CompositionNegative.lean:46:2: Tactic `decide` proved that the proposition
 
 ## Итог: агрегат собран, доказательства приняты, ложь отвергнута, аксиомы стандартные
 
