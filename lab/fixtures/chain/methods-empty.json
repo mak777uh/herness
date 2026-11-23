@@ -1,8 +1,28 @@
 {
  "id": "chain:methods-empty",
- "adjacent": {"id": "adjacent-1", "allowed_destinations": ["allowed.local"],
-  "allowed_methods": ["POST"], "proven": true},
- "downstream": [{"id": "downstream-1", "allowed_destinations": ["allowed.local"],
-  "allowed_methods": [], "proven": true}],
+ "adjacent": {
+  "id": "adjacent-1",
+  "allowed_destinations": ["allowed.local"],
+  "allowed_methods": ["POST"],
+  "proven": {
+   "kind": "lean-instance",
+   "artifact": "proofs/Proofs/ChainInstances.lean",
+   "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+   "subject_sha256": "dae71aebd364156fdcca28926b6aa06398b6bce07438d3435553ffc3f5229707"
+  }
+ },
+ "downstream": [
+  {
+   "id": "downstream-1",
+   "allowed_destinations": ["allowed.local"],
+   "allowed_methods": [],
+   "proven": {
+    "kind": "lean-instance",
+    "artifact": "proofs/Proofs/ChainInstances.lean",
+    "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+    "subject_sha256": "dae71aebd364156fdcca28926b6aa06398b6bce07438d3435553ffc3f5229707"
+   }
+  }
+ ],
  "steps": []
 }

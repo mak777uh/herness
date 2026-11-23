@@ -1,0 +1,150 @@
+{
+ "schema": 2,
+ "id": "V6-PROOF-BINDING-R1",
+ "date": "2026-11-23",
+ "question": "Закрывает ли checker самодекларируемый proven:boolean: обязан ли downstream предъявить объект proof-binding, чей subject_sha256 вычислен из той же цепочки без proven, а sha256 — из точных байтов repo-relative артефакта?",
+ "hypothesis": "F2 (docs/R9-SYNTHESIS.md) — fail-open: строка 79 bin/chain.py принимает любой self-declared boolean без артефакта и без привязки к предмету. Замена на закрытый объект {kind,artifact,sha256,subject_sha256}, строгий JCS-subset и exact-byte проверка артефакта отличает привязку доказательства от голого утверждения. Subject — SHA-256 канонической цепочки после удаления только bridge-level proven у adjacent и downstream; поэтому добавление proof-binding не создаёт цикла.",
+ "criterion": "PASS: A0 воспроизведён (allowed.json с proven:true без артефакта даёт ok=true rc=0); после фикса boolean даёт K9_SCHEMA rc=3, отсутствие proof — K9_CHAIN_UNPROVEN rc=3, malformed — K9_PROVEN_BAD_FORMAT, отсутствующий артефакт — K9_PROVEN_MISSING_ARTIFACT, неверные байты — K9_PROVEN_HASH_MISMATCH, неверный subject — K9_PROVEN_SUBJECT_MISMATCH; годная привязка даёт ok=true rc=0; traversal/absolute/backslash пути отвергаются до чтения; strict CLI отвергает duplicate key, float и NaN как K9_SCHEMA rc=3; allowed/taint/methods-* сохраняют вердикты V1; tests/test_chain.py — 0 провалов и входит в selftest; Lean Proofs собирается, Proofs.ChainInstances принят со стандартными аксиомами, CompositionNegative отвергнут; мутант «вернуть bridge.get('proven') is not True» даёт провал теста; python bin/chain_report.py даёт deterministic machine report; python bin/hs.py gates rc=0, N/A названы и не считаются зелёными. Опровержение: boolean проходит, subject можно подменить, артефакт можно подменить, traversal читается, malformed проходит, тест ослаблен, Lean принимает NC, используются нестандартные аксиомы, гейты красные или ослаблены. Неопределённость: checker проверяет привязку, но не истинность доказательства и не запускает pinned Lean; kind в v1 один — lean-instance.",
+ "arms": [
+  "A0 (красное-до): allowed.json с downstream proven:true без artifact/subject — ok=true rc=0 (воспроизведено 23.11.2026)",
+  "A: downstream proven:true — K9_SCHEMA rc=3; отсутствие поля — K9_CHAIN_UNPROVEN rc=3",
+  "B: malformed proof object / неизвестный kind / неверный digest format / traversal — K9_PROVEN_BAD_FORMAT rc=3",
+  "C: repo-relative artifact отсутствует — K9_PROVEN_MISSING_ARTIFACT rc=3",
+  "D: artifact существует, но sha256 не совпадает — K9_PROVEN_HASH_MISMATCH rc=3",
+  "E: artifact hash совпадает, subject_sha256 не совпадает — K9_PROVEN_SUBJECT_MISMATCH rc=3",
+  "F: полный proof object с верным subject и artifact — ok=true rc=0",
+  "G: strict CLI duplicate key / float / NaN — K9_SCHEMA rc=3",
+  "H: fixture-регрессии allowed/taint/methods-empty/methods-absent/methods-ok — прежние вердикты",
+  "I: Lean Proofs + ChainInstances + аксиомы + CompositionNegative",
+  "J: мутант «вернуть boolean guard» — tests/test_chain.py провал",
+  "K: selftest + gates + deterministic chain report"
+ ],
+ "sensitivity": "A0/A отличает bare declaration от proof-binding. D/E разделяют подмену артефакта и подмену предмета. B/C проверяют путь до чтения. J отличает фикс от случайной зелёности. H защищает V1 от регресса. Машинный отчёт пересчитывает subject и verdict, а не копирует вывод теста.",
+ "unit_of_analysis": "одна JSON-декларация цепочки, один downstream proof object и один repo-relative proof artifact",
+ "primary_metric": "ok/коды отказа checker'а; rc; число провалов теста; Lean rc и аксиомы; selftest/gates rc; subject/artifact SHA-256",
+ "test": "python tests/test_chain.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при проходе boolean, подмене subject/artifact, чтении traversal, ослаблении теста, принятии NC, нестандартных аксиомах или красных гейтах; порог и критерий не менять",
+ "fixture": "синтетические имена allowed.local, методы GET/POST; artifact — proofs/Proofs/ChainInstances.lean; настоящие адреса, ключи и секреты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300, Python 3.13.11, git bash",
+  "wsl": "Ubuntu (WSL2), Lean 4.36.0-rc2",
+  "network": "не требуется",
+  "real_secrets": false,
+  "baseline": "HEAD 31a7b561; selftest rc=0; test_chain 19/19; gates 30/33 с N/A journals/rust/run-index; doctor 4/5 (установленный DSH не может переместить disk cache, установленный DSH не изменялся); refs sync отсутствует"
+ },
+ "critical_controls": [
+  {
+   "id": "red-before-reproduced",
+   "input": "lab/fixtures/chain/allowed.json до фикса",
+   "expect": "ok=true, rc=0 при proven:true без artifact/subject"
+  },
+  {
+   "id": "boolean-refused",
+   "input": "downstream proven:true",
+   "expect": "K9_SCHEMA, rc=3"
+  },
+  {
+   "id": "proof-required",
+   "input": "downstream без proven",
+   "expect": "K9_CHAIN_UNPROVEN, rc=3"
+  },
+  {
+   "id": "bad-format",
+   "input": "malformed object, unknown kind, bad digest, traversal path",
+   "expect": "K9_PROVEN_BAD_FORMAT, rc=3"
+  },
+  {
+   "id": "artifact-required",
+   "input": "proof object с отсутствующим artifact",
+   "expect": "K9_PROVEN_MISSING_ARTIFACT, rc=3"
+  },
+  {
+   "id": "artifact-bound",
+   "input": "неверный sha256 существующего artifact",
+   "expect": "K9_PROVEN_HASH_MISMATCH, rc=3"
+  },
+  {
+   "id": "subject-bound",
+   "input": "неверный subject_sha256 при верном artifact",
+   "expect": "K9_PROVEN_SUBJECT_MISMATCH, rc=3"
+  },
+  {
+   "id": "positive-binding",
+   "input": "полный proof object",
+   "expect": "ok=true, rc=0"
+  },
+  {
+   "id": "strict-json",
+   "input": "duplicate key / float / NaN",
+   "expect": "K9_SCHEMA, rc=3"
+  },
+  {
+   "id": "v1-stable",
+   "input": "allowed/taint/methods-* fixtures",
+   "expect": "прежние вердикты"
+  },
+  {
+   "id": "lean-instances",
+   "input": "Proofs.ChainInstances",
+   "expect": "собран, стандартные аксиомы"
+  },
+  {
+   "id": "lean-nc-rejected",
+   "input": "Proofs.CompositionNegative",
+   "expect": "rc≠0"
+  },
+  {
+   "id": "mutant-guard",
+   "input": "вернуть boolean proof guard",
+   "expect": "провал tests/test_chain.py"
+  },
+  {
+   "id": "machine-report",
+   "input": "python bin/chain_report.py",
+   "expect": "deterministic JSON, повторные байты равны"
+  },
+  {
+   "id": "gates-green",
+   "input": "python bin/hs.py selftest; python bin/hs.py gates",
+   "expect": "rc=0; N/A названы"
+  }
+ ],
+ "kill_criteria": [
+  "boolean proof проходит после фикса",
+  "subject или artifact можно подменить без точного кода отказа",
+  "traversal/absolute/backslash путь читается",
+  "strict CLI принимает duplicate key, float или NaN",
+  "тест ослаблен, чтобы стать зелёным",
+  "Lean принимает CompositionNegative или использует нестандартные аксиомы",
+  "machine report недетерминирован или расходится с checker",
+  "гейты красные или ослаблены",
+  "выдаётся K9_proven или синоним"
+ ],
+ "known_limits": [
+  "проверяется привязка proof object к subject и exact-byte artifact, но не истинность доказательства",
+  "pinned Lean не запускается checker'ом; это отложено до proof-package/admission",
+  "kind закрыт одним значением lean-instance в v1; toolchain/theorem входят в proof-package следующего слоя",
+  "subject включает всю цепочку, включая steps и policy-поля, кроме только bridge-level proven",
+  "repo-relative artifact path и resolved containment проверяются; symlink/TOCTOU внутри репозитория не являются моделью угроз этого среза",
+  "это K9_model_checked, не K9_proven; active пуст, owner-ключ не создаётся"
+ ],
+ "owner_decision": "R9-SYNTHESIS (docs/R9-SYNTHESIS.md), решение владельца «реализация, новых брифов не нужно», этап 0 шаг 2",
+ "closed": true,
+ "result": {
+  "verdict": "PASS — boolean fail-open воспроизведён; после фикса proof object обязателен для downstream, subject и exact-byte artifact связаны, malformed/path/missing/hash/subject отказы имеют отдельные коды; strict CLI, fixture-регрессии, Lean, мутант, machine report, selftest и gates проверены",
+  "red_before": "allowed.json с proven:true без artifact/subject — ok=true rc=0",
+  "checker": "boolean — K9_SCHEMA + K9_CHAIN_UNPROVEN; malformed/path — K9_PROVEN_BAD_FORMAT; missing — K9_PROVEN_MISSING_ARTIFACT; bytes — K9_PROVEN_HASH_MISMATCH; subject — K9_PROVEN_SUBJECT_MISMATCH; valid — ok=true rc=0",
+  "tests": "python tests/test_chain.py — 43 проверки, провалов: 0; suite включён в hs selftest",
+  "lean": "Proofs aggregate и Proofs.ChainInstances собраны; 3 новые теоремы со стандартными аксиомами; CompositionNegative отвергнут (4 контроля)",
+  "mutant": "возврат boolean guard — 23 провала; chain.py восстановлен байт-в-байт",
+  "machine_report": "python bin/chain_report.py --check — rc=0; два независимых render byte-identical; SHA-256 ab9b2513…72b6c",
+  "claims_fast": "python bin/verify_claims.py --fast — 295 исполняемых утверждений, провалов: 0; C-0334 проходит",
+  "claims_full": "полный live-прогон — 327 утверждений, 17 старых environment-dependent отказов (C-0334 проходит); не выдаётся за зелёный",
+  "gates": "python bin/hs.py gates — rc=0, 31/33 оценено; N/A journals/run-index названы; Rust оценён после сборки бинарника полным прогоном",
+  "coverage": "327/327 closed, strict_coverage 0.559, verdict ANCHORED_WEAK; README и audit-report пересобраны",
+  "evidence": "research/outputs/V6-PROOF-BINDING-R1-2026-11-23.txt",
+  "residual": "привязка ≠ истинность; pinned Lean checker'ом не запускается; symlink/TOCTOU внутри репозитория вне среза; K9_model_checked, не K9_proven"
+ },
+ "conclusion": "PASS: self-declared boolean заменён проверяемой proof-binding привязкой к subject и exact-byte artifact; V1-вердикты сохранены, Lean и негативные контроли зелёные. Граница: привязка не доказывает истинность доказательства; K9_proven не выдан.",
+ "updated": "2026-11-23"
+}

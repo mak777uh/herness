@@ -1,8 +1,28 @@
 {
  "id": "chain:methods-ok",
- "adjacent": {"id": "adjacent-1", "allowed_destinations": ["allowed.local"],
-  "allowed_methods": ["GET", "POST"], "proven": true},
- "downstream": [{"id": "downstream-1", "allowed_destinations": ["allowed.local"],
-  "allowed_methods": ["GET", "POST"], "proven": true}],
+ "adjacent": {
+  "id": "adjacent-1",
+  "allowed_destinations": ["allowed.local"],
+  "allowed_methods": ["GET", "POST"],
+  "proven": {
+   "kind": "lean-instance",
+   "artifact": "proofs/Proofs/ChainInstances.lean",
+   "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+   "subject_sha256": "598db5702f90f8b87433802048898de3ee184a6a33da57b7f6079767538cfccc"
+  }
+ },
+ "downstream": [
+  {
+   "id": "downstream-1",
+   "allowed_destinations": ["allowed.local"],
+   "allowed_methods": ["GET", "POST"],
+   "proven": {
+    "kind": "lean-instance",
+    "artifact": "proofs/Proofs/ChainInstances.lean",
+    "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+    "subject_sha256": "598db5702f90f8b87433802048898de3ee184a6a33da57b7f6079767538cfccc"
+   }
+  }
+ ],
  "steps": []
 }

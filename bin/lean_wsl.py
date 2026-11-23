@@ -58,6 +58,9 @@ COMPOSITION_THEOREMS = [
     "Composition.unproven_refused",
     "Composition.chainOk_all_proven",
     "Composition.methods_coverage_refused",
+    "ChainInstances.declared_instance_ok",
+    "ChainInstances.missing_instance_refused",
+    "ChainInstances.narrowed_instance_refused",
 ]
 
 
@@ -127,10 +130,15 @@ def main() -> int:
     ok_composition = rc == 0
     lines.append(f"## Контур композиции K9: {'СОБРАН (rc=0)' if ok_composition else f'НЕ СОБРАН (rc={rc})'}")
     lines.append("")
+    rc, _ = run_wsl(f"{base} && lake build Proofs.ChainInstances")
+    ok_instances = rc == 0
+    lines.append(f"## Контур proof-binding инстансов: {'СОБРАН (rc=0)' if ok_instances else f'НЕ СОБРАН (rc={rc})'}")
+    lines.append("")
 
     # 5. аксиомы теорем — только стандартные (scratch в /tmp, репо Probe.lean не трогаем)
     all_theorems = THEOREMS + BRIDGE_THEOREMS + COMPOSITION_THEOREMS
     probe_body = ("import Proofs.Policy\nimport Proofs.PartBridge\nimport Proofs.Composition\n"
+                  "import Proofs.ChainInstances\n"
                   + "\n".join(f"#print axioms {t}" for t in all_theorems) + "\n")
     ax_cmd = (f"{base} && cat > /tmp/ProbeWsl.lean <<'EOF'\n{probe_body}EOF\n"
               f"lean /tmp/ProbeWsl.lean\nrc=$?\nrm -f /tmp/ProbeWsl.lean\nexit $rc")
@@ -175,7 +183,7 @@ def main() -> int:
             lines.append(f"   {ln.strip()}")
     lines.append("")
 
-    verdict = (ok_aggregate and ok_proof and ok_bridge and ok_composition and clean
+    verdict = (ok_aggregate and ok_proof and ok_bridge and ok_composition and ok_instances and clean
                and rejected_policy and rejected_bridge and rejected_composition)
     lines.append(f"## Итог: {'агрегат собран, доказательства приняты, ложь отвергнута, аксиомы стандартные' if verdict else 'ЕСТЬ ПРОБЛЕМА'}")
     lines.append("")

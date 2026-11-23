@@ -27,10 +27,14 @@ example : within (comp controlRead controlWrite) controlBound = false := by
 example : leaks (comp secretStep netStep) = false := by
   decide
 
+/-- Proof-binding в модели: строгий разбор и хеши выполняет Python. -/
+def controlProof : ProofRef :=
+  ⟨"lean-instance", "proofs/Proofs/ChainInstances.lean", "0000000000000000000000000000000000000000000000000000000000000000", "subject"⟩
+
 /-- Цепочка с непроверенным downstream. -/
 def controlChain : Chain :=
-  ⟨⟨"adjacent", ["allowed.local"], ["GET"], true⟩,
-   [⟨"downstream", ["allowed.local"], ["GET"], false⟩]⟩
+  ⟨⟨"adjacent", ["allowed.local"], ["GET"], none⟩,
+   [⟨"downstream", ["allowed.local"], ["GET"], none⟩]⟩
 
 /-- Ложь: цепочка с непроверенным downstream допустима. -/
 example : chainOk controlChain = true := by
@@ -38,8 +42,8 @@ example : chainOk controlChain = true := by
 
 /-- Цепочка, где adjacent разрешает метод, а downstream не покрывает (V1). -/
 def controlChainMethods : Chain :=
-  ⟨⟨"adjacent", ["allowed.local"], ["POST"], true⟩,
-   [⟨"downstream", ["allowed.local"], [], true⟩]⟩
+  ⟨⟨"adjacent", ["allowed.local"], ["POST"], none⟩,
+   [⟨"downstream", ["allowed.local"], [], some controlProof⟩]⟩
 
 /-- Ложь: пустое покрытие методов downstream всё ещё допустимо. -/
 example : chainOk controlChainMethods = true := by

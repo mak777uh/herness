@@ -14,7 +14,7 @@ module
   T1 — объединение замыканий внутри границы;
   T2 — нет: чтение секрета и сеть по отдельности не утекают, вместе — утекают;
   T3 — исполнитель отказывает при утечке; T4 — исполняет без утечки;
-  T5/T6 — downstream-мост без доказательства делает цепочку недопустимой;
+  T5/T6 — downstream-мост без proof-binding делает цепочку недопустимой;
   T7 — пустое покрытие методов downstream при непустом adjacent — отказ (V1).
 
 Граница модели: проверяются объявленные замыкания, а не поведение кода.
@@ -122,12 +122,21 @@ public theorem runChain_performs_safe (s : Step) (h : leaks s = false) :
 
 /-! ## T5/T6. Цепочка мостов: без доказательства — отказ -/
 
-/-- Объявление моста: адреса, которые он пропускает, и доказан ли он. -/
+/-- Ссылка на proof artifact. Строки opaque для Lean-модели: Python-checker
+    проверяет закрытую форму, subject_sha256 и exact-byte sha256. -/
+public structure ProofRef where
+  kind : String
+  artifact : String
+  sha256 : String
+  subjectSha256 : String
+  deriving Repr
+
+/-- Объявление моста: адреса, методы и необязательная proof-binding ссылка. -/
 public structure Bridge where
   id : String
   destinations : List String
   methods : List String
-  proven : Bool
+  proof : Option ProofRef
   deriving Repr
 
 /-- Цепочка: adjacent-мост и downstream-мосты. -/
@@ -136,9 +145,9 @@ public structure Chain where
   downstream : List Bridge
   deriving Repr
 
-/-- Все downstream-мосты доказаны. -/
+/-- Все downstream-мосты имеют proof-binding. Истинность доказательства модель не проверяет. -/
 public def allProven (bs : List Bridge) : Bool :=
-  bs.all (fun b => b.proven)
+  bs.all (fun b => b.proof.isSome)
 
 /-- Adjacent-мост форвардит адрес, и downstream его пропускает. -/
 public def forwards (adj : Bridge) (b : Bridge) : Bool :=

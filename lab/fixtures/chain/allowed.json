@@ -4,14 +4,24 @@
   "id": "adjacent-1",
   "allowed_destinations": ["allowed.local"],
   "allowed_methods": ["GET"],
-  "proven": true
+  "proven": {
+   "kind": "lean-instance",
+   "artifact": "proofs/Proofs/ChainInstances.lean",
+   "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+   "subject_sha256": "cc322a3dab1f4d7cbb893f511b23d367ae1faba93fff7fd4e9f07711910436bb"
+  }
  },
  "downstream": [
   {
    "id": "downstream-1",
    "allowed_destinations": ["allowed.local"],
    "allowed_methods": ["GET"],
-   "proven": true
+   "proven": {
+    "kind": "lean-instance",
+    "artifact": "proofs/Proofs/ChainInstances.lean",
+    "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+    "subject_sha256": "cc322a3dab1f4d7cbb893f511b23d367ae1faba93fff7fd4e9f07711910436bb"
+   }
   }
  ],
  "steps": [

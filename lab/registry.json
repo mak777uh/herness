@@ -415,6 +415,17 @@
    "conclusion": "research/outputs/V1-METHODS-R1-2026-11-23.txt",
    "claim": "C-0333",
    "note": "PASS: красное-до — methods-empty ok=true rc=0; A — K9_DOWNSTREAM_MISSING_METHOD rc=3; B — K9_SCHEMA rc=3; C — ok=true rc=0; D — allowed/taint вердикты без изменений; E — Lean агрегат собран, methods_coverage_refused принята (аксиомы стандартные); F — CompositionNegative 4 контроля отвергнуты; G — мутант «вернуть охрану and methods» даёт провал теста; H — gates 33/33 rc=0 после регистрации E-0041. Граница: policy-only, методы не исполняются в runtime downstream; направление coverage — консенсус A/B/C (docs/R9-SYNTHESIS.md); это K9_model_checked, не K9_proven."
+  },
+  {
+   "id": "E-0042",
+   "title": "V6-PROOF-BINDING-R1: proof object вместо self-declared boolean",
+   "hypothesis": "F2: bare proven:true принимается без артефакта и subject. Закрытый proof object с exact-byte artifact hash и JCS subject hash заменит голое утверждение проверяемой привязкой; истинность доказательства остаётся вне этого среза.",
+   "prereg": "lab/prereg/V6-PROOF-BINDING-R1.json",
+   "status": "closed",
+   "note": "PASS: 43/43, machine report byte-identical, Lean rc2 и negative controls зелёные, мутант 23 провала; привязка не доказывает истинность, K9_proven не выдан",
+   "conclusion": "research/outputs/V6-PROOF-BINDING-R1-2026-11-23.txt",
+   "claim": "C-0334",
+   "updated": "2026-11-23"
   }
  ]
 }

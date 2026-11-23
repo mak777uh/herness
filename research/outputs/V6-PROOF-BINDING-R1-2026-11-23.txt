@@ -1,0 +1,117 @@
+V6-PROOF-BINDING-R1 — 2026-11-23
+=================================
+
+Baseline
+--------
+HEAD: 31a7b561e3333b3fe22fbab0bf61270f166e4147 (main, clean before work)
+Python: 3.13.11 (Windows 11 build 26300)
+WSL: Ubuntu, Lean 4.36.0-rc2
+Selftest baseline: rc=0
+test_chain baseline: 19 checks, failures=0
+gates baseline: rc=0, 30/33 evaluated; N/A journals/rust/run-index
+doctor baseline: 4/5; installed DSH could not move its disk cache (installed DSH not modified)
+refs search: unavailable (`справочника нет: refs sync`); recorded in preregistration
+
+RED before
+----------
+Command: python bin/chain.py check lab/fixtures/chain/allowed.json
+Observed: ok=true, rc=0 while downstream carried only `proven:true`; no artifact and no subject binding.
+This reproduces F2 from docs/R9-SYNTHESIS.md.
+
+Implementation
+--------------
+- bin/chain.py accepts only closed proof objects {kind,artifact,sha256,subject_sha256}.
+- kind v1: lean-instance. Digests: 64 lowercase hex, bare form.
+- subject: SHA-256 of strict canonical JSON (repository JCS subset) for the whole chain after removing only bridge-level `proven` from adjacent/downstream.
+- artifact: repo-relative POSIX path; absolute, drive-qualified, backslash, empty/dot/parent segments and resolved escape are refused before read.
+- exact artifact bytes are hashed; proof truth is not inferred from the hash.
+- strict CLI refuses duplicate keys, float, NaN and integers outside ±(2^53−1).
+- tests/test_chain.py is now part of `hs selftest`.
+- proofs/Proofs/ChainInstances.lean models concrete proof-presence and method-coverage instances.
+- bin/chain_report.py regenerates research/proofs/k9-chain-instances.json deterministically.
+
+Checks after
+-----------
+python tests/test_chain.py
+  43 checks, провалов: 0 (failures=0)
+
+python bin/chain_report.py --check
+  rc=0; two independent renders were byte-identical.
+
+python bin/lean_wsl.py
+  aggregate Proofs: rc=0 (14 jobs)
+  Proofs.Composition: rc=0
+  Proofs.ChainInstances: rc=0
+  theorem axioms: only propext, Classical.choice, Quot.sound
+  Proofs.Negative: rejected
+  Proofs.PartBridgeNegative: rejected
+  Proofs.CompositionNegative: rejected (4 controls)
+
+python bin/hs.py selftest
+  rc=0, including test_chain.py
+
+python bin/hs.py gates
+  rc=0; 31/33 evaluated; N/A: journals, run-index (named, not counted as green).
+  Rust is now evaluated because the full verifier built its release binary; probes 17/17.
+
+python bin/check_lean_imports.py
+  rc=0; 11 modules reachable from 6 roots
+
+python bin/lab.py validate
+  rc=0; 42 experiments linked
+
+Closure and claim checks
+------------------------
+python bin/verify_claims.py --fast
+  295 executable claims, failures=0; C-0334 passes.
+
+Full verifier (not green; recorded, not hidden)
+  The verifier ignores an unsupported --help argument and ran full mode once.
+  Result: 327 claims, 17 failures; C-0334 passes. The failures are existing
+  environment-dependent claims: C-0007, C-0010, C-0011, C-0013, C-0018,
+  C-0024, C-0025, C-0058, C-0059, C-0107, C-0284, C-0285, C-0286, C-0287,
+  C-0292, C-0293, C-0315 (missing live probe scripts/binaries, room loop mount,
+  browser path, stale historical size/test-count expectations). This is not
+  reported as a green full verification and is not a V6 regression.
+
+python bin/coverage.py + python bin/audit.py --strict + readme_numbers.py --fix
+  327/327 claims closed; malformed=0; strict_coverage=0.559; ANCHORED_WEAK.
+  README and audit-report regenerated from artifacts.
+
+Final integrity
+  python bin/hs.py selftest: rc=0
+  python bin/hs.py gates: rc=0; 31/33; N/A journals/run-index; probes 17/17
+  python bin/readme_numbers.py: numbers match artifacts
+  python bin/check_autonomy.py --staged: no protected path without a log entry
+  git diff --check: passed
+
+Mutant guard
+------------
+Mutant: restore `bridge.get("proven") is not True` in the downstream proof check.
+Result: tests/test_chain.py rc=1, 23 failed checks.
+Restoration: bin/chain.py restored byte-for-byte in a finally block; subsequent test run failures=0.
+
+Fixture verdicts
+----------------
+allowed.json       -> ok=true, codes=[]
+taint.json         -> ok=false, codes=[K9_TAINT_ESCAPE]
+methods-empty.json -> ok=false, codes=[K9_DOWNSTREAM_MISSING_METHOD]
+methods-absent.json-> ok=false, codes=[K9_SCHEMA]
+methods-ok.json    -> ok=true, codes=[]
+
+Digests
+-------
+bin/chain.py                 106bd24dd361cbac48550464808bc0b4ac4e226260865d3cc5db20cf2c6c31b8
+bin/chain_report.py          94d696efefdf0745fddd20301ca02c0e66b5582d256192b681a44c612750d32a
+proofs/Proofs/ChainInstances.lean  8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308
+research/proofs/k9-chain-instances.json  ab9b2513a6dae9de442c351642178edda0caa998b0cd9ecb05c0736543d72b6c
+tests/test_chain.py          a52c0609869a9b5c7046e2a94036bac862a5ebce4a0db9a1bc291419b8095f66
+
+Residual / what this does not prove
+------------------------------------
+- The checker proves binding, not truth: a matching digest does not establish that a theorem is valid.
+- The checker does not run pinned Lean; proof-package regeneration belongs to the later admission layer.
+- Lean models proof presence and policy semantics; digest strings are opaque there.
+- Repo-relative resolution is checked, but symlink/TOCTOU races inside the repository are outside this slice.
+- Downstream code, hidden channels and Rust/Lean correspondence remain unverified.
+- This is K9_model_checked, not K9_proven. No owner key was created; active remains empty.

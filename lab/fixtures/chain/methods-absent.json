@@ -1,8 +1,27 @@
 {
  "id": "chain:methods-absent",
- "adjacent": {"id": "adjacent-1", "allowed_destinations": ["allowed.local"],
-  "allowed_methods": ["GET"], "proven": true},
- "downstream": [{"id": "downstream-1", "allowed_destinations": ["allowed.local"],
-  "proven": true}],
+ "adjacent": {
+  "id": "adjacent-1",
+  "allowed_destinations": ["allowed.local"],
+  "allowed_methods": ["GET"],
+  "proven": {
+   "kind": "lean-instance",
+   "artifact": "proofs/Proofs/ChainInstances.lean",
+   "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+   "subject_sha256": "b069c7d13aa5fad92d1b511ccacb492e4b94c251c753cf206c676e09b9f19dca"
+  }
+ },
+ "downstream": [
+  {
+   "id": "downstream-1",
+   "allowed_destinations": ["allowed.local"],
+   "proven": {
+    "kind": "lean-instance",
+    "artifact": "proofs/Proofs/ChainInstances.lean",
+    "sha256": "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+    "subject_sha256": "b069c7d13aa5fad92d1b511ccacb492e4b94c251c753cf206c676e09b9f19dca"
+   }
+  }
+ ],
  "steps": []
 }
