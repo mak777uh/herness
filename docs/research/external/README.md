@@ -80,11 +80,13 @@
 
 Вопросы: [`docs/EXTERNAL-QUESTIONS-R9-BRIDGES.md`](../../EXTERNAL-QUESTIONS-R9-BRIDGES.md) (31 вопрос, 8 блоков, снимок `ce7c64d`).
 Дополнение после первого ответа: [`docs/EXTERNAL-QUESTIONS-R9-ADDENDUM.md`](../../EXTERNAL-QUESTIONS-R9-ADDENDUM.md).
+Решения как технические вопросы: [`docs/EXTERNAL-QUESTIONS-R9.2.md`](../../EXTERNAL-QUESTIONS-R9.2.md) (V1–V6; указание владельца: это технические вопросы, не решения).
 
 | файл | размер | SHA-256 | что внутри |
 |---|---:|---|---|
 | [`2026-11-23-R9-answer-A.md`](2026-11-23-R9-answer-A.md) | 89 628 Б | `cf36482b7b66748d95d002b0060f3b245856b19f266272125a962439f137f275` | все 31 вопрос R9; реестр открытых ссылок (BRIDGE/COMP/CHAIN/PDIFF/PROP/CONST/NC/ROOT); сквозная линия «один IR → одно ядро → три формы законов → конформность-гейт»; 3 repro-кандидата (пустой allowed_methods, транскрипция в policy_diff, шестой код K9_SCHEMA) |
 | [`2026-11-23-R9.1-answer-A.md`](2026-11-23-R9.1-answer-A.md) | 55 935 Б | `cc9af0617f5b560b751208314781ba76987036bfac91c829e9322d60e887ee8f` | ответ A на R9.1: X1–X10 + S1–S10 артефактами (IR v1 JSON+Lean, каталог 7 законов/8 инстансов, скелет policy_eval, фикстура FACT-1); самокоррекции: parity-гейт закрыл 19/14, VM обязательна для /v1/net, три формы не покрывают гиперсвойства |
+| [`2026-11-23-R9.2-answer-A.md`](2026-11-23-R9.2-answer-A.md) | 27 096 Б | ``59a37ece2e66ec4bd6351b23d426e5a04369a28d57e190ad1f32f904437ff4a3`` | ответ A на R9.2 (V1–V6): пустой allowed_methods = deny-all + замкнутый словарь методов; K12 принять; K11 uniform для не-native с конвертным допуском; head мигрировать к cards; V5/V6 — в файле |
 
 
 Хеши проверяются командами:
