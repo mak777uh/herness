@@ -36,7 +36,7 @@ import admission as adm  # noqa: E402
 import registry_state as rs  # noqa: E402
 
 MARKER = "OWNER-VERIFY-R1"
-CARD = ROOT / "lab" / "tools" / "drafts" / "head-v1.draft.json"
+CARD = ROOT / "lab" / "tools" / "cards" / "head.json"
 SOURCE = ROOT / "core-rs" / "src" / "head.rs"
 POLICY = ROOT / "lab" / "tools" / "policy.json"
 ROOM = ROOT / "lab" / "tools" / "room-profile-v0.json"

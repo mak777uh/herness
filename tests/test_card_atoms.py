@@ -17,7 +17,10 @@ sys.path.insert(0, str(ROOT))
 from bin import card_atoms  # noqa: E402
 
 RESULTS: list[tuple[bool, str]] = []
-CARD = json.loads((ROOT / "lab" / "tools" / "cards" / "head.json").read_text(encoding="utf-8"))
+LEGACY = ROOT / "lab" / "tools" / "archive" / "head_legacy.json"
+CANONICAL = ROOT / "lab" / "tools" / "cards" / "head.json"
+CARD = json.loads(LEGACY.read_text(encoding="utf-8"))
+V1 = json.loads(CANONICAL.read_text(encoding="utf-8"))
 NET_CARD = {
     "id": "netprobe-test",
     "closure": {
@@ -38,6 +41,16 @@ def rule(rule_id: str, action: str, effect: str, resource: str) -> dict:
 
 
 def main() -> int:
+    check(V1.get("schema_version") == "tool-card-v1", "каноническая карточка действительно tool-card-v1")
+    try:
+        card_atoms.atoms(V1)
+    except card_atoms.CardShapeError as exc:
+        message = str(exc).lower()
+        check("v1" in message and "автоконвер" in message,
+              f"card_atoms явно отказывает v1→v0: {exc}")
+    else:
+        check(False, "card_atoms неявно сконвертировал tool-card-v1")
+
     derived = card_atoms.atoms(CARD)
     relations = [atom["relation"] for atom in derived]
     check(len(derived) == 5, f"атомов head выведено {len(derived)} (ожидалось 5)")
@@ -153,7 +166,7 @@ def main() -> int:
     # CLI: legacy-карточка `head_legacy` с реальной политикой не «зелёная». Право /mnt/**
     # не покрыто правилами нового `head` (только fixtures), поэтому это rc=3
     # (`uncovered`), а не допуск. Карточка помечена superseded_by=head.
-    rc = card_atoms.main(["--check", str(ROOT / "lab" / "tools" / "cards" / "head.json"),
+    rc = card_atoms.main(["--check", str(LEGACY),
                           "--policy", str(ROOT / "lab" / "tools" / "policy.json")])
     check(rc != 0, f"head_legacy с реальной политикой не «зелёный», получено rc={rc}")
 
@@ -174,7 +187,7 @@ def main() -> int:
     for flag, message in RESULTS:
         print(f"[{'ok' if flag else 'FAIL'}] {message}")
     failed = sum(1 for flag, _ in RESULTS if not flag)
-    print(f"провалов: {failed}")
+    print(f"проверок: {len(RESULTS)}, провалов: {failed}")
     return 0 if failed == 0 else 1
 
 

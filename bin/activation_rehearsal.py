@@ -38,7 +38,7 @@ sys.path.insert(0, str(BIN))
 import admission as adm  # noqa: E402
 import registry_state as rs  # noqa: E402
 
-CARD = ROOT / "lab" / "tools" / "drafts" / "head-v1.draft.json"
+CARD = ROOT / "lab" / "tools" / "cards" / "head.json"
 SOURCE = ROOT / "core-rs" / "src" / "head.rs"
 BINARY = ROOT / "core-rs" / "target" / "release" / "head_slice_host"
 FIXTURE = ROOT / "lab" / "fixtures" / "model_visible" / "head-slice.txt"

@@ -269,7 +269,7 @@ strict 0.56.
 | id | что принято | артефакт |
 |---|---|---|
 | Q1 | пять файловых `kind`: `file_read`, `directory_read`, `file_write`, `digest`, `bridge_request` | [`lab/tools/tool-card-v1.schema.json`](../lab/tools/tool-card-v1.schema.json) |
-| Q2 | `tool-card-v1` — draft, не подключён к `bin/tool_card.py` | пример [`head-v1.draft.json`](../lab/tools/drafts/head-v1.draft.json) |
+| Q2 | `tool-card-v1` — draft, не подключён к `bin/tool_card.py` | пример [`head-v1.draft.json` (ныне canonical)](../lab/tools/cards/head.json) |
 | Q3 | словарь отказов v2: `K4_RESOURCE_LIMIT`, `K6_DATA_CLASS_UNKNOWN`, `K6_SECRET_EGRESS`, `K11_ADMISSION_REQUIRED` | [`lab/refusal-codes.json`](../lab/refusal-codes.json), `VERSION = 2`, 23 кода |
 | Q4 | первый срез только на синтетическом `model_visible` fixture | [`lab/fixtures/model_visible/`](../lab/fixtures/model_visible/manifest.json) |
 | Q5 | TCG — симуляция; security-утверждение требует аппаратной виртуализации | [`research/outputs/qemu-accel-2026-11-16.txt`](../research/outputs/qemu-accel-2026-11-16.txt) |
@@ -900,7 +900,7 @@ Q1–Q10 приняты владельцем и не переоткрывали�
 - [Бриф R6](EXTERNAL-QUESTIONS-R6.md)
 - [Бриф R7](EXTERNAL-QUESTIONS-R7.md)
 - [tool-card-v1 (draft)](../lab/tools/tool-card-v1.schema.json)
-- [head-v1.draft.json](../lab/tools/drafts/head-v1.draft.json)
+- [head-v1.draft.json (ныне canonical)](../lab/tools/cards/head.json)
 - [Словарь отказов v2](../lab/refusal-codes.json)
 - [Fixture](../lab/fixtures/model_visible/manifest.json)
 - [Пре-регистрация HEAD-SLICE-R1](../lab/prereg/HEAD-SLICE-R1.json)

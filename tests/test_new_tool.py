@@ -9,9 +9,11 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -54,6 +56,19 @@ def main() -> int:
                               .read_text(encoding="utf-8"))
         check(fragment.get("merged") is False and fragment.get("tool") == card["id"],
               f"policy fragment {spec['id']} не влит")
+
+    real_import = builtins.__import__
+
+    def without_jsonschema(name, *args, **kwargs):
+        if name == "jsonschema" or name.startswith("jsonschema."):
+            raise ImportError("controlled missing jsonschema")
+        return real_import(name, *args, **kwargs)
+
+    valid_card = json.loads((new_tool.OUT_ROOT / specs[0]["id"] / "card.json").read_text(encoding="utf-8"))
+    with patch("builtins.__import__", side_effect=without_jsonschema):
+        dependency_problems = new_tool.card_schema_check(valid_card)
+    check(len(dependency_problems) == 1 and "обязательная зависимость" in dependency_problems[0],
+          f"генератор без jsonschema отвергает карточку без required-only fallback: {dependency_problems}")
 
     policy = (ROOT / "lab" / "tools" / "policy.json").read_text(encoding="utf-8")
     check("head_cand_" not in policy, "активная policy не содержит кандидатов")

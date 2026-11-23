@@ -701,11 +701,12 @@ def provenance() -> dict:
 def card_schema_check(card: dict) -> list[str]:
     try:
         import jsonschema
-    except Exception:  # noqa: BLE001
-        required = json.loads(SCHEMA.read_text(encoding="utf-8"))["required"]
-        missing = [field for field in required if field not in card]
-        return [f"нет поля {field}" for field in missing]
+    except Exception as exc:  # noqa: BLE001
+        # Required-only проверка не является схемой: без jsonschema кандидат
+        # обязан быть отвергнут, а не принят по одному набору обязательных полей.
+        return [f"jsonschema: обязательная зависимость для tool-card-v1 не установлена: {exc}"]
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator.check_schema(schema)
     validator = jsonschema.Draft202012Validator(schema)
     return [f"{'/'.join(map(str, error.path))}: {error.message}"
             for error in sorted(validator.iter_errors(card), key=lambda item: list(item.path))]

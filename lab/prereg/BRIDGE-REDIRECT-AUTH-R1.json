@@ -1,0 +1,73 @@
+{
+ "schema": 2,
+ "id": "BRIDGE-REDIRECT-AUTH-R1",
+ "date": "2026-11-23",
+ "question": "Может ли upstream 3xx перенести Authorization провайдера моста на другой origin, и закроет ли полный запрет следования редиректам эту границу",
+ "hypothesis": "urllib.request.urlopen следует upstream 3xx и копирует Authorization на redirect target; после запрета redirect handler любой 3xx даёт фиксированный отказ моста, target не получает ни одного запроса, а канарейка и Location не появляются в ответе и журнале",
+ "criterion": "Подтверждение: для 301/302/303/307/308 на same-origin и cross-origin после фикса source получает Authorization ровно один раз (положительный контроль), redirect target получает 0 запросов и 0 Authorization, мост отвечает 502 с фиксированной причиной upstream redirect refused; во всех каналах 0 вхождений канарейки, Location и redirect target. Обычный upstream 200 сохраняет 200 и Authorization source. Опровержение: target получил запрос/Authorization, мост прошёл редирект, либо канарейка/Location/target попали в ответ, bridge.log или stdout/stderr. Неопределённость: source/target/мост не стартовали или положительный контроль не исполнен",
+ "arms": [
+  "A: текущий urlopen со стандартным redirect handler",
+  "B: opener с redirect_request -> None; любой upstream 3xx превращается в фиксированный отказ"
+ ],
+ "sensitivity": "Класс различается числом запросов и Authorization на redirect target. Положительный контроль source=1 и обычный 200 обязательны: отказ без исполнения upstream ничего не доказывает",
+ "unit_of_analysis": "один POST /v1/chat/completions к in-process мосту с loopback source и отдельным loopback redirect target",
+ "primary_metric": "число запросов target и число Authorization target; порог после фикса — 0/0 для всех 10 redirect-плеч",
+ "test": "python tests/test_bridge_redirects.py",
+ "stopping_rule": "один пре-регистрированный batch; остановиться при запросе target, 200 после redirect, утечке канарейки/Location/target или потере положительного контроля; порог не менять",
+ "fixture": "синтетическая канарейка и локальный токен генерируются тестом; loopback HTTP source/target; настоящие ключи и токены не читаются",
+ "environment": {
+  "host": "Windows; только loopback",
+  "network": "in-process ThreadingHTTPServer на 127.0.0.1; cross-origin target адресуется как localhost",
+  "real_secrets": false
+ },
+ "critical_controls": [
+  {
+   "id": "redirect-matrix",
+   "input": "301/302/303/307/308 × same-origin/cross-origin",
+   "expect_before": "target получает запрос и Authorization",
+   "expect_after": "target=0 запросов, target Authorization=0, мост=502/upstream redirect refused"
+  },
+  {
+   "id": "source-positive",
+   "input": "каждое redirect-плечо",
+   "expect": "source получает Authorization ровно один раз"
+  },
+  {
+   "id": "normal-200",
+   "input": "source отвечает 200 без Location",
+   "expect": "мост=200, source Authorization=1"
+  },
+  {
+   "id": "no-secret-or-location",
+   "input": "ответ моста, bridge.log, stdout/stderr",
+   "expect": "0 вхождений канарейки, Location и redirect target"
+  }
+ ],
+ "kill_criteria": [
+  "redirect target получил запрос или Authorization",
+  "мост ответил успехом после upstream 3xx",
+  "канарейка, Location или redirect target попали в наблюдаемые каналы",
+  "source не получил Authorization или обычный 200 не прошёл",
+  "использован настоящий ключ или токен владельца",
+  "тест ослаблен ради зелёного результата"
+ ],
+ "known_limits": [
+  "Проверяется только upstream-редирект стандартной библиотеки urllib, а не строгий HTTP-парсер (V5)",
+  "Same-origin/cross-origin различаются именами loopback-хостов; это не внешняя сеть и не DNS-атака",
+  "TLS, прокси, альтернативные HTTP-клиенты и поведение конкретного провайдера не перемеряются",
+  "Это security hotfix, не owner approval, не production activation и не K9"
+ ],
+ "closed": true,
+ "conclusion": "PASS: RED 32 провала; 301/302/303 переносили Authorization на target и давали 200, 307/308 на Python 3.13.11 не следовались, но возвращали сырой 3xx. После no-redirect opener все 10 плеч дают target=0, мост=502/upstream redirect refused; обычный 200 и source Authorization сохранены; канарейка/Location/target отсутствуют во всех каналах",
+ "result": {
+  "verdict": "PASS — upstream redirects запрещены, Authorization не перенесён",
+  "before": "rc=1; 32 провала; 301/302/303 same/cross target request=1 и Authorization=1, мост=200; 307/308 target=0, мост=307/308",
+  "after": "rc=0; провалов 0; 10/10 target requests=0 и Authorization=0, мост=502 с фиксированной причиной; ordinary 200=ok",
+  "positive_control": "source Authorization=1 в каждом redirect-плече и обычный upstream 200",
+  "regression": "tests/test_bridge.py 8/8; tests/test_bridge_key_isolation.py 7/7; tests/test_bridge_win_isolation.py 28/28; tests/test_bridge_net_namespace.py 16/16; hs.py selftest rc=0 с test_bridge_redirects.py",
+  "evidence": "research/outputs/BRIDGE-REDIRECT-AUTH-R1-2026-11-23.txt",
+  "residual": "только urllib/loopback; TLS, proxy, DNS, строгий HTTP subset и поведение провайдера не покрыты; не approval/activation/K9"
+ },
+ "owner_decision": "владелец 2026-11-23: «Redirect/Authorization hotfix … это делай я имел ввиду»; изменение bin/bridge.py разрешено, commit/push не запрошены",
+ "updated": "2026-11-23"
+}

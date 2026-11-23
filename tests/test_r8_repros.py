@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 LOOP = ROOT / "core-rs" / "src" / "loopmod.rs"
 POLICY_JSON = ROOT / "lab" / "tools" / "policy.json"
 SCHEMA = ROOT / "lab" / "tools" / "tool-card-v1.schema.json"
-DRAFT = ROOT / "lab" / "tools" / "drafts" / "head-v1.draft.json"
+CARD = ROOT / "lab" / "tools" / "cards" / "head.json"
+LEGACY = ROOT / "lab" / "tools" / "archive" / "head_legacy.json"
 CODES = ROOT / "lab" / "refusal-codes.json"
 
 CHECKS: list[tuple[str, callable]] = []
@@ -181,11 +182,15 @@ def admission() -> str:
 
 @check("REPRO-HEAD-CARD")
 def head_card() -> str:
-    legacy = json.loads((ROOT / "lab" / "tools" / "cards" / "head.json").read_text(encoding="utf-8"))
-    draft = json.loads(DRAFT.read_text(encoding="utf-8"))
-    assert legacy["id"] != draft["id"], \
-        f"две карточки с одним id={draft['id']!r} в разных форматах: неизвестно, какая закон"
-    return "id карточек различаются"
+    canonical = json.loads(CARD.read_text(encoding="utf-8"))
+    legacy = json.loads(LEGACY.read_text(encoding="utf-8"))
+    assert canonical.get("schema_version") == "tool-card-v1" and canonical.get("id") == "head", \
+        "canonical cards/head.json должен быть единственной tool-card-v1 карточкой head"
+    assert legacy.get("id") == "head_legacy" and legacy.get("status") == "superseded", \
+        "legacy должен быть архивной superseded карточкой head_legacy"
+    assert not list((ROOT / "lab" / "tools" / "drafts").glob("*.json")), \
+        "drafts не должны содержать вторую рабочую карточку"
+    return "canonical v1 head; legacy только в archive"
 
 
 @check("REPRO-REFUSAL-V3")
@@ -213,10 +218,10 @@ def schema_enum() -> str:
 def draft_enum() -> str:
     data = json.loads(CODES.read_text(encoding="utf-8"))
     codes = {item["code"] for item in data["codes"]}
-    draft = json.loads(DRAFT.read_text(encoding="utf-8"))
-    unknown = sorted(set(draft["refusals"]) - codes)
+    canonical = json.loads(CARD.read_text(encoding="utf-8"))
+    unknown = sorted(set(canonical["refusals"]) - codes)
     assert not unknown, f"карточка ссылается на коды вне словаря: {unknown}"
-    return "карточка использует только словарь"
+    return "canonical карточка использует только словарь"
 
 
 def main(argv: list[str]) -> int:

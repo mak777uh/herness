@@ -1,0 +1,181 @@
+{
+ "schema": 2,
+ "id": "HEAD-CARD-CANONICAL-R1",
+ "date": "2026-11-23",
+ "question": "Можно ли сделать drafts/head-v1.draft.json единственной канонической tool-card-v1 карточкой head в lab/tools/cards/head.json, сохранив точные байты и pinned provenance, а legacy head_legacy оставить только историческим архивом, который нельзя активировать?",
+ "hypothesis": "Промоушен без read-resave, явный dispatch tool_card.validate по schema_version, обязательный jsonschema Draft202012Validator для v1, смысловые проверки и отдельный activation gate устранят две конкурирующие рабочие карточки. Legacy v0 останется валиден для исторического validate, но status=superseded и отсутствие policy не дадут активации. Автоконверсия v1→v0 в card_atoms запрещена, потому что она не сохраняет все обязательства v1.",
+ "criterion": "PASS: tests/test_head_cards.py на текущем split даёт воспроизводимый RED до перемещения; после промоушена cards/head.json — единственная tool-card-v1 head с id=head, drafts пуст, schema единственная, id в cards не дублируются, head_legacy находится в archive со status=superseded и superseded_by=head; canonical validate ok, legacy historical validate ok, legacy activation отказ, canonical activation ok; policy не содержит head_legacy; card_atoms явно отказывает v1; tests/test_tool_card.py проверяет archive legacy и canonical v1, ловит unknown field/wrong type/const/bad digest/bad effects и отсутствие jsonschema без required-only fallback; все рабочие readers используют canonical; hash карточки sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, 5832 байта и 313 CRLF сохранены; draft исчез; policy/schema/card bytes не изменены; focused tests и доступные self-tests зелёные, отсутствующие self-test режимы отмечены N/A, а не выдуманы. Опровержение: RED не воспроизведён до перемещения, меняются байты/newline/provenance, v1 принимается без jsonschema, superseded активируется, v1 неявно конвертируется в v0, остаётся рабочий draft reader, либо focused проверка красная.",
+ "arms": [
+  "RED: tests/test_head_cards.py переписан под canonical/drafts-empty/archive/activation и запущен на исходном split до перемещения карточек",
+  "GREEN A: legacy cards/head.json скопирован байт-в-байт в archive/head_legacy.json, draft перемещён байт-в-байт в cards/head.json",
+  "GREEN B: readers и рабочие тесты переключены на canonical; policy/schema/provenance не меняются",
+  "GREEN C: tool-card-v1 проверяется Draft202012Validator и смысловыми правилами; legacy v0 остаётся историческим",
+  "GREEN D: activation отклоняет superseded, card_atoms отклоняет tool-card-v1 без конверсии",
+  "GREEN E: focused tests, check_policy_parity --check и существующие self-tests; git diff --check по своим файлам"
+ ],
+ "sensitivity": "Класс различается числом работоспособных canonical v1 карточек, draft-файлов, дубликатов id, activation verdict и числом отвергнутых schema/semantic мутантов. Положительные контроли canonical validate/activation и legacy historical validate обязательны: отказ без работоспособного canonical ничего не доказывает",
+ "unit_of_analysis": "одна проверка состояния lab/tools/cards, drafts, archive и валидатора; RED/GREEN фиксируется отдельными запусками focused test suites до и после промоушена",
+ "critical_controls": [
+  {
+   "id": "red-before-move",
+   "input": "новый tests/test_head_cards.py на текущем cards legacy + drafts v1 split",
+   "expect": "детерминированный rc=1 как минимум по canonical-v1, empty-drafts, archive, activation"
+  },
+  {
+   "id": "exact-byte-promotion",
+   "input": "draft до и canonical после перемещения",
+   "expect": "sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97; 5832 байта; 313 CRLF; draft отсутствует"
+  },
+  {
+   "id": "single-canonical",
+   "input": "lab/tools/cards, lab/tools/drafts и schema-файлы",
+   "expect": "ровно одна canonical tool-card-v1 head, drafts пуст, schema единственная, id карточек уникальны"
+  },
+  {
+   "id": "historical-legacy-valid",
+   "input": "lab/tools/archive/head_legacy.json",
+   "expect": "legacy validate без ошибок; id=head_legacy; status=superseded; superseded_by=head"
+  },
+  {
+   "id": "superseded-not-activatable",
+   "input": "activation check архивной карточки",
+   "expect": "явный отказ; canonical head activation ok"
+  },
+  {
+   "id": "jsonschema-required",
+   "input": "v1 при подменённом отсутствии jsonschema",
+   "expect": "явная ошибка зависимости; required-only fallback не используется"
+  },
+  {
+   "id": "jsonschema-mutants",
+   "input": "unknown field, wrong type/const, malformed digest, forbidden effects",
+   "expect": "каждый мутант отвергнут; canonical проходит"
+  },
+  {
+   "id": "semantic-v1",
+   "input": "refusals вне словаря, banned purpose, неверный kind/template, exemplars без refusal",
+   "expect": "смысловая ошибка v1"
+  },
+  {
+   "id": "no-auto-conversion",
+   "input": "canonical tool-card-v1 в card_atoms.atoms",
+   "expect": "явная CardShapeError о запрете v1→v0; archive legacy продолжает работать"
+  },
+  {
+   "id": "parity-jsonschema-gate",
+   "input": "python bin/check_policy_parity.py --check",
+   "expect": "rc=0 и вызов общего v1 validator; policy/card/schema digest неизменны"
+  }
+ ],
+ "threshold": {
+  "red_reproductions": 1,
+  "focused_failed": 0,
+  "v1_negative_controls_rejected": "все заявленные мутанты и смысловые контроли",
+  "canonical_card_sha256": "sha256:361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97",
+  "canonical_card_bytes": 5832,
+  "canonical_card_crlf": 313,
+  "canonical_v1_head_count": 1,
+  "draft_json_count": 0,
+  "schema_count": 1,
+  "card_id_duplicates": 0
+ },
+ "primary_metric": "RED/GREEN focused test counts; activation verdict; jsonschema mutant rejection; card SHA-256/bytes/CRLF; command rc",
+ "test": "python tests/test_head_cards.py; python tests/test_tool_card.py; python tests/test_card_atoms.py; python tests/test_r8_repros.py",
+ "stopping_rule": "один prereg batch; остановиться при изменении card/policy/schema bytes, ослаблении гейта, принятии superseded, required-only fallback, авто-конверсии v1→v0 или красной focused проверке; критерий и порог после RED не менять",
+ "fixture": "реальные репозиторные карточки и схема; синтетические in-memory мутанты; настоящие секреты, owner keys и production registry не используются",
+ "environment": {
+  "host": "Windows 11 build 26300, Git Bash, Python 3.13.11",
+  "jsonschema": "4.26.0",
+  "network": "не требуется",
+  "real_secrets": false,
+  "baseline": "рабочее дерено содержит параллельную правку bin/bridge.py основного агента; запрещённые файлы не изменяются; commit/push запрещены"
+ },
+ "known_limits": [
+  "схема проверяет форму; kind/template/effects/purpose/exemplars и provenance требуют отдельных смысловых проверок",
+  "jsonschema и смысловый validator не доказывают соответствие карточки Rust-исполнению и не заменяют admission",
+  "активационная проверка в этом срезе — проверка статуса/id/schema карточки, не owner-церемония и не запись production registry",
+  "legacy v0 сохраняется только для исторического validate и card_atoms; sunset старого validator не выполняется в этой задаче",
+  "автоконверсия v1→v0 явно запрещена; IR-перевод остаётся отдельным долгом HEAD-CARD-IR-DEBT",
+  "не запускаются общие hs.py gates, чтобы не пересечься с основным агентом; это не заявление о полном зелёном репозитория",
+  "git diff --check проверяет только свои файлы; commit/push не выполняются"
+ ],
+ "kill_criteria": [
+  "карточка, policy или schema пересохранены с другим SHA-256/размером/newline",
+  "canonical v1 принят при отсутствии jsonschema",
+  "superseded карточка допущена к активации",
+  "card_atoms молча преобразует v1 в v0",
+  "drafts или второй рабочий reader сохраняются",
+  "pinned schema/card provenance перестаёт совпадать",
+  "focused RED/GREEN контроль ослаблен или провален",
+  "для проверки выдуман self-test режим"
+ ],
+ "owner_decision": "R9-SYNTHESIS V4, решение владельца «реализация, новых брифов не нужно», этап 0 шаг 3",
+ "result": {
+  "status": "PASS",
+  "red": {
+   "command": "python tests/test_head_cards.py",
+   "runs": 2,
+   "rc": 1,
+   "checks": 17,
+   "failed": 11,
+   "identical_stdout": true,
+   "before_promotion": true
+  },
+  "green": {
+   "test_head_cards": {"rc": 0, "checks": 17, "failed": 0},
+   "test_tool_card": {"rc": 0, "checks": 27, "failed": 0},
+   "test_card_atoms": {"rc": 0, "checks": 33, "failed": 0},
+   "test_r8_repros": {"rc": 0, "checks": 18, "failed": 0},
+   "check_policy_parity": {"command": "python bin/check_policy_parity.py --check", "rc": 0},
+   "activation_rehearsal": {"command": "python bin/activation_rehearsal.py --no-launch", "rc": 0, "passed": 22, "total": 22},
+   "verify_owner_package": {"command": "python bin/verify_owner_package.py --self-test", "rc": 0, "passed": 5, "total": 5}
+  },
+  "integration": {
+   "independent_focused": "test_head_cards 17/0; test_tool_card 27/0; test_card_atoms 33/0; test_r8_repros 18/0; test_new_tool 0 провалов; parity rc=0",
+   "selftest": {"command": "python bin/hs.py selftest", "rc": 0},
+   "prereg_check": {"command": "python bin/prereg.py check", "with_sensitivity": 33, "total": 33},
+   "verify_claims_fast": {"command": "python bin/verify_claims.py --fast", "claims": 297, "failed": 0},
+   "lab_validate": {"command": "python bin/lab.py validate", "experiments": 44, "rc": 0},
+   "gates": {"command": "python bin/hs.py gates", "rc": 0, "evaluated": 31, "total": 33, "na": ["журналы: нет runs/", "индекс прогонов: нет runs/accept/*.bin"]},
+   "coverage": {"total": 329, "closed": 329, "strict_coverage": 0.561, "verdict": "ANCHORED_WEAK"},
+   "ci": "jsonschema==4.26.0 установлен в gates/claims/selftest/admission; V4 suites включены в selftest",
+   "registry_history": "append-only события и производное состояние не переписывались; production head=candidate, active=[]"
+  },
+  "canonical_card": {
+   "path": "lab/tools/cards/head.json",
+   "sha256": "361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97",
+   "bytes": 5832,
+   "crlf": 313,
+   "draft_absent": true,
+   "promotion": "legacy copyfile; draft os.replace; JSON не парсился и не пересохранялся"
+  },
+  "legacy_archive": {
+   "path": "lab/tools/archive/head_legacy.json",
+   "sha256": "e3ac2bc7331a4735807cd404ba88acffb2a4585e6c6ac9eeeb42cc38640e2110",
+   "bytes": 1041,
+   "historical_validate": "ok",
+   "activation": "refused: superseded"
+  },
+  "unavailable_self_tests": [
+   "python bin/activation_rehearsal.py --self-test: N/A — режима нет; выполнен существующий --no-launch",
+   "python bin/head_slice.py --self-test: N/A — режима нет; --host/--qemu не запускались"
+  ],
+  "reader_reference_check": "В bin/tests нет ссылок на удалённый head-v1.draft.json; activation_rehearsal, head_slice, verify_owner_package, check_policy_parity и test_r8_repros читают cards/head.json",
+  "pinned_provenance": {
+   "schema_sha256": "77195fbe464257d2d029a858853b7372f6c27337739c4da0f61466d4df920d70",
+   "policy_sha256": "2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802",
+   "room_profile_sha256": "f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6",
+   "constitution_sha256": "e9d6f90404c5cde3acbec145f780b2e7f2d054d484fb74269ca1e76334216fb5"
+  },
+  "residual_limits": [
+   "registry.events.jsonl и производный registry.state.json сохраняют исторический путь draft как append-only доказательство; история не переписывалась",
+   "исторические формулировки docs сохранены; локальные ссылки переведены на canonical, CLAIMS.md синхронизирован как C-0336, coverage пересобран под 329 утверждений",
+   "явный IR-перевод tool-card-v1 остаётся долгом HEAD-CARD-IR-DEBT; card_atoms намеренно отказывает v1",
+   "общие gates выполнены: 31/33 оценено, 2 N/A (нет runs/ и индекса журналов); N/A не считается зелёным, полный профиль не заявлен"
+  ],
+  "evidence": "research/outputs/HEAD-CARD-CANONICAL-R1-2026-11-23.txt"
+ },
+ "conclusion": "PASS: воспроизводимый RED получен до промоушена; canonical v1 и архивный superseded legacy разделены без изменения точных байтов/provenance; jsonschema, semantic и activation gates, запрет авто-конверсии и все focused проверки зелёные.",
+ "closed": true,
+ "updated": "2026-11-23"
+}

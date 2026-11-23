@@ -55,6 +55,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36")
 ALLOWED_PREFIX = "/v1/"
+REDIRECT_REFUSAL = b'{"error":"upstream redirect refused"}'
 
 # Окружение внешнего помощника `net.py`: только то, без чего не запускается Python.
 # Ключ провайдера живёт в окружении моста; если запускать дочерний процесс без env=,
@@ -108,6 +109,18 @@ def port_in_use(host: str, port: int) -> bool:
         return True
     finally:
         probe.close()
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Не следовать upstream 3xx — даже на тот же origin.
+
+    Стандартный handler может перенести Authorization на redirect target.
+    Поэтому редирект не обрабатывается как успешный ответ: HTTPError с 3xx
+    превращается в фиксированный отказ, без чтения тела и Location.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
 
 
 def upstream_allowed(url: str) -> tuple[bool, str]:
@@ -224,11 +237,23 @@ class Bridge:
         request.add_header("User-Agent", BROWSER_UA)
         request.add_header("x-opencode-session", self.session)
         request.add_header("Content-Type", headers.get("content-type", "application/json"))
+        opener = urllib.request.build_opener(_NoRedirectHandler())
         try:
-            with urllib.request.urlopen(request, timeout=180) as response:
-                return int(response.status), response.read(), ""
+            with opener.open(request, timeout=180) as response:
+                status = int(response.status)
+                if 300 <= status < 400:
+                    return 502, REDIRECT_REFUSAL, f"upstream redirect refused ({status})"
+                return status, response.read(), ""
         except urllib.error.HTTPError as error:
-            return int(error.code), error.read() or b"", f"upstream {error.code}"
+            try:
+                status = int(error.code)
+                if 300 <= status < 400:
+                    # Тело и Location источника не читаем и не отражаем: источник
+                    # уже видел Authorization, но target не должен получить ничего.
+                    return 502, REDIRECT_REFUSAL, f"upstream redirect refused ({status})"
+                return status, error.read() or b"", f"upstream {status}"
+            finally:
+                error.close()
         except Exception as error:  # noqa: BLE001 — сеть, TLS, таймаут
             return 502, b"", f"upstream error: {type(error).__name__}"
 

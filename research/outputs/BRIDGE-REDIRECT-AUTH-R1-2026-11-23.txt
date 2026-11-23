@@ -1,0 +1,99 @@
+BRIDGE-REDIRECT-AUTH-R1 — upstream redirects не переносят Authorization
+Дата: 2026-11-23
+Пре-регистрация: lab/prereg/BRIDGE-REDIRECT-AUTH-R1.json
+SHA-256 пре-регистрации до закрытия: fdc97a38ca6aff7e92160e41587196bed0d94cf8cf566b921e52616291b8f36c
+Baseline: ac5e8761b88fb2d602dc247144236478df71f8c7
+Окружение: Windows 11 10.0.26300, Python 3.13.11; только loopback, внешняя сеть не использовалась.
+Канарейка и локальный токен синтетические; значения не печатаются и не сохраняются.
+
+Вопрос
+-----
+Стандартный urllib redirect handler может перенести Authorization провайдера
+на redirect target. Требование владельца: upstream redirects запрещены целиком,
+любой 3xx — фиксированный fail-closed отказ; target не получает запроса,
+Location/канарейка/target не попадают в наблюдаемые каналы.
+
+Красный репро (до изменения bin/bridge.py)
+-----------------------------------------
+Команда: python tests/test_bridge_redirects.py
+Итог: rc=1, провалов: 32.
+
+301/302/303 × same-origin/cross-origin (6 плеч):
+- source получил Authorization ровно один раз — положительный контроль выполнен;
+- redirect target получил запрос и Authorization — утечка воспроизведена;
+- мост прошёл редирект и ответил 200 вместо отказа;
+- фиксированная причина отказа отсутствовала.
+
+307/308 × same-origin/cross-origin (4 плеча):
+- source получил Authorization ровно один раз;
+- на Python 3.13.11 target не получил запрос и Authorization;
+- мост всё равно вернул сырой 307/308 вместо фиксированного отказа.
+
+Таким образом, исходное ожидание пре-регистрации «target получает Authorization
+во всех десяти плечах» не сбылось для 307/308 на этом runtime. Это наблюдение
+о поведении стандартной библиотеки, а не изменение порога: после фикса все
+десять плеч обязаны дать target=0 и мост=502.
+
+Обычный upstream 200 прошёл во всех прогонах. Канарейка, Location и redirect
+target отсутствовали в ответах, bridge.log и stdout/stderr даже на RED; дефект
+был именно в переносе Authorization на target.
+
+Изменение
+---------
+bin/bridge.py:
+- _NoRedirectHandler.redirect_request возвращает None;
+- Bridge.forward использует отдельный opener с этим handler;
+- любой 3xx, наблюдаемый как response или HTTPError, превращается в
+  HTTP 502 и фиксированное тело {"error":"upstream redirect refused"};
+- тело и Location upstream 3xx не читаются и не отражаются;
+- причина в журнале содержит только код 3xx, не Location и не target.
+
+bin/hs.py:
+- test_bridge_redirects.py добавлен в общий selftest рядом с test_bridge.py.
+
+tests/test_bridge_redirects.py:
+- in-process мост + loopback source/target;
+- 301/302/303/307/308 × same-origin/cross-origin;
+- same-origin landing serviced тем же сервером, но учитывается отдельно;
+- cross-origin target адресуется как localhost;
+- source Authorization=1, target requests=0, target Authorization=0;
+- обычный 200 как положительный контроль;
+- отсутствие канарейки, Location и target в ответах, bridge.log, stdout/stderr.
+
+Зелёный прогон (после изменения)
+--------------------------------
+Команда: python tests/test_bridge_redirects.py
+Итог: rc=0, провалов: 0.
+
+- 10/10 redirect-плеч: source Authorization=1;
+- 10/10 redirect-плеч: target requests=0, target Authorization=0;
+- 10/10 redirect-плеч: мост=502, error=upstream redirect refused;
+- обычный upstream: мост=200, source Authorization=1, target не использован;
+- ответы моста: канарейка=0, Location=0, redirect target=0;
+- bridge.log: канарейка=0, Location=0, redirect target=0;
+- stdout/stderr: канарейка=0, Location=0, redirect target=0.
+
+Регрессия
+---------
+python tests/test_bridge.py — 8/8 ok, провалов: 0.
+python tests/test_bridge_key_isolation.py — 7/7 ok, провалов: 0;
+канарейка в response/output/bridge.log/proc.log = 0/0/0/0.
+python bin/hs.py selftest — rc=0; test_bridge_redirects.py включён и прошёл.
+python tests/test_bridge_win_isolation.py — 28/28 ok, провалов: 0.
+python tests/test_bridge_net_namespace.py — 16/16 ok, провалов: 0 (WSL Ubuntu).
+Три дополнительных повтора test_bridge_redirects.py — return codes [0, 0, 0],
+в каждом канареечная проверка дала провалов: 0.
+
+Хеши реализации
+---------------
+bin/bridge.py: 5270c89292f380803293935b139d95824495deaea7febb989b3e49f86ca0b6a0
+tests/test_bridge_redirects.py: dfec7707fe0616f27c61dc03b61b9b35e00cea1f319d88b84affbb8f2ccd6de6
+
+Границы
+-------
+- Проверен upstream-редирект urllib на loopback, не строгий HTTP-парсер (V5).
+- Same/cross-origin различаются именами loopback-хостов; DNS, TLS, proxy и
+  поведение конкретного провайдера не перемерялись.
+- Это security hotfix, не owner approval, не production activation и не K9.
+- Настоящий ключ не использовался; active пуст; K9_proven не выдан.
+- Commit/push не выполнялись.

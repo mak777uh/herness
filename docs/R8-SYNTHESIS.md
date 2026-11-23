@@ -869,5 +869,5 @@ v0. Один изменённый байт card/binary — отказ; запу�
   запечатанная пре-регистрация среза.
 - [`lab/tools/policy.json`](../lab/tools/policy.json),
   [`lab/tools/registry.jsonl`](../lab/tools/registry.jsonl),
-  [`lab/tools/drafts/head-v1.draft.json`](../lab/tools/drafts/head-v1.draft.json) —
+  [`lab/tools/cards/head.json`](../lab/tools/cards/head.json) (первоначальный draft, ныне canonical) —
   проверяемые артефакты, а не «красивые документы».

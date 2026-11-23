@@ -1,0 +1,27 @@
+{
+ "id": "head_legacy",
+ "status": "superseded",
+ "superseded_by": "head",
+ "purpose": "вернуть первые N строк файла, не давая прочитать файл целиком.",
+ "inputs": {
+  "path": "файл внутри /mnt",
+  "n": "целое 1..200, по умолчанию 10"
+ },
+ "outputs": {
+  "lines": "строки с номерами",
+  "truncated": "признак, что файл длиннее выдачи"
+ },
+ "closure": {
+  "fs": {"read": ["/mnt/**"], "write": []},
+  "net": [],
+  "time_ms": 100,
+  "memory_mb": 4,
+  "output_bytes": 8192
+ },
+ "refusals": ["S6_CLOSURE_BREACH", "S1_SCHEMA"],
+ "examples": [
+  {"args": {"path": "/mnt/CLAIMS.md", "n": 3}, "expect": "первая строка содержит «1: » и текст заголовка"},
+  {"args": {"path": "/mnt/CLAIMS.md", "n": 0}, "expect": "отказ S1_SCHEMA: n вне диапазона 1..200"},
+  {"args": {"path": "/etc/passwd", "n": 3}, "expect": "отказ S6_CLOSURE_BREACH: путь вне комнаты"}
+ ]
+}

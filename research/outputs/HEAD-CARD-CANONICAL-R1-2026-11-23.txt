@@ -1,0 +1,137 @@
+HEAD-CARD-CANONICAL-R1 — 2026-11-23
+Пре-регистрация: lab/prereg/HEAD-CARD-CANONICAL-R1.json
+Статус: PASS. RED зафиксирован ДО перемещения карточек; GREEN и интеграция повторены основным агентом.
+
+## RED (до промоушена)
+
+Команда: python tests/test_head_cards.py
+Повторено два раза независимыми запусками через subprocess.
+Run 1: rc=1; проверок=17; провалов=11; stdout двух запусков побайтно одинаков.
+Run 2: rc=1; проверок=17; провалов=11; stdout двух запусков побайтно одинаков.
+
+Точный stdout каждого запуска:
+[ok] canonical cards/head.json существует
+[FAIL] canonical id=head, получено 'head_legacy'
+[FAIL] canonical schema_version=tool-card-v1, получено None
+[ok] canonical validate ok: []
+[FAIL] canonical точные байты: sha256=e3ac2bc7331a4735807cd404ba88acffb2a4585e6c6ac9eeeb42cc38640e2110, bytes=1041, CRLF=0
+[FAIL] canonical — единственная tool-card-v1 head: []
+[FAIL] drafts пуст: ['C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\lab\tools\drafts\head-v1.draft.json']
+[ok] schema единственная: ['C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\lab\tools\tool-card-v1.schema.json']
+[ok] id в cards не дублируются: []
+[FAIL] legacy сохранён байт-в-байт: sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, bytes=0
+[FAIL] legacy archive status/superseded_by: id=None, status=None, superseded_by=None
+[FAIL] legacy historical validate ok: ['legacy archive не читается']
+[FAIL] legacy activation отказ: ['activation API отсутствует']
+[FAIL] canonical activation ok: ['activation API отсутствует']
+[ok] policy содержит head: 4
+[ok] policy не содержит head_legacy: []
+[FAIL] canonical не tool-card-v1: запрет авто-конверсии не проверен
+проверок: 17, провалов: 11
+
+## Baseline точных байтов (до перемещения)
+
+- lab/tools/cards/head.json: legacy id=head_legacy; sha256=e3ac2bc7331a4735807cd404ba88acffb2a4585e6c6ac9eeeb42cc38640e2110; 1041 байт; 27 LF; 0 CRLF.
+- lab/tools/drafts/head-v1.draft.json: sha256=361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97; 5832 байта; 313 LF; 313 CRLF.
+- lab/tools/tool-card-v1.schema.json: sha256=77195fbe464257d2d029a858853b7372f6c27337739c4da0f61466d4df920d70; 7931 байт; 285 LF; 0 CRLF.
+- lab/tools/policy.json: sha256=2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802; 6106 байт; 246 LF; 0 CRLF.
+- lab/tools/room-profile-v0.json: sha256=f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6; 700 байт; 22 LF; 0 CRLF.
+
+На момент RED ни legacy archive, ни перемещение карточки ещё не выполнялись.
+Порог и критерий после RED не меняются.
+
+## Промоушен точными байтами
+
+- Legacy cards/head.json скопирован через shutil.copyfile в lab/tools/archive/head_legacy.json; hash и размер совпали до/после.
+- Draft lab/tools/drafts/head-v1.draft.json перемещён через os.replace в lab/tools/cards/head.json; JSON не парсился и не пересохранялся.
+- .gitattributes переносит EOL-pin с удалённого draft на canonical cards/head.json.
+- После перемещения draft отсутствует.
+
+Финальные метрики:
+- lab/tools/cards/head.json: sha256=361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97; 5832 байта; 313 CRLF.
+- lab/tools/archive/head_legacy.json: sha256=e3ac2bc7331a4735807cd404ba88acffb2a4585e6c6ac9eeeb42cc38640e2110; 1041 байт; 0 CRLF.
+- lab/tools/tool-card-v1.schema.json: sha256=77195fbe464257d2d029a858853b7372f6c27337739c4da0f61466d4df920d70; 7931 байт; 0 CRLF.
+- lab/tools/policy.json: sha256=2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802; 6106 байт; 0 CRLF.
+- lab/tools/room-profile-v0.json: sha256=f203f404559dd544870f373c3c0a28a2f5f6e3556e16e8cf6e47bcb11cd38de6; 700 байт; 0 CRLF.
+- docs/CONSTITUTION-v0-2026-11-16.md: sha256=e9d6f90404c5cde3acbec145f780b2e7f2d054d484fb74269ca1e76334216fb5; 40157 байт; 333 CRLF.
+
+## GREEN: focused tests и gates
+
+Все команды выполнялись из корня herness.
+
+1. python tests/test_head_cards.py
+   rc=0; проверок=17; провалов=0.
+   Проверены canonical id/schema/validate/hash-bytes-CRLF, единственная v1 head, пустые drafts, единственная schema, уникальные id, точный архив, historical validate, activation verdicts, policy и запрет card_atoms v1→v0.
+
+2. python tests/test_tool_card.py
+   rc=0; проверок=27; провалов=0.
+   Проверены archive legacy, canonical v1, activation, jsonschema unknown field/wrong type/wrong const/malformed digest, semantic bad digest/effects/traversal/template/purpose/closed refusals/exemplars, unsupported schema_version, обязательный jsonschema без fallback и propagation отказа общего validator через check_policy_parity.
+
+3. python tests/test_card_atoms.py
+   rc=0; проверок=33; провалов=0.
+   Legacy archive выводит 5 атомов; canonical v1 даёт явную CardShapeError об автоконверсии tool-card-v1→v0.
+
+4. python tests/test_r8_repros.py
+   rc=0; проверок=18; провалов=0.
+   REPRO-HEAD-CARD подтверждает canonical v1, архивный superseded legacy и отсутствие draft; исторический REPRO-DRAFT-ENUM читает canonical.
+
+5. python bin/check_policy_parity.py --check
+   rc=0.
+   stdout: [ok] политика: один источник, 23 правила, карточка head не шире политики
+   Gate вызывает общий tool_card.validate; отдельный negative control подтвердил propagation его отказа.
+
+6. python bin/activation_rehearsal.py --no-launch
+   rc=0; PASS activation rehearsal: 22/22.
+   production registry-файлы не изменены; production head остаётся candidate; production active пуст.
+
+7. python bin/verify_owner_package.py --self-test
+   rc=0; PASS owner verify self-test: 5 проверок.
+   test-only: true; ключ эфемерный; запись не выполнялась.
+
+## N/A и намеренно не запускавшиеся команды
+
+- python bin/activation_rehearsal.py --self-test: N/A. --help показывает только -h/--work/--build/--no-launch/--evidence/--quiet/--keep; режим --self-test отсутствует. Вместо выдуманного режима выполнен существующий --no-launch.
+- python bin/head_slice.py --self-test: N/A. --help показывает только -h/--host/--qemu/--keep/--no-build; режим --self-test отсутствует. --host/--qemu не запускались: это отдельные Linux/QEMU прогоны, а не self-test, и они вне данного focused среза.
+- На этапе focused-прогона общие hs.py gates/selftest не запускались из-за параллельной работы основного агента. Они выполнены позже в интеграции ниже; это не заявление о полном профиле без N/A.
+
+## Readers и остаточные ссылки
+
+Grep по bin/tests не нашёл ссылок на удалённый head-v1.draft.json. Рабочие readers переключены на canonical:
+- bin/activation_rehearsal.py: CARD=lab/tools/cards/head.json; pinned digest сохранён.
+- bin/head_slice.py: CARD=lab/tools/cards/head.json.
+- bin/verify_owner_package.py: CARD=lab/tools/cards/head.json.
+- bin/check_policy_parity.py: CARD=lab/tools/cards/head.json и общий v1 validator.
+- tests/test_r8_repros.py: canonical + archive.
+
+Старый draft path остаётся в историческом тексте docs/evidence, а также в append-only lab/tools/registry.events.jsonl и его производном registry.state.json. Переписывать событие с hash-chain/полномочиями нельзя; это доказательство истории, не рабочий reader. На интеграции локальные Markdown-ссылки в DECISIONS-R5, SELF-TOOLING и R8-SYNTHESIS переведены на canonical cards/head.json; формулировки о прежнем draft-статусе сохранены как история.
+
+## Интеграция основного агента
+
+- Независимый повтор focused: test_head_cards 17/0, test_tool_card 27/0, test_card_atoms 33/0, test_r8_repros 18/0, test_new_tool 0 провалов; check_policy_parity --check rc=0.
+  test_head_cards stdout: проверок: 17, провалов: 0
+- В new_tool.py удалён required-only fallback: без jsonschema кандидатная карточка отвергается явной ошибкой зависимости; негативный контроль добавлен в test_new_tool.py.
+- jsonschema==4.26.0 закреплён в CI jobs gates/claims/selftest/admission; V4 focused suites и test_new_tool включены в hs.py selftest.
+- python bin/hs.py selftest: rc=0, включая bridge redirects, canonical card, schema/semantic mutants, card_atoms, R8 repros и generator dependency control.
+- python bin/prereg.py check: 33 из 33 пре-регистраций имеют sensitivity/unit_of_analysis.
+- python bin/verify_claims.py --fast: 297 утверждений, провалено 0; C-0335 и C-0336 прошли.
+- python bin/lab.py validate: реестр связен, 44 эксперимента; HEAD-CARD-CANONICAL-R1 связан как E-0044/C-0336.
+- python bin/hs.py gates: rc=0; оценено 31 из 33 гейтов, N/A 2 (нет runs/ и runs/accept/*.bin). N/A не считается зелёным.
+- research/claims-coverage.json пересобран: total=closed=329, malformed=0; strict_coverage=0.561, verdict ANCHORED_WEAK сохранён.
+- activation_rehearsal.py --no-launch: 22/22; verify_owner_package.py --self-test: 5/5. Production registry остаётся candidate/active=[].
+- JSON/YAML syntax и py_compile изменённых Python-файлов: PASS. Настоящие секреты и owner-ключи не использовались.
+
+## Финальная проверка diff
+
+- git diff --check по tracked файлам этого среза: PASS, whitespace diagnostics отсутствуют.
+- git diff --no-index --check /dev/null для untracked prereg/evidence/archive: PASS, whitespace diagnostics отсутствуют (no-index rc=1 означает наличие нового файла, не whitespace error).
+- lab/prereg/HEAD-CARD-CANONICAL-R1.json повторно разобран JSON: closed=true, result.status=PASS.
+- CLI tool_card --check: canonical ok (8 примеров), archive legacy ok (3 примера).
+
+## Ограничения и остаточный долг
+
+- Схема проверяет форму; semantic checks не доказывают соответствие Rust-исполнению и не заменяют admission.
+- Legacy v0 оставлен только для исторического validate/card_atoms; sunset старого validator не входит в этот срез.
+- Явный IR-перевод tool-card-v1 остаётся долгом HEAD-CARD-IR-DEBT; молчаливой авто-конверсии нет.
+- CLAIMS.md синхронизирован основным агентом: добавлен C-0336, расширена регрессия C-0335; coverage-артефакт пересобран под 329 утверждений.
+- Настоящие секреты, owner keys и production registry не использовались/не изменялись.
+- commit/push не выполнялись.

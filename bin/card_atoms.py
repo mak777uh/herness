@@ -11,11 +11,12 @@
   --check   упасть, если карточка и политика противоречат друг другу или право карточки
             не покрыто разрешением политики.
 
-    python bin/card_atoms.py --derive lab/tools/cards/head.json
-    python bin/card_atoms.py --gaps   lab/tools/cards/head.json
-    python bin/card_atoms.py --check  lab/tools/cards/head.json
+    python bin/card_atoms.py --derive lab/tools/archive/head_legacy.json
+    python bin/card_atoms.py --gaps   lab/tools/archive/head_legacy.json
+    python bin/card_atoms.py --check  lab/tools/archive/head_legacy.json
 
 Границы v0:
+  * tool-card-v1 не конвертируется в v0: автоконверсия обязательств запрещена явно;
   * пустой массив — это «эффекта нет», а не wildcard; отсутствующее обязательное поле — ошибка;
   * из карточки не синтезируется ни один путь, которого в ней нет;
   * проверка двусторонняя: policy allow против запрета карточки и policy deny против права
@@ -81,7 +82,15 @@ def _closure(card: dict) -> tuple[list[str], list[str], list[str], int, list[str
 
 
 def atoms(card: dict) -> list[dict]:
-    """Вывести атомы только из явно объявленных эффектов карточки."""
+    """Вывести атомы только из явно объявленных эффектов legacy v0 карточки."""
+    if not isinstance(card, dict):
+        raise CardShapeError("карточка: ожидался JSON-объект")
+    if "schema_version" in card:
+        version = card["schema_version"]
+        raise CardShapeError(
+            f"schema_version={version!r}: автоконверсия {version}→v0 запрещена; "
+            "сначала нужен явный IR-перевод, а не потеря обязательств tool-card-v1"
+        )
     read, write, net, output_bytes, refusals = _closure(card)
     out: list[dict] = []
     index = 0

@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LOOP = ROOT / "core-rs" / "src" / "loopmod.rs"
 POLICY = ROOT / "lab" / "tools" / "policy.json"
-DRAFT = ROOT / "lab" / "tools" / "drafts" / "head-v1.draft.json"
+CARD = ROOT / "lab" / "tools" / "cards" / "head.json"
 CODES = ROOT / "lab" / "refusal-codes.json"
 
 INCLUDE = 'include_str!("../../lab/tools/policy.json")'
@@ -122,8 +122,16 @@ def check() -> list[str]:
     for missing in sorted(REQUIRED_DENIES - denies):
         problems.append(f"удалён обязательный запрет: {missing}")
 
-    draft = json.loads(DRAFT.read_text(encoding="utf-8"))
-    effects = draft["effects"]
+    card = json.loads(CARD.read_text(encoding="utf-8"))
+    sys.path.insert(0, str(ROOT))
+    try:
+        from bin import tool_card
+
+        problems += [f"tool-card-v1: {issue}" for issue in tool_card.validate(card)]
+    except Exception as exc:  # noqa: BLE001
+        problems.append(f"общий tool-card-v1 validator недоступен: {type(exc).__name__}: {exc}")
+
+    effects = card["effects"]
     if effects["fs_read"] != [{"root_ref": "room:input", "segments": ["fixtures"]}]:
         problems.append(f"fs_read карточки head изменился: {effects['fs_read']}")
     for key in ("fs_list", "fs_write", "bridges"):
@@ -142,9 +150,9 @@ def check() -> list[str]:
     }
     for name, path in provenance_sources.items():
         actual = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-        if draft["provenance"].get(name) != actual:
+        if card["provenance"].get(name) != actual:
             problems.append(f"provenance {name} не совпадает с {path.name}: "
-                            f"{draft['provenance'].get(name)} != {actual}")
+                            f"{card['provenance'].get(name)} != {actual}")
 
     # Разрешённое карточке должно быть разрешено политикой, и ничего сверх.
     if not allows(rules, "head", "read", "file:/mnt/fixtures/head-slice.txt"):

@@ -13,7 +13,7 @@
 | id | решение | статус | артефакт |
 |---|---|---|---|
 | Q1 | Для v0 — пять файловых `kind`: `file_read`, `directory_read`, `file_write`, `digest`, `bridge_request` | принято | [`tool-card-v1.schema.json`](../lab/tools/tool-card-v1.schema.json) |
-| Q2 | `tool-card-v1` — **черновик**, не действующий закон | принято | схема + [`head-v1.draft.json`](../lab/tools/drafts/head-v1.draft.json) |
+| Q2 | `tool-card-v1` — **черновик**, не действующий закон | принято | схема + [`head-v1.draft.json` (ныне canonical)](../lab/tools/cards/head.json) |
 | Q3 | Четыре новых кода отказа приняты поправкой словаря v2 | принято | [`refusal-codes.json`](../lab/refusal-codes.json) |
 | Q4 | Первый срез — только синтетический `model_visible` fixture, без реального `/mnt` | принято | [`lab/fixtures/model_visible/`](../lab/fixtures/model_visible/) |
 | Q5 | TCG — только симуляция; security-утверждение требует аппаратной виртуализации и измерения | принято, замер сделан | [`qemu-accel-2026-11-16.txt`](../research/outputs/qemu-accel-2026-11-16.txt) |
@@ -49,7 +49,7 @@
 ## 3. Q2 — `tool-card-v1` как черновик
 
 Схема лежит в [`lab/tools/tool-card-v1.schema.json`](../lab/tools/tool-card-v1.schema.json),
-пример карточки `head` — в [`lab/tools/drafts/head-v1.draft.json`](../lab/tools/drafts/head-v1.draft.json).
+пример карточки `head` (первоначальный draft, с 2026-11-23 canonical) — в [`lab/tools/cards/head.json`](../lab/tools/cards/head.json).
 Статус — **draft**. Она не подключена к `bin/tool_card.py` и не заменяет текущие карточки
 `lab/tools/cards/*.json`. Пока владелец отдельно не утвердит схему как действующую:
 

@@ -33,7 +33,7 @@ lab/prereg/HEAD-SLICE-R1.json text eol=crlf
 # Карточка head запечатана в HEAD-SLICE-R1 по CRLF-байтам (sha256:361ad2ec…):
 # promoter и репетиция сверяют её точные байты с digest карточки. Общий *.json
 # даёт LF, поэтому представление фиксируется отдельно; при смене — перепечатать.
-lab/tools/drafts/head-v1.draft.json text eol=crlf
+lab/tools/cards/head.json text eol=crlf
 
 # бинарь
 *.zstd binary

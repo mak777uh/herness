@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-11-18",
+ "updated_at": "2026-11-23",
  "program": {
   "name": "herness",
   "phase": "M0: прибор собран, внешних задач нет; идёт проверка предпосылки ядра",
@@ -425,6 +425,28 @@
    "note": "PASS: 43/43, machine report byte-identical, Lean rc2 и negative controls зелёные, мутант 23 провала; привязка не доказывает истинность, K9_proven не выдан",
    "conclusion": "research/outputs/V6-PROOF-BINDING-R1-2026-11-23.txt",
    "claim": "C-0334",
+   "updated": "2026-11-23"
+  },
+  {
+   "id": "E-0043",
+   "title": "BRIDGE-REDIRECT-AUTH-R1: upstream 3xx не переносят Authorization",
+   "hypothesis": "urllib следует upstream 3xx и может скопировать Authorization на redirect target; полный запрет redirect handler закроет границу и даст фиксированный fail-closed отказ.",
+   "prereg": "lab/prereg/BRIDGE-REDIRECT-AUTH-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/BRIDGE-REDIRECT-AUTH-R1-2026-11-23.txt",
+   "claim": "C-0335",
+   "note": "PASS: RED 32 провала; 301/302/303 same/cross target request=1 и Authorization=1, мост=200; 307/308 target=0, но сырой 3xx. После no-redirect opener 10/10 target=0, мост=502/upstream redirect refused; source Authorization=1 и обычный 200 сохранены; канарейка/Location/target=0 во всех каналах. Регрессия bridge 8/8, key isolation 7/7, win isolation 28/28, net namespace 16/16, общий selftest rc=0. Граница: urllib/loopback, не V5; TLS/proxy/DNS/провайдер не покрыты; не approval/activation/K9.",
+   "updated": "2026-11-23"
+  },
+  {
+   "id": "E-0044",
+   "title": "HEAD-CARD-CANONICAL-R1: единая canonical tool-card-v1 и архивный superseded legacy",
+   "hypothesis": "Промоушен без read-resave, обязательный jsonschema/semantic validator, отдельный activation gate и явный отказ auto-conversion устранят две конкурирующие рабочие карточки без потери pinned provenance.",
+   "prereg": "lab/prereg/HEAD-CARD-CANONICAL-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HEAD-CARD-CANONICAL-R1-2026-11-23.txt",
+   "claim": "C-0336",
+   "note": "PASS: RED 11 провалов до перемещения; canonical SHA-256 361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, 5832 байта, 313 CRLF; legacy archive 1041 байт, superseded; focused 17/27/33/18 без провалов, parity rc=0, activation rehearsal 22/22, owner verify 5/5. Граница: schema/semantic checks не доказывают Rust-соответствие; IR-перевод остаётся долгом; append-only registry history не переписывалась; не approval/activation/K9.",
    "updated": "2026-11-23"
   }
  ]
