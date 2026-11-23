@@ -430,6 +430,13 @@ def gate_links(root: Path) -> list[str]:
     for path in iter_files(root):
         if path.suffix.lower() != ".md":
             continue
+        rel = path.relative_to(root).as_posix()
+        if rel.startswith("docs/research/external/"):
+            # Сырые внешние ответы — свидетельства, а не документация:
+            # хранятся байт-в-байт (.gitattributes), markdown-синтаксис в них
+            # случаен (JSON-схемы, регэкспы), править их нельзя. Гейт судит
+            # документацию; целостность каталога проверяет его README.
+            continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for target in LINK_RE.findall(text):
             target = target.split("#", 1)[0].strip()

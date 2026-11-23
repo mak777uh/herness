@@ -67,3 +67,5 @@ docs/research/external/2026-11-17-R7-answer-* -text -eol
 docs/research/external/2026-11-17-R8-answer-* -text -eol
 # то же для R9: первый ответ A коммитится байт-в-байт,
 docs/research/external/2026-11-23-R9-answer-* -text -eol
+# то же для R9.1: ответ A (дожим) — байт-в-байт,
+docs/research/external/2026-11-23-R9.1-answer-* -text -eol
