@@ -1,0 +1,89 @@
+{
+ "schema": 2,
+ "id": "VSOCK-WIN-R1",
+ "date": "2026-11-24",
+ "question": "Может ли Windows-хост/QEMU поднять vhost-vsock устройство и обеспечить guest→host→guest канал CID=2 с заявленными задержкой, потерей и изоляцией",
+ "hypothesis": "На Windows 11 build 26300 QEMU не сможет поднять vhost-vsock-pci, потому что vhost-vsock требует Linux kernel backend. Проба даст честный RED с конкретной причиной отказа и нулевыми fallback-вызовами. Если устройство всё же поднимется, измеренные 100/100 echo, p99 < 5 мс на 1000 образцах, 0/10000 потерь и изоляция CID дадут GREEN; fallback на TCP/stdio в этой пробе запрещён.",
+ "criterion": "Transport GREEN только если устройство vhost-vsock стартует, 100/100 guest→host→guest echo успешны, p99 latency < 5.0 мс на N=1000, 0 потерь в 10000 кадрах, reconnect после guest restart успешен и guest не достигает ни одного CID кроме host(2). Transport RED фиксируется при отказе устройства, недоступном guest CID, любом потерянном кадре, p99 >= 5.0 мс или доступе к чужому CID. Успешный RED-вердикт прибора означает корректно обнаруженную неподдерживаемую среду, но не доказывает пригодность VSOCK и не разрешает fallback. Достаточность RED для выбора HTTP-subset решает владелец. N/A без фактического запуска QEMU не является RED или GREEN.",
+ "arms": [
+  "A: Windows QEMU с vhost-vsock-pci,guest-cid=3; host CID=2; реальная guest→host→guest echo проба",
+  "B: отрицательный контроль прибора — metrics не публикуются при отказе устройства, а verdict содержит точную причину RED",
+  "C: контроль изоляции — guest пытается достичь CID кроме 2 и обязан получить отказ; TCP/stdio fallback не вызывается"
+ ],
+ "sensitivity": "Класс различается булевым device start, счётчиками echo/cadр, percentile latency, reconnect verdict и числом достижимых CID. Нулевые метрики без запуска не отличают RED от N/A, поэтому probe обязан сохранить command/rc/stderr и явный status. Положительный контроль echo на поддерживаемом CI-Linux не подменяет Windows-результат.",
+ "unit_of_analysis": "один Windows QEMU launch с отдельным guest CID=3 и host CID=2; latency sample N=1000; soak 10000 кадров; одна изоляционная проба",
+ "primary_metric": "device_start; echo_success/100; p99_latency_ms; lost_frames/10000; reconnect_ok; reachable_non_host_cids; fallback_calls; command rc и stderr",
+ "test": "python bin/vsock_probe.py --output research/outputs/VSOCK-WIN-R1-2026-11-24.txt",
+ "stopping_rule": "один prereg batch; остановиться после device start решения, 1000 latency samples, 10000 soak frames и одной reconnect/изоляционной пробы; при отказе устройства не выдумывать latency/loss и не переходить к TCP; порог после запуска не менять",
+ "fixture": "существующие QEMU/kernel/initramfs артефакты репозитория; синтетические echo bytes; настоящие ключи, owner keys, production registry и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300",
+  "qemu": "путь и версия фиксируются фактическим запуском; Linux/WSL успех не засчитывается",
+  "network": "только VSOCK CID 2↔3; внешняя сеть не нужна",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; это не успешный поиск"
+ },
+ "critical_controls": [
+  {
+   "id": "device-start",
+   "input": "QEMU -device vhost-vsock-pci,guest-cid=3",
+   "expect": "фактический rc/stderr; при отказе — RED, а не N/A и не GREEN"
+  },
+  {
+   "id": "echo",
+   "input": "100 guest→host→guest echo",
+   "expect": "100/100 только при реально поднятом канале"
+  },
+  {
+   "id": "latency",
+   "input": "N=1000 замеров",
+   "expect": "p99 < 5.0 мс; сырые замеры сохранены"
+  },
+  {
+   "id": "soak",
+   "input": "10000 кадров",
+   "expect": "0 потерь; reconnect после guest restart успешен"
+  },
+  {
+   "id": "cid-isolation",
+   "input": "guest пытается достичь CID кроме 2",
+   "expect": "0 достижимых non-host CID"
+  },
+  {
+   "id": "no-fallback",
+   "input": "instrumentation и process trace",
+   "expect": "0 TCP/stdio fallback вызовов; отказ VSOCK остаётся отказом VSOCK"
+  }
+ ],
+ "threshold": {
+  "device_start_required_for_green": true,
+  "echo_success": 100,
+  "latency_samples": 1000,
+  "p99_latency_ms_less_than": 5.0,
+  "soak_frames": 10000,
+  "soak_lost_frames": 0,
+  "reconnect_after_guest_restart": true,
+  "reachable_non_host_cids": 0,
+  "fallback_calls": 0
+ },
+ "known_limits": [
+  "Проба проверяет vhost-vsock на Windows/QEMU, а не Hyper-V AF_HYPERV/VMBus и не Linux WSL",
+  "RED не доказывает невозможность любого другого Windows socket backend; он закрывает только заявленный vhost-vsock путь",
+  "GREEN не был бы разрешением на frames-over-vsock, production activation или снятие HTTP до отдельного owner decision",
+  "Достаточность RED для выбора канонического HTTP-subset остаётся решением владельца",
+  "Локальный refs-индекс отсутствует (NOT PROVIDED); эксперимент опирается на утверждённый W17 и docs/R9-SYNTHESIS.md"
+ ],
+ "kill_criteria": [
+  "устройство не запущено, но probe печатает GREEN",
+  "metrics опубликованы без фактических samples или при device failure",
+  "использован TCP/stdio fallback или Linux/WSL результат подменяет Windows",
+  "lost frames, p99 threshold или CID isolation нарушены, но вердикт остаётся GREEN",
+  "отсутствуют command/rc/stderr и невозможно отличить RED от N/A",
+  "порог изменён после запуска"
+ ],
+ "owner_decision": "утверждённый план W17: VSOCK-WIN-R1 выполняется отдельной RED/GREEN пробой без fallback; достаточность результата решает владелец",
+ "runs": [
+  "runs/exp-vsock-win-r1"
+ ],
+ "closed": false
+}

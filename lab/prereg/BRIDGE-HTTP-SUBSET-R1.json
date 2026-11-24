@@ -1,0 +1,133 @@
+{
+ "schema": 2,
+ "id": "BRIDGE-HTTP-SUBSET-R1",
+ "date": "2026-11-24",
+ "question": "Заменит ли строгий канонический HTTP/1.1-subset на границе комната↔мост неоднозначный stdlib-разбор и закроет ли канонический Rust-клиент smuggling, неканонические длины, pipelining и неполные ответы",
+ "hypothesis": "До изменения stdlib-приём принимает как минимум 8 из 22 заявленных негодных запросов. После строгого pre-handler все 22 именованных мутанта и 50 дополнительных malformed-запросов получают BRIDGE_HTTP_* отказ без вызова downstream, четыре канонических positives проходят, Rust эмитит точные запросы для трёх маршрутов и отвергает 12 неканонических response-контролей. Ошибки остаются типизированными, соединение закрывается после одного запроса, канарейка не попадает в журнал.",
+ "criterion": "PASS только если RED воспроизведён на baseline a791a3c с не менее чем 8 unsafe acceptances из заранее перечисленных классов; после изменения 22/22 именованных мутанта отвергнуты с ожидаемым BRIDGE_HTTP_* кодом, 50/50 malformed отвергнуты, 4/4 канонических positives приняты, число downstream вызовов на всех отказах равно 0, Rust route emit positives 3/3, Rust emit negatives 6/6, Rust response negatives 12/12 и response positives 2/2. Production header idle timeout равен 5.0 с, total timeout 30.0 с, body cap 8 MiB, header line cap 1024 B, header count cap 8; реальный slowloris контроль подтверждает idle timeout, scaled total-timeout контроль подтверждает ту же ветку без 30-секундного ожидания. Опровержение: любой invalid доходит до dispatch, canonical positive ломается, счётчик прибора не меняется, код отказа не BRIDGE_HTTP_*, соединение обрабатывает второй запрос, сроки отключены, тест ослаблен или использован настоящий секрет. N/A для неподнятого loopback-прибора не является PASS.",
+ "arms": [
+  "RED: новый raw-socket корпус и Rust fixtures запускаются на baseline a791a3c до изменения bridge.py/model.rs",
+  "GREEN A: strict pre-handler разбирает точный request-line, закрытый routes/methods/header allowlist и canonical Content-Length до dispatch",
+  "GREEN B: TE/Expect/duplicate/obs-fold/LF-only/obs-text/trailing bytes/pipelining получают типизированный отказ; одно соединение обрабатывает один запрос",
+  "GREEN C: connect/write/read deadlines и response framing применяются на Python и Rust сторонах",
+  "GREEN D: существующие bridge/provider/isolation tests обновляются на канонические клиенты без ослабления security assertions"
+ ],
+ "sensitivity": "Класс различается числом invalid-запросов, дошедших до downstream, числом canonical positives, точными BRIDGE_HTTP_* кодами, байтами canonical Rust request и числом отвергнутых response-мутантов. Положительные controls обязательны: полный отказ без работоспособного chat/journal/net/health ничего не доказывает. Для каждого именованного мутанта зафиксирован ожидаемый код, поэтому общий 4xx без различения причины не засчитывается.",
+ "unit_of_analysis": "один raw HTTP/1.1 запрос на отдельном loopback TCP-соединении либо один вызов Rust canonical request/response helper; RED/GREEN считается по сумме всех тестовых бинарников, а не по последнему выводу",
+ "primary_metric": "unsafe acceptances на RED; rejected/accepted counts после фикса; downstream calls on reject; canonical request bytes; BRIDGE_HTTP_* code; command rc",
+ "test": "python tests/test_bridge_http_subset.py; python tests/test_bridge.py; python tests/test_bridge_redirects.py; python tests/test_bridge_key_isolation.py; python tests/test_bridge_net_namespace.py; python tests/test_bridge_win_isolation.py; python bin/rust_tests.py",
+ "stopping_rule": "один prereg batch; остановиться при любом invalid downstream вызове, потере canonical positive, ослаблении теста, изменении порога после RED, fallback на stdlib-разбор границы или использовании реального ключа; исправления только в новом раунде с сохранением RED-артефакта",
+ "fixture": "синтетические local token и provider canary; in-process loopback HTTP upstream; raw socket client; временный journal path; настоящие ключи, owner keys и production registry не используются",
+ "environment": {
+  "host": "Windows 11 build 26300, Git Bash, Python 3.13.11",
+  "baseline_commit": "a791a3ce29144e6cac9be6413087dad4364ae2e7",
+  "network": "только 127.0.0.1 loopback; внешняя сеть не нужна",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; это не успешный поиск"
+ },
+ "critical_controls": [
+  {
+   "id": "canonical-four",
+   "input": "GET /health и канонические POST /v1/chat/completions, /v1/journal, /v1/net",
+   "expect": "4/4 accepted, downstream positive control выполнен, ответ имеет Content-Length и Connection: close"
+  },
+  {
+   "id": "duplicate-headers",
+   "input": "duplicate Content-Length; duplicate Host",
+   "expect": "BRIDGE_HTTP_DUPLICATE_HEADER; downstream=0"
+  },
+  {
+   "id": "transfer-framing",
+   "input": "Transfer-Encoding + Content-Length; chunked body",
+   "expect": "BRIDGE_HTTP_CHUNKED_FORBIDDEN; downstream=0"
+  },
+  {
+   "id": "header-grammar",
+   "input": "obs-fold; LF-only; obs-text/UTF-8 header",
+   "expect": "BRIDGE_HTTP_MALFORMED; downstream=0"
+  },
+  {
+   "id": "length-lexical",
+   "input": "missing Content-Length; +5; 05; ' 5'; 5_0; -1",
+   "expect": "BRIDGE_HTTP_BAD_LENGTH; downstream=0"
+  },
+  {
+   "id": "method-path-version",
+   "input": "GET на POST route; absolute-form URI; /v1/net/../chat; HTTP/1.0",
+   "expect": "BRIDGE_HTTP_METHOD/_PATH/_VERSION соответственно; downstream=0"
+  },
+  {
+   "id": "header-policy",
+   "input": "unknown header; Expect: 100-continue",
+   "expect": "BRIDGE_HTTP_FORBIDDEN_HEADER и BRIDGE_HTTP_EXPECT_FORBIDDEN; downstream=0; автоматического 100 Continue нет"
+  },
+  {
+   "id": "smuggling",
+   "input": "байты после body; второй pipelined request в том же соединении",
+   "expect": "BRIDGE_HTTP_SMUGGLING; downstream=0; второй request не обработан"
+  },
+  {
+   "id": "cap-and-deadlines",
+   "input": "Content-Length больше 8 MiB; partial header до idle timeout; partial body до total timeout",
+   "expect": "BRIDGE_HTTP_LENGTH_CAP/_TIMEOUT; production constants 5.0/30.0; scaled test использует ту же ветку"
+  },
+  {
+   "id": "rust-emit",
+   "input": "chat/journal/net canonical request; host CRLF; token CRLF; unknown path; path query; empty token; port 0",
+   "expect": "3/3 точных canonical positives; 6/6 negatives отказаны до записи в socket"
+  },
+  {
+   "id": "rust-response",
+   "input": "HTTP/1.0; LF-only; missing/duplicate/bad Content-Length; TE; short/trailing/oversized/chunked body; 3xx; bad status line",
+   "expect": "12/12 response negatives отвергнуты; 2/2 canonical 200/error positives приняты"
+  },
+  {
+   "id": "no-secret",
+   "input": "bridge.log, stdout/stderr, ответы, evidence",
+   "expect": "0 вхождений provider canary и local token; отрицательный контроль детектора секретов выполнен"
+  }
+ ],
+ "threshold": {
+  "named_mutants": 22,
+  "red_min_unsafe_acceptances": 8,
+  "malformed_corpus": 50,
+  "canonical_positives": 4,
+  "named_mutants_rejected_after": 22,
+  "malformed_rejected_after": 50,
+  "canonical_accepted_after": 4,
+  "downstream_calls_on_reject": 0,
+  "rust_route_emit_positives": 3,
+  "rust_emit_negatives": 6,
+  "rust_response_negatives": 12,
+  "rust_response_positives": 2,
+  "header_idle_seconds": 5.0,
+  "total_timeout_seconds": 30.0,
+  "max_body_bytes": 8388608,
+  "max_header_line_bytes": 1024,
+  "max_headers": 8
+ },
+ "known_limits": [
+  "Subset относится только к комнате↔мосту; upstream provider остаётся полным urllib/TLS контуром и не объявляется каноническим этим экспериментом",
+  "Корпус доказывает закрытие перечисленных классов, но не формальную тотальность парсера и не отсутствие будущих HTTP-мутантов",
+  "Response-side controls проверяют Rust-клиент моста, а не произвольный внешний HTTP-сервер",
+  "VSOCK-WIN-R1 регистрируется и исполняется отдельно; TCP fallback не является evidence для VSOCK",
+  "Локальный refs-индекс отсутствует (NOT PROVIDED); источники ограничены утверждённым планом и docs/R9-SYNTHESIS.md",
+  "Это security P0 и не owner approval, production activation, публикация или утверждение K9"
+ ],
+ "kill_criteria": [
+  "любой из 22 мутантов или 50 malformed запросов доходит до downstream",
+  "канонический health/chat/journal/net positive не проходит",
+  "BRIDGE_HTTP_* код отсутствует или подменён общим сообщением без различения причины",
+  "второй request на том же соединении обрабатывается",
+  "header idle/total timeout отключены или production constants отличаются от 5.0/30.0",
+  "Rust emitter допускает CRLF/unknown path/empty token/port 0",
+  "Rust response parser принимает chunked, duplicate length, short или trailing body",
+  "provider canary или local token попадают в наблюдаемые каналы",
+  "тест или порог ослаблены ради зелёного результата"
+ ],
+ "owner_decision": "владелец 2026-11-24: «смотри я все тебе ращрешаю и разработка вместе с отвественностью - твоя»; утверждённый план W17 и Wave 4, commit/push в этот репозиторий разрешены",
+ "runs": [
+  "runs/exp-bridge-http-subset-r1"
+ ],
+ "closed": false
+}

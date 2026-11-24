@@ -448,6 +448,24 @@
    "claim": "C-0336",
    "note": "PASS: RED 11 провалов до перемещения; canonical SHA-256 361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97, 5832 байта, 313 CRLF; legacy archive 1041 байт, superseded; focused 17/27/33/18 без провалов, parity rc=0, activation rehearsal 22/22, owner verify 5/5. Граница: schema/semantic checks не доказывают Rust-соответствие; IR-перевод остаётся долгом; append-only registry history не переписывалась; не approval/activation/K9.",
    "updated": "2026-11-23"
+  },
+  {
+   "id": "E-0045",
+   "title": "BRIDGE-HTTP-SUBSET-R1: строгий канонический HTTP-subset комнаты и Rust-клиента",
+   "hypothesis": "Stdlib-приём принимает неоднозначные framing/length/header запросы; strict pre-handler и canonical Rust emitter откажут всем 22 мутантам и 50 malformed запросам без потери четырёх canonical positives.",
+   "prereg": "lab/prereg/BRIDGE-HTTP-SUBSET-R1.json",
+   "status": "running",
+   "note": "Prereg зафиксирован до RED/GREEN на baseline a791a3c; implementation и измерение ещё не выполнены; пороги не меняются после запуска.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0046",
+   "title": "VSOCK-WIN-R1: отдельная проба vhost-vsock на Windows без fallback",
+   "hypothesis": "Windows/QEMU не поднимет vhost-vsock; корректный probe сохранит RED с command/rc/stderr, нулевыми fallback-вызовами и без выдуманных metrics.",
+   "prereg": "lab/prereg/VSOCK-WIN-R1.json",
+   "status": "running",
+   "note": "Prereg зафиксирован до запуска; ожидаемый RED не является N/A или GREEN, достаточность решения оставляет владельцу.",
+   "updated": "2026-11-24"
   }
  ]
 }
