@@ -1,0 +1,38 @@
+E-0060 — независимый correction review
+Baseline: commit 5719247 + минимальный diff E-0060
+Дата: 2026-11-24
+
+Вердикт: NEEDS_CHANGES
+
+1. HIGH — malformed nested hidden молча игнорируется и даёт PASS.
+На чистом HSJ2-журнале критерий {"hidden":{"max_steps":1,"hidden":"SENTINEL-NESTED"}}
+через python bin/accept.py criterion.json journal.bin на Windows и POSIX даёт rc=0,
+[ok] скрытая часть критерия — выполнена, итог: PASS.
+Причина: hidden входит в KNOWN_KEYS, но _rows() его не обрабатывает; проходящий max_steps
+делает внешний hidden успешным (bin/accept.py:137–141,395–399). Вложенного
+malformed-hidden контроля нет в tests/test_host_journal_accept_review5.py.
+
+2. HIGH — duplicate JSON hidden keys обходят новую проверку.
+Критерий {"require_status":"done","hidden":"SENTINEL-DUP","hidden":{}} на чистом журнале
+CLI на обеих платформах возвращает rc=0 и итог: PASS: первый malformed hidden отбрасывается
+правилом last-key-wins. Обратный порядок ключей даёт rc=1/FAIL.
+Причина: json.loads() без object_pairs_hook (bin/accept.py:417–421). CLI-контроль
+сериализует обычный словарь через json.dumps(), поэтому дубликаты не покрывает.
+
+3. MEDIUM — non-finite числовой порог внутри hidden даёт PASS.
+На чистом журнале {"require_status":"done","hidden":{"max_steps":Infinity}} и валидный JSON
+{"require_status":"done","hidden":{"max_steps":1e309}} дают rc=0, hidden выполнен, итог: PASS
+на Windows и POSIX.
+Причина: нестрогий JSON loader и отсутствие проверки конечности/типа числового условия
+(bin/accept.py:417–418,236–239). Позитивный тест использует только max_steps=1.
+
+4. HIGH — show_hidden=False раскрывает sentinel через traceback.
+Критерий {"require_status":"done","hidden":{"min_objects":"HIDDEN-SENTINEL-CONDITION"}}
+без --show-hidden CLI на обеих платформах печатает в stderr:
+ValueError: invalid literal for int() with base 10: 'HIDDEN-SENTINEL-CONDITION'
+rc=1, но требование конфиденциальности нарушено. Аналогично утекает значение max_repeat_ratio.
+Причина: исключения из _rows(hidden, ...) не перехватываются и проходят через main()
+(bin/accept.py:197–209,332–338,396,438). No-leak тест проверяет только malformed внешний hidden.
+
+Решение: E-0060 остаётся open без conclusion/claim; sealed prereg/corpus не переписывается.
+Новая correction-попытка регистрируется отдельно. W07B closure запрещена.

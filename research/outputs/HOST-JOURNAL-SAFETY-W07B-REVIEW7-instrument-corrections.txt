@@ -1,0 +1,9 @@
+E-0062 instrument correction до production fix
+
+Первый RED 4/9 на Windows/POSIX содержал ошибку нового прибора: full-combined-positive передавал list[str] в authority.project(), который ожидает list[tuple[kind, detail]], поэтому получал ValueError: too many values to unpack. Production code не изменялся.
+
+Исправлена только fixture-адаптация: local LINES преобразуются в events = [tuple(line.split(" ", 1)) ...] перед независимой host projection. Повторный RED сохранён отдельно как *-red-instrument-corrected.txt: 5/9, четыре ожидаемых Unicode failures, full combined positive проходит. Первый RED не переписан.
+
+Критерии, количество controls и пороги не менялись. Sealed prereg остаётся прежним.
+
+Вторая поправка относится только к subprocess probe: Windows child с PYTHONIOENCODING=utf-8 писал UTF-8, а parent subprocess.run(text=True) декодировал bytes в locale encoding, поэтому textual marker выглядел как mojibake и probe упал. Production при этом вернул rc=2 без traceback и без значения. Для probe явно заданы PYTHONIOENCODING=utf-8 у child и encoding="utf-8" у parent; повтор сохранён отдельно как *-unicode-probes-*-instrument-corrected.txt. Первый output не переписан.

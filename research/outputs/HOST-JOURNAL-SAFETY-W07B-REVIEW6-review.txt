@@ -1,0 +1,35 @@
+HOST-JOURNAL-SAFETY-W07B-REVIEW6 — независимый correction review
+Дата: 2026-11-24
+HEAD: 5719247055e0d8a75dc681112f4871493ea32307
+Вердикт: NEEDS_CHANGES
+
+Основные обходы E-0059/E-0060 production закрывает, но correction E-0061 не полностью fail-closed.
+
+FINDING 1 — MEDIUM: unpaired Unicode surrogate приводит к traceback
+bin/accept.py: strict JSON loader принимает escape \ud800 в строковом значении. Schema validation считает его обычной строкой. При печати результата Windows/POSIX завершаются с UnicodeEncodeError, exit code 1 и полным traceback.
+Repro: {"require_status":"done","task":"VISIBLE-\ud800"}; также {"require_status":"done\ud800"}.
+Ожидание: malformed criterion получает нормализованный FAIL без traceback. PASS и hidden leak здесь не возникают.
+Независимое воспроизведение главным агентом подтверждено на Windows.
+
+FINDING 2 — MEDIUM: duplicate-visible oracle может false-green
+tests/test_host_journal_accept_review6.py: assert_cli_rejected проверяет только code != 0 и отсутствие PASS. При подмене _criterion_pairs на first-key-wins вход max_steps=0,max_steps=4 всё равно удовлетворяет helper: дубликат принят, но обычный semantic FAIL даёт rc=1. Обратный порядок при last-key-wins также удовлетворяет helper.
+Текущая production правильно отклоняет оба порядка с rc=2; finding — недостаточный oracle и отсутствие reverse-order visible duplicate control, а не действующий duplicate bypass.
+Независимое воспроизведение главным агентом подтвердило false-green для обоих порядков.
+
+FINDING 3 — LOW: combined positive не соответствует prereg
+tests/test_host_journal_accept_review6.py: combined control опускает host_run, host_session, host_match, хотя prereg требует валидные все известные поля. Независимый полный combined probe reviewer со всеми 19 полями прошёл на обеих платформах; это пробел теста/prereg conformance.
+
+ПОДТВЕРЖДЕНО REVIEWER
+- review6 16/16 и review5 9/9 на Windows и WSL POSIX.
+- Targeted regressions accept/integrity/authority/review3/review4/host-journal/tip прошли на обеих платформах.
+- Platform suites: Windows R1-review 11/11, durability 2/4 + 2 N/A; POSIX R1-review 10/11 + 1 N/A, durability 4/4. N/A не засчитаны как PASS.
+- 89 независимых probes на платформу: nested hidden, duplicates любого порядка/глубины, escaped-equivalent keys, NaN/Infinity/overflow, malformed known fields, invalid UTF-8/JSON, regex OverflowError/RecursionError — fail-closed. Hidden sentinels и stack traces не утекали; валидные positives сохранены.
+- seal verify-all: 38 seals, 0 проблем; prereg ef17d418…a924 совпал.
+- Сохранённые aggregates: manifest 71 suite / 1225 checks / 0 failures; gates 31 OK / 2 N/A / 0 FAIL; coverage 340/340, strict 191/337 = 0.57, ANCHORED_WEAK.
+- Ослаблений прежних semantic/integrity/session/expiry/hash criteria и изменений sealed E-0054–E-0060 corpus не обнаружено.
+
+ОГРАНИЧЕНИЯ
+Reviewer не повторял полный manifest, Rust и все gates из-за read-only scope и побочных записей; сохранённые outputs разобраны и сверены. Сеть, production и реальные аккаунты не использовались. Временные probes удалены; review/evidence reviewer не создавал и не переписывал.
+
+СЛЕДУЮЩИЙ ШАГ
+E-0061 остаётся open без conclusion/claim. Sealed prereg/corpus не меняются. Три finding переносятся в отдельную E-0062 correction-попытку; W07B closure запрещена до её PASS и нового независимого review.

@@ -1,0 +1,90 @@
+{
+  "schema": 2,
+  "id": "HOST-JOURNAL-SAFETY-W07B-REVIEW7",
+  "date": "2026-11-24",
+  "question": "Закроет ли отдельная E-0062 correction три findings независимого E-0061 review: Unicode surrogate traceback, false-green duplicate-visible oracle и неполный combined positive?",
+  "hypothesis": "Если strict criterion loader проверяет UTF-8 encodability всех JSON ключей и строк, lone surrogate будет отклоняться до вычисления и печати; если duplicate controls требуют именно loader refusal rc=2 в обоих порядках и проверяются мутацией first/last-key-wins, oracle перестанет принимать обычный semantic FAIL; полный combined fixture со всеми известными полями подтвердит сохранение валидного host-bound критерия.",
+  "criterion": "PASS только при review7 9/9 на Windows и POSIX без N/A: lone surrogate в visible task, require_status, hidden task и JSON key даёт loader FAIL rc=2 без PASS и traceback; duplicate visible max_steps в прямом и обратном порядке даёт loader FAIL rc=2 с duplicate diagnostic; мутации loader на first-key-wins и last-key-wins ловятся строгим oracle; полный combined criterion со всеми 19 известными полями, включая host_run/host_session/host_match, проходит; обычная Unicode-строка и корректная surrogate pair проходят. Обязательны review6 16/16, review5 9/9, review4 7/7, review3 7/7, review2 6/6 и прежние W07B/W07A thresholds. Любой принятый invalid Unicode criterion, traceback, false-green oracle, потеря валидного позитива, лишний N/A, ослабление порогов или изменение sealed E-0054–E-0061 corpus после RED означает отсутствие PASS.",
+  "arms": [
+    "A (до fix): escaped lone surrogate принимается JSON loader, затем UnicodeEncodeError появляется при печати visible criterion; duplicate-visible helper принимает обычный rc=1 FAIL и потому не различает отклонённый дубликат с semantic FAIL; combined fixture не включает host binding.",
+    "B (fix): recursive UTF-8/scalar validation отклоняет невалидные Unicode keys/values generic CriterionError до check; dedicated strict-loader oracle требует rc=2, duplicate diagnostic и отсутствие PASS/traceback в обоих порядках; combined fixture создаёт синтетический host journal и включает все известные поля."
+  ],
+  "sensitivity": "Unicode controls меняют только одно место: task value, require_status value, hidden task value или JSON key. Duplicate controls меняют только порядок двух max_steps; oracle mutation заменяет только duplicate resolution policy. Combined positive добавляет host binding без ослабления прочих условий; valid Unicode positive использует корректную пару суррогатов и обычный не-ASCII текст.",
+  "unit_of_analysis": "один acceptance criterion и один полный чистый HSJ2 журнал; combined positive дополнительно использует один синтетический host journal",
+  "primary_metric": "review7_controls=9; windows_passed=9; posix_passed=9; review7_na=0; invalid_unicode_rejected=4; duplicate_visible_orders=2; duplicate_oracle_mutations=2; full_combined_positive=1; valid_unicode_positive=1; review6_controls=16; review5_controls=9; review4_controls=7; review3_controls=7; review2_controls=6",
+  "test": "python tests/test_host_journal_accept_review7.py",
+  "stopping_rule": "Одна correction-попытка после независимого E-0061 NEEDS_CHANGES: зарегистрировать и запечатать prereg, сохранить RED на текущем production-коде на Windows и POSIX, исправить только Unicode-safe criterion loading, duplicate-visible oracle и combined test coverage, затем повторить focused GREEN и accumulated W07B/W07A matrix. После GREEN провести один независимый correction review. Остановиться при первом необъяснённом провале; не менять E-0054–E-0061 sealed corpus, hash domain, session/expiry критерии и platform thresholds после RED. W03/W06/W09 и production activation не смешивать.",
+  "fixture": "Только синтетические HSJ2 байты и host journal во временных каталогах, прямые вызовы accept.check/accept.main с временными criterion/journal файлами; сеть, секреты, модель, внешние аккаунты и production writes не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; empty/exit 2 не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "visible-task-surrogate", "input": "require_status=done, task=VISIBLE-\\ud800", "expect": "CLI rc=2; нет PASS/traceback; нормализованный criterion FAIL"},
+    {"id": "visible-status-surrogate", "input": "require_status=done\\ud800", "expect": "CLI rc=2; нет PASS/traceback; нормализованный criterion FAIL"},
+    {"id": "hidden-task-surrogate-no-leak", "input": "require_status=done, hidden={task:HIDDEN-\\ud800}", "expect": "CLI rc=2; нет PASS/traceback; surrogate escape и decoded sentinel не раскрыты"},
+    {"id": "surrogate-key-no-traceback", "input": "require_status=done, \\ud800=1", "expect": "CLI rc=2; нет PASS/traceback; malformed key не попадает в отчёт"},
+    {"id": "duplicate-visible-threshold-reverse", "input": "require_status=done, max_steps=4, max_steps=0", "expect": "CLI rc=2; duplicate diagnostic; нет PASS/traceback"},
+    {"id": "duplicate-oracle-first-key-wins", "input": "та же duplicate criterion + мутация _criterion_pairs на first-key-wins", "expect": "строгий oracle бросает AssertionError; контроль прибора проходит"},
+    {"id": "duplicate-oracle-last-key-wins", "input": "обратный duplicate criterion + мутация _criterion_pairs на last-key-wins", "expect": "строгий oracle бросает AssertionError; контроль прибора проходит"},
+    {"id": "full-combined-positive", "input": "валидные все 19 известных полей + synthetic host journal", "expect": "overall PASS; host_run/host_session/host_match проверены; hidden wrapper PASS"},
+    {"id": "valid-unicode-positive", "input": "require_status=done, task/comment с кириллицей и корректной surrogate pair", "expect": "overall PASS; Unicode не считается malformed"}
+  ],
+  "threshold": {
+    "review7_controls": 9,
+    "windows_passed": 9,
+    "posix_passed": 9,
+    "review7_na": 0,
+    "invalid_unicode_rejected": 4,
+    "duplicate_visible_orders": 2,
+    "duplicate_oracle_mutations": 2,
+    "full_combined_positive": 1,
+    "valid_unicode_positive": 1,
+    "review6_controls": 16,
+    "review6_windows_passed": 16,
+    "review6_posix_passed": 16,
+    "review5_controls": 9,
+    "review5_windows_passed": 9,
+    "review5_posix_passed": 9,
+    "review4_controls": 7,
+    "review4_windows_passed": 7,
+    "review4_posix_passed": 7,
+    "review3_controls": 7,
+    "review3_windows_passed": 7,
+    "review3_posix_passed": 7,
+    "review2_controls": 6,
+    "review2_windows_passed": 6,
+    "review2_posix_passed": 6,
+    "authority_controls": 14,
+    "prior_review_controls": 7,
+    "r1_controls": 34,
+    "r1_review_windows": 11,
+    "r1_review_posix": 10,
+    "r1_review_posix_na": 1,
+    "tip_controls": 12,
+    "durability_windows_passed": 2,
+    "durability_windows_na": 2,
+    "durability_posix_passed": 4
+  },
+  "known_limits": [
+    "E-0059/E-0060/E-0061 остаются historical NEEDS_CHANGES/open без conclusion/claim; их sealed prereg/corpus не переписываются",
+    "E-0054/E-0055/E-0056 остаются open без conclusion/claim",
+    "Schema validation не доказывает истинность события или внешнего результата",
+    "Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation остаются отдельными работами",
+    "Windows directory durability остаётся N/A из W07A"
+  ],
+  "kill_criteria": [
+    "Lone surrogate в ключе или строковом значении criterion принимается и приводит к PASS или traceback",
+    "Duplicate visible threshold в любом порядке даёт обычный semantic FAIL, который удовлетворяет oracle",
+    "Мутация duplicate resolution на first/last-key-wins не обнаруживается строгим oracle",
+    "Полный combined criterion с host binding не проходит либо fixture скрывает host fields",
+    "Корректная Unicode-строка/surrogate pair отвергается",
+    "Прежние review6/review5/review4/review3/review2/W07B/W07A thresholds не проходят либо corpus/порог ослаблен после RED"
+  ],
+  "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; correction после независимого review регистрируется отдельно",
+  "runs": [
+    "runs/exp-host-journal-safety-w07b-review7"
+  ]
+}

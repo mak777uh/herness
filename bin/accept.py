@@ -41,6 +41,7 @@ except Exception:  # noqa: BLE001
 
 import hashlib
 import json
+import math
 import re
 import sys
 from collections import Counter
@@ -149,6 +150,47 @@ _BINDING_VALIDATION_ROWS = {
 
 def _has_substantive_rows(rows: list[tuple[str, bool, str]]) -> bool:
     return any(name not in _BINDING_VALIDATION_ROWS for name, _ok, _detail in rows)
+
+
+_STRING_KEYS = {"task", "comment", "require_status", "anchor_regex", "host_run", "host_session"}
+_BOOL_KEYS = {"require_commit", "host_match"}
+_INT_KEYS = {"max_steps", "min_objects", "max_calls_without_claim"}
+_NUMBER_KEYS = {"max_allowance", "max_repeat_ratio"}
+_STRING_LIST_KEYS = {"must_call", "must_not_call", "require_events", "tools", "scope"}
+
+
+def _finite_number(value: object) -> bool:
+    # bool — подкласс int, но не числовой порог. Большие ints конечны и не требуют float cast.
+    return type(value) is int or (type(value) is float and math.isfinite(value))
+
+
+def _criterion_errors(criteria: dict, *, nested: bool) -> list[str]:
+    """Имена известных полей с неверным типом/значением; значения не попадают в отчёт."""
+    errors: list[str] = []
+    for key, value in criteria.items():
+        if key == "hidden":
+            if nested:
+                errors.append(key)
+            continue
+        if key in _STRING_KEYS and not isinstance(value, str):
+            errors.append(key)
+        elif key in _BOOL_KEYS and type(value) is not bool:
+            errors.append(key)
+        elif key in _INT_KEYS and type(value) is not int:
+            errors.append(key)
+        elif key in _NUMBER_KEYS and not _finite_number(value):
+            errors.append(key)
+        elif key in _STRING_LIST_KEYS and not (
+            isinstance(value, list) and all(isinstance(item, str) for item in value)
+        ):
+            errors.append(key)
+    pattern = criteria.get("anchor_regex")
+    if isinstance(pattern, str):
+        try:
+            re.compile(pattern)
+        except (re.error, OverflowError, RecursionError):
+            errors.append("anchor_regex")
+    return sorted(set(errors))
 
 
 def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
@@ -366,7 +408,17 @@ def check(criteria: dict, records: list[tuple[int, str]],
         return (False, [("критерий не пустой", False, "условий нет — принимать нечего")])
     evs = events(records)
     kinds = [kind for kind, _ in evs]
-    rows = _rows(criteria, evs, kinds, records)
+    visible_errors = _criterion_errors(criteria, nested=False)
+    rows: list[tuple[str, bool, str]] = []
+    if visible_errors:
+        for key in visible_errors:
+            rows.append((f"условие {key} понятно", False, "неверный тип или значение условия"))
+    else:
+        try:
+            rows = _rows(criteria, evs, kinds, records)
+        except (TypeError, ValueError, re.error, OverflowError, OSError):
+            # Ошибка вычисления не становится PASS и не печатает значения критерия.
+            rows.append(("условия критерия проверены", False, "не удалось проверить условие"))
     # Integrity — обязательная проверка, но не заменяет содержательный критерий. Иначе
     # task/comment/host_match без проверяемых условий получали PASS от одной этой строки.
     has_substantive_checks = _has_substantive_rows(rows)
@@ -384,15 +436,40 @@ def check(criteria: dict, records: list[tuple[int, str]],
         rows.append((f"условие {key} понятно", False, "неизвестное условие критерия"))
 
     hidden = criteria.get("hidden")
-    if isinstance(hidden, dict) and hidden:
-        hidden_rows = _rows(hidden, evs, kinds, records)
-        has_substantive_checks = has_substantive_checks or _has_substantive_rows(hidden_rows)
+    if "hidden" in criteria and not isinstance(hidden, dict):
+        # Присутствующий malformed hidden — не «нет проверки», а провал: иначе опечатка
+        # в критерии тихо отключает held-out часть рядом с проходящим visible positive.
+        if show_hidden:
+            detail = "не выполнена: hidden должен быть объектом"
+        else:
+            detail = "не выполнена (какие условия — на хосте, см. --show-hidden)"
+        rows.append(("скрытая часть критерия", False, detail))
+    elif isinstance(hidden, dict) and hidden:
+        hidden_errors = _criterion_errors(hidden, nested=True)
         hidden_unknown = sorted(set(hidden) - KNOWN_KEYS)
-        hidden_ok = bool(hidden_rows) and not hidden_unknown and all(ok for _, ok, _ in hidden_rows)
+        hidden_rows: list[tuple[str, bool, str]] = []
+        evaluation_failed = False
+        if not hidden_errors:
+            try:
+                hidden_rows = _rows(hidden, evs, kinds, records)
+            except (TypeError, ValueError, re.error, OverflowError, OSError):
+                # Hidden values не попадают в stderr даже при необработанном условии.
+                evaluation_failed = True
+        has_substantive_checks = has_substantive_checks or _has_substantive_rows(hidden_rows)
+        hidden_ok = (
+            not hidden_errors
+            and not evaluation_failed
+            and bool(hidden_rows)
+            and not hidden_unknown
+            and all(ok for _, ok, _ in hidden_rows)
+        )
         if hidden_ok:
             detail = "выполнена"
         elif show_hidden:
-            failures = [name for name, ok, _ in hidden_rows if not ok]
+            failures = [f"некорректное условие {key}" for key in hidden_errors]
+            if evaluation_failed:
+                failures.append("не удалось проверить скрытое условие")
+            failures += [name for name, ok, _ in hidden_rows if not ok]
             failures += [f"неизвестное условие {key}" for key in hidden_unknown]
             detail = "не выполнена: " + "; ".join(failures)
         else:
@@ -406,10 +483,58 @@ def check(criteria: dict, records: list[tuple[int, str]],
     return (has_substantive_checks and all(ok for _, ok, _ in rows), rows)
 
 
+class CriterionError(ValueError):
+    """Критерий не читается как строгий JSON объект."""
+
+
+def _criterion_pairs(pairs: list[tuple[str, object]]) -> dict:
+    result: dict = {}
+    for key, value in pairs:
+        if key in result:
+            raise CriterionError("критерий содержит повторяющийся JSON ключ")
+        result[key] = value
+    return result
+
+
+def _reject_constant(_text: str) -> object:
+    raise CriterionError("критерий содержит non-finite JSON число")
+
+
+def _check_criterion_json(value: object) -> None:
+    """JSON criterion состоит только из конечных чисел и валидных UTF-8 строк."""
+    if isinstance(value, str):
+        try:
+            value.encode("utf-8")
+        except UnicodeEncodeError:
+            # json.loads принимает escaped lone surrogate, но такой критерий нельзя
+            # безопасно напечатать. Отказываем до check и без значения в диагностике.
+            raise CriterionError("критерий содержит недопустимую Unicode строку") from None
+        return
+    if type(value) is float and not math.isfinite(value):
+        raise CriterionError("критерий содержит non-finite JSON число")
+    if isinstance(value, list):
+        for item in value:
+            _check_criterion_json(item)
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            _check_criterion_json(key)
+            _check_criterion_json(item)
+
+
 def _load_criteria(path: Path) -> dict:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_criterion_pairs,
+            parse_constant=_reject_constant,
+        )
+        _check_criterion_json(data)
+    except CriterionError:
+        raise
+    except (OSError, UnicodeError, ValueError, RecursionError):
+        raise CriterionError("критерий не является строгим JSON объектом") from None
     if not isinstance(data, dict):
-        raise SystemExit("критерий должен быть объектом JSON")
+        raise CriterionError("критерий должен быть объектом JSON")
     return data
 
 
@@ -420,7 +545,11 @@ def main(argv: list[str] | None = None) -> int:
     if len(argv) < 2:
         print("accept <критерий.json> <журнал.bin> [--show-hidden]", file=sys.stderr)
         return 2
-    criteria = _load_criteria(Path(argv[0]))
+    try:
+        criteria = _load_criteria(Path(argv[0]))
+    except CriterionError as exc:
+        print(f"FAIL: {exc}", file=sys.stderr)
+        return 2
     journal = Path(argv[1])
     if not journal.exists():
         print(f"FAIL: нет журнала {journal}", file=sys.stderr)

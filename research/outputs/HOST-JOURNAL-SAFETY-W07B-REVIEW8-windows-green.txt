@@ -1,0 +1,11 @@
+[ok] duplicate-zero-first-direct
+[ok] duplicate-zero-last-direct
+[ok] first-key-wins-exact-semantic-fail
+[ok] last-key-wins-exact-semantic-fail
+[ok] asymmetric-resolver-exact-semantic-fail
+[ok] unicode-loader-refusal-preserved
+[ok] valid-unicode-positive-preserved
+
+host journal accept review8: 7/7 ok; N/A 0; провалов: 0
+
+rc=0

@@ -1,0 +1,66 @@
+HOST-JOURNAL-SAFETY-W07B-REVIEW9 — conclusion
+Дата: 2026-11-24
+Вердикт: PASS
+
+E-0064 закрыл два метаконтрольных false-green независимого review E-0063 отдельной
+instrument correction. Production, sealed Review8 corpus и прежние пороги не менялись.
+
+RED:
+- Windows: review9 4/12, N/A 0, восемь ожидаемых провалов.
+- POSIX: review9 4/12, N/A 0, восемь ожидаемых провалов.
+- Наследованный plain AssertionError helper не выдавал требуемую OracleRefusalMissing
+  для synthetic wrong rc, missing diagnostic, PASS output и traceback output.
+
+Correction только нового oracle:
+- Каждая exact refusal-проверка выдаёт отдельную OracleRefusalMissing с распознаваемой причиной.
+- Synthetic controls независимо проверяют rc=2, diagnostic, no-PASS и no-traceback.
+- Metakontrol ловит только OracleRefusalMissing, а не любой AssertionError.
+- Asymmetric reverse control проверяет настоящий loader refusal для duplicate 4→0 и ловит
+  замену resolver на first-key-wins.
+
+GREEN:
+- Windows review9: 12/12, N/A 0, rc=0.
+- POSIX review9: 12/12, N/A 0, rc=0.
+- Оба прямых duplicate порядка дают loader rc=2 с diagnostic без PASS/traceback.
+- First-key-wins, last-key-wins и asymmetric 0→4 дают exact semantic FAIL rc=1.
+- Invalid Unicode остаётся loader refusal; валидный Unicode и surrogate pair проходят.
+- Metacontrol probes: пять из пяти проверенных ослаблений дают RED, 11/12 и один провал.
+
+Регрессии:
+- Windows accumulated matrix: rc=0; Review9 12/12; durability 2 passed + 2 Windows-only N/A.
+- POSIX accumulated matrix: rc=0; Review9 12/12; durability 4/4.
+- Review8 7/7, Review7 9/9, Review6 16/16, Review5 9/9, Review4 7/7,
+  Review3 7/7 и Review2 6/6 сохранены в соответствующих platform regressions.
+- Полный manifest: 74 suites, 1253 checks, 0 failures.
+- Selftest: rc=0.
+- Gates: 31/33 оценено, 2 прежних N/A (журналы, индекс прогонов); probes 17/17.
+- Seals до closure: 41/41, проблем 0.
+- Coverage до добавления claim: 340/340, strict 0.57, ANCHORED_WEAK.
+- Production SHA-256: 4a16e366e98b9067e0a8bbdfd65e1e834cc8336455e32356282d1c7f5707a4a6.
+- Review7 SHA-256: 4ea4743ef55580a1e365098416a64f98964079b4350479256b1a93d1147c60e5.
+- Review8 SHA-256: 68a80840f6bbfc5d302015638da7b30501f190d5dfaa7200c63df3177fea7e95.
+- acceptance-metrics.txt byte-identical HEAD (SHA-256
+  bb221d198bc3e9a8dbceddb416795ad0518825cf26ebfe7d318b39c5f817c13f).
+
+Независимый review:
+- research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW9-review.txt
+- Вердикт PASS, substantive findings отсутствуют.
+
+Границы:
+- PASS ограничен E-0064 и test oracle; W07B целиком не закрыт.
+- E-0054/E-0055/E-0056 остаются open без conclusion/claim.
+- E-0059/E-0060/E-0061/E-0062/E-0063 остаются historical NEEDS_CHANGES/open
+  без conclusion/claim; их sealed prereg/corpus не переписываются.
+- Новая финальная W07B closure-попытка и её независимый review обязательны.
+- Strict coverage ANCHORED_WEAK, Windows directory durability N/A, resume/retry,
+  W03 lifecycle, W06 SSRF, W09 streaming caps и production activation не закрыты.
+- Fail-closed criterion/oracle не доказывает истинность события или внешнего результата.
+- N/A не считается PASS.
+
+Post-closure проверки:
+- Windows и POSIX Review9 повторно: 12/12, N/A 0, rc=0.
+- C-0348 artifact check: rc=0; seal verify-all: 41/41, проблем 0.
+- Coverage после добавления C-0348: 341/341, strict 191/338 = 0.565, ANCHORED_WEAK.
+- Gates после обновления coverage: 31/33 оценено, 2 прежних N/A, rc=0; probes 17/17.
+- Первый post-closure gates запуск обнаружил только устаревший coverage artifact (340 против 341);
+  failure сохранён отдельно, coverage пересчитана командой, пороги/corpus не менялись.

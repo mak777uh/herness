@@ -1,0 +1,27 @@
+HOST-JOURNAL-SAFETY-W07B-REVIEW7 — независимый correction review
+Дата: 2026-11-24
+HEAD: 5719247055e0d8a75dc681112f4871493ea32307
+Вердикт: NEEDS_CHANGES
+
+Production-исправление E-0062 работает, но зарегистрированный duplicate oracle всё ещё допускает ложный зелёный результат.
+
+FINDING — MEDIUM, блокирует PASS
+tests/test_host_journal_accept_review7.py: прямой strict-loader контроль есть только для duplicate max_steps в порядке 4→0. Порядок 0→4 проверяется лишь после патча loader на first-key-wins. Кроме того, except AssertionError в oracle-mutation controls считает любой сбой assertions успешной мутацией, не требуя именно semantic FAIL.
+
+Repro: resolver отклоняет duplicate только для 4→0, а при 0→4 оставляет первое значение. После мутации Review7 печатает 9/9, rc=0, хотя прямой 0→4 duplicate принимается. Независимо воспроизведено reviewer на Windows/WSL и главным агентом; outputs: HOST-JOURNAL-SAFETY-W07B-REVIEW7-oracle-repro-windows.txt и -posix.txt.
+
+Рекомендованная граница исправления: прямой strict-loader контроль для 0→4 и явная проверка, что mutation даёт именно rc=1, итог FAIL, без duplicate diagnostic/traceback. Sealed Review7 corpus не переписывать; отдельная E-0063 correction должна добавить надёжный oracle новым suite.
+
+ПОДТВЕРЖДЕНО
+- Production recursive UTF-8 validation покрывает strings, keys, lists, nested objects; duplicate detection после JSON key decode и до check.
+- Real-subprocess probes Windows/WSL: lone high/low surrogate в visible task, require_status, hidden task, JSON key, reversed pair, list/nested values, --show-hidden и invalid UTF-8 дают rc=2 без PASS/traceback/утечки; корректная Unicode-строка и surrogate pair проходят.
+- Duplicate max_steps 0→4 и 4→0, escaped-equivalent key и nested hidden duplicate дают rc=2 с duplicate diagnostic.
+- Combined positive содержит все 19 полей и создаёт synthetic host journal реальными authority.project/host_journal.append; host verification не подменён.
+- Review7 9/9 Windows/POSIX; accumulated matrix без провалов; Review6 16/16, Review5 9/9, Review4/3 7/7, authority 14/14, prior review 7/7, R1 34/34, tip 12/12.
+- Manifest validation 68 Python + 4 Rust; seals 39/39; coverage 340/340, strict 0.57, ANCHORED_WEAK; сохранённый manifest 72/1234/0 согласуется с текущим manifest.
+
+ОГРАНИЧЕНИЯ
+Полный gates/selftest end-to-end reviewer не перезапускал; сохранённые outputs сверены. Seals и coverage пересчитаны независимо. Сеть, production и реальные аккаунты не использовались. Временные probes удалены; acceptance-metrics.txt имеет тот же SHA-256, что HEAD.
+
+СЛЕДУЮЩИЙ ШАГ
+E-0062 остаётся open без conclusion/claim. Sealed Review7 corpus не меняется. False-green oracle переносится в отдельную E-0063/Review8 correction; W07B closure запрещена до её PASS и независимого review.

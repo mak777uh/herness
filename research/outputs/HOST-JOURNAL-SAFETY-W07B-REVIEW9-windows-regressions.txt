@@ -1,0 +1,233 @@
+[ok] полный прогон по критерию проходит
+[ok] невызванный инструмент валит приёмку
+[ok] запрещённый инструмент валит приёмку
+[ok] опора не того вида валит приёмку
+[ok] без опоры прогон не считается выполненным
+[ok] превышение шагов валит приёмку
+[ok] превышение расхода валит приёмку
+[ok] оборванный хвост не чинится и валит приёмку
+[ok] испорченная CRC отсекает запись и всё после неё
+[ok] журнал без коммита валит приёмку
+[ok] чужой заголовок не разбирается
+[ok] пустой критерий не проходит
+задача: найти опору; записей: 7
+  [ok] статус = done — фактически: done
+  [ok] вызваны инструменты ['search'] — вызовы: ['search']; не хватает: []
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [ok] опора соответствует /CLAIMS\.md:\d+/ — опоры: ['/mnt/CLAIMS.md:4']
+  [ok] шагов ≤ 4 — шагов: 1
+  [ok] расход ≤ 0.001 — потрачено: 0.00010000 (оценка провайдера, не факт биллинга)
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+  [ok] журнал прочитан полностью — tail=0; problems=0
+итог: PASS
+задача: найти опору; записей: 7
+  [FAIL] статус = done — фактически: unverified
+  [ok] вызваны инструменты ['search'] — вызовы: ['search']; не хватает: []
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [FAIL] опора соответствует /CLAIMS\.md:\d+/ — опоры: []
+  [ok] шагов ≤ 4 — шагов: 1
+  [ok] расход ≤ 0.001 — потрачено: 0.00010000 (оценка провайдера, не факт биллинга)
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+  [ok] журнал прочитан полностью — tail=0; problems=0
+итог: FAIL
+[ok] критерий из файла читается CLI и печатает итог
+[ok] критерии в комнату не попадают: образа касается только names()
+[ok] скрытая часть проходит — приёмка проходит
+[ok] скрытая часть проваливается — приёмка падает, причина не раскрыта
+[ok] с --show-hidden автор видит, какое условие провалилось
+[ok] неизвестное условие критерия — провал, а не пропуск
+[ok] вызов вне объявленной выдачи валит приёмку
+[ok] отказ по невыданному инструменту нарушением не считается
+[ok] стадия берётся из журнала: unrecorded и blocked
+[ok] порог барахтания не отсекает ответ с опорой (ADR-0052)
+[ok] барахтание без опоры по-прежнему отказ
+[ok] много вызовов без опоры — отдельный отказ
+
+приёмка: 24/24 ok
+провалов: 0
+[ok] trailing-invalid-utf8-data
+[ok] trailing-invalid-utf8-commit
+[ok] trailing-bad-crc
+[ok] trailing-torn-frame
+[ok] direct-callers
+[ok] clean-positive
+
+host journal accept integrity: 6/6 ok; N/A 0; провалов: 0
+[ok] bound-positive
+[ok] missing-binding
+[ok] partial-binding
+[ok] forged-run
+[ok] mismatched-session
+[ok] expired-binding
+[ok] raw-canary
+[ok] oversized-body
+[ok] strict-schema
+[ok] host-match-positive
+[ok] forged-local
+[ok] required-session
+[ok] rust-python-vector
+[ok] receipt-semantics
+
+host journal authority: 14/14 ok; N/A 0; провалов: 0
+[ok] strict-local-utf8
+[ok] exact-whitespace
+[ok] typed-mismatched-session
+[ok] typed-expired-binding
+[ok] session-before-read
+[ok] claim-unverified-status
+[ok] rust-receipt-shape
+
+host journal authority review: 7/7 ok; N/A 0; провалов: 0
+[ok] metadata-task-only
+[ok] metadata-comment-only
+[ok] metadata-host-match-only
+[ok] hidden-only-substantive
+[ok] exact-utf8-direct-callers
+[ok] clean-positive
+[ok] cli-no-content
+
+host journal accept review3: 7/7 ok; N/A 0; провалов: 0
+[ok] host-match-missing-run-visible
+[ok] host-match-missing-run-hidden
+[ok] host-match-false-no-run
+[ok] hidden-unknown-only
+[ok] hidden-unknown-with-positive
+[ok] hidden-real-positive
+[ok] hidden-unknown-no-leak
+
+host journal accept review4: 7/7 ok; N/A 0; провалов: 0
+[ok] hidden-string-visible-positive
+[ok] hidden-list-visible-positive
+[ok] hidden-int-visible-positive
+[ok] hidden-bool-visible-positive
+[ok] hidden-null-visible-positive
+[ok] malformed-hidden-no-leak
+[ok] malformed-hidden-cli-fail
+[ok] empty-hidden-visible-positive
+[ok] valid-hidden-visible-positive
+
+host journal accept review5: 9/9 ok; N/A 0; провалов: 0
+[ok] nested-hidden-string
+[ok] nested-hidden-object
+[ok] duplicate-hidden-malformed-first
+[ok] duplicate-hidden-malformed-last
+[ok] duplicate-visible-threshold
+[ok] hidden-max-steps-infinity
+[ok] hidden-max-steps-overflow
+[ok] hidden-max-repeat-nan
+[ok] hidden-min-objects-no-leak
+[ok] hidden-max-repeat-no-leak
+[ok] hidden-invalid-regex-no-leak
+[ok] hidden-max-steps-bool
+[ok] visible-max-steps-string
+[ok] valid-hidden-positive
+[ok] valid-combined-positive
+[ok] empty-hidden-positive
+
+host journal accept review6: 16/16 ok; N/A 0; провалов: 0
+[ok] visible-task-surrogate
+[ok] visible-status-surrogate
+[ok] hidden-task-surrogate-no-leak
+[ok] surrogate-key-no-traceback
+[ok] duplicate-visible-threshold-reverse
+[ok] duplicate-oracle-first-key-wins
+[ok] duplicate-oracle-last-key-wins
+[ok] full-combined-positive
+[ok] valid-unicode-positive
+
+host journal accept review7: 9/9 ok; N/A 0; провалов: 0
+[ok] duplicate-zero-first-direct
+[ok] duplicate-zero-last-direct
+[ok] first-key-wins-exact-semantic-fail
+[ok] last-key-wins-exact-semantic-fail
+[ok] asymmetric-resolver-exact-semantic-fail
+[ok] unicode-loader-refusal-preserved
+[ok] valid-unicode-positive-preserved
+
+host journal accept review8: 7/7 ok; N/A 0; провалов: 0
+[ok] duplicate-zero-first-direct
+[ok] duplicate-zero-last-direct
+[ok] first-key-wins-exact-semantic-fail
+[ok] last-key-wins-exact-semantic-fail
+[ok] asymmetric-resolver-exact-semantic-fail
+[ok] asymmetric-reverse-loader-refusal
+[ok] oracle-rejects-wrong-exit-code
+[ok] oracle-rejects-missing-diagnostic
+[ok] oracle-rejects-pass-output
+[ok] oracle-rejects-traceback-output
+[ok] unicode-loader-refusal-preserved
+[ok] valid-unicode-positive-preserved
+
+host journal accept review9: 12/12 ok; N/A 0; провалов: 0
+[ok] цепочка растёт и проверяется
+[ok] подмена события ломает проверку
+[ok] выкинутая запись ломает цепочку prev
+[ok] дописывание идёт за последней записью
+[ok] чужого журнала нет — проблема, а не пустой успех
+[ok] canonical v2 хеширует полный envelope
+[ok] traversal run ID отвергнут
+[ok] absolute run ID отвергнут
+[ok] не-opaque алфавит run ID отвергнут
+[ok] overlong run ID отвергнут
+[ok] NUL в run ID отвергнут
+[ok] legacy v1 отвергнут без миграции
+[ok] подмена seq обнаружена
+[ok] подмена версии обнаружена
+[ok] подмена timestamp полного envelope обнаружена
+[ok] валидная цепочка чужого run ID отвергнута
+[ok] неизвестное поле envelope отвергнуто
+[ok] неcanonical JSON строка отвергнута
+[ok] duplicate JSON key отвергнут
+[ok] malformed середина блокирует append
+[ok] оборванный хвост блокирует append без обрезки
+[ok] пустой журнал не является валидным
+[ok] symlink/reparse журнала отвергнут
+[ok] hardlink журнала отвергнут
+[ok] каталог на месте журнала отвергнут
+[ok] symlink/reparse базовый каталог отвергнут
+[ok] hardlinked lock отвергнут
+[ok] 4 процесса дописывают 80 записей без гонки
+[ok] fsync завершён до ACK
+[ok] сбой fsync не даёт ACK
+[ok] write-loop завершает частичные записи
+[ok] не-str event отвергнут
+[ok] граница event 65536 bytes исполняется
+[ok] events не возвращает доверенный префикс повреждённой цепочки
+
+host journal safety: 34/34 ok
+провалов: 0
+[ok] genesis prev с пересчётом hash отвергнут
+[ok] later prev с пересчётом цепочки отвергнут
+[ok] удаление середины с перенумерацией отвергнуто
+[ok] escaped events проходят append→verify round trip
+[ok] RecursionError нормализован в fail-closed отказ
+[ok] Windows fd закрыт при пост-transfer отказе
+[ok] journal open использует O_APPEND
+[ok] 8 threads дописывают 80 непрерывных записей
+[ok] fsync наблюдён после полной финальной записи
+[ok] положительная связанная цепочка проходит
+[ok] platform dispatch явно различает Windows и POSIX
+
+host journal review: 11/11 ok; N/A 0; провалов: 0
+[ok] positive anchor повторяет точные journal hashes
+[ok] renumbered deletion даёт точный trusted prefix
+[ok] rehashed event mutation ловится anchor position
+[ok] prefix truncation не выдаётся за полный журнал
+[ok] unanchored suffix отвергается
+[ok] missing anchor не мигрируется
+[ok] malformed anchor отвергается
+[ok] torn anchor отвергается
+[ok] journal fsync наблюдён до anchor fsync и ACK
+[ok] anchor fsync failure не даёт ACK
+[ok] crash gap journal без anchor fail-closed
+[ok] 4 процесса дают 80 точных journal/anchor пар
+
+host journal tip: 12/12 ok; N/A 0; провалов: 0
+[ok] промежуточный anchor LF проверяется
+[ok] compound corruption не завышает trusted prefix
+[N/A] POSIX append fsync закрепляет всю ancestry каталогов
+[N/A] POSIX retry после directory fsync failure повторяет durability шаг
+
+host journal durability: 2/4 ok; N/A 2; провалов: 0
+
+rc=0

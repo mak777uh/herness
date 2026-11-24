@@ -1,0 +1,13 @@
+[ok] visible-task-surrogate
+[ok] visible-status-surrogate
+[ok] hidden-task-surrogate-no-leak
+[ok] surrogate-key-no-traceback
+[ok] duplicate-visible-threshold-reverse
+[ok] duplicate-oracle-first-key-wins
+[ok] duplicate-oracle-last-key-wins
+[ok] full-combined-positive
+[ok] valid-unicode-positive
+
+host journal accept review7: 9/9 ok; N/A 0; провалов: 0
+
+rc=0

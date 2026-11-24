@@ -602,6 +602,83 @@
    "claim": "C-0347",
    "note": "PASS: Windows/POSIX RED 3/7, GREEN 7/7; host_match=true без host_run и unknown hidden key отклоняются рядом с real positive, no-leak и положительные controls сохранены. Промежуточная review3 interaction regression объяснена и закрыта классификацией binding rows без изменения sealed corpus. Полный manifest 69/1200/0, seals 35/35, независимый review PASS. E-0054/E-0055/E-0056 остаются open.",
    "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0059",
+   "title": "HOST-JOURNAL-SAFETY-W07B-CLOSURE: финальная сверка накопленной correction chain",
+   "hypothesis": "Если финальный код на commit 5719247 проходит все accumulated controls и один независимый final review не находит substantive findings, W07B можно закрыть в заявленных границах, сохранив E-0054/E-0055/E-0056 как open historical experiments.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "NEEDS_CHANGES: accumulated controls прошли, но независимый final review нашёл новый malformed-hidden fail-open (string/list/int/bool дают PASS рядом с visible positive; воспроизведено Windows/POSIX). E-0059 остаётся open без conclusion/claim; W07B closure запрещена. Sealed prereg/corpus не переписываются; review: research/outputs/HOST-JOURNAL-SAFETY-W07B-CLOSURE-review.txt. refs search: NOT PROVIDED.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0060",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW5: present-but-malformed hidden fail-closed",
+   "hypothesis": "Явная проверка присутствия и object type hidden закроет новый malformed-hidden fail-open: present string/list/int/bool/null будут давать FAIL рядом с visible positive, при этом no-leak, CLI refusal и валидные hidden positives сохранятся.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW5.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "NEEDS_CHANGES: Windows/POSIX RED 2/9, GREEN 9/9; полный manifest 70/1209/0, gates 31/33 (2 N/A), seals 37/37. Независимый review нашёл ещё четыре substantive findings: nested hidden, duplicate hidden JSON keys, non-finite numeric threshold и hidden sentinel в traceback. E-0060 остаётся open без conclusion/claim; sealed prereg/corpus не переписываются. Review: research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW5-review.txt. refs search: NOT PROVIDED (rc=2).",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0061",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW6: strict criterion JSON/schema fail-closed",
+   "hypothesis": "Strict loader и schema validation известных полей закроют nested hidden, duplicate JSON keys, non-finite thresholds и hidden exception/traceback утечки, сохранив валидные visible/hidden критерии.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW6.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "NEEDS_CHANGES: Windows/POSIX RED 4/16, GREEN 16/16; regex OverflowError/RecursionError probes прошли без traceback/leak; полный manifest 71/1225/0, gates 31/33 (2 N/A), seals 38/38, coverage 340/340 strict 0.57. Независимый review подтвердил закрытие исходных обходов, но нашёл Unicode surrogate traceback, false-green duplicate-visible oracle и неполный combined positive. E-0061 остаётся open без conclusion/claim; sealed corpus не меняется. Review: research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW6-review.txt. Исправления вынесены в E-0062; W07B closure запрещена.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0062",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW7: Unicode-safe criterion и строгий duplicate oracle",
+   "hypothesis": "UTF-8/scalar validation criterion keys/values, dedicated duplicate-loader oracle и полный combined fixture закроют три findings E-0061 без ослабления прежних W07A/W07B criteria.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW7.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "NEEDS_CHANGES: Windows/POSIX RED 5/9, GREEN 9/9; Unicode real-subprocess probes прошли, full combined 19/19 passed; manifest 72/1234/0, gates 31/33 (2 N/A), seals 39/39, coverage 340/340 strict 0.57. Независимый review подтвердил production fix, но нашёл false-green duplicate oracle: прямой 0→4 отсутствует, а broad except AssertionError принимает semantic FAIL. E-0062 остаётся open без conclusion/claim; sealed Review7 corpus не меняется. Review: research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW7-review.txt. Исправление вынесено в E-0063; W07B closure запрещена.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0063",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW8: strict duplicate loader oracle",
+   "hypothesis": "Новый Review8 suite с прямыми controls обоих duplicate порядков и exact semantic-FAIL mutation checks закроет false-green E-0062 без изменения production и sealed Review7 corpus.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW8.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "NEEDS_CHANGES: Windows/POSIX RED 4/7, GREEN 7/7; manifest 73/1241/0, gates 31/33 (2 N/A), seals 40/40, coverage 340/340 strict 0.57. Независимый review подтвердил production/Unicode и накопленные thresholds, но нашёл два метаконтрольных false-green: asymmetric resolver не проверяет отказ 4→0, а удаление exact rc=2 или diagnostic проверки внутри helper оставляет suite зелёным. E-0063 остаётся open без conclusion/claim; sealed Review8 corpus не меняется. Review: research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW8-review.txt. Исправление вынесено в E-0064; W07B closure запрещена.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0064",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW9: exact metakontrol strict loader oracle",
+   "hypothesis": "Новый Review9 suite с asymmetric reverse mutation и synthetic negative controls для каждой exact helper-проверки закроет два findings E-0063 без изменения production и sealed Review8 corpus.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW9.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW9-conclusion.txt",
+   "claim": "C-0348",
+   "note": "Отдельная instrument correction после E-0063 NEEDS_CHANGES: 12/12 на Windows и POSIX, пять проверенных мутаций прибора дают RED, независимый review PASS. Production и sealed E-0054–E-0063 corpus не менялись. PASS ограничен E-0064; W07B closure требует новой отдельной финальной проверки всей correction-цепочки.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0065",
+   "title": "HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL: финальная сверка correction chain E-0054–E-0064",
+   "hypothesis": "Если финальный код проходит все accumulated Windows/POSIX/aggregate thresholds и один независимый final review не находит substantive findings, W07B можно закрыть в заявленных границах без переписывания исторических NEEDS_CHANGES.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL-conclusion.txt",
+   "claim": "C-0349",
+   "note": "PASS: независимый final review не нашёл substantive findings; 14 focused suites на Windows/POSIX, 45 дополнительных probes на платформу и пять Review9 metakontrol-регрессий подтверждены. Manifest 74/1253/0, seals 42/42, gates 31 оценено/2 прежних N/A/0 FAIL, baseline 44/44 без изменений. W07B закрыт только в authority/acceptance границе; исторические E-0054–E-0063 статусы/corpus не переписаны, activation и внешняя публикация запрещены.",
+   "updated": "2026-11-24"
   }
  ]
 }

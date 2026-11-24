@@ -1,0 +1,86 @@
+{
+  "schema": 2,
+  "id": "HOST-JOURNAL-SAFETY-W07B-REVIEW5",
+  "date": "2026-11-24",
+  "question": "Закроет ли явная проверка присутствия и типа hidden новый malformed-hidden fail-open, не раскрывая скрытые данные при show_hidden=False и не ломая валидные visible/hidden критерии?",
+  "hypothesis": "Если любое присутствующее поле hidden, не являющееся объектом JSON, даёт FAIL независимо от видимого positive, то string/list/int/bool/null больше не могут тихо отключить скрытую проверку. Пустой объект hidden={} сохраняет прежнюю семантику отсутствия скрытых условий, а непустой объект с валидными условиями продолжает работать.",
+  "criterion": "PASS только при review5 9/9 на Windows и POSIX без N/A: hidden string/list/int/bool/null даёт overall FAIL рядом с require_status=done; malformed hidden не раскрывает sentinel при show_hidden=False; CLI возвращает ненулевой rc и не печатает итог PASS; hidden={} с валидным visible positive остаётся PASS без заявления выполненной скрытой проверки; валидный hidden positive вместе с visible positive остаётся PASS. Обязательны review4 7/7, review3 7/7, review2 6/6 и прежние W07B/W07A platform thresholds. Любой принятый malformed hidden, утечка sentinel, потеря валидного позитива, лишний N/A, ослабление порогов или изменение sealed E-0054–E-0059 corpus после RED означает отсутствие PASS.",
+  "arms": [
+    "A (до fix): accept.check проверяет hidden только при isinstance(hidden, dict) and hidden; present-but-malformed string/list/int/bool/null пропускается и может быть замаскирован visible positive.",
+    "B (fix): accept.check различает отсутствие поля и его присутствие; любой present non-dict hidden добавляет FAIL-строку скрытой части без значения/типа-sensitive утечки; прежняя обработка непустого dict и семантика пустого dict сохраняются."
+  ],
+  "sensitivity": "Каждый негативный контроль меняет только тип/значение hidden при одинаковом чистом журнале и require_status=done. Для falsy malformed значений используются [], 0, false и null; no-leak использует уникальный строковый sentinel; CLI использует отдельный временный критерий и журнал. Позитивные controls отличаются только допустимым hidden={} или валидным max_steps=1.",
+  "unit_of_analysis": "один acceptance criterion и один полный чистый HSJ2 журнал",
+  "primary_metric": "review5_controls=9; windows_passed=9; posix_passed=9; review5_na=0; malformed_hidden_rejected=5; hidden_sentinel_not_leaked=1; cli_rejected=1; empty_hidden_positive_passed=1; valid_hidden_positive_passed=1; review4_controls=7; review3_controls=7; review2_controls=6; authority_controls=14; prior_review_controls=7; r1_controls=34; tip_controls=12",
+  "test": "python tests/test_host_journal_accept_review5.py",
+  "stopping_rule": "Одна correction-попытка после independent E-0059 NEEDS_CHANGES: зарегистрировать и запечатать prereg, сохранить RED на текущем production-коде на Windows и POSIX, исправить только type/presence validation hidden, затем повторить focused GREEN и accumulated W07B/W07A matrix. После GREEN провести один независимый correction review. Остановиться при первом необъяснённом провале; не менять E-0054–E-0059 sealed corpus, hash domain, schema, session/expiry критерии и platform thresholds после RED. W03/W06/W09 и production activation не смешивать.",
+  "fixture": "Только синтетические HSJ2 байты в памяти, прямые вызовы accept.check и accept.main с временными criterion/journal файлами; сеть, секреты, модель, внешние аккаунты и production writes не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; empty/exit 2 не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "hidden-string-visible-positive", "input": "clean done journal; require_status=done + hidden=\"typo\"", "expect": "overall FAIL и hidden wrapper FAIL"},
+    {"id": "hidden-list-visible-positive", "input": "clean done journal; require_status=done + hidden=[\"max_steps\",1]", "expect": "overall FAIL и hidden wrapper FAIL"},
+    {"id": "hidden-int-visible-positive", "input": "clean done journal; require_status=done + hidden=0", "expect": "overall FAIL и hidden wrapper FAIL"},
+    {"id": "hidden-bool-visible-positive", "input": "clean done journal; require_status=done + hidden=false", "expect": "overall FAIL и hidden wrapper FAIL"},
+    {"id": "hidden-null-visible-positive", "input": "clean done journal; require_status=done + hidden=null", "expect": "overall FAIL и hidden wrapper FAIL"},
+    {"id": "malformed-hidden-no-leak", "input": "clean done journal; require_status=done + hidden=уникальный sentinel; show_hidden=False", "expect": "overall FAIL; sentinel отсутствует в names/details"},
+    {"id": "malformed-hidden-cli-fail", "input": "accept.main с temporary JSON criterion hidden=[] и clean journal.bin", "expect": "rc != 0; вывод не содержит итог PASS"},
+    {"id": "empty-hidden-visible-positive", "input": "clean done journal; require_status=done + hidden={}", "expect": "overall PASS; hidden wrapper не заявляет выполненную проверку"},
+    {"id": "valid-hidden-visible-positive", "input": "clean done journal; require_status=done + hidden={max_steps:1}", "expect": "overall PASS и hidden wrapper PASS"}
+  ],
+  "threshold": {
+    "review5_controls": 9,
+    "windows_passed": 9,
+    "posix_passed": 9,
+    "review5_na": 0,
+    "malformed_hidden_rejected": 5,
+    "hidden_sentinel_not_leaked": 1,
+    "cli_rejected": 1,
+    "empty_hidden_positive_passed": 1,
+    "valid_hidden_positive_passed": 1,
+    "review4_controls": 7,
+    "review4_windows_passed": 7,
+    "review4_posix_passed": 7,
+    "review3_controls": 7,
+    "review3_windows_passed": 7,
+    "review3_posix_passed": 7,
+    "review2_controls": 6,
+    "review2_windows_passed": 6,
+    "review2_posix_passed": 6,
+    "authority_controls": 14,
+    "prior_review_controls": 7,
+    "r1_controls": 34,
+    "r1_review_windows": 11,
+    "r1_review_posix": 10,
+    "r1_review_posix_na": 1,
+    "tip_controls": 12,
+    "durability_windows_passed": 2,
+    "durability_windows_na": 2,
+    "durability_posix_passed": 4
+  },
+  "known_limits": [
+    "E-0059 остаётся historical NEEDS_CHANGES/open без conclusion/claim; его sealed prereg и corpus не переписываются",
+    "E-0054/E-0055/E-0056 остаются open без conclusion/claim",
+    "hidden={} трактуется как отсутствие скрытых условий и не создаёт PASS-строку скрытой проверки; при отсутствии visible substantive условия действует прежний E-0057 no-content refusal",
+    "Любой present non-dict hidden, включая null, является malformed; сообщение не раскрывает значение при show_hidden=False",
+    "Вручную сконструированный plain list по-прежнему считается чистым parse_journal metadata API",
+    "Fail-closed критерий не доказывает истинность события или внешнего результата",
+    "Windows directory durability остаётся N/A из W07A",
+    "Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation остаются отдельными работами"
+  ],
+  "kill_criteria": [
+    "Любой present malformed hidden string/list/int/bool/null даёт overall PASS рядом с visible positive",
+    "show_hidden=False раскрывает malformed hidden sentinel",
+    "CLI с malformed hidden печатает итог PASS или возвращает rc=0",
+    "Валидный hidden positive или documented hidden={} semantics перестаёт работать",
+    "Прежние review4/review3/review2/W07B/W07A thresholds не проходят либо corpus/порог ослаблен после RED"
+  ],
+  "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; correction после независимого review регистрируется отдельно",
+  "runs": [
+    "runs/exp-host-journal-safety-w07b-review5"
+  ]
+}

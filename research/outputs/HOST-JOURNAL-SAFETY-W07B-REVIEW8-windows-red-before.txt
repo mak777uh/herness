@@ -1,0 +1,11 @@
+[ok] duplicate-zero-first-direct
+[ok] duplicate-zero-last-direct
+[FAIL] first-key-wins-exact-semantic-fail — AssertionError: strict oracle приняла ordinary semantic FAIL
+[FAIL] last-key-wins-exact-semantic-fail — AssertionError: strict oracle приняла ordinary semantic FAIL
+[FAIL] asymmetric-resolver-exact-semantic-fail — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] шагов ≤ 4 — шагов: 1\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n')
+[ok] unicode-loader-refusal-preserved
+[ok] valid-unicode-positive-preserved
+
+host journal accept review8: 4/7 ok; N/A 0; провалов: 3
+
+rc=1

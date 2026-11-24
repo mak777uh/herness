@@ -1,0 +1,100 @@
+E-0065 — независимый финальный review W07B
+Baseline HEAD: 5719247055e0d8a75dc681112f4871493ea32307
+Production SHA-256: 4a16e366e98b9067e0a8bbdfd65e1e834cc8336455e32356282d1c7f5707a4a6
+Final prereg pre-closure SHA-256: 81a41e70572740e59a4c1ba7c6c78aaf049e8a62430310c426f656bdafc83700
+Дата: 2026-11-24
+
+Вердикт: PASS
+Substantive findings: 0
+
+PASS относится к E-0065 / final W07B boundary и накопленной correction chain.
+Он не означает production activation, внешнюю верификацию, PASS для W03/W06/W09/CI
+или превращение исторических NEEDS_CHANGES в PASS.
+
+Фактические независимые проверки:
+- HEAD и SHA-256 production совпали с prereg.
+- Пересчитаны hashes и длины всех 44 baseline-файлов и 12 digest-only sidecars:
+  расхождений нет.
+- Registry совпал с baseline: E-0054/E-0055/E-0056/E-0059/E-0060/E-0061/E-0062/E-0063
+  остаются open NEEDS_CHANGES без conclusion/claim; E-0057/E-0058/E-0064 closed PASS;
+  E-0065 на момент review open без conclusion/claim.
+- acceptance-metrics.txt byte-identical HEAD; git diff --exit-code для файла и
+  git diff --check прошли. После probes baseline, sidecars, registry, metrics и
+  production hash повторно совпали.
+- Прочитаны AGENTS.md, final prereg/baseline, полностью bin/accept.py, релевантные
+  bridge.py/host_journal.py/core-rs/src/lib.rs, journal_event.py, Rust host_event.rs/model.rs
+  и все 11 исторических independent reviews.
+
+Прослеженные substantive findings:
+1. E-0054 authority: strict UTF-8, exact local-line digest, typed run/session/expiry
+   mismatches, claim/unverified→recorded и строгий Rust receipt {seq,sha256} закрыты.
+2. E-0055 trailing invalid UTF-8 после валидного prefix: JournalRecords сохраняет
+   tail/problems/complete; прямой accept.check и зарегистрированные callers fail-closed.
+3. E-0056 metadata-only PASS и неточный UTF-8 fixture: binding/integrity/unknown rows
+   не создают substantive PASS; exact seq=8 invalid UTF-8 подтверждён.
+4. E-0057/E-0058: binding и hidden positives сохранены; no-content refusal не вытесняется.
+5. E-0059 malformed hidden: string/list/int/bool/null дают нормализованный FAIL без PASS/leak.
+6. E-0060 strict schema: nested hidden, duplicates любого порядка/глубины, finite numbers,
+   regex failures и no-leak проверены; валидные positives сохранены.
+7. E-0061 Unicode/combined: recursive scalar validation устраняет surrogate traceback;
+   полный 19-field combined positive прошёл с реальным синтетическим host journal.
+8. E-0062 visible duplicate: оба порядка 0→4 и 4→0 дают strict loader refusal rc=2.
+9. E-0063 oracle: loader refusal rc=2 отличается от ordinary semantic FAIL rc=1.
+10. E-0064 metakontrol: exact OracleRefusalMissing и synthetic controls исполняются.
+11. Historical integrity: sealed corpus, пороги и статусы не переписаны.
+12. Aggregates: сохранённые outputs соответствуют всем зарегистрированным порогам.
+
+Новых fail-open/fail-closed регрессий, утечек hidden sentinels, traceback, подмены
+semantic FAIL за loader refusal или ослабленных oracles в зарегистрированной границе
+не обнаружено.
+
+Фактически запущенная focused matrix:
+- Windows: authority 14/14; authority review 7/7; integrity/Review2 6/6;
+  Review3 7/7; Review4 7/7; Review5 9/9; Review6 16/16; Review7 9/9;
+  Review8 7/7; Review9 12/12; R1 34/34; R1 review 11/11; TIP 12/12;
+  durability 2 passed + 2 POSIX-only N/A.
+- WSL POSIX: те же authority/acceptance suites; R1 34/34; R1 review 10 passed +
+  1 Windows-only N/A; TIP 12/12; durability 4/4.
+- Лишних N/A нет; N/A не засчитаны как PASS.
+
+Независимый Review9 metakontrol на обеих платформах:
+- Немодифицированный suite: rc=0, 12/12.
+- Настоящий asymmetric duplicate 4→0: rc=2, duplicate diagnostic, нет PASS/traceback.
+- Замена r9.asymmetric на r9.first_key_wins: rc=1, 11/12; единственный провал
+  asymmetric-reverse-loader-refusal с OracleRefusalMissing expected rc=2.
+- Удаление только rc=2 проверки: 11/12, провал oracle-rejects-wrong-exit-code.
+- Удаление только diagnostic: 11/12, провал oracle-rejects-missing-diagnostic.
+- Удаление только no-PASS: 11/12, провал oracle-rejects-pass-output.
+- Удаление только no-traceback: 11/12, провал oracle-rejects-traceback-output.
+- Исходные suites не менялись: in-memory monkeypatch и внешний tempfile.
+
+Дополнительно выполнено 45 независимых probes на платформу: visible/hidden duplicates,
+nested/escaped-equivalent duplicates, lone surrogates, Unicode positives,
+NaN/Infinity/overflow, malformed JSON/UTF-8/schema, regex failures,
+semantic FAIL versus loader refusal, metadata-only, CRC/torn tails и exact seq=8.
+Ожидаемые refusal/positive результаты совпали.
+
+Просмотренные сохранённые aggregates:
+- Manifest: 74 suites / 1253 checks / 0 failures.
+- Selftest: rc=0.
+- Gates: 31 evaluated, 2 прежних N/A, 0 FAIL; probes 17/17.
+- Seals: 42/42, 0 problems.
+- Coverage: 341/341, strict 191/338 = 0.565 (0.57), 124 weak expectations,
+  32 description artifacts, 0 broken rows, ANCHORED_WEAK.
+- Windows/POSIX regression outputs совпали с независимо выполненной focused matrix.
+
+Ограничения:
+- Полные manifest/gates/selftest reviewer не перезапускал; проверены сохранённые outputs.
+- Strict duplicate/Unicode/non-finite loader rc=2 относится к bin/accept.py.
+  judge_metrics.py и verify_answers.py не переиспользуют _load_criteria; их E-0055
+  tail-контроль исправлен через прямую передачу JournalRecords. Общая унификация
+  этих consumers — отдельное hardening вне prereg.
+- Ручной plain list по-прежнему теряет parse metadata; production callers её сохраняют.
+- Windows directory durability — N/A; strict claims coverage — ANCHORED_WEAK.
+- Resume/retry идемпотентность, W03/W06/W09, clean-clone/CI, реальный runtime shell,
+  внешняя верификация и production activation не проверялись и не покрыты PASS.
+- Внешняя сеть, секреты и аккаунты не использовались; файлы репозитория не менялись.
+
+Решение: E-0065 можно закрыть с conclusion и отдельным claim. W07B PASS ограничен
+зарегистрированной authority/acceptance границей. Исторические NEEDS_CHANGES остаются
+open; commit/push разрешены владельцем, внешняя публикация и activation запрещены.

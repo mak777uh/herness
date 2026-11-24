@@ -1,0 +1,14 @@
+{
+  "immutable_baseline_files_checked": 42,
+  "allowed_closure_changes": [
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL.json",
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL.json.sha256"
+  ],
+  "file_mismatches": [],
+  "historical_status_mismatches": [],
+  "pre_closure_hash_preserved": true,
+  "current_prereg_seal_ok": true,
+  "current_prereg_seal_message": "lab\\prereg\\HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL.json: печать сходится (77efa639883b…)",
+  "acceptance_metrics_byte_identical_to_head": true,
+  "ok": true
+}

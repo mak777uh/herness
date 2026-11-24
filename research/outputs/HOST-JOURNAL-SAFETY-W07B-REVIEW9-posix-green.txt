@@ -1,0 +1,16 @@
+[ok] duplicate-zero-first-direct
+[ok] duplicate-zero-last-direct
+[ok] first-key-wins-exact-semantic-fail
+[ok] last-key-wins-exact-semantic-fail
+[ok] asymmetric-resolver-exact-semantic-fail
+[ok] asymmetric-reverse-loader-refusal
+[ok] oracle-rejects-wrong-exit-code
+[ok] oracle-rejects-missing-diagnostic
+[ok] oracle-rejects-pass-output
+[ok] oracle-rejects-traceback-output
+[ok] unicode-loader-refusal-preserved
+[ok] valid-unicode-positive-preserved
+
+host journal accept review9: 12/12 ok; N/A 0; провалов: 0
+
+rc=0

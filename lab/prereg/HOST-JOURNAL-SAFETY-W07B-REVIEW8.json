@@ -1,0 +1,90 @@
+{
+  "schema": 2,
+  "id": "HOST-JOURNAL-SAFETY-W07B-REVIEW8",
+  "date": "2026-11-24",
+  "question": "Закроет ли новый Review8 oracle false-green E-0062, не меняя production и не переписывая sealed Review7 corpus?",
+  "hypothesis": "Если новый suite прямо проверяет loader refusal rc=2 с duplicate diagnostic для duplicate max_steps в обоих порядках, а mutation controls отдельно требуют exact semantic FAIL rc=1 без duplicate diagnostic/traceback, first-key-wins, last-key-wins и asymmetric resolver больше не могут дать ложный зелёный. Unicode production behavior и валидный positive сохраняются.",
+  "criterion": "PASS только при review8 7/7 на Windows и POSIX без N/A: немодифицированный loader отвергает duplicate max_steps 0→4 и 4→0 с rc=2, duplicate diagnostic и без PASS/traceback; first-key-wins, last-key-wins и asymmetric resolver дают именно rc=1, итог FAIL, без duplicate diagnostic/traceback, и строгий oracle обнаруживает это как mutation; invalid Unicode по-прежнему даёт loader rc=2; корректная Unicode-строка проходит. Обязательны review7 9/9, review6 16/16, review5 9/9, review4 7/7, review3 7/7, review2 6/6 и прежние W07B/W07A thresholds. Любой принятый duplicate, обычный semantic FAIL, ошибочно засчитанный oracle-mutation, лишний N/A, ослабление порогов или изменение sealed E-0054–E-0062 corpus после RED означает отсутствие PASS.",
+  "arms": [
+    "A (inherited oracle): новый suite сначала воспроизводит broad E-0062 helper, который принимает любой rc!=0; mutation controls требуют exact semantic FAIL и поэтому показывают RED.",
+    "B (strict oracle): helper требует loader rc=2, duplicate diagnostic и отсутствие PASS/traceback; mutation controls явно проверяют rc=1, итог FAIL и отсутствие duplicate diagnostic перед подтверждением, что strict oracle отклонил mutant."
+  ],
+  "sensitivity": "Прямые controls меняют только порядок двух max_steps. Mutation controls меняют только duplicate resolution policy: first wins, last wins или asymmetric reject 4→0/accept 0→4. Unicode controls подтверждают отсутствие regression в уже исправленной production границе.",
+  "unit_of_analysis": "один duplicate acceptance criterion и один полный чистый HSJ2 журнал",
+  "primary_metric": "review8_controls=7; windows_passed=7; posix_passed=7; review8_na=0; duplicate_direct_orders=2; exact_mutation_checks=3; unicode_refusal_preserved=1; valid_unicode_preserved=1; review7_controls=9; review6_controls=16; review5_controls=9; review4_controls=7; review3_controls=7; review2_controls=6",
+  "test": "python tests/test_host_journal_accept_review8.py",
+  "stopping_rule": "Одна instrument correction после независимого E-0062 NEEDS_CHANGES: зарегистрировать и запечатать prereg, добавить новый Review8 suite с inherited broad oracle и сохранить RED на неизменённом production-коде на Windows/POSIX, затем ужесточить только новый oracle до exact loader/semantic distinction и повторить focused GREEN и accumulated matrix. После GREEN провести один независимый review. Sealed Review7 и production не менять; остановиться при первом необъяснённом провале; W03/W06/W09 и production activation не смешивать.",
+  "fixture": "Только синтетические HSJ2 байты в памяти и временные criterion/journal файлы; direct accept.main вызовы и monkeypatch только duplicate resolver в рамках test process; сеть, секреты, модель, внешние аккаунты и production writes не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; empty/exit 2 не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "duplicate-zero-first-direct", "input": "require_status=done, max_steps=0, max_steps=4", "expect": "немодифицированный loader rc=2; duplicate diagnostic; нет PASS/traceback"},
+    {"id": "duplicate-zero-last-direct", "input": "require_status=done, max_steps=4, max_steps=0", "expect": "немодифицированный loader rc=2; duplicate diagnostic; нет PASS/traceback"},
+    {"id": "first-key-wins-exact-semantic-fail", "input": "0→4 + first-key-wins resolver", "expect": "mutant rc=1, итог FAIL, нет duplicate diagnostic/traceback; strict oracle ловит mutant"},
+    {"id": "last-key-wins-exact-semantic-fail", "input": "4→0 + last-key-wins resolver", "expect": "mutant rc=1, итог FAIL, нет duplicate diagnostic/traceback; strict oracle ловит mutant"},
+    {"id": "asymmetric-resolver-exact-semantic-fail", "input": "0→4 + resolver, который отвергает только 4→0", "expect": "mutant rc=1, итог FAIL, нет duplicate diagnostic/traceback; strict oracle ловит mutant"},
+    {"id": "unicode-loader-refusal-preserved", "input": "require_status=done, task=\\ud800", "expect": "loader rc=2; нет PASS/traceback/значения"},
+    {"id": "valid-unicode-positive-preserved", "input": "require_status=done, корректная Unicode-строка", "expect": "rc=0; PASS"}
+  ],
+  "threshold": {
+    "review8_controls": 7,
+    "windows_passed": 7,
+    "posix_passed": 7,
+    "review8_na": 0,
+    "duplicate_direct_orders": 2,
+    "exact_mutation_checks": 3,
+    "unicode_refusal_preserved": 1,
+    "valid_unicode_preserved": 1,
+    "review7_controls": 9,
+    "review7_windows_passed": 9,
+    "review7_posix_passed": 9,
+    "review6_controls": 16,
+    "review6_windows_passed": 16,
+    "review6_posix_passed": 16,
+    "review5_controls": 9,
+    "review5_windows_passed": 9,
+    "review5_posix_passed": 9,
+    "review4_controls": 7,
+    "review4_windows_passed": 7,
+    "review4_posix_passed": 7,
+    "review3_controls": 7,
+    "review3_windows_passed": 7,
+    "review3_posix_passed": 7,
+    "review2_controls": 6,
+    "review2_windows_passed": 6,
+    "review2_posix_passed": 6,
+    "authority_controls": 14,
+    "prior_review_controls": 7,
+    "r1_controls": 34,
+    "r1_review_windows": 11,
+    "r1_review_posix": 10,
+    "r1_review_posix_na": 1,
+    "tip_controls": 12,
+    "durability_windows_passed": 2,
+    "durability_windows_na": 2,
+    "durability_posix_passed": 4
+  },
+  "known_limits": [
+    "E-0059/E-0060/E-0061/E-0062 остаются historical NEEDS_CHANGES/open без conclusion/claim; их sealed prereg/corpus не переписываются",
+    "E-0054/E-0055/E-0056 остаются open без conclusion/claim",
+    "Review8 исправляет только test oracle; production E-0062 не меняется",
+    "Strict coverage 0.57 и Windows directory durability N/A остаются отдельными ограничениями",
+    "Resume/retry, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation не входят в scope"
+  ],
+  "kill_criteria": [
+    "Duplicate 0→4 или 4→0 принимается немодифицированным loader",
+    "Ordinary semantic FAIL rc=1 удовлетворяет strict loader oracle",
+    "Mutation control засчитывает успех без exact rc=1/FAIL и отсутствия duplicate diagnostic",
+    "Asymmetric resolver даёт ложный зелёный",
+    "Invalid Unicode перестаёт отклоняться либо корректный Unicode перестаёт проходить",
+    "Прежние review7/review6/review5/review4/review3/review2/W07B/W07A thresholds не проходят либо corpus/порог ослаблен после RED"
+  ],
+  "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; correction после независимого review регистрируется отдельно",
+  "runs": [
+    "runs/exp-host-journal-safety-w07b-review8"
+  ]
+}

@@ -1,0 +1,20 @@
+[ok] nested-hidden-string
+[ok] nested-hidden-object
+[ok] duplicate-hidden-malformed-first
+[ok] duplicate-hidden-malformed-last
+[ok] duplicate-visible-threshold
+[ok] hidden-max-steps-infinity
+[ok] hidden-max-steps-overflow
+[ok] hidden-max-repeat-nan
+[ok] hidden-min-objects-no-leak
+[ok] hidden-max-repeat-no-leak
+[ok] hidden-invalid-regex-no-leak
+[ok] hidden-max-steps-bool
+[ok] visible-max-steps-string
+[ok] valid-hidden-positive
+[ok] valid-combined-positive
+[ok] empty-hidden-positive
+
+host journal accept review6: 16/16 ok; N/A 0; провалов: 0
+
+rc=0

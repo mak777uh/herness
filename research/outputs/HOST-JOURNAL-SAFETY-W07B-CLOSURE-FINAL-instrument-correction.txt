@@ -1,0 +1,23 @@
+E-0065 final closure — instrument correction до verification batch
+Дата: 2026-11-24
+
+Обнаружено при подготовке baseline hash manifest: поле test пре-регистрации содержало
+несуществующий путь tests/test_host_journal_accept_review2.py. В lab/prereg/
+HOST-JOURNAL-SAFETY-W07B-REVIEW2.json и tests/test-manifest.json Review2 использует
+tests/test_host_journal_accept_integrity.py с minimum_checks=6.
+
+Исправление:
+- Удалён только несуществующий путь из команды test.
+- tests/test_host_journal_accept_integrity.py остаётся в команде один раз.
+- Все 12 critical controls, platform thresholds 6/6 Review2 и 6/6 integrity,
+  production hash, stopping rule и scope не менялись.
+- Verification batch и независимый final review ещё не запускались.
+- Production и sealed E-0054–E-0064 corpus не менялись.
+
+Pre-correction canonical SHA-256:
+adff43afc0a8bdce4af66615ce953031e9f9aa30039598bfcb6f4c1bd78ef34c
+
+Post-correction canonical SHA-256:
+81a41e70572740e59a4c1ba7c6c78aaf049e8a62430310c426f656bdafc83700
+
+Sidecar после коррекции совпадает. Это коррекция пути прибора, не ослабление критерия.

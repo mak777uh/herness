@@ -1,0 +1,7 @@
+[ok] visible-task: rc=2; no traceback; value not leaked
+[ok] visible-status: rc=2; no traceback; value not leaked
+[ok] hidden-task: rc=2; no traceback; value not leaked
+[ok] json-key: rc=2; no traceback; value not leaked
+[ok] valid-surrogate-pair: rc=0; PASS
+
+rc=0

@@ -1,0 +1,8 @@
+delete-rc-check: rc=1; host journal accept review9: 11/12 ok; N/A 0; провалов: 1
+delete-diagnostic-check: rc=1; host journal accept review9: 11/12 ok; N/A 0; провалов: 1
+delete-no-pass-check: rc=1; host journal accept review9: 11/12 ok; N/A 0; провалов: 1
+delete-no-traceback-check: rc=1; host journal accept review9: 11/12 ok; N/A 0; провалов: 1
+replace-asymmetric-with-first-key-wins: rc=1; host journal accept review9: 11/12 ok; N/A 0; провалов: 1
+metacontrol mutations detected: 5/5
+
+rc=0

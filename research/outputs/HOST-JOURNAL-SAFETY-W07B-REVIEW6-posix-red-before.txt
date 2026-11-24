@@ -1,0 +1,69 @@
+[FAIL] nested-hidden-string — AssertionError: [('журнал прочитан полностью', True, 'tail=0; problems=0'), ('скрытая часть критерия', True, 'выполнена')]
+[FAIL] nested-hidden-object — AssertionError: [('журнал прочитан полностью', True, 'tail=0; problems=0'), ('скрытая часть критерия', True, 'выполнена')]
+[FAIL] duplicate-hidden-malformed-first — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n', '')
+[ok] duplicate-hidden-malformed-last
+[FAIL] duplicate-visible-threshold — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] шагов ≤ 4 — шагов: 1\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n', '')
+[FAIL] hidden-max-steps-infinity — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [ok] скрытая часть критерия — выполнена\nитог: PASS\n', '')
+[FAIL] hidden-max-steps-overflow — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [ok] скрытая часть критерия — выполнена\nитог: PASS\n', '')
+[FAIL] hidden-max-repeat-nan — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [ok] скрытая часть критерия — выполнена\nитог: PASS\n', '')
+[FAIL] hidden-min-objects-no-leak — AssertionError: Traceback (most recent call last):
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/tests/test_host_journal_accept_review6.py", line 68, in cli
+    code = accept.main([str(criterion), str(journal)])
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 438, in main
+    ok, rows = check(criteria, records, show_hidden=show_hidden)
+               ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 396, in check
+    hidden_rows = _rows(hidden, evs, kinds, records)
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 208, in _rows
+    need = int(criteria["min_objects"])
+ValueError: invalid literal for int() with base 10: 'HIDDEN-SENTINEL-CONDITION'
+
+[FAIL] hidden-max-repeat-no-leak — AssertionError: Traceback (most recent call last):
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/tests/test_host_journal_accept_review6.py", line 68, in cli
+    code = accept.main([str(criterion), str(journal)])
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 438, in main
+    ok, rows = check(criteria, records, show_hidden=show_hidden)
+               ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 396, in check
+    hidden_rows = _rows(hidden, evs, kinds, records)
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 338, in _rows
+    limit = float(criteria["max_repeat_ratio"])
+ValueError: could not convert string to float: 'HIDDEN-SENTINEL-RATIO'
+
+[FAIL] hidden-invalid-regex-no-leak — AssertionError: Traceback (most recent call last):
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/tests/test_host_journal_accept_review6.py", line 68, in cli
+    code = accept.main([str(criterion), str(journal)])
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 438, in main
+    ok, rows = check(criteria, records, show_hidden=show_hidden)
+               ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 396, in check
+    hidden_rows = _rows(hidden, evs, kinds, records)
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 212, in _rows
+    pattern = re.compile(criteria["anchor_regex"])
+  File "/usr/lib/python3.14/re/__init__.py", line 289, in compile
+    return _compile(pattern, flags)
+  File "/usr/lib/python3.14/re/__init__.py", line 350, in _compile
+    p = _compiler.compile(pattern, flags)
+  File "/usr/lib/python3.14/re/_compiler.py", line 762, in compile
+    p = _parser.parse(p, flags)
+  File "/usr/lib/python3.14/re/_parser.py", line 973, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/usr/lib/python3.14/re/_parser.py", line 460, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+                ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                       not nested and not items))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/re/_parser.py", line 568, in _parse
+    raise source.error("unterminated character set",
+                       source.tell() - here)
+re.PatternError: unterminated character set at position 21
+
+[FAIL] hidden-max-steps-bool — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0'), ('скрытая часть критерия', True, 'выполнена')]
+[FAIL] visible-max-steps-string — TypeError: '<=' not supported between instances of 'int' and 'str'
+[ok] valid-hidden-positive
+[ok] valid-combined-positive
+[ok] empty-hidden-positive
+
+host journal accept review6: 4/16 ok; N/A 0; провалов: 12
+
+rc=1

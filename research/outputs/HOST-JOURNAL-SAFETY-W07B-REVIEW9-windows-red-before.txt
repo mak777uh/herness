@@ -1,0 +1,21 @@
+[ok] duplicate-zero-first-direct
+[ok] duplicate-zero-last-direct
+[FAIL] first-key-wins-exact-semantic-fail — AssertionError: (1, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [FAIL] шагов ≤ 0 — шагов: 1\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: FAIL\n')
+[FAIL] last-key-wins-exact-semantic-fail — AssertionError: (1, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [FAIL] шагов ≤ 0 — шагов: 1\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: FAIL\n')
+[FAIL] asymmetric-resolver-exact-semantic-fail — AssertionError: (1, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [FAIL] шагов ≤ 0 — шагов: 1\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: FAIL\n')
+[FAIL] asymmetric-reverse-loader-refusal — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] шагов ≤ 4 — шагов: 1\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n')
+[FAIL] oracle-rejects-wrong-exit-code — AssertionError: (1, 'итог: FAIL\nповторяющийся JSON ключ\n')
+[FAIL] oracle-rejects-missing-diagnostic — AssertionError: другая ошибка
+
+[FAIL] oracle-rejects-pass-output — AssertionError: итог: PASS
+повторяющийся JSON ключ
+
+[FAIL] oracle-rejects-traceback-output — AssertionError: повторяющийся JSON ключ
+Traceback
+
+[ok] unicode-loader-refusal-preserved
+[ok] valid-unicode-positive-preserved
+
+host journal accept review9: 4/12 ok; N/A 0; провалов: 8
+
+rc=1

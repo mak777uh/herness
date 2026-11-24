@@ -1,0 +1,42 @@
+E-0063 — независимый review Review8 oracle
+Baseline HEAD: 5719247055e0d8a75dc681112f4871493ea32307
+Production SHA-256: 4a16e366e98b9067e0a8bbdfd65e1e834cc8336455e32356282d1c7f5707a4a6
+Review8 SHA-256: 68a80840f6bbfc5d302015638da7b30501f190d5dfaa7200c63df3177fea7e95
+Дата: 2026-11-24
+
+Вердикт: NEEDS_CHANGES
+
+MEDIUM — asymmetric resolver проверяется только в направлении 0→4.
+tests/test_host_journal_accept_review8.py:57–63,101–103 и prereg critical control задают
+только принятие 0→4. Ветка отказа 4→0 не исполняется ни одним control. Независимое
+воспроизведение в памяти: замена r8.asymmetric на r8.first_key_wins всё ещё даёт 7/7, rc=0.
+При этом ZERO_LAST с подменённым resolver даёт rc=0, PASS и не содержит duplicate diagnostic.
+Текущая asymmetric-реализация сама по себе верна, но suite не защищает обязательный отказ 4→0.
+
+MEDIUM — метаконтроль не защищает каждую точную проверку strict helper.
+tests/test_host_journal_accept_review8.py:32–40,66–78. Если в памяти удалить только
+assert code == 2 либо только diagnostic-проверку, suite по-прежнему даёт 7/7, rc=0:
+прямые controls проходят на настоящем production, а mutation-control получает AssertionError
+по другой причине и ошибочно считает oracle успешным. Старый broad code != 0 ловится (4/7),
+но ослабление exact rc=2/diagnostic внутри helper остаётся незаметным.
+
+Необходимая коррекция: отдельный Review9 должен проверить ZERO_LAST под patched asymmetric
+resolver на exact loader refusal и синтетически проверить каждую проверку helper по отдельности
+(wrong rc, missing diagnostic, PASS output, traceback). Metakontrol должен ловить только
+специальный отказ oracle, а не любой AssertionError. Production и sealed Review8 не менять.
+
+Выполненные проверки:
+- Независимый Windows Review8: 7/7, N/A 0, rc=0; manifest runner: 7/7 checks.
+- Прямые duplicate controls обоих порядков, exact semantic-FAIL mutations и Unicode controls прошли.
+- Review7 независимо повторён: 9/9, rc=0; вывод совпал с сохранёнными Windows/POSIX GREEN.
+- minimum_checks=7; сохранённый manifest 73 suites / 1241 checks / 0 failures.
+- Gates 31/33, только прежние два N/A; seals 40/40; coverage 340/340, strict 0.57, ANCHORED_WEAK; selftest rc=0.
+- Production E-0063 не изменён; diff от HEAD содержит накопленные E-0059–E-0062 hunks.
+- Sidecars Review7/Review8 совпали; registry оставляет E-0062/E-0063 open без conclusion/claim.
+
+Ограничения: POSIX повторно не запускался; полные manifest/gates/selftest/coverage не перезапускались,
+сверены сохранённые outputs. Сеть не использовалась. Полного криптографического доказательства
+отсутствия backdating или байтовой identity E-0062 baseline нет. Файлы репозитория reviewer не менял.
+
+Решение: E-0063 остаётся open без conclusion/claim; W07B closure запрещена. Sealed Review8
+corpus не переписывается. Исправление регистрируется отдельной correction-попыткой E-0064.

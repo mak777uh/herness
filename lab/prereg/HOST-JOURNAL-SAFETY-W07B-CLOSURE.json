@@ -1,0 +1,72 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-W07B-CLOSURE",
+ "date": "2026-11-24",
+ "question": "Закрывает ли накопленная correction chain E-0054–E-0058 все substantive findings W07B в финальном коде, не переписывая исторические REFUTED/NEEDS_CHANGES эксперименты и не ослабляя пороги?",
+ "hypothesis": "Финальный host-issued run/session/expiry binding, refs-only projection, exact UTF-8/tail fail-closed, substantive acceptance checks, host_match binding и hidden unknown-key validation закрывают всю цепочку review-находок. Если независимый final review не находит substantive findings и все зарегистрированные platform thresholds проходят, W07B можно закрыть в заявленных границах при сохранении E-0054/E-0055/E-0056 как open historical experiments.",
+ "criterion": "PASS только при Windows/POSIX authority 14/14, prior review 7/7, review2 6/6, review3 7/7, review4 7/7 без лишних N/A; R1 34/34; R1-REVIEW Windows 11/11 либо POSIX 10 passed с одним явным Windows-only N/A; R2-TIP 12/12; durability Windows 2 passed + 2 явных POSIX-only N/A либо POSIX 4/4. Обязательны полный manifest без failures, selftest rc=0, gates с только прежними явными N/A, seals без проблем и один независимый final review с verdict PASS и substantive_findings=[]. Любой принятый invalid combo, новая утечка, потеря позитива, лишний N/A, ослабление порога или изменение sealed corpus после RED означает отсутствие PASS.",
+ "arms": [
+  "A (historical): E-0054/E-0055/E-0056 остаются open после независимых NEEDS_CHANGES; их sealed corpus и результаты не переписываются.",
+  "B (final verification): на зафиксированном коммите 5719247 повторяются все accumulated controls и выполняется один независимый read-only final review всей correction chain; новый production mechanism не вводится."
+ ],
+ "sensitivity": "Final review обязан воспроизвести каждую substantive finding из E-0054/E-0055/E-0056/E-0057 review и проверить её закрытие в текущем коде, а не только повторить happy-path suites. Отдельно проверяются no-leak, exact UTF-8 seq=8, binding validation без вытеснения no-content refusal и платформенные N/A.",
+ "unit_of_analysis": "финальная W07B authority/acceptance реализация и накопленная цепочка зарегистрированных controls",
+ "primary_metric": "authority_controls=14; prior_review_controls=7; review2_controls=6; review3_controls=7; review4_controls=7; windows_and_posix_thresholds=true; manifest_failures=0; selftest_rc=0; seals_problems=0; final_review_substantive_findings=0; historical_open_preserved=3",
+ "test": "python tests/test_host_journal_authority.py && python tests/test_host_journal_authority_review.py && python tests/test_host_journal_accept_integrity.py && python tests/test_host_journal_accept_review3.py && python tests/test_host_journal_accept_review4.py",
+ "stopping_rule": "Один final verification batch на commit 5719247: повторить accumulated Windows/POSIX thresholds, сверить aggregate evidence и выполнить один независимый read-only final review. Остановиться при первом необъяснённом провале; не менять production code, sealed corpus, hash domain, schema, session/expiry критерии и platform thresholds. W03/W06/W09, clean-clone/CI и production activation не смешивать.",
+ "fixture": "Только уже зарегистрированные tempfile/loopback/синтетические HSJ2 controls; сеть ограничена loopback, реальные секреты, модель, внешние аккаунты и owner keys не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run на том же worktree",
+  "commit": "5719247",
+  "network": "только loopback fixture; внешняя сеть не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+ },
+ "critical_controls": [
+  {"id": "e0054-five-findings", "input": "invalid UTF-8, whitespace digest, typed session/expiry isolation, claim/unverified status, exact Rust receipt", "expect": "все пять findings закрыты в финальном коде и подтверждены accumulated suites/review"},
+  {"id": "e0055-tail-finding", "input": "валидный совпадающий prefix + CRC-valid invalid UTF-8 trailing data/commit", "expect": "прямые accept.check/judge_metrics/verify_answers дают fail-closed отказ"},
+  {"id": "e0056-two-findings", "input": "metadata-only criterion и exact seq=8 invalid UTF-8 direct-caller vector", "expect": "metadata-only FAIL; seq=8 подтверждает именно invalid UTF-8"},
+  {"id": "e0057-residuals", "input": "host_match=true без host_run рядом с positive; mixed hidden unknown+positive", "expect": "FAIL; show_hidden=False не раскрывает имя; positives сохранены"},
+  {"id": "interaction-regression", "input": "metadata-only host_match без host_run", "expect": "binding FAIL сохраняется, no-content refusal не вытесняется"},
+  {"id": "historical-integrity", "input": "registry/seals/corpus E-0054–E-0058", "expect": "E-0054/E-0055/E-0056 остаются open; sealed thresholds/corpus не изменены"}
+ ],
+ "threshold": {
+  "authority_controls": 14,
+  "prior_review_controls": 7,
+  "review2_controls": 6,
+  "review3_controls": 7,
+  "review4_controls": 7,
+  "r1_controls": 34,
+  "r1_review_windows": 11,
+  "r1_review_posix": 10,
+  "r1_review_posix_na": 1,
+  "tip_controls": 12,
+  "durability_windows_passed": 2,
+  "durability_windows_na": 2,
+  "durability_posix_passed": 4,
+  "manifest_failures": 0,
+  "selftest_rc": 0,
+  "seals_problems": 0,
+  "final_review_substantive_findings": 0,
+  "historical_open_preserved": 3
+ },
+ "known_limits": [
+  "W07B closure не превращает E-0054/E-0055/E-0056 в PASS и не переписывает их выводы",
+  "Host receipt остаётся host_received/host_durable, не истинностью, acceptance или external verification",
+  "Refs-only схема не защищает от комнаты, одновременно подделывающей локальный журнал и согласованную ложную проекцию",
+  "Windows directory durability остаётся явным N/A; N/A не PASS",
+  "Вручную сконструированный plain list по-прежнему теряет parse metadata; production callers её сохраняют",
+  "Resume/retry идемпотентность, W03/W06/W09, clean-clone/CI, реальный runtime shell и production activation остаются отдельными работами"
+ ],
+ "kill_criteria": [
+  "Любая substantive finding E-0054–E-0057 воспроизводится в финальном коде",
+  "Accumulated platform threshold падает или получает лишний N/A",
+  "Sealed corpus/порог изменён после RED",
+  "Final review не PASS или содержит substantive finding",
+  "W07B closure выдается за production activation, внешнюю верификацию или полный W07/W10 PASS"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; commit/push в herness разрешены, внешняя публикация и activation запрещены",
+ "runs": [
+  "runs/exp-host-journal-safety-w07b-closure"
+ ]
+}

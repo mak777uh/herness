@@ -1,0 +1,24 @@
+E-0059 — независимый финальный review W07B
+Baseline: commit 5719247
+Дата: 2026-11-24
+
+Вердикт: NEEDS_CHANGES
+
+MEDIUM — malformed hidden молча пропускается и создаёт ложный PASS.
+
+bin/accept.py:386–400 обрабатывает hidden только при isinstance(hidden, dict) and hidden;
+_load_criteria() на 409–413 проверяет лишь верхнеуровневый объект. На чистом журнале критерии
+{"require_status":"done","hidden":"typo"}, а также hidden типа list/int/bool возвращают True
+без строки скрытой проверки. CLI печатает «итог: PASS», rc=0. Воспроизведено независимо
+на Windows и POSIX.
+
+Это противоречит ADR-0049-acceptance-outside-room.md:161–170 и kill criterion E-0059:
+опечатка или неверный тип скрытой части не должен тихо отключать проверку.
+
+Reviewer подтвердил закрытие исходных findings E-0054–E-0058, отсутствие production diff
+после 5719247, сохранение E-0054/E-0055/E-0056 как open и crossed-platform accumulated
+controls. Новый substantive finding блокирует W07B closure.
+
+Решение: E-0059 остаётся open; conclusion и claim не присваиваются. Sealed prereg
+HOST-JOURNAL-SAFETY-W07B-CLOSURE.json не переписывается. Исправление регистрируется
+отдельной correction-попыткой E-0060.

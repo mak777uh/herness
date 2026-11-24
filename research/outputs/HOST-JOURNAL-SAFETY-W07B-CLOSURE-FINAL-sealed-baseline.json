@@ -1,0 +1,264 @@
+{
+  "schema": 1,
+  "id": "HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL-BASELINE",
+  "date": "2026-11-24",
+  "baseline_head": "5719247055e0d8a75dc681112f4871493ea32307",
+  "scope": "W07B production, accumulated test corpus, sealed preregs/sidecars and protected metrics before final review",
+  "files": {
+    "bin/accept.py": {
+      "sha256": "4a16e366e98b9067e0a8bbdfd65e1e834cc8336455e32356282d1c7f5707a4a6",
+      "bytes": 31508
+    },
+    "bin/bridge.py": {
+      "sha256": "e3762b0f989d902a211079012d02c4b9085a829b322f044e5db1dea6aed1865e",
+      "bytes": 45293
+    },
+    "bin/host_journal.py": {
+      "sha256": "355ba910e58b8799b8d4cb347c4df8ffd253aa63303480c7d7a68d62ab3440ca",
+      "bytes": 30774
+    },
+    "core-rs/src/lib.rs": {
+      "sha256": "5f51282aa17cc7e40b19e70df290c09ac5de34af6010ae7df1786363895d016c",
+      "bytes": 2554
+    },
+    "tests/test-manifest.json": {
+      "sha256": "e8f2b316d25180f0c6c4e3860bf682550cd4092811bc982b76680db572df3ca7",
+      "bytes": 9408
+    },
+    "research/outputs/acceptance-metrics.txt": {
+      "sha256": "bb221d198bc3e9a8dbceddb416795ad0518825cf26ebfe7d318b39c5f817c13f",
+      "bytes": 4894
+    },
+    "tests/test_host_journal.py": {
+      "sha256": "b84ce677979fcd995f671009ff601e2f118a7273be745607aa6692f69a60ae00",
+      "bytes": 20135
+    },
+    "tests/test_host_journal_review.py": {
+      "sha256": "f223dafcd71575cf188b91d601f6b129ff71d8f467df7b13fa085d4fab18be7a",
+      "bytes": 11039
+    },
+    "tests/test_host_journal_tip.py": {
+      "sha256": "afdf2436373b671096c661f5f7637377d618fd1b450af6c26ba11ac2700f6e98",
+      "bytes": 12188
+    },
+    "tests/test_host_journal_tip_review.py": {
+      "sha256": "753d3b108e87b6229388e4be9a45d3ef2f6e8b3b1280282b5aa1b621e48cae09",
+      "bytes": 6014
+    },
+    "tests/test_host_journal_authority.py": {
+      "sha256": "4871d1c0aa896935eb37ea76007af2135d476f747a2978231e72363e5a97ec3d",
+      "bytes": 16099
+    },
+    "tests/test_host_journal_authority_review.py": {
+      "sha256": "d111bcfbd44e90c961a1c8953edb33572b87428b501be5888435f468536633e6",
+      "bytes": 8217
+    },
+    "tests/test_host_journal_accept_integrity.py": {
+      "sha256": "e8d269a50659973558e807fe4428622dab2a8a257d73d2cc51ffe3247bd0569f",
+      "bytes": 6423
+    },
+    "tests/test_host_journal_accept_review3.py": {
+      "sha256": "61651c8a63e9ed1935aee894eeff6d025aefe233529c3309394afaabd2cb9553",
+      "bytes": 6675
+    },
+    "tests/test_host_journal_accept_review4.py": {
+      "sha256": "a2c34489c8ad8f5333153907b9c808eef35a50a94fa2e7a756b219b763f6a771",
+      "bytes": 4096
+    },
+    "tests/test_host_journal_accept_review5.py": {
+      "sha256": "11b7d73b93060fc504dc30610e392038c76e9393d15fb2419bf5ba54c4d6ac38",
+      "bytes": 4641
+    },
+    "tests/test_host_journal_accept_review6.py": {
+      "sha256": "5abfc7e8a6f7654a824c7977d952005e7e03e7ad22e1e93780673349038af578",
+      "bytes": 7215
+    },
+    "tests/test_host_journal_accept_review7.py": {
+      "sha256": "4ea4743ef55580a1e365098416a64f98964079b4350479256b1a93d1147c60e5",
+      "bytes": 7945
+    },
+    "tests/test_host_journal_accept_review8.py": {
+      "sha256": "68a80840f6bbfc5d302015638da7b30501f190d5dfaa7200c63df3177fea7e95",
+      "bytes": 4425
+    },
+    "tests/test_host_journal_accept_review9.py": {
+      "sha256": "7ed93f1b009e6fa5a004d8fa7e0b09186f780c08aa349fe41a647239eb6abf97",
+      "bytes": 6326
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-AUTHORITY.json": {
+      "sha256": "53b74514ca90c5355bd71abb5e96ebc2b603eba38a2809b4b3678dd736bcc07d",
+      "bytes": 10191
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-AUTHORITY.json.sha256": {
+      "sha256": "9d65ca12a01b764a531ae2ba390b3581e1ada859f99d4a113d25a3e008982111",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW.json": {
+      "sha256": "558aa7d541a1f83e4d55c73e81c5f8b0241489842a7763416385f7494b0b4311",
+      "bytes": 9529
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW.json.sha256": {
+      "sha256": "583b69905a94afdb8474eadf8d4b1fc5f3499fff79be2dccb6b4cee8c0e45b7e",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW2.json": {
+      "sha256": "98232785fa6dff675f33239540f5a5781f8c22bb526372bcb8384646ad5cff57",
+      "bytes": 8788
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW2.json.sha256": {
+      "sha256": "6ba5533ca2eb995c63d8ca4d484ddb739f50cdc95edc045d69f55353743673ae",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW3.json": {
+      "sha256": "12d8d2c285c66fe702b0cfb4d2872b13e3edbc331446e4b588267faa03c015de",
+      "bytes": 11820
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW3.json.sha256": {
+      "sha256": "e3e9628ccececa8e638cc316db316b2e009c0c801c62d62c2f3c9999d6814785",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW4.json": {
+      "sha256": "2de53100b00cb2a40df3ca5ccd2d27a5bc4544b6d19c35c92bcb8ed86c53feaa",
+      "bytes": 11574
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW4.json.sha256": {
+      "sha256": "9f5b0076e478275826f8f715bde352dcda0dc029f4e51dc244803a92173dfaf0",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE.json": {
+      "sha256": "d351124310a7be139232a7e7400cff67d0f69e31526144054998ef002189f878",
+      "bytes": 8397
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE.json.sha256": {
+      "sha256": "8d45a827d7fa2e4ebabd7919b29a7f9663adf1b0360317bcfe2bbc53790c2685",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW5.json": {
+      "sha256": "0efda981caaee51361a397d2b5b2c13f0cdc2a50e5e1b679d588f861e1dbe897",
+      "bytes": 9844
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW5.json.sha256": {
+      "sha256": "f742a5e84ddca43a517bec05515d9fc74824b2d5f62d92a5e2525e1ecf45b044",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW6.json": {
+      "sha256": "ef17d4187dae0800d507ac69645e19c2612c62708cdde7d0b50ca3a2d351a924",
+      "bytes": 10839
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW6.json.sha256": {
+      "sha256": "a1c813bff7233e5031bfd9ddcc0010295657cb28ae29042b2771b569f46e433a",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW7.json": {
+      "sha256": "5b75ec210908c2a95fbb0a21570adc83bbef441c49f8117389c555165549cf69",
+      "bytes": 10368
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW7.json.sha256": {
+      "sha256": "866436778cc53f52f51d7430cc1975440795967cffffba055144d1b26432dbe4",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW8.json": {
+      "sha256": "93fe4110df5efa3d8778f46eabb970d0a6518a722c2b40223b5acc8613b672ad",
+      "bytes": 8881
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW8.json.sha256": {
+      "sha256": "834c0744b01998c07b036658255a846f7891ea8be25afa26e674ea37a170ffff",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW9.json": {
+      "sha256": "abfbf6f6dffb36dd36844c2964bf6b308193209c178e744fc8f58d2bccebd9c5",
+      "bytes": 13181
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW9.json.sha256": {
+      "sha256": "028812fb5a1e9715b1718f8d68ffdef126c033fffd6f4856eaec8d54d1bc9b71",
+      "bytes": 65
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL.json": {
+      "sha256": "81a41e70572740e59a4c1ba7c6c78aaf049e8a62430310c426f656bdafc83700",
+      "bytes": 12709
+    },
+    "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL.json.sha256": {
+      "sha256": "751456e8fb33f9b11622b809d0d3f522165bc5d53babafd4517360c3d00dd12a",
+      "bytes": 65
+    }
+  },
+  "historical_experiments": {
+    "E-0054": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-AUTHORITY.json"
+    },
+    "E-0055": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW.json"
+    },
+    "E-0056": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW2.json"
+    },
+    "E-0057": {
+      "status": "closed",
+      "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-conclusion.txt",
+      "claim": "C-0346",
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW3.json"
+    },
+    "E-0058": {
+      "status": "closed",
+      "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-conclusion.txt",
+      "claim": "C-0347",
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW4.json"
+    },
+    "E-0059": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE.json"
+    },
+    "E-0060": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW5.json"
+    },
+    "E-0061": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW6.json"
+    },
+    "E-0062": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW7.json"
+    },
+    "E-0063": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW8.json"
+    },
+    "E-0064": {
+      "status": "closed",
+      "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW9-conclusion.txt",
+      "claim": "C-0348",
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW9.json"
+    },
+    "E-0065": {
+      "status": "open",
+      "conclusion": null,
+      "claim": null,
+      "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL.json"
+    }
+  },
+  "acceptance_metrics": {
+    "worktree_sha256": "bb221d198bc3e9a8dbceddb416795ad0518825cf26ebfe7d318b39c5f817c13f",
+    "head_sha256": "bb221d198bc3e9a8dbceddb416795ad0518825cf26ebfe7d318b39c5f817c13f",
+    "byte_identical_to_head": true
+  }
+}

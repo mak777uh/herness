@@ -1,0 +1,35 @@
+nested-hidden: ok=True; rows=[('журнал прочитан полностью', True, 'tail=0; problems=0'), ('скрытая часть критерия', True, 'выполнена')]
+duplicate-hidden-malformed-first: rc=0
+duplicate-hidden-malformed-first: stdout='задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n'
+duplicate-hidden-malformed-first: stderr=''
+duplicate-hidden-malformed-last: rc=1
+duplicate-hidden-malformed-last: stdout='задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [FAIL] скрытая часть критерия — не выполнена (какие условия — на хосте, см. --show-hidden)\nитог: FAIL\n'
+duplicate-hidden-malformed-last: stderr=''
+nonfinite-infinity: rc=0
+nonfinite-infinity: stdout='задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [ok] скрытая часть критерия — выполнена\nитог: PASS\n'
+nonfinite-infinity: stderr=''
+nonfinite-overflow: rc=0
+nonfinite-overflow: stdout='задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [ok] скрытая часть критерия — выполнена\nитог: PASS\n'
+nonfinite-overflow: stderr=''
+Traceback (most recent call last):
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW5-independent-probes.py", line 74, in <module>
+    cli(
+    ~~~^
+        "hidden-value-traceback",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        '{"require_status":"done","hidden":{"min_objects":"HIDDEN-SENTINEL-CONDITION"}}',
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW5-independent-probes.py", line 51, in cli
+    code = accept.main([str(criterion), str(journal)])
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 438, in main
+    ok, rows = check(criteria, records, show_hidden=show_hidden)
+               ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 396, in check
+    hidden_rows = _rows(hidden, evs, kinds, records)
+  File "/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/bin/accept.py", line 208, in _rows
+    need = int(criteria["min_objects"])
+ValueError: invalid literal for int() with base 10: 'HIDDEN-SENTINEL-CONDITION'
+
+rc=1

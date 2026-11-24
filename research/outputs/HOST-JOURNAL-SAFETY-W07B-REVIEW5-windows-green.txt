@@ -1,0 +1,13 @@
+[ok] hidden-string-visible-positive
+[ok] hidden-list-visible-positive
+[ok] hidden-int-visible-positive
+[ok] hidden-bool-visible-positive
+[ok] hidden-null-visible-positive
+[ok] malformed-hidden-no-leak
+[ok] malformed-hidden-cli-fail
+[ok] empty-hidden-visible-positive
+[ok] valid-hidden-visible-positive
+
+host journal accept review5: 9/9 ok; N/A 0; провалов: 0
+
+rc=0

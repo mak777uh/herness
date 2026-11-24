@@ -1,0 +1,13 @@
+[FAIL] hidden-string-visible-positive — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] hidden-list-visible-positive — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] hidden-int-visible-positive — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] hidden-bool-visible-positive — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] hidden-null-visible-positive — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] malformed-hidden-no-leak — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] malformed-hidden-cli-fail — AssertionError: (0, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n', '')
+[ok] empty-hidden-visible-positive
+[ok] valid-hidden-visible-positive
+
+host journal accept review5: 2/9 ok; N/A 0; провалов: 7
+
+rc=1

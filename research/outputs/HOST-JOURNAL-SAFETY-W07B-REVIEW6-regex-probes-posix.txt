@@ -1,0 +1,4 @@
+[ok] regex-overflow: rc=1; no traceback; pattern not leaked
+[ok] regex-recursion: rc=1; no traceback; pattern not leaked
+
+rc=0

@@ -1,0 +1,58 @@
+E-0064 — независимый correction review Review9 exact metakontrol
+Baseline HEAD: 5719247055e0d8a75dc681112f4871493ea32307
+Production SHA-256: 4a16e366e98b9067e0a8bbdfd65e1e834cc8336455e32356282d1c7f5707a4a6
+Review8 SHA-256: 68a80840f6bbfc5d302015638da7b30501f190d5dfaa7200c63df3177fea7e95
+Prereg pre-closure SHA-256: d023365f0804ed6e8fbe54516965be99869ff2c2e29f636bd0d9e96f602bbcdf
+Дата: 2026-11-24
+
+Вердикт: PASS
+Substantive findings: нет
+
+PASS относится к correction-эксперименту E-0064 / Review9 и его test oracle.
+Он не является закрытием W07B или production activation.
+
+Проверено:
+- Все 12 controls tests/test_host_journal_accept_review9.py соответствуют prereg и threshold.
+- Прямые duplicate criteria в порядках 0→4 и 4→0 дают loader refusal rc=2.
+- First-key-wins, last-key-wins и asymmetric 0→4 дают exact semantic FAIL rc=1;
+  ordinary semantic FAIL не удовлетворяет strict loader oracle.
+- Настоящий asymmetric resolver даёт loader refusal для обратного 4→0.
+- Замена r9.asymmetric на r9.first_key_wins даёт rc=1, 11/12 и ровно один провал.
+- Удаление каждой exact helper-проверки — rc=2, diagnostic, no-PASS, no-traceback —
+  даёт rc=1, 11/12 и ровно один соответствующий провал.
+- Четыре synthetic controls независимо проверяют каждую причину OracleRefusalMissing;
+  поэтому возврат broad except AssertionError не маскирует ослабление helper.
+- Invalid Unicode остаётся loader refusal без PASS/traceback/раскрытия sentinel;
+  корректный Unicode и surrogate pair проходят.
+
+Фактические read-only прогоны reviewer:
+- Windows Review9: 12/12, N/A 0, rc=0.
+- Manifest runner Review9: 12/12 checks при minimum_checks=12.
+- Независимые in-memory probes asymmetric/first-key-wins и четырёх helper mutations:
+  пять ожидаемых регрессий обнаружены; каждая даёт 11/12 и один именной провал.
+- Hash production, sealed Review7 и sealed Review8 совпал с зафиксированными значениями.
+- research/outputs/acceptance-metrics.txt byte-identical HEAD.
+- Seal Review9 совпал с pre-closure sidecar; seal verify-all: 41/41, проблем 0.
+
+Сверенные сохранённые aggregates:
+- RED Windows/POSIX: 4/12, N/A 0, восемь ожидаемых провалов.
+- GREEN Windows/POSIX: 12/12, N/A 0, rc=0.
+- Accumulated Windows/POSIX regressions: rc=0; Review9 12/12; Windows durability
+  2 passed + 2 явных Windows-only N/A, POSIX durability 4/4.
+- Manifest: 74 suites / 1253 checks / 0 failures.
+- Selftest: rc=0.
+- Gates: 31/33 оценено, 2 прежних N/A (журналы, индекс прогонов); probes 17/17.
+- Coverage: 340/340, strict 0.567, ANCHORED_WEAK.
+- Metacontrol probes: пять из пяти проверенных ослаблений обнаружены.
+
+Ограничения:
+- Reviewer не перезапускал WSL/POSIX focused suite; POSIX GREEN и regressions сверены
+  по сохранённым outputs.
+- Полные manifest/selftest/gates/coverage reviewer не перезапускал; сверены сохранённые outputs.
+- Timestamps не являются криптографическим доказательством отсутствия backdating.
+- Reviewer не менял файлы репозитория; сеть не использовалась.
+
+Решение: E-0064 можно закрыть как отдельную instrument correction с conclusion и claim.
+E-0059–E-0063 остаются historical NEEDS_CHANGES/open без conclusion/claim.
+Sealed Review8 и production не меняются. W07B closure требует новой отдельной финальной
+проверки всей correction-цепочки; N/A не считается PASS.

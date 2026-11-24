@@ -1,0 +1,78 @@
+HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL — conclusion
+Дата: 2026-11-24
+Вердикт: PASS
+
+E-0065 закрывает W07B в зарегистрированной authority/acceptance границе после
+независимого E-0064 PASS. Новая production correction в этом раунде не вводилась.
+Исторические NEEDS_CHANGES experimentы и их sealed corpus не переписывались.
+
+Baseline:
+- HEAD: 5719247055e0d8a75dc681112f4871493ea32307.
+- Production bin/accept.py SHA-256:
+  4a16e366e98b9067e0a8bbdfd65e1e834cc8336455e32356282d1c7f5707a4a6.
+- Sealed baseline: 44 файла production/tests/prereg/sidecars/protected metrics.
+- Post-run baseline check: 0 file mismatches, 0 registry status mismatches,
+  acceptance-metrics.txt byte-identical HEAD.
+- Instrument correction до verification batch: удалён несуществующий путь Review2;
+  фактический test_host_journal_accept_integrity.py и все thresholds сохранены.
+
+Финальная focused matrix:
+- Windows: authority 14/14; prior review 7/7; integrity/Review2 6/6;
+  Review3 7/7; Review4 7/7; Review5 9/9; Review6 16/16; Review7 9/9;
+  Review8 7/7; Review9 12/12; R1 34/34; R1 review 11/11; TIP 12/12;
+  durability 2 passed + 2 POSIX-only N/A.
+- POSIX: authority 14/14; prior review 7/7; integrity/Review2 6/6;
+  Review3 7/7; Review4 7/7; Review5 9/9; Review6 16/16; Review7 9/9;
+  Review8 7/7; Review9 12/12; R1 34/34; R1 review 10 passed + 1 Windows-only N/A;
+  TIP 12/12; durability 4/4.
+- Все команды rc=0; лишних N/A нет.
+
+Aggregates:
+- Полный manifest: 74 suites, 1253 checks, 0 failures.
+- Selftest: rc=0.
+- Gates: 31/33 оценено, 2 прежних N/A (журналы, индекс прогонов), 0 FAIL; probes 17/17.
+- Seals: 42/42, проблем 0.
+- Coverage до добавления closure claim: 341/341, strict 191/338 = 0.565 (0.57),
+  124 weak expectations, 32 description artifacts, 0 broken rows, ANCHORED_WEAK.
+- Post-closure: coverage 342/342, strict 191/339 = 0.563 (0.56), gates 31/33
+  с теми же 2 N/A и 0 FAIL, seals 42/42; повторный baseline check подтвердил
+  42 неизменных файла, два разрешённых closure-изменения и pre-closure hash.
+
+Независимый final review:
+- research/outputs/HOST-JOURNAL-SAFETY-W07B-CLOSURE-FINAL-review.txt
+- Вердикт PASS, substantive findings: 0.
+- Reviewer самостоятельно запустил все 14 focused suites на Windows и POSIX.
+- Выполнено 45 дополнительных probes на платформу.
+- Подтверждены все пять metakontrol-регрессий Review9: asymmetric/first-key-wins
+  и отдельное удаление rc/diagnostic/no-PASS/no-traceback проверок дают 11/12.
+- Полный 19-field combined positive прошёл через direct check, CLI PASS и host verification.
+
+Закрытая цепочка findings:
+- E-0054: strict UTF-8, exact digest, typed session/expiry, recorded status, exact receipt.
+- E-0055: CRC-valid invalid UTF-8 trailing data/commit не даёт direct caller PASS.
+- E-0056: metadata-only FAIL и exact seq=8 invalid UTF-8 fixture.
+- E-0057/E-0058: substantive checks, binding validation, hidden unknown/no-leak.
+- E-0059/E-0060: malformed/nested/duplicate/non-finite criterion fail-closed.
+- E-0061: surrogate traceback устранён; полный combined positive сохранён.
+- E-0062/E-0063: оба visible duplicate порядка; loader refusal не подменяется semantic FAIL.
+- E-0064: exact OracleRefusalMissing и synthetic metakontrols.
+
+Историческая целостность:
+- E-0054/E-0055/E-0056/E-0059/E-0060/E-0061/E-0062/E-0063 остаются
+  open NEEDS_CHANGES без conclusion/claim.
+- E-0057/E-0058/E-0064 остаются closed PASS со своими claims.
+- Их sealed prereg/corpus и thresholds не менялись.
+
+Границы:
+- PASS относится к W07B host authority/acceptance boundary и E-0065, не к activation.
+- Host receipt остаётся host_received/host_durable, не истинностью или external verification.
+- Refs-only схема не защищает от комнаты, одновременно подделывающей local journal
+  и согласованную ложную projection.
+- Ручной plain list теряет parse metadata; production callers её сохраняют.
+- judge_metrics.py/verify_answers.py не переиспользуют strict _load_criteria; их tail
+  boundary исправлен через JournalRecords. Унификация loader consumers — отдельный hardening.
+- Windows directory durability — N/A; strict claims coverage — ANCHORED_WEAK.
+- Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps,
+  clean-clone/CI, реальный runtime shell, внешняя верификация и production activation
+  остаются отдельными работами.
+- N/A не считается PASS.

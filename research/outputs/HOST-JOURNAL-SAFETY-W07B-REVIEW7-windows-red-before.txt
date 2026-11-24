@@ -1,0 +1,13 @@
+[FAIL] visible-task-surrogate — AssertionError: (0, 'задача: VISIBLE-\ud800; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n')
+[FAIL] visible-status-surrogate — AssertionError: (1, 'задача: ?; записей: 7\n  [FAIL] статус = done\ud800 — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: FAIL\n')
+[FAIL] hidden-task-surrogate-no-leak — AssertionError: (1, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [FAIL] скрытая часть критерия — не выполнена (какие условия — на хосте, см. --show-hidden)\nитог: FAIL\n')
+[FAIL] surrogate-key-no-traceback — AssertionError: (1, 'задача: ?; записей: 7\n  [ok] статус = done — фактически: done\n  [ok] журнал прочитан полностью — tail=0; problems=0\n  [FAIL] условие \ud800 понятно — неизвестное условие критерия\nитог: FAIL\n')
+[ok] duplicate-visible-threshold-reverse
+[ok] duplicate-oracle-first-key-wins
+[ok] duplicate-oracle-last-key-wins
+[FAIL] full-combined-positive — ValueError: too many values to unpack (expected 2)
+[ok] valid-unicode-positive
+
+host journal accept review7: 4/9 ok; N/A 0; провалов: 5
+
+rc=1
