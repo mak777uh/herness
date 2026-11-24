@@ -20,6 +20,7 @@
     {"id": "test_card_atoms.py", "path": "tests/test_card_atoms.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_chain.py", "path": "tests/test_chain.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_ci_rust_prefetch.py", "path": "tests/test_ci_rust_prefetch.py", "runner": "custom-main", "minimum_checks": 5},
+    {"id": "test_claim_platform_artifact.py", "path": "tests/test_claim_platform_artifact.py", "runner": "custom-main", "minimum_checks": 5},
     {"id": "test_compile.py", "path": "tests/test_compile.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_contracts.py", "path": "tests/test_contracts.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_coverage.py", "path": "tests/test_coverage.py", "runner": "custom-main", "minimum_checks": 1},

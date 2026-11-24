@@ -1,0 +1,44 @@
+{
+  "schema": 2,
+  "id": "CI-CLAIM-ARTIFACT-R1",
+  "date": "2026-11-25",
+  "question": "Можно ли проверять историческое Windows/QEMU наблюдение C-0340 в GitHub Ubuntu через точный сохранённый артефакт, не повторяя несовместимый probe и не ослабляя RED/fallback criterion?",
+  "hypothesis": "Замена только команды C-0340 на check_artifacts устранит ложный CI FAIL: Ubuntu больше не запускает vsock_probe, а прежний артефакт по-прежнему обязан содержать VERDICT: RED и fallback_calls: 0. Текст, тип, артефакт, дата, ожидание и sealed VSOCK-WIN-R1 evidence остаются неизменными.",
+  "criterion": "PASS только если baseline HEAD 1b932c2f33a91347c7ec9f851ba90aa39c8ea051; CI 45506161516 сохраняет C-0340 FAIL из-за Ubuntu N/A rc=2; sealed VSOCK-WIN-R1 prereg/sidecar, probe и исторический артефакт имеют зафиксированные SHA-256 и не изменены; в CLAIMS.md меняется только команда C-0340 на `python bin/check_artifacts.py C-0340`; focused 5/5 на Windows/POSIX; актуальный artifact-check проходит; команды с vsock_probe, VERDICT: PASS, fallback_calls: 1 и отсутствующий артефакт отвергаются; verify_claims --fast даёт 315/0; production Rust, thresholds, N/A и corpus не изменены.",
+  "arms": [
+    "A (historical CI RED): run 45506161516 на Ubuntu повторяет Windows-only vsock_probe, получает N/A rc=2 и поэтому FAIL C-0340; это не опровержение исторического Windows RED.",
+    "B (artifact correction): команда C-0340 проверяет неизменный tracked artifact через check_artifacts; сам probe не запускается.",
+    "C (controls): точная команда, реальный artifact-check и три синтетических отрицательных мутанта — PASS verdict, ненулевой fallback и missing artifact."
+  ],
+  "sensitivity": "Focused suite проверяет ровно пять controls и возвращает ненулевой rc при любом расхождении. Синтетические мутанты проходят через настоящий check_artifacts.main с временными CLAIMS.md/evidence. Порог 5/5 не снижается; N/A не становится PASS; исторический RED не переписывается.",
+  "unit_of_analysis": "строка C-0340 в CLAIMS.md, bin/check_artifacts.py, сохранённый VSOCK-WIN-R1 artifact и GitHub Ubuntu verify_claims job",
+  "primary_metric": "focused_controls=5/5; focused_failed=0; windows_rc=0; posix_rc=0; artifact_check_rc=0; verify_claims_fast=315/0; source_prereg_changed=0; source_sidecar_changed=0; source_probe_changed=0; source_artifact_changed=0",
+  "test": "python tests/test_claim_platform_artifact.py; python bin/test_manifest.py --check; python bin/check_artifacts.py C-0340; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate; python bin/prereg.py check",
+  "stopping_rule": "Сначала запечатать prereg и сохранить focused RED. Затем изменить только команду C-0340 и зарегистрировать focused suite. Остановиться при изменении source prereg/sidecar/probe/artifact, текста или ожидания C-0340, любом focused FAIL, verify_claims != 315/0, либо попытке превратить N/A в PASS.",
+  "fixture": "Настоящий CLAIMS.md и VSOCK-WIN-R1 artifact; временные synthetic CLAIMS.md/evidence для трёх отрицательных controls; сеть, QEMU, секреты и owner keys не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX/WSL; GitHub Ubuntu CI",
+    "network": "нет",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)»",
+    "baseline_head": "1b932c2f33a91347c7ec9f851ba90aa39c8ea051",
+    "baseline_claims_sha256": "75543d0c6e19a36602d0c933336ca75ea440ec1f47d48da7647ab0593bef41df",
+    "baseline_ci_log_sha256": "f96f51f1062fcfde2800f207cbd17e30867567382dfc5bfcc6b5de0ef188412d",
+    "source_prereg": "lab/prereg/VSOCK-WIN-R1.json",
+    "source_prereg_sha256": "19055d28533fa7c2dc1fd651a33641968fa4c9c09bb133a9d1102dc66ede2296",
+    "source_sidecar": "lab/prereg/VSOCK-WIN-R1.json.sha256",
+    "source_sidecar_sha256": "62f4a5618a8ed28adb3be88cafd5fafd9f47ee460b292f909dfcd65c6388bcaf",
+    "source_probe": "bin/vsock_probe.py",
+    "source_probe_sha256": "883df646d57dc3f872ca4458ebb319ac5becbdc1381c11d659ae9789e304caaa",
+    "source_artifact": "research/outputs/VSOCK-WIN-R1-2026-11-24.txt",
+    "source_artifact_sha256": "2ade130dd36fa90c04922cbbe648f985aafdfa0e34d40175a4442923557a2c30",
+    "ci_run": "45506161516"
+  },
+  "known_limits": [
+    "Artifact-check доказывает наличие сохранённого наблюдения, а не повторяемость Windows/QEMU запуска",
+    "C-0340 остаётся RED-наблюдением и не становится GREEN или разрешением fallback",
+    "Bridge unshare, Windows-only selftest N/A, absolute links и полный CI-PASS остаются отдельными residuals"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-residuals"]
+}

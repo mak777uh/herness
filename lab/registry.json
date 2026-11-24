@@ -824,6 +824,15 @@
    "conclusion": "research/outputs/CI-RUST-OFFLINE-R2-CLOSURE.txt",
    "note": "PASS: focused и manifest selection 5/5 на Windows/POSIX; новый пустой WSL CARGO_HOME дал baseline 3 failures на `hex`, fetch rc=0, post-fetch authority 14/14 и review 7/7; исторический CI 45499098427 отдельно подтверждён как missing `ed25519-dalek`; lockfile_changed=0 и production Rust diff пуст. Commit a151ca1 прошёл полный Windows selftest 78 suites rc=0 и W18 14/14 при пустом status. Seals 56/56, prereg 68/68, lab 79/7; verify_claims --fast 315/0, coverage 347/347 anchored и strict 196/344. E-0078 сохранён открытым историческим RED; полный CI-PASS и independent review не заявлены.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0080",
+   "title": "CI-CLAIM-ARTIFACT-R1: platform-bound claim через сохранённый artifact",
+   "hypothesis": "C-0340 можно проверять в Ubuntu через точный tracked artifact без повторного Windows/QEMU probe и без изменения исторического RED/fallback criterion.",
+   "prereg": "lab/prereg/CI-CLAIM-ARTIFACT-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано после CI 45506161516: Ubuntu повторно запустил vsock_probe, получил N/A rc=2 и дал ложный FAIL C-0340. Correction меняет только команду claim на check_artifacts; source prereg/sidecar/probe/artifact не переписываются.",
+   "updated": "2026-11-25"
   }
  ]
 }
