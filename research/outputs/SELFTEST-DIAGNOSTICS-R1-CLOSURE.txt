@@ -1,0 +1,60 @@
+SELFTEST-DIAGNOSTICS-R1 — CLOSURE CONCLUSION
+Дата: 2026-11-25
+Вердикт: PASS — E-0077; bounded diagnostics для failed suite воспроизводимо работают.
+Baseline implementation HEAD: 685df947aee965bd141d99149df3330c507eb609
+Baseline prereg HEAD: 1e7e02c3e8e54002aaf06a61663faef862bb9274
+
+ЧТО ЗАКРЫТО
+- cmd_selftest использует отдельный selftest_suite_message(result).
+- Failed suite печатает result.summary(), непустую note и последние не более 30 строк уже сохранённого SuiteResult.output.
+- Successful suite печатает только summary; output payload не раскрывается.
+- Пустой output безопасен; checks, rc, verdict, thresholds, N/A и corpus не изменяются.
+- Новый прибор не исправляет CI residuals: он делает их точную причину видимой в журнале.
+
+REFS SEARCH
+- До кода: python bin/hs.py refs search "CI selftest скрывает stdout упавшего suite и residuals нельзя диагностировать".
+- Результат rc=2, NOT PROVIDED: справочника нет. Пустой результат не считается успешным поиском или доказательством отсутствия аналогичного механизма.
+
+ИСТОРИЧЕСКИЕ RED
+- До реализации focused Windows/POSIX: проверок: 6; провалов: 6, rc=1. Форматтер отсутствовал.
+- Первый GREEN attempt: проверок: 8; провалов: 1. Тест ошибочно ожидал suite id внутри result.summary() и делил tail/success на лишние checks. Ошибка была только в тесте; старые логи сохранены как green-attempt1-red.
+- Development Windows selftest перед implementation commit: W18 13/14 из-за новых незакоммиченных файлов вне замороженного W18 scope. Новая диагностика точно назвала bin/hs.py, prereg, sidecar и tests/test_selftest_diagnostics.py. DEV_FILES не расширялся задним числом; после commit повторён clean clone.
+
+ФИНАЛЬНЫЕ ПРОВЕРКИ
+Windows, чистый clone 685df94:
+- W18 controls: 14/14 ok; провалов: 0; mode=clean-clone.
+- Полный python bin/hs.py selftest: rc=0; aggregate_failures=0; все 77 Python suites прошли, включая test_selftest_diagnostics.py 6/6 и W18 14/14.
+- pilot --verify, registry --check, seal.py verify-all, lab.py validate, prereg.py check: rc=0.
+- seals: 54, проблем: 0; lab: 77 экспериментов, 7 следующих гипотез; prereg: 66/66 sensitivity.
+- Финальный git status --porcelain пуст; временный clone удалён.
+- После регистрации C-0353 python bin/verify_claims.py --fast: утверждений: 314; провалено: 0.
+- coverage.py: 346/346 anchored, strict 195/343 (0.569), verdict ANCHORED_WEAK.
+
+POSIX/WSL, чистый clone 685df94:
+- W18 controls: 14/14 ok; провалов: 0; mode=clean-clone.
+- E-0077 focused: проверок: 6; провалов: 0.
+- E-0076 regression: проверок: 8; провалов: 0.
+- pilot, registry, seals, lab, prereg и status: rc=0; status пуст; временный clone удалён.
+- Полный POSIX selftest не объявляется PASS: Windows-only N/A и отсутствие pytest на локальном WSL остаются отдельными ограничениями; GitHub Ubuntu residuals требуют фактического CI-run.
+
+ШЕСТЬ КОНТРОЛЕЙ
+1. Failed summary сохраняет checks/rc и диагностический маркер.
+2. Tail содержит последние 30 строк и не печатает более старую.
+3. Successful suite сохраняет summary и не печатает payload.
+4. Empty output безопасен и сохраняет rc.
+5. Failed note видна.
+6. Интеграционный cmd_selftest с synthetic failed suite сохраняет rc=1 и печатает output.
+
+ТОЧНЫЕ ДАЙДЖЕСТЫ
+Локальные run logs перечислены для воспроизводимости; каталог runs/ по действующему .gitignore в git не трекается. В репозитории сохраняется этот tracked conclusion и sealed prereg.
+bin/hs.py = cdd5da8aa4e364fcb757f7d920850099815782a1a0c2d0cf7b618a938deca92e
+tests/test_selftest_diagnostics.py = b4ae13300255c0340aa50e6e0893622c7a5db766542776f7a783ee1177a550e4
+tests/test-manifest.json = afdb9048e628c6f7e8d320928b9ed34ee113db9c4084956f1dd9cefc1a0cde46
+SELFTEST-DIAGNOSTICS-R1.json = 5a6442e4c31c56f2281d95d69ec541f4005dfe9ae349f2659111a5458b7d4dd0
+windows-clean-685df94.txt = 071b23b202c05a80843dbd066bcdd024805d9f13c731112b5684f31726613a5f
+posix-clean-685df94.txt = 861e6a565d5ecb6c2e3b1af8290f3f3ca888255b361e225a6df102ae1a395c0a
+
+ГРАНИЦЫ
+- PASS относится к bounded formatter и его шести controls, а не к исправлению самих CI residuals.
+- Независимый review, полный CI-PASS, Windows directory durability, strict claims coverage и Lean↔Rust equivalence не заявлены.
+- N/A не PASS. Production activation и внешняя публикация не выполнялись; реальные owner keys и секреты не использовались.

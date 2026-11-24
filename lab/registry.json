@@ -798,8 +798,10 @@
    "title": "SELFTEST-DIAGNOSTICS-R1: bounded diagnostics для failed suite",
    "hypothesis": "Selftest может печатать bounded tail уже сохранённого SuiteResult.output только для failed suite, не меняя rc, thresholds, N/A и corpus.",
    "prereg": "lab/prereg/SELFTEST-DIAGNOSTICS-R1.json",
-   "status": "open",
-   "note": "Prereg запечатан до кода: 5a6442e4c31c56f2…; baseline hs.py 05c13c05… и manifest 30580fbd…. Исторический RED сохранён: Windows/POSIX focused 0/6, rc=1; CI residuals не считаются исправленными.",
+   "status": "closed",
+   "claim": "C-0353",
+   "conclusion": "research/outputs/SELFTEST-DIAGNOSTICS-R1-CLOSURE.txt",
+   "note": "PASS: focused 6/6 на Windows/POSIX; чистые Windows/POSIX clone 685df94 дали W18 14/14, seals 54/54, lab 77/7, prereg 66/66; полный Windows selftest rc=0 и пустой status. Исторический RED 6 failures и ошибочный первый test attempt сохранены. Formatter не меняет rc, thresholds, N/A или corpus и не исправляет сами CI residuals; independent review и полный CI-PASS не заявлены.",
    "updated": "2026-11-25"
   }
  ]
