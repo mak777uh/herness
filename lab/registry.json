@@ -803,6 +803,27 @@
    "conclusion": "research/outputs/SELFTEST-DIAGNOSTICS-R1-CLOSURE.txt",
    "note": "PASS: focused 6/6 на Windows/POSIX; чистые Windows/POSIX clone 685df94 дали W18 14/14, seals 54/54, lab 77/7, prereg 66/66; полный Windows selftest rc=0 и пустой status. Исторический RED 6 failures и ошибочный первый test attempt сохранены. Formatter не меняет rc, thresholds, N/A или corpus и не исправляет сами CI residuals; independent review и полный CI-PASS не заявлены.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0078",
+   "title": "CI-RUST-OFFLINE-R1: locked prefetch для offline controls",
+   "hypothesis": "Один cargo fetch --locked перед selftest наполнит cargo cache отдельного CI job и устранит missing dependency без изменения offline semantics.",
+   "prereg": "lab/prereg/CI-RUST-OFFLINE-R1.json",
+   "status": "open",
+   "conclusion": "research/outputs/CI-RUST-OFFLINE-R1-RED.txt",
+   "note": "Исторический RED по буквальному критерию: focused post-correction 5/5 на Windows/POSIX, но пустой WSL CARGO_HOME дал 3 failures на missing `hex`, а prereg требовал `ed25519-dalek`. Fetch rc=0, post-fetch authority 14/14 и review 7/7, lockfile неизменён. Sealed prereg/sidecar не переписаны; продолжение — E-0079.",
+   "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0079",
+   "title": "CI-RUST-OFFLINE-R2: две точные cache evidence surfaces",
+   "hypothesis": "Locked prefetch закрывает missing dependency cache и на WSL surface (`hex`), и на историческом GitHub Ubuntu surface (`ed25519-dalek`) без изменения lockfile, production Rust, thresholds, N/A или corpus.",
+   "prereg": "lab/prereg/CI-RUST-OFFLINE-R2.json",
+   "status": "closed",
+   "claim": "C-0354",
+   "conclusion": "research/outputs/CI-RUST-OFFLINE-R2-CLOSURE.txt",
+   "note": "PASS: focused и manifest selection 5/5 на Windows/POSIX; новый пустой WSL CARGO_HOME дал baseline 3 failures на `hex`, fetch rc=0, post-fetch authority 14/14 и review 7/7; исторический CI 45499098427 отдельно подтверждён как missing `ed25519-dalek`; lockfile_changed=0 и production Rust diff пуст. Seals 56/56, prereg 68/68, lab 79/7; verify_claims --fast 315/0, coverage 347/347 anchored и strict 196/344. E-0078 сохранён открытым историческим RED; полный CI-PASS и independent review не заявлены.",
+   "updated": "2026-11-25"
   }
  ]
 }

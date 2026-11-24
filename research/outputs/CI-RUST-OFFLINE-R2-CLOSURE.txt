@@ -1,0 +1,72 @@
+CI-RUST-OFFLINE-R2 — closure E-0079
+Дата: 2026-11-25
+Baseline HEAD: c6b9517b1b759954fccd629fb4e489d70ce17008
+Исторический CI HEAD: 685df947aee965bd141d99149df3330c507eb609
+
+Вердикт: PASS — только E-0079 / CI-RUST-OFFLINE-R2.
+E-0078 остаётся открытым историческим RED; его sealed prereg, sidecar и
+RED conclusion не переписаны и не перепечатаны.
+
+Focused controls: 5/5; провалов: 0 (Windows и POSIX).
+Manifest selection test_ci_rust_prefetch.py: 5/5, rc=0 на Windows и POSIX.
+
+Что измерено:
+1. Workflow correction содержит ровно один шаг `cargo fetch --locked` с
+   `working-directory: core-rs` перед `Selftest`, только в selftest job.
+   Diff относительно baseline — ровно три добавленные строки.
+2. Focused controls принимают актуальный workflow и отвергают missing fetch,
+   late fetch после Selftest и unlocked fetch. Оба host-journal suite сохраняют
+   по одному Windows/POSIX offline guard.
+3. Повторный WSL probe с новым пустым CARGO_HOME:
+   - authority baseline offline: 13/14, failures=1, rc=1;
+   - review baseline offline: 5/7, failures=2, rc=1;
+   - baseline_failed=3; missing `hex` подтверждён в обоих suite;
+   - cargo fetch --locked в core-rs: rc=0;
+   - authority post-fetch offline: 14/14, failures=0, rc=0;
+   - review post-fetch offline: 7/7, failures=0, rc=0;
+   - временный CARGO_HOME удалён.
+4. Исторический GitHub Ubuntu CI run 45499098427 отдельно подтверждает
+   authority 13/14, review 5/7 и missing `ed25519-dalek` в трёх Rust controls.
+   WSL `hex` и CI `ed25519-dalek` не подменяют друг друга.
+5. Cargo.lock SHA-256 до/после: 095f7b88a4bc34324c5f9613fcef989d02b2257347ca507c24d8e5e36c2c565b.
+   git diff baseline..worktree по core-rs пуст; production Rust не изменён.
+
+Статические gates после регистрации E-0078/E-0079:
+- manifest: 78 Python + 4 Rust entries;
+- lab validate: реестр связен, экспериментов 79, следующих гипотез 7;
+- seals: 56/56, проблем 0;
+- prereg: 68/68 sensitivity;
+- verify_claims --fast после регистрации C-0354: 315 утверждений, провалено 0;
+- check_artifacts C-0354: rc=0;
+- coverage: 347/347 anchored, strict 196/344 = 0.57, ANCHORED_WEAK.
+
+Зафиксированные SHA-256 (raw относятся к текущему checkout; seal.py проверяет
+канонический префикс с нормализацией CRLF, поэтому текстовый EOL не меняет печать):
+- R2 prereg: 25ce0b6de5281a8f0fb8c6f3554b2df62000246b2febd4189c97a779b92efa39
+- R2 sidecar: d384842ae8ce0de224f23766f385aad4573bfd5c0a0a03f37c8ae171d1eb9d23
+- workflow: d020e074cbd4c2027168a78830c47764f10d8e8c7eb638688e471064b20a9d58
+- focused test: 7d84245d37e15921c40bedecfb4b853e3d58e10085073469f6879b929afae947
+- manifest: 067fd4d17237bf6dcaeb7cd4ed82e62208f4466f5434035c6a030d0928c21380
+- WSL R2 evidence: 7fe366d6de287dc59577685b574217c6ed5489b0e06bf372f561b39e4e9d5c23
+- CI failed log: 029bd431c91a41a79830ebe008ff76f1357d5aaadd125a95aada36903a8c5d74
+- focused GREEN Windows/POSIX: c37bb2a9b69e31fa4d1452d57dfea861b19434f774f9b7879efaacf829ec5e53 / c7299739ff10e3d9f1c9effb17a7bd2089414728c0932229cb460c6601643322
+- manifest GREEN Windows/POSIX: aec88185291a24ef643a617ed18884e4fe1c2b17597f354d3e8d8305d9f194ef / f1ad7e9161f734ce5b2d3079af806970b3da958c21356c6f680840884f958af4
+
+Историческая попытка E-0078:
+- focused baseline 5/1, post-correction 5/0;
+- первый focused attempt сохранил 2 failures: ожидаемый missing prefetch и
+  ошибку нового контроля, не распознавшего POSIX `"CARGO_NET_OFFLINE": "true"`;
+- исправлен только тест; host-journal suites не менялись;
+- пустой WSL cache дал `hex`, а sealed E-0078 требовал `ed25519-dalek`;
+- поэтому E-0078 RED, а не PASS; evidence — CI-RUST-OFFLINE-R1-RED.txt.
+
+Границы:
+- Prefetch доказывает доступность locked dependencies, не корректность Rust runtime.
+- Полный CI-PASS не заявлен: bridge positive-control unshare, Windows-only N/A,
+  C-0340 platform behavior и 21 absolute Windows link остаются отдельными residuals.
+- Независимый review R2 не проводился.
+- Thresholds, N/A, corpus, rc semantics и offline guards не ослаблены.
+- Network использовался только для cargo fetch --locked; секреты и owner keys не использовались.
+- Production activation и внешняя публикация не выполнялись.
+- runs/ исключён из git; tracked closure и sealed prereg сохраняют команды,
+  точные counts и digests воспроизводимого вывода.

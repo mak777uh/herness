@@ -1,0 +1,53 @@
+CI-RUST-OFFLINE-R1 — историческая попытка E-0078
+Дата: 2026-11-25
+Baseline HEAD: c6b9517b1b759954fccd629fb4e489d70ce17008
+Prereg: lab/prereg/CI-RUST-OFFLINE-R1.json
+Prereg SHA-256: 678b0786dfa1525e3e454e3dbc5b93a0035b18652923a7e9fe9bc0409de1ea92
+Sidecar SHA-256: 7d61df60417331233ea2506e445b17b29e5907e2f81619257b77b52c8e3b6f66
+
+Вердикт: RED — буквальный критерий E-0078 не выполнен.
+Claim не создан. Историческая попытка не превращается в PASS.
+
+Наблюдения:
+1. Focused RED до workflow correction сохранён на Windows и POSIX.
+   Первый attempt: 5 checks, 2 failures, rc=1. Второй failure был ошибкой
+   самого нового контроля: POSIX guard записан как "CARGO_NET_OFFLINE": "true",
+   а не литеральной строкой CARGO_NET_OFFLINE=true. Исправлен только тест.
+   Итоговый baseline RED: 5 checks, 1 failure, rc=1; отсутствует locked prefetch.
+2. После добавления ровно одного cargo fetch --locked в selftest job focused
+   GREEN: Windows 5/5, rc=0; POSIX 5/5, rc=0.
+3. WSL probe с новым пустым CARGO_HOME:
+   - authority baseline offline: 13/14, failures=1, rc=1;
+   - review baseline offline: 5/7, failures=2, rc=1;
+   - суммарно baseline_failed=3;
+   - первая отсутствующая locked dependency в обеих ветках — `hex`, не
+     `ed25519-dalek`;
+   - cargo fetch --locked в core-rs: rc=0;
+   - authority post-fetch offline: 14/14, failures=0, rc=0;
+   - review post-fetch offline: 7/7, failures=0, rc=0;
+   - Cargo.lock SHA-256 до и после: 095f7b88a4bc34324c5f9613fcef989d02b2257347ca507c24d8e5e36c2c565b;
+   - временный CARGO_HOME удалён.
+4. Prereg E-0078 отдельно требует на WSL именно missing ed25519-dalek.
+   Исторический GitHub CI run 45499098427 действительно показал ed25519-dalek,
+   но пустой WSL cache показал hex. Это разные cache states/evidence surfaces.
+   Поэтому механизм получил GREEN observation, но sealed E-0078 остаётся RED.
+
+Сохранённый raw evidence:
+runs/exp-ci-rust-offline-r1/e0078-empty-cargo-home-attempt1-red.txt
+SHA-256: 8933837b4800144e68d964ba0769a2580a11139b924e71d79c64a473dd57e04c
+Команда WSL: python3 runs/exp-ci-rust-offline-r1/run_empty_cargo_home.py
+В helper итоговый VERDICT намеренно RED, потому что проверка требовала hex-free
+критерий E-0078 с ed25519-dalek. Post-fetch GREEN не затирает этот RED.
+
+Границы:
+- Изменены только .github/workflows/gates.yml, tests/test_ci_rust_prefetch.py,
+  tests/test-manifest.json и новые research/prereg артефакты.
+- git diff baseline..worktree по core-rs пуст; production Rust и Cargo.lock неизменны.
+- Оба host-journal suite и их Windows/POSIX offline guards неизменны.
+- Thresholds, N/A, corpus и rc semantics не ослаблены.
+- Bridge unshare, Windows-only N/A, C-0340, absolute links, directory durability,
+  strict claims coverage и Lean↔Rust equivalence остаются отдельными residuals.
+- Полный CI-PASS, independent review, activation и публикация не заявлены.
+
+Продолжение: отдельная sealed correction CI-RUST-OFFLINE-R2/E-0079 должна
+проверить обе точные evidence surfaces, не переписывая E-0078.

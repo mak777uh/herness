@@ -1,0 +1,47 @@
+{
+  "schema": 2,
+  "id": "CI-RUST-OFFLINE-R2",
+  "date": "2026-11-25",
+  "question": "Можно ли закрыть locked Rust prefetch correction, если пустой WSL cache падает первым на hex, а исторический GitHub Ubuntu cache — на ed25519-dalek, не переписывая E-0078 и не ослабляя gates?",
+  "hypothesis": "Тот же ровно один cargo fetch --locked в selftest job устраняет missing locked dependency cache на обеих evidence surfaces: WSL baseline даёт 3 failures из-за hex, GitHub CI исторически даёт 3 failures из-за ed25519-dalek, после fetch оба host-journal suite проходят offline 14/14 и 7/7 без изменения lockfile, production Rust, thresholds, N/A или corpus.",
+  "criterion": "PASS только если sealed E-0078 prereg/sidecar и его RED conclusion имеют зафиксированные SHA-256 и не изменены; baseline HEAD c6b9517b1b759954fccd629fb4e489d70ce17008; workflow diff содержит ровно три добавленные строки в selftest job и рабочий hash d020e074cbd4c2027168a78830c47764f10d8e8c7eb638688e471064b20a9d58; focused 5/5 на Windows/POSIX; missing/late/unlocked fetch отвергаются; оба host-journal suite сохраняют Windows/POSIX offline guards и исходные hashes; повторный WSL probe с новым пустым CARGO_HOME даёт baseline authority 13/14 и review 5/7 с missing `hex` в каждой Rust-контроли, суммарно 3 failures, затем cargo fetch --locked rc=0 и post-fetch authority 14/14, review 7/7, оба rc=0; исторический CI run 45499098427 отдельно подтверждает missing `ed25519-dalek` при CARGO_NET_OFFLINE=true; Cargo.lock, production Rust, thresholds, N/A и corpus не изменены.",
+  "arms": [
+    "A (historical E-0078 RED): focused baseline 5/1 и post-correction 5/0; пустой WSL cache дал 3 failures на `hex`, fetch и post-fetch GREEN выполнились, но sealed критерий требовал `ed25519-dalek`, поэтому E-0078 остаётся RED.",
+    "B (R2 correction): не менять реализацию, а запечатать две точные evidence surfaces: WSL empty-cache `hex` и исторический GitHub Ubuntu `ed25519-dalek`; повторить WSL baseline/fetch/post-fetch probe.",
+    "C (controls): focused missing/late/unlocked fetch и offline guards; исходные hashes E-0078/RED conclusion/workflow/lockfile/host-journal suites; пустой production Rust diff; registry сохраняет E-0078 открытым историческим RED."
+  ],
+  "sensitivity": "Проверяются raw SHA-256 sealed source, sidecar и RED conclusion; ровно один locked fetch в core-rs перед Selftest; три отрицательных workflow mutant; по одному Windows/POSIX offline guard в каждом host-journal suite; новый пустой CARGO_HOME; точные baseline 13/14 и 5/7 с `hex`; post-fetch 14/14 и 7/7; неизменный Cargo.lock и пустой core-rs diff. Порог 5/5 и aggregate 3 baseline failures не снижается; N/A не становится PASS.",
+  "unit_of_analysis": "selftest job в .github/workflows/gates.yml, два host-journal Python suite и две cache evidence surfaces",
+  "primary_metric": "focused_controls=5/5; focused_failed=0; windows_rc=0; posix_rc=0; empty_cargo_home_baseline_failed=3; wsl_baseline_missing_hex=2; historical_ci_missing_ed25519_dalek=1; post_fetch_authority=14/14; post_fetch_review=7/7; lockfile_changed=0; production_rust_changed=0",
+  "test": "python tests/test_ci_rust_prefetch.py; python bin/test_manifest.py --check; python3 runs/exp-ci-rust-offline-r1/run_empty_cargo_home_r2.py в WSL; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate; python bin/prereg.py check",
+  "stopping_rule": "Сначала запечатать R2. Затем только повторить измерения и сохранить closure; workflow, focused suite, manifest, host-journal suites, Cargo.lock и production Rust не менять. Остановиться при любом hash/count/order/guard расхождении, отсутствии `hex` в WSL baseline, несовпадении исторического CI `ed25519-dalek`, изменении sealed E-0078 или ослаблении thresholds/N/A/corpus.",
+  "fixture": "Настоящий workflow и host-journal suites; синтетические missing/late/unlocked workflow controls; новый временный CARGO_HOME в /tmp; сеть только для cargo fetch --locked, секреты и owner keys не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX/WSL; исторический GitHub Ubuntu selftest job",
+    "network": "cargo fetch --locked; иных внешних вызовов нет",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: E-0078 зафиксировал rc=2 для того же механизма; R2 не вводит новый механизм и не считает пустой поиск успешным",
+    "baseline_head": "c6b9517b1b759954fccd629fb4e489d70ce17008",
+    "source_prereg": "lab/prereg/CI-RUST-OFFLINE-R1.json",
+    "source_prereg_sha256": "678b0786dfa1525e3e454e3dbc5b93a0035b18652923a7e9fe9bc0409de1ea92",
+    "source_sidecar_sha256": "7d61df60417331233ea2506e445b17b29e5907e2f81619257b77b52c8e3b6f66",
+    "source_red_conclusion": "research/outputs/CI-RUST-OFFLINE-R1-RED.txt",
+    "source_red_conclusion_sha256": "77366a4c014f7a84099e6f27d870d67d3aa7e3e60df8c772588e25d771800639",
+    "source_raw_evidence_sha256": "8933837b4800144e68d964ba0769a2580a11139b924e71d79c64a473dd57e04c",
+    "implementation_workflow_sha256": "d020e074cbd4c2027168a78830c47764f10d8e8c7eb638688e471064b20a9d58",
+    "focused_test_sha256": "7d84245d37e15921c40bedecfb4b853e3d58e10085073469f6879b929afae947",
+    "manifest_sha256": "067fd4d17237bf6dcaeb7cd4ed82e62208f4466f5434035c6a030d0928c21380",
+    "baseline_cargo_lock_sha256": "095f7b88a4bc34324c5f9613fcef989d02b2257347ca507c24d8e5e36c2c565b",
+    "baseline_authority_test_sha256": "4871d1c0aa896935eb37ea76007af2135d476f747a2978231e72363e5a97ec3d",
+    "baseline_authority_review_test_sha256": "6ff3f965c92eb5b98427ac74c318299481175acb04a9505aeb03731307c63a85",
+    "ci_run": "45499098427"
+  },
+  "known_limits": [
+    "E-0078 остаётся историческим RED; R2 не переписывает его prereg, sidecar или вывод",
+    "Prefetch доказывает только доступность locked dependencies, не корректность Rust runtime",
+    "WSL `hex` и CI `ed25519-dalek` — разные cache states; один результат не подменяет другой",
+    "Bridge unshare, Windows-only N/A, C-0340, absolute links и полный CI-PASS остаются отдельными residuals"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-rust-offline-r1", "runs/exp-ci-residuals"]
+}

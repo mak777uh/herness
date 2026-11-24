@@ -1,0 +1,38 @@
+{
+  "schema": 2,
+  "id": "CI-RUST-OFFLINE-R1",
+  "date": "2026-11-25",
+  "question": "Как устранить missing ed25519-dalek в offline Rust controls отдельного CI selftest job, не ослабляя offline semantics, lockfile, thresholds или N/A?",
+  "hypothesis": "Если в selftest job перед python bin/hs.py selftest выполнить cargo fetch --locked в core-rs, то отдельный job наполнит общий cargo cache locked dependencies и offline host-journal controls пройдут без изменения production Rust или тестов.",
+  "criterion": "PASS только если baseline HEAD c6b9517b1b759954fccd629fb4e489d70ce17008 и hashes workflow/lockfile зафиксированы до кода; focused 5/5 на Windows/POSIX; workflow содержит ровно один cargo fetch --locked с working-directory core-rs перед Selftest; missing/late/unlocked fetch отвергаются controls; оба host-journal suite сохраняют CARGO_NET_OFFLINE=true; на WSL с пустым CARGO_HOME baseline offline controls дают RED missing ed25519-dalek, после fetch — authority 14/14 и review 7/7; Cargo.lock, production Rust, thresholds, N/A и corpus не ослаблены.",
+  "arms": [
+    "A (baseline RED): selftest job имеет Rust toolchain, но не делает cargo fetch; host-journal controls запускают cargo с CARGO_NET_OFFLINE=true и падают на отсутствующей ed25519-dalek.",
+    "B (R1 correction): добавить в selftest job шаг cargo fetch --locked с working-directory core-rs перед Selftest; другие jobs и production Rust не меняются.",
+    "C (controls): актуальный workflow принимается; missing, late и unlocked fetch отвергаются; offline guards в обоих host-journal suites сохраняются."
+  ],
+  "sensitivity": "Проверяются наличие и точная форма fetch, рабочая директория, порядок перед Selftest и сохранение двух CARGO_NET_OFFLINE=true guards в каждом host-journal suite. Порог 5/5 не снижается; N/A не превращается в PASS.",
+  "unit_of_analysis": "один selftest job в .github/workflows/gates.yml и два host-journal Python suite",
+  "primary_metric": "focused_controls=5/5; focused_failed=0; windows_rc=0; posix_rc=0; empty_cargo_home_baseline_failed=3; post_fetch_authority=14/14; post_fetch_review=7/7; lockfile_changed=0",
+  "test": "python tests/test_ci_rust_prefetch.py; python bin/test_manifest.py --check; WSL empty CARGO_HOME baseline/fetch/host-journal probes; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate",
+  "stopping_rule": "Сначала запечатать prereg и сохранить focused RED. Затем изменить только .github/workflows/gates.yml, добавить tests/test_ci_rust_prefetch.py и один manifest entry. Остановиться при изменении Cargo.lock, production Rust, host-journal offline semantics, thresholds, N/A, других jobs или любом focused провале.",
+  "fixture": "Synthetic workflow text с missing/late/unlocked fetch; реальный WSL cargo cache в /tmp; сеть используется только для cargo fetch locked dependencies, секреты и owner keys не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX/WSL и GitHub Ubuntu selftest job",
+    "network": "cargo fetch --locked; иных внешних вызовов нет",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search \"CI selftest offline cargo missing dependency cache\" вернул rc=2, справочника нет; пусто не считается успешным поиском",
+    "baseline_head": "c6b9517b1b759954fccd629fb4e489d70ce17008",
+    "baseline_workflow_sha256": "55c9b2caf79bc285ee40a4dd547bb6f409128d83f1612fe25aa35efe9bb598aa",
+    "baseline_cargo_lock_sha256": "095f7b88a4bc34324c5f9613fcef989d02b2257347ca507c24d8e5e36c2c565b",
+    "baseline_authority_test_sha256": "4871d1c0aa896935eb37ea76007af2135d476f747a2978231e72363e5a97ec3d",
+    "baseline_authority_review_test_sha256": "6ff3f965c92eb5b98427ac74c318299481175acb04a9505aeb03731307c63a85",
+    "ci_run": "45499098427"
+  },
+  "known_limits": [
+    "Prefetch устраняет только missing dependency cache и не доказывает корректность Rust runtime",
+    "Bridge positive-control unshare, Windows-only N/A, C-0340 и absolute links остаются отдельными residuals",
+    "Cargo fetch не делает отсутствие сети допустимым для offline controls и не меняет lockfile"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-rust-offline-r1", "runs/exp-ci-residuals"]
+}
