@@ -750,6 +750,24 @@
    "conclusion": "research/outputs/W03-LIFECYCLE-R1-REVIEW3-CLOSURE.txt",
    "note": "PASS в составе финальной W03 Review3 closure. Исходный E-0070 SHA-256 1de08b9f… сохраняется с ошибочной длиной 65; correction задаёт фактический 64-символьный hash 74c77403…2583. Production, corpus, sidecar и thresholds не менялись.",
    "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0073",
+   "title": "W18-CLEAN-CLONE-R1: HEAD-bound snapshot, EOL и stale pilot baseline",
+   "hypothesis": "CRLF checkout pin, отдельная sealed pilot baseline correction и append-only canonical candidate event дают воспроизводимый clean clone без перезаписи sealed prereg и истории.",
+   "prereg": "lab/prereg/W18-CLEAN-CLONE-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано до исправлений после CI run 45483411240 и локального stale pilot RED. Baseline f292734; refs search NOT PROVIDED (rc=2). Требуются 14/14 W18 controls, Review3 9/9 и pilot verify rc=0 в Windows/POSIX clean clone; production Rust bytes, исходный pilot prereg, registry seq=8 и active=[] сохраняются. Полный CI-PASS не заявлен.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0074",
+   "title": "PILOT-GENERATOR-R1-BASELINE-CORRECTION: fail-closed reseal chain",
+   "hypothesis": "Отдельная sealed correction сохраняет исторические new_tool/generator digests и разрешает обновление только двух инженерных файлов без изменения thresholds и остальных frozen artifacts.",
+   "prereg": "lab/prereg/PILOT-GENERATOR-R1-BASELINE-CORRECTION.json",
+   "status": "open",
+   "note": "Зарегистрирована в W18 до clean-clone GREEN. Исходный PILOT-GENERATOR-R1 SHA-256 42fb4a43…c2af5 сохранён; correction 9727c890…f87b задаёт new_tool e4db3fce…57b3 и generator 1d830fd8…e08. Verifier fail-closed на missing/tampered/foreign/threshold/digest мутантах; полный 20 specs/24 mutants прогон не повторялся.",
+   "updated": "2026-11-24"
   }
  ]
 }

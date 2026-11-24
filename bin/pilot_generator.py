@@ -38,11 +38,13 @@ BIN = ROOT / "bin"
 sys.path.insert(0, str(BIN))
 
 import new_tool as nt  # noqa: E402
+import seal as method_seal  # noqa: E402
 
 AUTHORED = ROOT / "lab" / "pilot" / "specs" / "authored"
 HELDOUT = ROOT / "lab" / "pilot" / "specs" / "heldout"
 MUTANTS = ROOT / "lab" / "pilot" / "mutants.json"
 PREREG = ROOT / "lab" / "prereg" / "PILOT-GENERATOR-R1.json"
+CORRECTION = ROOT / "lab" / "prereg" / "PILOT-GENERATOR-R1-BASELINE-CORRECTION.json"
 EVIDENCE = ROOT / "research" / "outputs" / "PILOT-GENERATOR-R1-2026-11-17.txt"
 CANDIDATES = ROOT / "lab" / "candidates"
 OUT_ROOT = CANDIDATES / "file_read_stream"
@@ -72,6 +74,14 @@ CRITERION = (
     "16/16 критических и 8/8 функциональных мутантов пойманы; ни одна проверка "
     "не зелёная при отсутствующей телеметрии. Любой пропуск — FAIL без ослабления."
 )
+
+# W18: исходный prereg остаётся sealed. Correction разрешена только для двух
+# инженерных файлов, изменившихся после пилота; остальные specs/mutants/head
+# evidence и thresholds продолжают сверяться с исходной фиксацией.
+CORRECTION_ID = "PILOT-GENERATOR-R1-BASELINE-CORRECTION"
+CORRECTION_FILES = {"bin/new_tool.py", "bin/pilot_generator.py"}
+CORRECTION_KEYS = {"new_tool_digest"}
+DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 def digest_bytes(data: bytes) -> str:
@@ -195,17 +205,84 @@ def write_prereg() -> int:
     return 0
 
 
-def verify_prereg(document: dict | None = None) -> list[str]:
-    problems: list[str] = []
-    if document is None:
-        if not PREREG.exists():
-            return ["нет lab/prereg/PILOT-GENERATOR-R1.json; сначала --prereg"]
-        document = json.loads(PREREG.read_text(encoding="utf-8"))
+def load_correction() -> tuple[dict | None, list[str]]:
+    """Correction обязательна и fail-closed; её sidecar проверяет точные байты."""
+    if not CORRECTION.exists():
+        return None, [f"нет sealed correction {CORRECTION.relative_to(ROOT)}"]
+    try:
+        document = json.loads(CORRECTION.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return None, [f"correction не читается: {exc}"]
+    if not isinstance(document, dict):
+        return None, ["correction не является объектом"]
+    sealed, message = method_seal.verify(CORRECTION)
+    if not sealed:
+        return None, [message]
+    return document, []
+
+
+def validate_correction(document: dict, correction: dict | None, source_digest: str) -> list[str]:
+    """Correction меняет только два инженерных файла и не трогает thresholds."""
+    if correction is None:
+        return ["correction отсутствует"]
+    if correction.get("id") != CORRECTION_ID:
+        return [f"correction id={correction.get('id')!r}"]
+    if correction.get("source_prereg") != "lab/prereg/PILOT-GENERATOR-R1.json":
+        return ["correction указывает не на исходный PILOT-GENERATOR-R1"]
+    if correction.get("source_prereg_sha256") != source_digest:
+        return ["correction source_prereg_sha256 не совпадает с исходным prereg"]
+    if correction.get("thresholds_sha256") != canonical_map_digest(THRESHOLDS):
+        return ["correction thresholds_sha256 не совпадает с замороженными thresholds"]
+
+    frozen = document.get("frozen") or {}
+    old = correction.get("historical_frozen") or {}
+    new = correction.get("corrected_frozen") or {}
+    if set(old) != {"files", *CORRECTION_KEYS}:
+        return ["historical_frozen имеет неверный набор ключей"]
+    if set(new) != {"files", *CORRECTION_KEYS}:
+        return ["corrected_frozen имеет неверный набор ключей"]
+    old_files = old.get("files") or {}
+    new_files = new.get("files") or {}
+    if set(old_files) != CORRECTION_FILES or set(new_files) != CORRECTION_FILES:
+        return ["correction разрешена только для bin/new_tool.py и bin/pilot_generator.py"]
+    for key in CORRECTION_KEYS:
+        if old.get(key) != frozen.get(key):
+            return [f"historical_frozen.{key} не совпадает с исходным prereg"]
+        if not isinstance(new.get(key), str) or not DIGEST.match(new[key]):
+            return [f"corrected_frozen.{key} имеет неверный digest"]
+    source_files = frozen.get("files") or {}
+    for path in CORRECTION_FILES:
+        if old_files.get(path) != source_files.get(path):
+            return [f"historical_frozen.files.{path} не совпадает с исходным prereg"]
+        if not isinstance(new_files.get(path), str) or not DIGEST.match(new_files[path]):
+            return [f"corrected_frozen.files.{path} имеет неверный digest"]
+    if old.get("new_tool_digest") != old_files.get("bin/new_tool.py"):
+        return ["historical new_tool_digest расходится с historical files"]
+    if new.get("new_tool_digest") != new_files.get("bin/new_tool.py"):
+        return ["corrected new_tool_digest расходится с corrected files"]
+    return []
+
+
+def corrected_frozen(document: dict, correction: dict) -> dict:
+    frozen = dict(document.get("frozen") or {})
+    files = dict(frozen.get("files") or {})
+    new = correction["corrected_frozen"]
+    for key in CORRECTION_KEYS:
+        frozen[key] = new[key]
+    files.update(new["files"])
+    frozen["files"] = files
+    return frozen
+
+
+def verify_documents(document: dict, correction: dict | None, source_digest: str) -> list[str]:
+    problems = validate_correction(document, correction, source_digest)
+    if problems:
+        return problems
     if document.get("id") != "PILOT-GENERATOR-R1":
         problems.append(f"id={document.get('id')!r}")
     if document.get("thresholds") != THRESHOLDS:
         problems.append("пороги в пре-регистрации отличаются от замороженных")
-    frozen = document.get("frozen") or {}
+    frozen = corrected_frozen(document, correction)
     current = frozen_document()
     for key, value in current.items():
         if key == "files":
@@ -218,6 +295,17 @@ def verify_prereg(document: dict | None = None) -> list[str]:
             if old_files.get(path) != current["files"].get(path):
                 problems.append(f"файл изменился после фиксации: {path}")
     return problems
+
+
+def verify_prereg(document: dict | None = None) -> list[str]:
+    if document is None:
+        if not PREREG.exists():
+            return ["нет lab/prereg/PILOT-GENERATOR-R1.json; сначала --prereg"]
+        document = json.loads(PREREG.read_text(encoding="utf-8"))
+    correction, problems = load_correction()
+    if problems:
+        return problems
+    return verify_documents(document, correction, file_digest(PREREG))
 
 
 def wsl_path(path: Path) -> str:

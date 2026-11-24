@@ -1,0 +1,89 @@
+{
+ "schema": 2,
+ "id": "W18-CLEAN-CLONE-R1",
+ "date": "2026-11-24",
+ "question": "Можно ли проверить один HEAD-bound snapshot после W03 без платформенного EOL-расхождения, stale PILOT-GENERATOR-R1 baseline и ссылки candidate-реестра на удалённый draft, не переписывая sealed prereg и append-only историю?",
+ "hypothesis": "Если закрепить checkout EOL core-rs/src/loopmod.rs, а изменение generator baseline принять только через отдельную sealed correction с fail-closed metakontrol, то чистый клон сохранит Review3 hash-control и pilot --verify. Новое candidate-событие реестра переведёт производный head card на canonical path, не меняя active и не активируя инструмент.",
+ "criterion": "PASS snapshot gate только если baseline f29273494e2bd415106e4de212ad6f848e83c48d воспроизводимо даёт Review3 8/9 на LF checkout и pilot --verify rc=1; исправленный HEAD в отдельных Windows и POSIX clean clone даёт Review3 9/9, pilot --verify rc=0, V1/V6 chain, V4 canonical/legacy/schema/anti-conversion controls без провалов; loopmod checkout равен 191435 байт, 3647 CRLF и SHA-256 74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583, а Git blob отдельно равен 187788 байт, 0 CRLF и SHA-256 b2ffec5ddba1575eaedb6cb2310a4308ba83e46a64ae914a2b5dcc7a2f2802fe; canonical head единствен, drafts пуст, legacy refusal и no-auto-conversion сохраняются; исходный PILOT-GENERATOR-R1.json и событие реестра seq=8 побайтно неизменны; correction отвергает отсутствие, подмену source digest, новый generator digest и посторонний файл; active=[]; clean worktree без отклонений. Любой N/A, провал, ослабление или перезапись sealed/append-only истории означает отсутствие PASS.",
+ "arms": [
+  "A (baseline RED): clean clone f292734; Ubuntu LF checkout ломает Review3 R09, а frozen new_tool digest cadd56ad… расходится с текущим e4db3fce…; candidate registry state указывает на отсутствующий draft.",
+  "B (EOL correction): отдельное .gitattributes правило text eol=crlf для core-rs/src/loopmod.rs; Git blob остаётся LF, checkout становится CRLF; production Rust bytes не меняются.",
+  "C (pilot correction): отдельный sealed PILOT-GENERATOR-R1-BASELINE-CORRECTION сохраняет старые digests как исторические и задаёт фактические новые digests new_tool.py и pilot_generator.py; verifier принимает correction только для этих двух путей и сохраняет остальные frozen files/thresholds.",
+  "D (registry correction): append-only candidate seq=9 указывает на lab/tools/cards/head.json; производный state пересобирается, active остаётся пустым, seq=8 не редактируется.",
+  "E (clean-clone GREEN): отдельные Windows и POSIX clone одного исправленного commit; focused W03/V1/V4/V6/pilot/registry/exact-byte controls и metakontrol; CI run сообщается отдельно и не превращается в PASS."
+ ],
+ "sensitivity": "EOL измеряется раздельно по checkout bytes и Git blob. Pilot correction имеет положительный контроль текущего HEAD и негативные контроли missing/tampered correction, wrong source digest, wrong corrected new_tool digest, wrong corrected generator digest, unrelated path и threshold mutation. Registry control требует неизменного seq=8, canonical seq=9, пустого active и сохранения V4 exact-byte/legacy/anti-conversion поведения.",
+ "unit_of_analysis": "один clean clone конкретного commit; одна checkout/blob пара байтов; одна frozen/corrected hash пара; одно append-only registry состояние",
+ "primary_metric": "baseline_review3_passed=8; baseline_pilot_rc=1; corrected_review3_passed=9; corrected_pilot_rc=0; focused_failed=0; platform_na=0; source_prereg_changed=0; source_registry_event_changed=0; production_rust_changed=0; active_count=0; worktree_deviations=0",
+ "test": "python tests/test_w03_lifecycle_review3.py; python tests/test_w18_clean_clone.py; python bin/pilot_generator.py --verify; python tests/test_chain.py; python tests/test_head_cards.py; python tests/test_tool_card.py; python tests/test_card_atoms.py; python bin/registry_state.py --check; python bin/seal.py verify-all; python bin/lab.py validate",
+ "stopping_rule": "Сначала зарегистрировать и запечатать E-0073, сохранить refs search и baseline clean-clone RED. Затем внести только EOL rule, pilot correction mechanism/chain, registry event и W18 instrument. Остановиться при изменении production Rust bytes, исходного pilot prereg или seq=8, ослаблении thresholds, активации head, принятии посторонней correction или любом необъяснимом focused провале. CI residual не маскировать N/A.",
+ "fixture": "Настоящие clean clone локального git-репозитория; синтетические in-memory/tempfile мутанты correction; настоящие секреты, owner keys, сеть, QEMU и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и WSL Ubuntu POSIX clean clone",
+  "network": "не требуется; clone из локального репозитория",
+  "real_secrets": false,
+  "baseline_commit": "f29273494e2bd415106e4de212ad6f848e83c48d",
+  "refs_search": "NOT PROVIDED: python bin/hs.py refs search \"stale frozen generator baseline clean clone\" вернул rc=2, справочника нет; пусто не считается успешным поиском"
+ },
+ "baseline_sha256": {
+  ".gitattributes": "025a8b21586a0fa35c3f24de104e8abe1996ee811c91653d7a430ef401d94c19",
+  "bin/new_tool.py": "e4db3fce3ab54ee912e3089b2dc4935aafcaa3f700bcad2eb673def4dbd057b3",
+  "bin/pilot_generator.py": "93c44b990f96705402c6a13c24f713a4f4e5a9101761d9bc72b3f32677501c5b",
+  "lab/prereg/PILOT-GENERATOR-R1.json": "42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5",
+  "lab/tools/registry.events.jsonl": "6fbde54f5538ff69025ee613794825b43e45f496afdb03f0a5bd71b06261f2b8",
+  "lab/tools/registry.state.json": "f8f3a4adf63802c41372af77a98021ad74c4ed18b20d36a279c4ad07962f775b",
+  "lab/tools/cards/head.json": "361ad2ecd421fae57f7ec3ae4c5e7e5bc8befd4d6d21b68573c23a70e699fe97",
+  "core-rs/src/loopmod.rs": "74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583"
+ },
+ "expected_checkout": {
+  "path": "core-rs/src/loopmod.rs",
+  "bytes": 191435,
+  "crlf": 3647,
+  "sha256": "74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583"
+ },
+ "expected_git_blob": {
+  "path": "core-rs/src/loopmod.rs",
+  "bytes": 187788,
+  "crlf": 0,
+  "sha256": "b2ffec5ddba1575eaedb6cb2310a4308ba83e46a64ae914a2b5dcc7a2f2802fe"
+ },
+ "critical_controls": [
+  {"id": "W18-01", "input": "baseline f292734 Ubuntu clean clone Review3", "expect": "8/9; единственный провал — checkout SHA-256 loopmod.rs"},
+  {"id": "W18-02", "input": "baseline f292734 pilot_generator --verify", "expect": "rc=1; new_tool_digest и bin/new_tool.py mismatch"},
+  {"id": "W18-03", "input": ".gitattributes и checkout loopmod.rs", "expect": "точное CRLF правило; 191435 байт, 3647 CRLF, SHA-256 74c77403…2583"},
+  {"id": "W18-04", "input": "HEAD:core-rs/src/loopmod.rs Git blob", "expect": "187788 байт, 0 CRLF, SHA-256 b2ffec5d…02fe; blob не равен checkout"},
+  {"id": "W18-05", "input": "Review3 в исправленных Windows/POSIX clean clone", "expect": "9/9 без N/A"},
+  {"id": "W18-06", "input": "pilot --verify с текущей sealed correction", "expect": "rc=0; thresholds и все нетронутые frozen files совпадают"},
+  {"id": "W18-07", "input": "correction missing/tampered/source digest mutation", "expect": "fail-closed, rc!=0"},
+  {"id": "W18-08", "input": "corrected new_tool/generator digest mutation", "expect": "fail-closed, rc!=0"},
+  {"id": "W18-09", "input": "correction для постороннего spec/mutant/head file", "expect": "fail-closed, rc!=0"},
+  {"id": "W18-10", "input": "V1/V6 test_chain.py", "expect": "0 провалов; bare boolean/missing proof/bad hash/bad subject/path/duplicate-key отвергнуты"},
+  {"id": "W18-11", "input": "V4 head_cards/tool_card/card_atoms", "expect": "0 провалов; canonical exact bytes unique, drafts empty, legacy refusal, jsonschema required, no auto-conversion"},
+  {"id": "W18-12", "input": "registry chain/state", "expect": "seq=8 неизменён; seq=9 candidate canonical path; active=[]; state согласован"},
+  {"id": "W18-13", "input": "исходный PILOT-GENERATOR-R1.json", "expect": "SHA-256 42fb4a43…c2af5 и старые frozen digests сохранены"},
+  {"id": "W18-14", "input": "clean clone после focused tests", "expect": "git status --porcelain пуст; HEAD совпадает с заявленным commit"}
+ ],
+ "threshold": {
+  "baseline_review3_passed": 8,
+  "baseline_pilot_rc": 1,
+  "corrected_review3_passed": 9,
+  "corrected_pilot_rc": 0,
+  "focused_failed": 0,
+  "platform_na": 0,
+  "w18_controls": 14,
+  "source_prereg_changed": 0,
+  "source_registry_event_changed": 0,
+  "production_rust_changed": 0,
+  "active_count": 0,
+  "worktree_deviations": 0
+ },
+ "known_limits": [
+  "Snapshot gate не объявляет полный CI-PASS: известные POSIX selftest, absolute-link и platform claim residuals требуют отдельного разбора",
+  "Pilot correction обновляет только инженерный baseline; он не повторяет 20 specs/24 mutants и не выдаёт новое доказательство генератора",
+  "Checkout SHA-256 и Git blob SHA-256 намеренно различаются; equality между ними не является критерием",
+  "Windows и WSL остаются разными evidence surfaces; PASS одного не переносится на другой",
+  "CI RED run 45483411240 сохраняется как исторический факт и не переписывается"
+ ],
+ "owner_decision": "W18 утверждённого плана; владелец разрешил автономную разработку, commit и push в herness; production activation и внешняя публикация запрещены",
+ "runs": ["runs/exp-w18-clean-clone-r1"]
+}

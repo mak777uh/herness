@@ -35,6 +35,10 @@ lab/prereg/HEAD-SLICE-R1.json text eol=crlf
 # даёт LF, поэтому представление фиксируется отдельно; при смене — перепечатать.
 lab/tools/cards/head.json text eol=crlf
 
+# W03 Review3 baseline измерен на CRLF checkout (191435 байт, SHA-256 74c77403…).
+# Git blob остаётся LF; pin делает checkout digest воспроизводимым на Linux/Windows.
+core-rs/src/loopmod.rs text eol=crlf
+
 # бинарь
 *.zstd binary
 *.png binary

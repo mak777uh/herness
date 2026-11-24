@@ -1,19 +1,20 @@
 {
  "active": [],
  "epoch": 1,
- "events_digest": "sha256:6d0bf3f1fb96e1388359e7fc3652b35145a4784066d1e96264154383504aa18c",
- "head_seq": 8,
+ "events_digest": "sha256:f0e70609b5fd93fa384d97b5368541a0da828e6d507801fe160322417aa9e919",
+ "head_seq": 9,
  "schema": "herness-registry-state-v1",
  "snapshot_digest": "sha256:0afc75ec3bf277ba4d48336c75368d2f7382d0963aa0b42c929472715de9b008",
  "tools": {
   "head": {
-   "card": "lab/tools/drafts/head-v1.draft.json",
+   "card": "lab/tools/cards/head.json",
    "history": [
     "unreviewed",
+    "candidate",
     "candidate"
    ],
-   "reason": "Stage 7: ручной срез HEAD-SLICE-R1 PASS; owner admission ещё не подписан",
-   "seq": 8,
+   "reason": "W18: canonical HEAD-CARD-CANONICAL-R1 path; historical draft retained in seq=8; owner admission not signed",
+   "seq": 9,
    "state": "candidate"
   },
   "list": {

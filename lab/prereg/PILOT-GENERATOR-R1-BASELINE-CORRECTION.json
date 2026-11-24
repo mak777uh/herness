@@ -1,0 +1,38 @@
+{
+ "allowed_paths": [
+  "bin/new_tool.py",
+  "bin/pilot_generator.py"
+ ],
+ "corrected_frozen": {
+  "files": {
+   "bin/new_tool.py": "sha256:e4db3fce3ab54ee912e3089b2dc4935aafcaa3f700bcad2eb673def4dbd057b3",
+   "bin/pilot_generator.py": "sha256:1d830fd8ad2fde5ea319a68164786ec4b7bab2571c76fb95b21be79fde486e08"
+  },
+  "new_tool_digest": "sha256:e4db3fce3ab54ee912e3089b2dc4935aafcaa3f700bcad2eb673def4dbd057b3"
+ },
+ "criterion": "PASS correction только при неизменном SHA-256 исходного prereg, совпадении historical_frozen с исходной фиксацией, точном corrected_frozen для bin/new_tool.py и bin/pilot_generator.py, неизменных thresholds и fail-closed отказах на missing/tampered/foreign correction.",
+ "date": "2026-11-24",
+ "historical_frozen": {
+  "files": {
+   "bin/new_tool.py": "sha256:cadd56ad6569165704205e5a336fe9412be61d329363810e8da4d4e2d9c5e816",
+   "bin/pilot_generator.py": "sha256:93c44b990f96705402c6a13c24f713a4f4e5a9101761d9bc72b3f32677501c5b"
+  },
+  "new_tool_digest": "sha256:cadd56ad6569165704205e5a336fe9412be61d329363810e8da4d4e2d9c5e816"
+ },
+ "hypothesis": "Отдельная sealed correction сохраняет старые digests как исторические, задаёт фактические новые digests двух инженерных файлов и принимается verifier только для них.",
+ "id": "PILOT-GENERATOR-R1-BASELINE-CORRECTION",
+ "known_limits": [
+  "Correction не повторяет 20 specs/24 mutants и не выдаёт новое доказательство генератора",
+  "Correction не разрешает менять thresholds, specs, mutants, HEAD-SLICE prereg/evidence или любые иные файлы",
+  "Sidecar является fail-closed печатью точных байтов correction; исходный prereg не перепечатывается"
+ ],
+ "owner_decision": "W18 утверждённого плана; автономная разработка, commit и push в herness разрешены; activation и внешняя публикация запрещены",
+ "question": "Как принять изменившийся инженерный baseline PILOT-GENERATOR-R1 без перезаписи sealed исходного prereg и без ослабления остальных frozen files/thresholds?",
+ "runs": [
+  "runs/exp-w18-clean-clone-r1"
+ ],
+ "schema": 2,
+ "source_prereg": "lab/prereg/PILOT-GENERATOR-R1.json",
+ "source_prereg_sha256": "sha256:42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5",
+ "thresholds_sha256": "sha256:68483fec276169fe0d2f6b8bfe2f412d99e199f9d049692a6f3c6ba57f772fc0"
+}
