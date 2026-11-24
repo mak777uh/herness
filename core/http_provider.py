@@ -11,11 +11,16 @@ import os
 import re
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
+from .http_boundary import (
+    UpstreamError,
+    build_no_redirect_opener,
+    validate_base_url,
+)
 from .provider import ModelReply, StreamError, ToolCall, assemble, parse_sse
 
 
@@ -36,7 +41,16 @@ class OpenAICompatProvider:
 
     def __init__(self, base_url: str, model: str, api_key_env: str,
                  timeout: int = 120, extra_headers: dict | None = None,
-                 max_tokens: int = 1024):
+                 max_tokens: int = 1024, *,
+                 allow_loopback_http: bool = False,
+                 allowed_origins: Iterable[str] | None = None):
+        self.allow_loopback_http = allow_loopback_http
+        self.allowed_origins = tuple(allowed_origins) if allowed_origins is not None else (base_url,)
+        validate_base_url(
+            base_url,
+            allow_loopback_http=allow_loopback_http,
+            allowed_origins=self.allowed_origins,
+        )
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.api_key_env = api_key_env
@@ -81,11 +95,12 @@ class OpenAICompatProvider:
         return headers
 
     def _opener(self):
-        """Локальные адреса идут мимо системного прокси: иначе запрос к себе уходит в прокси-цепочку."""
-        host = urllib.parse.urlparse(self.base_url).hostname or ""
-        if host in {"127.0.0.1", "localhost", "::1"}:
-            return urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        return urllib.request.build_opener()
+        """Redirect off и точный configured origin; loopback минует системный proxy."""
+        return build_no_redirect_opener(
+            self.base_url,
+            allow_loopback_http=self.allow_loopback_http,
+            allowed_origins=self.allowed_origins,
+        )
 
     def has_key(self) -> bool:
         return bool(self._key())
@@ -125,10 +140,19 @@ class OpenAICompatProvider:
                     )
                     count = 0
         except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")[:400]
-            raise StreamError(f"HTTP {exc.code} от провайдера: {detail}") from exc
+            try:
+                if 300 <= exc.code < 400:
+                    # Тело и Location источника не читаем и не отражаем: источник
+                    # уже видел Authorization, но redirect target не должен получить ничего.
+                    raise StreamError("upstream redirect refused") from exc
+                detail = exc.read().decode("utf-8", errors="replace")[:400]
+                raise StreamError(f"HTTP {exc.code} от провайдера: {detail}") from exc
+            finally:
+                exc.close()
         except urllib.error.URLError as exc:
             raise StreamError(f"сеть недоступна: {exc.reason}") from exc
+        except UpstreamError as exc:
+            raise StreamError(f"upstream отклонён: {exc}") from exc
 
         return HttpResult(reply=reply, status=status,
                           latency_ms=int((time.perf_counter() - started) * 1000),

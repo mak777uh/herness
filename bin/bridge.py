@@ -52,6 +52,16 @@ MAX_BODY = 8 * 1024 * 1024
 # Корень репозитория: нужен, чтобы позвать bin/net.py по известному пути,
 # а не по текущему каталогу процесса.
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from core.http_boundary import (  # noqa: E402 — root added for `python bin/bridge.py`
+    NoRedirectHandler,
+    UpstreamError,
+    build_no_redirect_opener,
+    validate_upstream,
+)
+
 BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36")
 ALLOWED_PREFIX = "/v1/"
@@ -111,38 +121,41 @@ def port_in_use(host: str, port: int) -> bool:
         probe.close()
 
 
-class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
-    """Не следовать upstream 3xx — даже на тот же origin.
-
-    Стандартный handler может перенести Authorization на redirect target.
-    Поэтому редирект не обрабатывается как успешный ответ: HTTPError с 3xx
-    превращается в фиксированный отказ, без чтения тела и Location.
-    """
-
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
+# Историческое имя сохранено для traceability прежнего redirect hotfix.
+_NoRedirectHandler = NoRedirectHandler
 
 
-def upstream_allowed(url: str) -> tuple[bool, str]:
-    """Проверить адрес провайдера до старта.
-
-    https обязателен всегда, кроме одного случая: локальная заглушка на loopback для тестов.
-    Открытый текст наружу — это ключ в открытом виде, а не «удобство разработки».
-    """
-    lowered = url.lower()
-    if lowered.startswith("https://"):
-        return True, ""
-    if lowered.startswith("http://"):
-        host = lowered[7:].split("/")[0].split(":")[0]
-        if host in ("127.0.0.1", "localhost", "::1"):
-            return True, ""
-        return False, "http:// допустим только для loopback-заглушки"
-    return False, "upstream должен начинаться с https://"
+def upstream_allowed(
+    url: str,
+    allow_loopback_http: bool = False,
+    allowed_origins: tuple[str, ...] | None = None,
+) -> tuple[bool, str]:
+    """Проверить адрес провайдера до старта общей provider/bridge границей."""
+    try:
+        validate_upstream(
+            url,
+            allow_loopback_http=allow_loopback_http,
+            allowed_origins=allowed_origins,
+        )
+    except UpstreamError as exc:
+        return False, str(exc)
+    return True, ""
 
 
 class Bridge:
     def __init__(self, upstream: str, provider_key: str, local_token: str,
-                 log_path: Path | None, session: str | None = None):
+                 log_path: Path | None, session: str | None = None, *,
+                 allow_loopback_http: bool = False,
+                 allowed_origins: tuple[str, ...] | None = None):
+        self.allow_loopback_http = allow_loopback_http
+        self.allowed_origins = tuple(allowed_origins) if allowed_origins is not None else None
+        allowed, why = upstream_allowed(
+            upstream,
+            allow_loopback_http=allow_loopback_http,
+            allowed_origins=self.allowed_origins,
+        )
+        if not allowed:
+            raise UpstreamError(why)
         self.upstream = upstream
         self.provider_key = provider_key
         self.local_token = local_token
@@ -237,8 +250,12 @@ class Bridge:
         request.add_header("User-Agent", BROWSER_UA)
         request.add_header("x-opencode-session", self.session)
         request.add_header("Content-Type", headers.get("content-type", "application/json"))
-        opener = urllib.request.build_opener(_NoRedirectHandler())
         try:
+            opener = build_no_redirect_opener(
+                self.upstream,
+                allow_loopback_http=self.allow_loopback_http,
+                allowed_origins=self.allowed_origins,
+            )
             with opener.open(request, timeout=180) as response:
                 status = int(response.status)
                 if 300 <= status < 400:
@@ -448,6 +465,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--bind", default="127.0.0.1")
     parser.add_argument("--allow-remote", action="store_true",
                         help="разрешить bind не на loopback (по умолчанию запрещено)")
+    parser.add_argument("--allow-loopback-http", action="store_true",
+                        help="test-only: разрешить http:// upstream на loopback")
     parser.add_argument("--upstream", required=True, help="полный URL провайдера")
     parser.add_argument("--token-file", required=True, help="файл с локальным токеном клиента")
     parser.add_argument("--log", default=None, help="файл журнала (по умолчанию stderr)")
@@ -456,7 +475,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.allow_remote and args.bind not in ("127.0.0.1", "::1", "localhost"):
         print("мост слушает только loopback; для внешнего bind нужен --allow-remote", file=sys.stderr)
         return 2
-    allowed, why = upstream_allowed(args.upstream)
+    allowed, why = upstream_allowed(
+        args.upstream,
+        allow_loopback_http=args.allow_loopback_http,
+        allowed_origins=(args.upstream,),
+    )
     if not allowed:
         print(f"upstream отклонён: {why}", file=sys.stderr)
         return 2
@@ -468,7 +491,14 @@ def main(argv: list[str] | None = None) -> int:
 
     local_token = read_token(Path(args.token_file))
     log_path = Path(args.log) if args.log else None
-    bridge = Bridge(args.upstream, provider_key, local_token, log_path)
+    bridge = Bridge(
+        args.upstream,
+        provider_key,
+        local_token,
+        log_path,
+        allow_loopback_http=args.allow_loopback_http,
+        allowed_origins=(args.upstream,),
+    )
 
     # F-BRIDGE-1 (09.11.2026). Раньше мост на занятом порту НЕ падал: у
     # ThreadingHTTPServer по умолчанию allow_reuse_address=1, и на Windows это

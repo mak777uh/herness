@@ -59,7 +59,13 @@ def start(handler_cls):
 
 def with_bridge(upstream_url: str, log_path: Path):
     token = "local-" + "tk-123"
-    b = bridge_mod.Bridge(upstream_url, "PROVIDER-KEY-SECRET", token, log_path)
+    b = bridge_mod.Bridge(
+        upstream_url,
+        "PROVIDER-KEY-SECRET",
+        token,
+        log_path,
+        allow_loopback_http=True,
+    )
     server = ThreadingHTTPServer(("127.0.0.1", 0), bridge_mod.make_handler(b))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server.server_address[1], token
@@ -177,6 +183,40 @@ def _():
         code = bridge_mod.main([
             "--upstream", "http://example.test/v1/x", "--token-file", str(token_file)])
         assert code == 2, code
+
+
+@case("credentials и неоднозначный port в upstream отвергаются")
+def _():
+    for url in (
+        "https://user:pass@example.test/v1/x",
+        "https://example.test:bad/v1/x",
+        "https://example.test:/v1/x",
+        "https://example.test\\@evil.test/v1/x",
+    ):
+        allowed, why = bridge_mod.upstream_allowed(url)
+        assert not allowed and why, (url, allowed, why)
+
+
+@case("loopback HTTP требует явного test-only флага")
+def _():
+    url = "http://127.0.0.1:8790/v1/chat/completions"
+    assert not bridge_mod.upstream_allowed(url)[0]
+    assert bridge_mod.upstream_allowed(url, allow_loopback_http=True)[0]
+    assert not bridge_mod.upstream_allowed("http://127.0.0.1.evil.test/v1/x", True)[0]
+
+
+@case("origin allowlist сравнивает точные hostname и port")
+def _():
+    url = "https://example.test:444/v1/x"
+    allowed, why = bridge_mod.upstream_allowed(
+        url,
+        allowed_origins=("https://example.test:443/v1/x",),
+    )
+    assert not allowed and "allowlist" in why, (allowed, why)
+    assert bridge_mod.upstream_allowed(
+        url,
+        allowed_origins=("https://EXAMPLE.test:444/other",),
+    )[0]
 
 
 def main() -> int:

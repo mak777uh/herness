@@ -161,6 +161,7 @@ def main() -> int:
             local_token=local_token,
             log_path=log_path,
             session="redirect-auth-test",
+            allow_loopback_http=True,
         )
         with (
             serving(handler_for(source_records, source_response, target_records)) as source_server,

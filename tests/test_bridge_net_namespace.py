@@ -83,7 +83,11 @@ def start_bridge(tmp: Path, port: int, path_env: str | None = None):
     token_path = tmp / "token.txt"
     token_path.write_text(TOKEN, encoding="utf-8")
     proc_log = open(tmp / "proc.log", "wb")
-    env = {**os.environ, "HS_BRIDGE_KEY": CANARY}
+    env = {
+        **os.environ,
+        "HS_BRIDGE_KEY": CANARY,
+        "PYTHONPATH": str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", ""),
+    }
     if path_env is not None:
         env["PATH"] = path_env
     command = [
@@ -91,6 +95,7 @@ def start_bridge(tmp: Path, port: int, path_env: str | None = None):
         str(bin_dir / "bridge.py"),
         "--port", str(port),
         "--upstream", "http://127.0.0.1:9/v1/chat/completions",
+        "--allow-loopback-http",
         "--token-file", str(token_path),
         "--log", str(tmp / "bridge.log"),
     ]
