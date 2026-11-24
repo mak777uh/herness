@@ -12,14 +12,14 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import http.client
 import io
 import json
 import secrets
+import socket
 import sys
 import tempfile
 import threading
-import urllib.error
-import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -108,23 +108,23 @@ def serving(handler):
 
 
 def post_bridge(port: int, local_token: str) -> tuple[int, bytes]:
-    request = urllib.request.Request(
-        f"http://127.0.0.1:{port}/v1/chat/completions",
-        data=b'{"probe": true}',
-        headers={
-            "Authorization": f"Bearer {local_token}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
+    body = b'{"probe": true}'
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
     try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            return int(response.status), response.read()
-    except urllib.error.HTTPError as error:
-        try:
-            return int(error.code), error.read()
-        finally:
-            error.close()
+        connection.putrequest(
+            "POST", "/v1/chat/completions", skip_host=True, skip_accept_encoding=True,
+        )
+        connection.putheader("Host", f"127.0.0.1:{port}")
+        connection.putheader("Authorization", f"Bearer {local_token}")
+        connection.putheader("Content-Type", "application/json")
+        connection.putheader("Content-Length", str(len(body)))
+        connection.putheader("Connection", "close")
+        connection.endheaders(body)
+        connection.sock.shutdown(socket.SHUT_WR)
+        response = connection.getresponse()
+        return int(response.status), response.read()
+    finally:
+        connection.close()
 
 
 def main() -> int:

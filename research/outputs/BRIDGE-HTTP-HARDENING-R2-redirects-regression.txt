@@ -1,0 +1,65 @@
+канарейка: sha256:0f27d81cdde6b484 (значение не печатается)
+[ok] 301 same-origin: source получил Authorization ровно один раз
+[ok] 301 same-origin: redirect target не получил запросов
+[ok] 301 same-origin: redirect target не получил Authorization
+[ok] 301 same-origin: мост отказал 502 (получено 502)
+[ok] 301 same-origin: ответ содержит фиксированную причину отказа
+[ok] 301 cross-origin: source получил Authorization ровно один раз
+[ok] 301 cross-origin: redirect target не получил запросов
+[ok] 301 cross-origin: redirect target не получил Authorization
+[ok] 301 cross-origin: мост отказал 502 (получено 502)
+[ok] 301 cross-origin: ответ содержит фиксированную причину отказа
+[ok] 302 same-origin: source получил Authorization ровно один раз
+[ok] 302 same-origin: redirect target не получил запросов
+[ok] 302 same-origin: redirect target не получил Authorization
+[ok] 302 same-origin: мост отказал 502 (получено 502)
+[ok] 302 same-origin: ответ содержит фиксированную причину отказа
+[ok] 302 cross-origin: source получил Authorization ровно один раз
+[ok] 302 cross-origin: redirect target не получил запросов
+[ok] 302 cross-origin: redirect target не получил Authorization
+[ok] 302 cross-origin: мост отказал 502 (получено 502)
+[ok] 302 cross-origin: ответ содержит фиксированную причину отказа
+[ok] 303 same-origin: source получил Authorization ровно один раз
+[ok] 303 same-origin: redirect target не получил запросов
+[ok] 303 same-origin: redirect target не получил Authorization
+[ok] 303 same-origin: мост отказал 502 (получено 502)
+[ok] 303 same-origin: ответ содержит фиксированную причину отказа
+[ok] 303 cross-origin: source получил Authorization ровно один раз
+[ok] 303 cross-origin: redirect target не получил запросов
+[ok] 303 cross-origin: redirect target не получил Authorization
+[ok] 303 cross-origin: мост отказал 502 (получено 502)
+[ok] 303 cross-origin: ответ содержит фиксированную причину отказа
+[ok] 307 same-origin: source получил Authorization ровно один раз
+[ok] 307 same-origin: redirect target не получил запросов
+[ok] 307 same-origin: redirect target не получил Authorization
+[ok] 307 same-origin: мост отказал 502 (получено 502)
+[ok] 307 same-origin: ответ содержит фиксированную причину отказа
+[ok] 307 cross-origin: source получил Authorization ровно один раз
+[ok] 307 cross-origin: redirect target не получил запросов
+[ok] 307 cross-origin: redirect target не получил Authorization
+[ok] 307 cross-origin: мост отказал 502 (получено 502)
+[ok] 307 cross-origin: ответ содержит фиксированную причину отказа
+[ok] 308 same-origin: source получил Authorization ровно один раз
+[ok] 308 same-origin: redirect target не получил запросов
+[ok] 308 same-origin: redirect target не получил Authorization
+[ok] 308 same-origin: мост отказал 502 (получено 502)
+[ok] 308 same-origin: ответ содержит фиксированную причину отказа
+[ok] 308 cross-origin: source получил Authorization ровно один раз
+[ok] 308 cross-origin: redirect target не получил запросов
+[ok] 308 cross-origin: redirect target не получил Authorization
+[ok] 308 cross-origin: мост отказал 502 (получено 502)
+[ok] 308 cross-origin: ответ содержит фиксированную причину отказа
+[ok] обычный upstream: мост ответил 200 (получено 200)
+[ok] обычный upstream: source получил Authorization (положительный контроль)
+[ok] обычный upstream: redirect target не использован
+[ok] ответы моста: канарейка отсутствует
+[ok] ответы моста: заголовок Location отсутствует
+[ok] ответы моста: redirect target отсутствует
+[ok] bridge.log: канарейка отсутствует
+[ok] bridge.log: заголовок Location отсутствует
+[ok] bridge.log: redirect target отсутствует
+[ok] stdout/stderr: канарейка отсутствует
+[ok] stdout/stderr: заголовок Location отсутствует
+[ok] stdout/stderr: redirect target отсутствует
+провалов: 0
+ВЕРДИКТ: PASS — upstream redirects запрещены, ключ не перенесён

@@ -1,0 +1,113 @@
+{
+ "schema": 2,
+ "id": "BRIDGE-HTTP-SUBSET-R1-REVIEW",
+ "date": "2026-11-24",
+ "question": "Закроют ли отдельные review-контроли пять находок независимого аудита: расхождение status policy, гонку pre-dispatch pipelining, неполные deadline/auth controls, пустой Rust request body и нестрогую header grammar",
+ "hypothesis": "Текущая W17 R1-реализация проходит исходный корпус 22/50/4, но review-контроли обнаружат как минимум четыре unsafe acceptances на Python/Rust границе и отсутствие исполнимых DNS/write deadline controls. После исправления все зарегистрированные review-проверки проходят, delayed pipeline не вызывает downstream, canonical clients используют half-close, status policy согласована, пустой request body отвергается, header grammar становится точной.",
+ "criterion": "PASS только если Python review suite даёт 8/8, Rust review suite даёт 7/7, delayed pipeline получает BRIDGE_HTTP_SMUGGLING при downstream=0, canonical health/chat/journal/net остаются 4/4, исходный W17 корпус остаётся 22/22 named, 50/50 malformed, 4/4 positive и 79/79 markers, полный Rust suite остаётся зелёным. Любой invalid downstream вызов, потеря canonical positive, снижение minimum_checks, ослабление исходного порога, реальный секрет или fallback на stdlib-разбор границы = FAIL. N/A не является PASS.",
+ "arms": [
+  "RED: review-контроли запускаются на текущем W17 worktree до исправлений пяти находок",
+  "GREEN A: Python и Rust используют одну закрытую status policy: 200 либо 400..599; остальное нормализуется в 502",
+  "GREEN B: canonical client завершает write half-close; bridge ждёт EOF до dispatch и потому отвергает fragmented/delayed pipeline без downstream",
+  "GREEN C: connect/header-idle/total/write deadlines имеют исполнимые timing controls; неверный token отвергается до чтения body; Rust client принимает только IP literal и потому не выходит за connect deadline в DNS",
+  "GREEN D: Rust emitter отвергает пустое тело; request/response header grammar требует точный разделитель и ASCII canonical values",
+  "GREEN E: исходный W17 корпус и focused bridge regressions повторяются без ослабления"
+ ],
+ "sensitivity": "Разница измеряется числом rejected/accepted review-контролей, downstream calls на delayed pipeline, длительностью timeout-проб, точными status/header мутантами и rc полного Rust suite. Положительные controls обязательны: отказ всего транспорта не доказывает безопасность. Timing controls проверяют нижнюю границу ожидаемого ожидания, поэтому немедленный отказ не зачитывается.",
+ "unit_of_analysis": "один raw HTTP/1.1 запрос на отдельном loopback TCP-соединении, один вызов Python status policy либо один вызов Rust canonical request/response/deadline helper",
+ "primary_metric": "review checks passed; unsafe acceptances на RED; downstream calls on delayed pipeline; elapsed timeout seconds; command rc",
+ "test": "python tests/test_bridge_http_review.py; python tests/test_bridge_http_subset.py; python tests/test_bridge.py; python tests/test_bridge_redirects.py; python tests/test_bridge_key_isolation.py; python tests/test_bridge_net_namespace.py; python tests/test_bridge_win_isolation.py; python bin/rust_tests.py",
+ "stopping_rule": "остановиться при любом invalid downstream вызове, потере canonical positive, ослаблении теста или порога, fallback на stdlib-разбор границы, использовании реального секрета либо изменении зарегистрированных review-контролей после RED; исправления прибора только новым раундом с сохранением RED",
+ "fixture": "синтетические local token и provider canary; in-process loopback upstream; raw socket client; временный journal path; настоящие ключи и owner keys не используются",
+ "environment": {
+  "host": "Windows 11 build 26300, Git Bash, Python 3.13.11",
+  "baseline_commit": "eb35b99cdf9e3119d56bdb45cb1c997250cd82a8",
+  "baseline_kind": "W17 uncommitted worktree после исходного GREEN",
+  "network": "только 127.0.0.1 loopback; внешняя сеть не нужна",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; это не успешный поиск",
+  "baseline_sha256": {
+   "bin/bridge.py": "c419442f965208a777eaa35bee2de3f2c543cd6b73e99ca3f4996e95f1a2add1",
+   "core-rs/src/model.rs": "6d9e307550e50e1918818b124b3c3cc3179b453664d91250870e27bbff748780",
+   "tests/test_bridge_http_subset.py": "aef24fca856bcfac5137cfdf7cca4db56175c5e23c5f384f86392814b88d3a40"
+  }
+ },
+ "critical_controls": [
+  {
+   "id": "status-policy",
+   "input": "upstream/local status 200, 400, 415, 418, 500, 599; non-policy 201, 302, 600",
+   "expect": "Python сохраняет 200 и 400..599, нормализует остальное в 502; Rust принимает те же canonical statuses и отвергает остальные"
+  },
+  {
+   "id": "delayed-pipeline",
+   "input": "первый canonical request, задержка, второй request отдельным сегментом, затем half-close",
+   "expect": "BRIDGE_HTTP_SMUGGLING; downstream=0; второй request не обработан"
+  },
+  {
+   "id": "deadline-timing",
+   "input": "scaled connect/header-idle/total/write timeout и Rust hostname, который потребовал бы DNS",
+   "expect": "каждая timing-проба ждёт не меньше заданного lower bound; немедленный отказ не зачитывается; Rust hostname отвергается до socket I/O и DNS не вызывается"
+  },
+  {
+   "id": "auth-before-body",
+   "input": "неверный token и объявленное, но не отправленное тело без half-close",
+   "expect": "немедленный 401 без ожидания body и downstream=0"
+  },
+  {
+   "id": "empty-body",
+   "input": "Rust canonical_request с пустым body",
+   "expect": "отказ до socket I/O"
+  },
+  {
+   "id": "header-grammar",
+   "input": "request Content-Length без ': '; response header без ': ', obs-text value, non-json Content-Type",
+   "expect": "Python/Rust отвергают все неканонические варианты"
+  },
+  {
+   "id": "canonical-regression",
+   "input": "исходный W17 корпус и health/chat/journal/net",
+   "expect": "79/79 markers, downstream positives 3/3, canonical responses сохраняются"
+  }
+ ],
+ "threshold": {
+  "python_review_checks": 8,
+  "rust_review_checks": 7,
+  "red_min_unsafe_acceptances": 4,
+  "delayed_pipeline_downstream": 0,
+  "original_named_mutants": 22,
+  "original_malformed": 50,
+  "original_canonical_positives": 4,
+  "original_markers": 79,
+  "full_rust_minimum_tests": 174
+ },
+ "known_limits": [
+  "Review-раунд не переписывает исходный W17 RED/GREEN и не меняет его пороги",
+  "Half-close является явным требованием канонического клиента этого subset; клиент без half-close получает timeout без dispatch",
+  "Rust bridge client принимает только IP literal; hostname и DNS resolution исключены из контракта, поэтому connect deadline не включает блокирующий resolver",
+  "Timing lower bounds доказывают отсутствие немедленного отказа, но не точную латентность ОС",
+  "Это security P0, не production activation, публикация или owner approval"
+ ],
+ "kill_criteria": [
+  "delayed pipeline вызывает downstream",
+  "canonical positive теряется либо исходный W17 счётчик падает",
+  "review timing control проходит на немедленном отказе",
+  "Rust emitter принимает пустой request body",
+  "Python/Rust status policy расходятся",
+  "header grammar снова допускает неоднозначный разделитель или obs-text",
+  "minimum_checks или исходный порог снижены ради зелёного результата"
+ ],
+ "owner_decision": "владелец 2026-11-24 делегировал разработку и технические решения в рамках утверждённых gates; commit/push в этот репозиторий разрешены",
+ "runs": [
+  "runs/exp-bridge-http-subset-r1-review"
+ ],
+ "closed": true,
+ "result": {
+  "verdict": "PASS — пять review-находок закрыты отдельными контролами без изменения исходного W17",
+  "before": "Python review 4/8 failures; Rust review 166 passed, 6 failed",
+  "after": "Python review 8/8; исходный Python subset 79/79; изолированный полный Rust suite 181/0",
+  "positive_control": "canonical health/chat/journal/net сохранены; обычный upstream 200 сохранён",
+  "evidence": "research/outputs/BRIDGE-HTTP-SUBSET-R1-REVIEW-python-green-after.txt; research/outputs/BRIDGE-HTTP-SUBSET-R1-rust-green-verified.txt",
+  "residual": "Half-close обязателен; Rust client IP-only; timing lower bounds не измеряют точную латентность ОС; CI-run/clean-clone не выполнены; не activation/approval/K9"
+ },
+ "conclusion": "PASS: review Python 8/8, delayed pipeline BRIDGE_HTTP_SMUGGLING при downstream=0, connect/header-idle/total/write timing controls прошли, auth-before-body 401 до body, status policy согласована, Rust отвергает пустое тело/DNS hostname/non-policy status/неканонические response headers; исходный W17 остаётся 79/79, полный Rust suite 181/0. Исходные пороги и review controls после RED не менялись."
+}

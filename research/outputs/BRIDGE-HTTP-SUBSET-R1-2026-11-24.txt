@@ -1,0 +1,93 @@
+BRIDGE-HTTP-SUBSET-R1 + REVIEW + HARDENING-R2 — финальный отчёт
+Дата: 2026-11-24
+Вердикт: PASS для зарегистрированного canonical HTTP/1.1 subset комната↔мост и отдельного post-review hardening-раунда.
+
+ОБЪЁМ
+Исходный W17, отдельный review-раунд по пяти находкам независимого аудита и отдельный BRIDGE-HTTP-HARDENING-R2 по четырём post-review находкам. R2 не меняет критерии закрытых R1/REVIEW.
+Пороги исходного prereg не менялись. Review prereg зарегистрирован и запечатан до review RED/GREEN.
+Production activation, реальные внешние аккаунты, настоящие owner keys, платежи и публикация не выполнялись.
+
+СРЕДА И БАЗА
+Windows 11 build 26300, Git Bash, Python 3.13.11; Rust release suite запускается штатным python bin/rust_tests.py в WSL Ubuntu с принудительной очисткой stale artifacts.
+Исходный Python RED: baseline a791a3ce29144e6cac9be6413087dad4364ae2e7.
+Исходный Rust RED artifact помечает eb35b99cdf9e3119d56bdb45cb1c997250cd82a8; это prereg-only коммит поверх a791a3c, production model.rs тогда ещё не был изменён.
+Review baseline: W17 worktree после исходного GREEN, закреплённый в review prereg тремя SHA-256.
+Сеть: только 127.0.0.1 loopback. Секреты: синтетические local token/provider canary.
+
+RED ДО ИСПРАВЛЕНИЙ
+Исходный Python: 78 провалов из 79 markers; unsafe acceptance воспроизведён.
+Артефакт: research/outputs/BRIDGE-HTTP-SUBSET-R1-python-red-before-final.txt (TEST_RC=1).
+Исходный Rust: 143 passed, 19 failed; canonical route emits 2/3, emit negatives 0/6 по новому контракту, response negatives 10/12.
+Артефакт: research/outputs/BRIDGE-HTTP-SUBSET-R1-rust-red-before.txt (rc=1).
+Review Python: 4 провала из 8 — header separator, delayed pipeline, connect timeout, status policy.
+Артефакт: research/outputs/BRIDGE-HTTP-SUBSET-R1-REVIEW-python-red-before.txt (REVIEW_RC=1).
+Review Rust: 166 passed, 6 failed; уже существующий non-policy status control был зелёным.
+Артефакт: research/outputs/BRIDGE-HTTP-SUBSET-R1-REVIEW-rust-red-before.txt (REVIEW_RC=1).
+Провалы прибора/линковщика сохранены отдельно и не подменяют валидный RED.
+
+GREEN ПОСЛЕ ИСПРАВЛЕНИЙ
+Исходный Python strict subset: 79/79 individual [ok] markers, 0 провалов, rc=0.
+Артефакт: research/outputs/BRIDGE-HTTP-SUBSET-R1-python-green-after.txt.
+Состав: 22/22 named mutants rejected, 50/50 malformed rejected, 4/4 canonical positives accepted; downstream=0 на отказах; реальные slowloris/total-timeout/no-secret controls пройдены.
+Review Python: 8/8, 0 провалов, rc=0.
+Артефакт: research/outputs/BRIDGE-HTTP-SUBSET-R1-REVIEW-python-green-after.txt.
+Наблюдённые тайминги: connect 0.206 s, header idle 5.029 s, total 0.201 s, write 0.200 s; delayed pipeline получил BRIDGE_HTTP_SMUGGLING при downstream=0; неверный token — 401 за 0.001 s до body.
+Полный Rust suite: 181 passed, 0 failed, rc=0.
+Артефакт: research/outputs/BRIDGE-HTTP-SUBSET-R1-rust-green-verified.txt.
+Разбивка: lib 172; external_taint 2; остальные integration binaries 1+3+3. Семь review-тестов входят в lib.
+Review Rust evidence от отдельного прогона: research/outputs/BRIDGE-HTTP-SUBSET-R1-REVIEW-rust-green-after.txt. Более ранний scoped BRIDGE-HTTP-SUBSET-R1-rust-green-after.txt сохранён как устаревшая история и не используется для финального вердикта.
+R2 RED: Python 1/3 (header-total boundary), Rust 174 passed/2 failed (default и custom response timeout); сохранён до production-исправлений.
+R2 GREEN: Python hardening 3/3; исходный W17 79/79; review 8/8; полный Rust suite 185 passed/0 failed (lib 176 + integration 2+1+3+3).
+Артефакты: research/outputs/BRIDGE-HTTP-HARDENING-R2-python-red-before.txt; BRIDGE-HTTP-HARDENING-R2-rust-red-before.txt; BRIDGE-HTTP-HARDENING-R2-python-green-after.txt; BRIDGE-HTTP-HARDENING-R2-original-green-after.txt; BRIDGE-HTTP-HARDENING-R2-review-green-after.txt; BRIDGE-HTTP-HARDENING-R2-rust-green-verified.txt. Промежуточный Rust GREEN с неименованным OS timeout сохранён как BRIDGE-HTTP-HARDENING-R2-rust-green-instrument-failed.txt; после типизации WouldBlock/TimedOut выполнен отдельный финальный прогон.
+
+ЧТО ИЗМЕНЕНО
+Python bridge: raw socket boundary; точные request-line/routes/methods/header allowlist; canonical Content-Length; запрет TE/Expect/obs-fold/LF-only/obs-text/unknown/duplicate headers; точный разделитель ': '; один request на connection; ожидание EOF после body до dispatch; фазовые connect/header-idle/body-total/write deadlines; status policy 200 либо 400..599, остальное нормализуется в 502.
+Rust client: canonical emitter трёх маршрутов; IP-only host и прямой SocketAddr connect без DNS; пустое тело отвергается до socket I/O; write half-close после полной записи; status policy 200 либо 400..599, остальное отвергается; response headers требуют ': ', ASCII values и ровно Content-Type: application/json.
+Все используемые Python canonical clients переведены на явные Host/Authorization/Content-Type/Content-Length/Connection: close и shutdown(SHUT_WR).
+Review suite добавлен в tests/test-manifest.json с minimum_checks=8; исходный minimum_checks=79 сохранён.
+R2: MAX_HEADER_BYTES исправлен на 9232 B (9 строк по 1024 B + 8 CRLF); добавлены изолированные total/count/line boundary controls с minimum_checks=3. Rust response timeout снова настраиваемый, default 180 с; connect/write остаются 5 с. Тестовый сервер проверяет EOF после request body до response; WouldBlock/TimedOut при чтении ответа называют read timeout.
+
+РЕГРЕССИИ И ГЕЙТЫ
+python tests/test_bridge.py — 11/11, 0 провалов.
+python tests/test_bridge_redirects.py — 62 individual [ok], 0 провалов, PASS.
+python tests/test_bridge_key_isolation.py — 7 individual [ok], 0 провалов, PASS.
+python tests/test_bridge_net_namespace.py — 16 individual [ok], 0 провалов, PASS.
+python tests/test_bridge_win_isolation.py — 28 individual [ok], 0 провалов, PASS.
+python bin/hs.py selftest — rc=0; subset 79/79, review 8/8 и hardening 3/3 распознаны прибором по индивидуальным markers. R2 evidence: research/outputs/BRIDGE-HTTP-HARDENING-R2-selftest.txt.
+python bin/check_briefs.py — 8 briefs, 9 owner rules, rc=0.
+python bin/prereg.py check и python bin/lab.py validate — ошибок связности нет; открыт только отдельный VSOCK-WIN-R1.
+python bin/hs.py gates — 31 из 33 оценено, 0 проблем; N/A: нет цепочки run-событий и нет runs/accept/*.bin. N/A не объявлен зелёным. R2 evidence: research/outputs/BRIDGE-HTTP-HARDENING-R2-gates.txt.
+python bin/coverage.py — 332/332 claims, coverage 1.00, strict_coverage 0.57; ANCHORED_WEAK не выдаётся за строгое доказательство.
+Fast gate probes — 17/17 поймали подложенный дефект. Полные gate probes — 32/32, два N/A по тем же причинам.
+py_compile изменённых Python-файлов, scoped rustfmt --check core-rs/src/model.rs и git diff --check — без ошибок.
+
+ФИНАЛЬНЫЕ SHA-256 ИСХОДНИКОВ R1/REVIEW (исторический snapshot до R2)
+bin/bridge.py b03f76a85bff2b9e612ebbfa034eb0729ad700c38548b38afe4ab090477ef783 (40743 байта)
+core-rs/src/model.rs cf7f770cb7e252dc122996fa15a91973c9088ca21d372ce456fb51995b234dd5 (48124 байт)
+tests/test_bridge_http_subset.py 3b4eccdb50a1cf97bb1a7ad06252f9b3c7f819d0b04f53517e0821105cef0f83 (19614 байт)
+tests/test_bridge_http_review.py 3cfe4b33b4d369df33daf0beee13b24de3a1c550992b06d744106669d09983e1 (8913 байт)
+lab/prereg/BRIDGE-HTTP-SUBSET-R1.json e3bac5674ba27c984d0db5cfec0680f9d424e5f966a5a3bca626151c72d0b410 (13145 байт, post-closure seal)
+lab/prereg/BRIDGE-HTTP-SUBSET-R1-REVIEW.json c7512250aa3e3153eec920f92a80b33a5f50a735f4221faa8a67113e1f4a65a0 (11092 байт, post-closure seal)
+
+ИСТОРИЧЕСКИЕ PRE-CLOSURE SHA-256 PREREG
+lab/prereg/BRIDGE-HTTP-SUBSET-R1.json 15b6b0eb42a71f2e451c7fb35a5c9ec12498edd883aa9109f82e3ab994941ae4 (11793 байт; до добавления closed/result/conclusion)
+lab/prereg/BRIDGE-HTTP-SUBSET-R1-REVIEW.json cedcd7d79da24bac8d908dbc52d9ab6ab7919140ffb28b9d34c9d2a428cb3f6d (9688 байт; до добавления closed/result/conclusion)
+Pre-closure sidecars перепечатаны после закрытия; исходные значения сохранены здесь и в истории исполнения. Оба post-closure sidecars проверены python bin/seal.py verify.
+
+ФИНАЛЬНЫЕ SHA-256 ИСХОДНИКОВ R2
+bin/bridge.py aea3cf7e01c452fd092b480c920ae68b5b3d160eec679295413c7f8a9986e978 (40757 байт)
+core-rs/src/model.rs 10a9ade378e920ee31927dde0deb016fc24ca4ddb9b05bb43ad9d732cb8c24c3 (51552 байта)
+tests/test_bridge_http_hardening.py be764cb5e05f2a60cc55da0ebb7d3cc76463beb587d586398d192b66c8c9d7e0 (3515 байт)
+tests/test-manifest.json b993c90bc1795dcd6dd6e6ec9f83d79fd05f7a34f68f4229244c8a684c919a67 (7382 байта)
+lab/prereg/BRIDGE-HTTP-HARDENING-R2.json 0b3288f2c538efbd2d3f2764203b24dd44434ce227200c50c976ebd34b489f22 (10985 байт, post-closure seal)
+Исходный pre-RED canonical seal R2: 4c072f846d093afca5967cb5c66534ba8321c2aa7eea13197acaa19eb5052dcb (9354 канонических байта). Он восстановлен удалением post-closure closed/result/conclusion из сохранённого JSON; исходный sidecar затем перепечатан после закрытия.
+
+ГРАНИЦЫ
+PASS относится к перечисленным классам входов и этой машине, не к формальной тотальности HTTP-парсера и не к произвольному upstream-серверу.
+Half-close — явное требование canonical client subset; клиент без half-close получает timeout без dispatch.
+Rust bridge client принимает только IP literal; DNS/hostname исключены из контракта.
+Rust response timeout снова настраиваемый (default 180 с); inbound bridge по-прежнему header idle 5.0 с и total 30.0 с. Timing tests проверяют нижние границы, а не точную латентность ОС; отдельные stall-мутанты для фаз body и EOF после полного body не выполнялись.
+Upstream provider остаётся полным urllib/TLS контуром; этот эксперимент не делает его canonical HTTP subset.
+Doctor остаётся 4/5 из-за access denied при перемещении disk cache установленного DeepSeek Harness; установленный DSH и его ~/.dsh не трогались.
+W10 CI-run и clean-clone ещё не выполнены; VSOCK-WIN-R1 — отдельная незакрытая проба.
+Это security P0 evidence, не owner approval, production activation, публикация, внешнее делегирование полномочий или K9_proven.

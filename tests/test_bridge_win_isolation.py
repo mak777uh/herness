@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import ctypes
 import hashlib
+import http.client
 import json
 import os
 import secrets
@@ -37,8 +38,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import urllib.error
-import urllib.request
 from ctypes import wintypes
 from pathlib import Path
 
@@ -313,16 +312,33 @@ def start_bridge(tmp: Path, port: int, launcher: str):
     return proc, proc_log, marker
 
 
+def exchange(port: int, method: str, path: str, headers: list[tuple[str, str]],
+             body: bytes = b"", timeout: float = 30) -> tuple[int, bytes]:
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=timeout)
+    try:
+        connection.putrequest(method, path, skip_host=True, skip_accept_encoding=True)
+        for name, value in headers:
+            connection.putheader(name, value)
+        connection.endheaders(body)
+        connection.sock.shutdown(socket.SHUT_WR)
+        response = connection.getresponse()
+        return int(response.status), response.read()
+    finally:
+        connection.close()
+
+
 def wait_health(port: int, proc: subprocess.Popen, proc_log, tmp: Path) -> bool:
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
         if proc.poll() is not None:
             break
         try:
-            with urllib.request.urlopen(
-                    f"http://127.0.0.1:{port}/health", timeout=1) as reply:
-                if reply.status == 200:
-                    return True
+            status, _ = exchange(
+                port, "GET", "/health",
+                [("Host", f"127.0.0.1:{port}"), ("Connection", "close")], timeout=1,
+            )
+            if status == 200:
+                return True
         except Exception:  # noqa: BLE001 — мост ещё не поднялся
             time.sleep(0.1)
     proc_log.flush()
@@ -334,17 +350,18 @@ def wait_health(port: int, proc: subprocess.Popen, proc_log, tmp: Path) -> bool:
 
 def post_net(port: int) -> tuple[int, str]:
     payload = json.dumps({"request": "probe"}, ensure_ascii=False).encode("utf-8")
-    request = urllib.request.Request(
-        f"http://127.0.0.1:{port}/v1/net",
-        data=payload,
-        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"},
-        method="POST",
+    status, body = exchange(
+        port, "POST", "/v1/net",
+        [
+            ("Host", f"127.0.0.1:{port}"),
+            ("Authorization", f"Bearer {TOKEN}"),
+            ("Content-Type", "application/json"),
+            ("Content-Length", str(len(payload))),
+            ("Connection", "close"),
+        ],
+        payload,
     )
-    try:
-        with urllib.request.urlopen(request, timeout=30) as reply:
-            return int(reply.status), reply.read().decode("utf-8", errors="replace")
-    except urllib.error.HTTPError as error:
-        return int(error.code), (error.read() or b"").decode("utf-8", errors="replace")
+    return status, body.decode("utf-8", errors="replace")
 
 
 def stop(proc: subprocess.Popen, proc_log) -> None:

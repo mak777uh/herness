@@ -1,0 +1,107 @@
+{
+ "schema": 2,
+ "id": "BRIDGE-HTTP-HARDENING-R2",
+ "date": "2026-11-24",
+ "question": "Закроет ли отдельный post-review раунд регрессию Rust response timeout, отсутствие исполнимого half-close контроля и неточную границу общего HTTP header cap без изменения исходного W17 и review-критериев",
+ "hypothesis": "После W17 R1/REVIEW остаются четыре изолированные проблемы: Rust игнорирует настраиваемый timeout и сокращает response wait с 180 до 30 с; тестовый сервер не проверяет EOF после request body; MAX_HEADER_BYTES на 16 байт меньше максимального head из 9 строк по 1024 B; count/line caps не изолированы от unknown-header отказов. После исправления Python hardening suite даёт 3/3, Rust hardening tests дают 4/4, исходный W17 остаётся 79/79, review 8/8, полный Rust suite не меньше 185 tests.",
+ "criterion": "PASS только если RED на текущем worktree содержит не менее двух регрессий; после изменения Python header-total boundary принимает ровно 9232 байта head и отвергает 9233 с BRIDGE_HTTP_HEADER_LIMIT, count boundary отличает 8 headers от 9 с BRIDGE_HTTP_HEADER_LIMIT, line boundary отличает 1024 B от 1025 с BRIDGE_HTTP_MALFORMED; Rust default response timeout равен 180 с, настраиваемый scaled response deadline исполняется с нижней временной границей, delayed response внутри deadline сохраняет canonical positive, сервер подтверждает EOF до отправки ответа. Исходный W17 79/79, review 8/8 и полный Rust suite зелёные. Любое ослабление старых controls/порогов, реальный секрет, fallback или N/A = FAIL.",
+ "arms": [
+  "RED: новый Python hardening suite и четыре Rust hardening tests запускаются до изменения production bridge.py/model.rs",
+  "GREEN A: MAX_HEADER_BYTES вычисляется из request-line + MAX_HEADERS строк и их CRLF-разделителей; отдельные controls изолируют total/count/line caps",
+  "GREEN B: Rust снова использует configurable response timeout с default 180 с; connect/write deadlines остаются фиксированными, inbound bridge 5.0/30.0 не меняется",
+  "GREEN C: тестовый сервер читает EOF после тела до ответа; отдельный Rust тест подтверждает write half-close",
+  "GREEN D: исходный W17, review и focused bridge regressions повторяются без ослабления"
+ ],
+ "sensitivity": "Каждая граница проверяется парой значений ровно на пределе и на единицу выше/ниже; timing control требует нижнюю границу ожидания, немедленный отказ не засчитывается. Half-close проверяется чтением EOF на сервере, а не наличием shutdown в исходнике. Полный Rust suite суммируется по всем бинарникам.",
+ "unit_of_analysis": "один вызов Python header parser/reader на синтетическом head либо один loopback вызов Rust HttpBridge с управляемой задержкой ответа",
+ "primary_metric": "boundary rejected/accepted; elapsed response seconds; EOF observed before response; command rc; полный Rust test count",
+ "test": "python tests/test_bridge_http_hardening.py; python bin/rust_tests.py; python tests/test_bridge_http_subset.py; python tests/test_bridge_http_review.py",
+ "stopping_rule": "остановиться при ослаблении W17/review controls, потере canonical positive, недостижимом loopback-приборе, использовании реального секрета или изменении критерия после RED; исправления прибора только новым раундом с сохранением RED",
+ "fixture": "синтетические ASCII header lines, socketpair test double, loopback TCP server с управляемой задержкой; реальные ключи, токены и owner keys не используются",
+ "environment": {
+  "host": "Windows 11 build 26300, Git Bash, Python 3.13.11; Rust release suite в WSL Ubuntu",
+  "baseline_kind": "W17 R1/REVIEW worktree после GREEN, до commit; production code не менялся во время регистрации R2",
+  "baseline_sha256": {
+   "bin/bridge.py": "b03f76a85bff2b9e612ebbfa034eb0729ad700c38548b38afe4ab090477ef783",
+   "core-rs/src/model.rs": "cf7f770cb7e252dc122996fa15a91973c9088ca21d372ce456fb51995b234dd5",
+   "tests/test_bridge_http_subset.py": "3b4eccdb50a1cf97bb1a7ad06252f9b3c7f819d0b04f53517e0821105cef0f83",
+   "tests/test_bridge_http_review.py": "3cfe4b33b4d369df33daf0beee13b24de3a1c550992b06d744106669d09983e1"
+  },
+  "network": "только 127.0.0.1 loopback",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: python bin/hs.py refs search завершился rc=2 «справочника нет: refs sync»; пустой индекс не считается успешным поиском"
+ },
+ "critical_controls": [
+  {
+   "id": "header-total-boundary",
+   "input": "head ровно MAX_HEADER_LINE*(MAX_HEADERS+1)+2*MAX_HEADERS = 9232 B и на 1 B больше",
+   "expect": "9232 принимает reader; 9233 даёт BRIDGE_HTTP_HEADER_LIMIT"
+  },
+  {
+   "id": "header-count-boundary",
+   "input": "8 и 9 уникальных synthetic headers",
+   "expect": "8 доходит до policy отказа, 9 даёт BRIDGE_HTTP_HEADER_LIMIT; удаление count cap ловится"
+  },
+  {
+   "id": "header-line-boundary",
+   "input": "header line 1024 B и 1025 B",
+   "expect": "1024 доходит до policy отказа, 1025 даёт BRIDGE_HTTP_MALFORMED"
+  },
+  {
+   "id": "rust-response-timeout",
+   "input": "default HttpBridge timeout и scaled custom timeout против delayed loopback response",
+   "expect": "default 180 с; custom deadline ждёт не меньше lower bound и отвергает поздний ответ; ранний ответ внутри deadline принимается"
+  },
+  {
+   "id": "rust-half-close",
+   "input": "canonical request, после которого сервер читает EOF до отправки response",
+   "expect": "EOF наблюдается; отдельный hardening test и все canonical emit tests зелёные"
+  },
+  {
+   "id": "frozen-regression",
+   "input": "W17 79 markers, review 8 markers, полный Rust suite",
+   "expect": "79/79, 8/8, не меньше 185 tests и 0 failures"
+  }
+ ],
+ "threshold": {
+  "python_hardening_checks": 3,
+  "rust_hardening_tests": 4,
+  "red_min_regressions": 2,
+  "original_markers": 79,
+  "review_markers": 8,
+  "full_rust_minimum_tests": 185,
+  "header_total_max_bytes": 9232,
+  "header_line_max_bytes": 1024,
+  "header_count_max": 8,
+  "rust_default_response_seconds": 180
+ },
+ "known_limits": [
+  "R2 не переписывает и не изменяет закрытые W17 R1 и REVIEW; это новый раунд с собственным RED/GREEN",
+  "Inbound bridge production timeouts остаются header idle 5.0 с и total 30.0 с; 180 с относится только к configurable ожиданию ответа Rust-клиента",
+  "Header count cap остаётся defense-in-depth: allowlist содержит меньше уникальных имён, поэтому отдельный synthetic control нужен для проверки самого cap",
+  "Timing lower bounds не доказывают точную латентность ОС; half-close проверяет канонический клиент, не произвольные клиенты",
+  "Это security P0, не production activation, публикация, owner approval или K9_proven"
+ ],
+ "kill_criteria": [
+  "исходный W17 или review теряет canonical positive либо получает invalid downstream",
+  "Rust снова игнорирует настраиваемый response timeout",
+  "half-close control не наблюдает EOF до response",
+  "header total/count/line boundary контроль не ловит границу",
+  "minimum_checks, test threshold или frozen criteria снижены ради зелёного результата",
+  "использован реальный секрет или N/A выдан за PASS"
+ ],
+ "owner_decision": "владелец делегировал разработку и технические решения в рамках утверждённых gates; commit/push в этот репозиторий разрешены",
+ "runs": [
+  "runs/exp-bridge-http-hardening-r2"
+ ],
+ "closed": true,
+ "result": {
+  "verdict": "PASS — post-review timeout, half-close и header boundaries закрыты отдельным раундом",
+  "before": "Python hardening 1/3; Rust 174 passed, 2 failed",
+  "after": "Python hardening 3/3; W17 79/79; review 8/8; полный Rust suite 185 passed, 0 failed; focused regressions без провалов",
+  "positive_control": "delayed canonical response внутри custom deadline принят; сервер наблюдал EOF до response; header count/line controls доходят до policy отказа",
+  "evidence": "research/outputs/BRIDGE-HTTP-HARDENING-R2-python-red-before.txt; research/outputs/BRIDGE-HTTP-HARDENING-R2-rust-red-before.txt; research/outputs/BRIDGE-HTTP-HARDENING-R2-python-green-after.txt; research/outputs/BRIDGE-HTTP-HARDENING-R2-rust-green-verified.txt; research/outputs/BRIDGE-HTTP-SUBSET-R1-2026-11-24.txt",
+  "residual": "Inbound bridge timeouts остаются 5.0/30.0; 180 с только для Rust response; timing lower bounds не точная латентность ОС; header count cap defense-in-depth; CI/VSOCK и activation не закрыты"
+ },
+ "conclusion": "PASS: R2 RED Python 1/3 и Rust 2 failed; после исправлений Python 3/3, W17 79/79, review 8/8, полный Rust suite 185/0. Rust снова уважает configurable response timeout 180 с, тестовый сервер подтверждает EOF до response, MAX_HEADER_BYTES=9232 и отдельные total/count/line boundaries проходят. Исходные W17/REVIEW критерии не менялись."
+}

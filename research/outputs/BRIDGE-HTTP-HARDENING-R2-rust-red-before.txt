@@ -1,0 +1,8 @@
+Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs)
+Finished `release` profile [optimized] target(s) in 16.51s
+test model::tests::hardening_default_response_timeout_remains_180_seconds ... FAILED
+test model::tests::hardening_custom_response_deadline_rejects_late_response ... FAILED
+test result: FAILED. 174 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+error: test failed, to rerun pass `--lib`
+
+[FAIL] провалов: 2

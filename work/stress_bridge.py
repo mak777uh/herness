@@ -11,34 +11,59 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import pathlib
+import socket
 import sys
 import time
-import urllib.error
-import urllib.request
 
 TOKEN = pathlib.Path(r"C:\111\env\bridge-token.txt").read_text(encoding="utf-8").strip()
 
 
+def exchange(method: str, path: str, headers: list[tuple[str, str]],
+             body: bytes = b"", timeout: float = 120) -> tuple[int, bytes]:
+    connection = http.client.HTTPConnection("127.0.0.1", 8790, timeout=timeout)
+    try:
+        connection.putrequest(method, path, skip_host=True, skip_accept_encoding=True)
+        for name, value in headers:
+            connection.putheader(name, value)
+        connection.endheaders(body)
+        connection.sock.shutdown(socket.SHUT_WR)
+        response = connection.getresponse()
+        return int(response.status), response.read()
+    finally:
+        connection.close()
+
+
 def health() -> int:
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8790/health", timeout=5) as r:
-            return r.status
+        status, _ = exchange(
+            "GET", "/health", [("Host", "127.0.0.1:8790"), ("Connection", "close")],
+            timeout=5,
+        )
+        return status
     except Exception:  # noqa: BLE001
         return 0
 
 
 def net_call(line: str) -> tuple[int, str]:
     body = json.dumps({"request": line}).encode()
-    request = urllib.request.Request(
-        "http://127.0.0.1:8790/v1/net", data=body,
-        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
-            return response.status, json.loads(response.read()).get("error", "ok")
-    except urllib.error.HTTPError as error:
-        return error.code, f"HTTP {error.code}"
+        status, payload = exchange(
+            "POST", "/v1/net",
+            [
+                ("Host", "127.0.0.1:8790"),
+                ("Authorization", f"Bearer {TOKEN}"),
+                ("Content-Type", "application/json"),
+                ("Content-Length", str(len(body))),
+                ("Connection", "close"),
+            ],
+            body,
+        )
+        if status != 200:
+            return status, f"HTTP {status}"
+        return status, json.loads(payload).get("error", "ok")
     except Exception as error:  # noqa: BLE001
         return 0, f"{type(error).__name__}: {error}"
 

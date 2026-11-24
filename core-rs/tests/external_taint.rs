@@ -14,8 +14,15 @@ use hs_core::model::HttpBridge;
 
 const MARKER: &str = "[external_untrusted]";
 
+fn canonical_response(body: &str) -> String {
+    format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    )
+}
+
 /// Крошечный сервер: один запрос, один ответ. Сеть не нужна.
-fn serve_once(response: &'static str) -> (u16, thread::JoinHandle<String>) {
+fn serve_once(response: String) -> (u16, thread::JoinHandle<String>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
     let handle = thread::spawn(move || {
@@ -31,10 +38,7 @@ fn serve_once(response: &'static str) -> (u16, thread::JoinHandle<String>) {
 
 #[test]
 fn успешный_ответ_помечен_как_внешний() {
-    let (port, handle) = serve_once(
-        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n\
-         {\"output\":\"найдено 1\"}",
-    );
+    let (port, handle) = serve_once(canonical_response(r#"{"output":"найдено 1"}"#));
     let mut link = HttpBridge::new("127.0.0.1", port, "local-tk", "net");
     link.path = "/v1/net".to_string();
     let text = link.net_request("search x").unwrap();
@@ -46,10 +50,7 @@ fn успешный_ответ_помечен_как_внешний() {
 
 #[test]
 fn отказ_сети_тоже_помечен_как_внешний() {
-    let (port, handle) = serve_once(
-        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n\
-         {\"error\":\"net\",\"message\":\"boom\"}",
-    );
+    let (port, handle) = serve_once(canonical_response(r#"{"error":"net","message":"boom"}"#));
     let mut link = HttpBridge::new("127.0.0.1", port, "local-tk", "net");
     link.path = "/v1/net".to_string();
     let error = link.net_request("open 9").unwrap_err();

@@ -1,0 +1,84 @@
+EXECUTION_HEAD=eb35b99cdf9e3119d56bdb45cb1c997250cd82a8
+CODE_BASELINE=a791a3ce29144e6cac9be6413087dad4364ae2e7
+INSTRUMENT_CORRECTION=header-value-6 now actually emits X-Request-Id with a tab; original RED artifact retained
+CMD=load git baseline bridge in isolated module; run corrected tests/test_bridge_http_subset.py
+[FAIL] duplicate-content-length: ожидался 4xx/5xx, получено 200
+[FAIL] duplicate-host: ожидался 4xx/5xx, получено 200
+[FAIL] transfer-plus-length: ожидался 4xx/5xx, получено 200
+[FAIL] chunked-body: ожидался BRIDGE_HTTP_CHUNKED_FORBIDDEN, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] obs-fold: ожидался 4xx/5xx, получено 200
+[FAIL] lf-only: ожидался 4xx/5xx, получено 200
+[FAIL] obs-text: ожидался 4xx/5xx, получено 200
+[FAIL] missing-length: ожидался BRIDGE_HTTP_BAD_LENGTH, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] plus-length: ожидался 4xx/5xx, получено 200
+[FAIL] leading-zero-length: ожидался 4xx/5xx, получено 200
+[FAIL] space-length: ожидался 4xx/5xx, получено 200
+[FAIL] underscore-length: ожидался 4xx/5xx, получено 200
+[FAIL] get-post-route: ожидался BRIDGE_HTTP_METHOD, получено {'error': 'только POST /v1/*'}
+[FAIL] absolute-form: ожидался BRIDGE_HTTP_PATH, получено {'error': 'только /v1/*'}
+[FAIL] unknown-header: ожидался 4xx/5xx, получено 200
+[FAIL] path-traversal: ожидался 4xx/5xx, получено 200
+[FAIL] http-10: ожидался 4xx/5xx, получено 200
+[FAIL] trailing-byte: ожидался 4xx/5xx, получено 200
+[FAIL] pipelined-request: ожидался 4xx/5xx, получено 200
+[FAIL] expect-continue: ожидался 4xx/5xx, получено 100
+[FAIL] length-cap: ожидался BRIDGE_HTTP_LENGTH_CAP, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] negative-length: ожидался BRIDGE_HTTP_BAD_LENGTH, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] path-0: ожидался 4xx/5xx, получено 200
+[FAIL] path-1: ожидался 4xx/5xx, получено 200
+[FAIL] path-2: ожидался 4xx/5xx, получено 200
+[FAIL] path-3: ожидался 4xx/5xx, получено 200
+[FAIL] path-4: ожидался 4xx/5xx, получено 200
+[FAIL] path-5: ожидался 4xx/5xx, получено 200
+[FAIL] method-0: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] method-1: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] method-2: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] method-3: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] method-4: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] method-5: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] version-0: ожидался 4xx/5xx, получено None
+[FAIL] version-1: ожидался 4xx/5xx, получено None
+[FAIL] version-2: ожидался 4xx/5xx, получено 200
+[FAIL] version-3: ожидался 4xx/5xx, получено None
+[FAIL] version-4: ожидался 4xx/5xx, получено 200
+[FAIL] length-0: ожидался BRIDGE_HTTP_* код, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] length-1: ожидался BRIDGE_HTTP_* код, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] length-2: ожидался 4xx/5xx, получено 200
+[FAIL] length-3: ожидался 4xx/5xx, получено 200
+[FAIL] length-4: ожидался 4xx/5xx, получено 200
+[FAIL] length-5: ожидался BRIDGE_HTTP_* код, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] length-6: ожидался BRIDGE_HTTP_* код, получено {'error': 'тело пустое или слишком большое'}
+[FAIL] header-value-0: ожидался 4xx/5xx, получено 200
+[FAIL] header-value-1: ожидался 4xx/5xx, получено 200
+[FAIL] header-value-2: ожидался BRIDGE_HTTP_* код, получено {'error': 'нужен локальный токен моста'}
+[FAIL] header-value-3: ожидался BRIDGE_HTTP_* код, получено {'error': 'нужен локальный токен моста'}
+[FAIL] header-value-4: ожидался 4xx/5xx, получено 200
+[FAIL] header-value-5: ожидался 4xx/5xx, получено 200
+[FAIL] header-value-6: ожидался 4xx/5xx, получено 200
+[FAIL] header-count-0: ожидался 4xx/5xx, получено 200
+[FAIL] header-count-1: ожидался 4xx/5xx, получено 200
+[FAIL] header-count-2: ожидался 4xx/5xx, получено 200
+[FAIL] header-count-3: ожидался 4xx/5xx, получено 200
+[FAIL] header-count-4: ожидался 4xx/5xx, получено 200
+[FAIL] header-count-5: ожидался 4xx/5xx, получено 200
+[FAIL] missing-host: ожидался 4xx/5xx, получено 200
+[FAIL] missing-auth: ожидался BRIDGE_HTTP_* код, получено {'error': 'нужен локальный токен моста'}
+[FAIL] missing-content-type: ожидался 4xx/5xx, получено 200
+[FAIL] missing-connection: ожидался 4xx/5xx, получено 200
+[FAIL] duplicate-auth: ожидался 4xx/5xx, получено 200
+[FAIL] duplicate-content-type: ожидался 4xx/5xx, получено 200
+[FAIL] duplicate-connection: ожидался 4xx/5xx, получено 200
+[FAIL] space-before-colon: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] tab-indent: ожидался 4xx/5xx, получено 200
+[FAIL] bare-lf-header: ожидался BRIDGE_HTTP_* код, получено {}
+[FAIL] long-header: ожидался 4xx/5xx, получено 200
+[FAIL] empty-header-name: ожидался 4xx/5xx, получено 200
+[FAIL] double-space-request-line: ожидался 4xx/5xx, получено 200
+[FAIL] health: нет Connection: close
+[FAIL] chat: нет Connection: close
+[FAIL] journal: нет Connection: close
+[FAIL] net: нет Connection: close
+[FAIL] module 'bin.bridge' has no attribute 'HTTP_HEADER_IDLE_TIMEOUT'
+[FAIL] module 'bin.bridge' has no attribute 'HTTP_TOTAL_TIMEOUT'
+проверок: 79; провалов: 78
+TEST_RC=1

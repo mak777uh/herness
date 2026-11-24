@@ -1,0 +1,11 @@
+[ok] header-separator
+[ok] auth-before-body: status=401, elapsed=0.001s
+[ok] delayed-pipeline
+[ok] connect-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=0.206s
+[ok] header-idle-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=5.029s
+[ok] total-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=0.201s
+[ok] write-timeout: timeout=0.2, elapsed=0.200s
+[ok] status-policy: [200, 400, 415, 418, 500, 599, 502, 502, 502]
+проверок: 8; провалов: 0
+
+RC=0

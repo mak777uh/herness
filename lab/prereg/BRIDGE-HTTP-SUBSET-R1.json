@@ -129,5 +129,14 @@
  "runs": [
   "runs/exp-bridge-http-subset-r1"
  ],
- "closed": false
+ "closed": true,
+ "result": {
+  "verdict": "PASS — зарегистрированный strict HTTP subset закрыт без ослабления порогов",
+  "before": "Python RED 78/79; Rust RED 143 passed, 19 failed",
+  "after": "Python 79/79 markers; полный Rust suite 181 passed, 0 failed; focused bridge regressions без провалов",
+  "positive_control": "GET /health и POST chat/journal/net приняты; обычный upstream 200 сохранён",
+  "evidence": "research/outputs/BRIDGE-HTTP-SUBSET-R1-2026-11-24.txt",
+  "residual": "Перечисленные классы входов, не формальная тотальность; upstream provider вне canonical subset; CI-run/clean-clone и VSOCK остаются отдельными долгами; N/A не PASS; не activation/approval/K9"
+ },
+ "conclusion": "PASS: после strict pre-handler 22/22 named mutants и 50/50 malformed отвергнуты без downstream, 4/4 canonical positives приняты, 79/79 markers зелёные; Rust route emit 3/3, emit negatives 6/6, response negatives 12/12 и positives 2/2 входят в полный suite 181/0. Review-раунд E-0047 закрыт отдельно. Итоговый отчёт research/outputs/BRIDGE-HTTP-SUBSET-R1-2026-11-24.txt; границы и N/A перечислены там."
 }

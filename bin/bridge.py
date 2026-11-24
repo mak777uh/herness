@@ -34,8 +34,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import hmac
 import json
 import os
+import re
 import shutil
 import socket
 import ssl
@@ -45,10 +47,24 @@ import time
 import urllib.error
 import urllib.request
 import uuid
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from dataclasses import dataclass
+from http.server import ThreadingHTTPServer
 from pathlib import Path
+from socketserver import BaseRequestHandler
 
 MAX_BODY = 8 * 1024 * 1024
+# Канонический subset комнаты. Эти значения — контракт W17, а не настройки окружения.
+HTTP_CONNECT_TIMEOUT = 5.0
+HTTP_WRITE_TIMEOUT = 5.0
+HTTP_HEADER_IDLE_TIMEOUT = 5.0
+HTTP_TOTAL_TIMEOUT = 30.0
+MAX_HEADER_LINE = 1024
+MAX_HEADERS = 8
+MAX_HEADER_BYTES = MAX_HEADER_LINE * (MAX_HEADERS + 1) + 2 * MAX_HEADERS
+POST_ROUTES = frozenset({"/v1/chat/completions", "/v1/journal", "/v1/net"})
+REQUEST_HEADERS = frozenset({
+    "host", "authorization", "content-type", "content-length", "connection", "x-request-id",
+})
 # Корень репозитория: нужен, чтобы позвать bin/net.py по известному пути,
 # а не по текущему каталогу процесса.
 ROOT = Path(__file__).resolve().parents[1]
@@ -275,95 +291,338 @@ class Bridge:
             return 502, b"", f"upstream error: {type(error).__name__}"
 
 
+class _BridgeHTTPError(Exception):
+    """Типизированный отказ границы: код уходит клиенту, сырой запрос — никогда."""
+
+    def __init__(self, status: int, code: str, message: str):
+        super().__init__(message)
+        self.status = status
+        self.code = code
+        self.message = message
+
+
+@dataclass(frozen=True)
+class _HTTPRequest:
+    method: str
+    path: str
+    headers: dict[str, str]
+    length: int
+    token: str | None
+
+
+_REQUEST_LINE = re.compile(r"([A-Za-z]+) ([!-~]+) (HTTP/[0-9]+(?:\.[0-9]+)?)\Z")
+_HEADER_NAME = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+\Z")
+_HOST_VALUE = re.compile(
+    r"(?:\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9.-]+)(?::[0-9]{1,5})?\Z"
+)
+_REQUEST_ID = re.compile(r"[A-Za-z0-9._:-]{1,128}\Z")
+_LENGTH = re.compile(r"[1-9][0-9]*\Z")
+
+
+def _has_bare_lf(data: bytes) -> bool:
+    return any(byte == 0x0A and (index == 0 or data[index - 1] != 0x0D)
+               for index, byte in enumerate(data))
+
+
+def canonical_response_status(status: int) -> int:
+    """Успех и ошибки сохраняются; остальные upstream statuses становятся 502."""
+    return status if status == 200 or 400 <= status <= 599 else 502
+
+
+class _SocketReader:
+    """Чтение с общим wall deadline и без буферизации сверх объявленного body."""
+
+    def __init__(self, sock: socket.socket):
+        self.sock = sock
+        self.buffer = bytearray()
+        self.started = time.monotonic()
+        self.received_any = False
+
+    def _receive(self, idle_timeout: float) -> None:
+        remaining = HTTP_TOTAL_TIMEOUT - (time.monotonic() - self.started)
+        if remaining <= 0:
+            raise _BridgeHTTPError(408, "BRIDGE_HTTP_TIMEOUT", "total request timeout")
+        self.sock.settimeout(min(idle_timeout, remaining))
+        try:
+            chunk = self.sock.recv(65536)
+        except socket.timeout:
+            raise _BridgeHTTPError(408, "BRIDGE_HTTP_TIMEOUT", "request read timeout") from None
+        if not chunk:
+            raise EOFError
+        self.received_any = True
+        self.buffer.extend(chunk)
+
+    def read_head(self) -> bytes:
+        while True:
+            end = self.buffer.find(b"\r\n\r\n")
+            if end >= 0:
+                if end > MAX_HEADER_BYTES:
+                    raise _BridgeHTTPError(400, "BRIDGE_HTTP_HEADER_LIMIT", "header block too large")
+                head = bytes(self.buffer[:end])
+                del self.buffer[:end + 4]
+                return head
+            if len(self.buffer) > MAX_HEADER_BYTES:
+                raise _BridgeHTTPError(400, "BRIDGE_HTTP_HEADER_LIMIT", "header block too large")
+            if _has_bare_lf(self.buffer):
+                raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "LF-only header grammar")
+            idle = HTTP_HEADER_IDLE_TIMEOUT if self.received_any else HTTP_CONNECT_TIMEOUT
+            self._receive(idle)
+
+    def read_body(self, length: int) -> bytes:
+        while len(self.buffer) < length:
+            self._receive(HTTP_TOTAL_TIMEOUT)
+        body = bytes(self.buffer[:length])
+        del self.buffer[:length]
+        return body
+
+    def assert_no_trailing(self) -> None:
+        if self.buffer:
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_SMUGGLING", "bytes after request body")
+        # Dispatch разрешён только после EOF. Иначе второй request может прийти
+        # отдельным TCP-сегментом уже после zero-time проверки и до dispatch.
+        while True:
+            remaining = HTTP_TOTAL_TIMEOUT - (time.monotonic() - self.started)
+            if remaining <= 0:
+                raise _BridgeHTTPError(408, "BRIDGE_HTTP_TIMEOUT", "total request timeout")
+            self.sock.settimeout(remaining)
+            try:
+                extra = self.sock.recv(65536)
+            except socket.timeout:
+                raise _BridgeHTTPError(
+                    408, "BRIDGE_HTTP_TIMEOUT", "client did not half-close request",
+                ) from None
+            if not extra:
+                return
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_SMUGGLING", "bytes after request body")
+
+
+def _parse_http_request(head: bytes) -> _HTTPRequest:
+    lines = head.split(b"\r\n")
+    if not lines or any(not line for line in lines):
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "empty request line or header")
+    if len(lines[0]) > MAX_HEADER_LINE or _has_bare_lf(head):
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "bad request line grammar")
+    try:
+        request_line = lines[0].decode("ascii")
+    except UnicodeDecodeError:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "non-ASCII request line") from None
+    match = _REQUEST_LINE.fullmatch(request_line)
+    if match is None:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "request line is not canonical")
+    method, path, version = match.groups()
+    if version != "HTTP/1.1":
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_VERSION", "only HTTP/1.1 is accepted")
+    if method not in {"GET", "POST"}:
+        raise _BridgeHTTPError(405, "BRIDGE_HTTP_METHOD", "method is not accepted")
+    if method == "GET" and path in POST_ROUTES:
+        raise _BridgeHTTPError(405, "BRIDGE_HTTP_METHOD", "POST route requires POST")
+    if method == "POST" and path == "/health":
+        raise _BridgeHTTPError(405, "BRIDGE_HTTP_METHOD", "health route requires GET")
+    if path not in POST_ROUTES | {"/health"}:
+        raise _BridgeHTTPError(404, "BRIDGE_HTTP_PATH", "path is not in the canonical route set")
+    if len(lines) - 1 > MAX_HEADERS:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_HEADER_LIMIT", "too many headers")
+
+    headers: dict[str, str] = {}
+    for line in lines[1:]:
+        if len(line) > MAX_HEADER_LINE or line[:1] in (b" ", b"\t"):
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "bad header line")
+        if any(byte < 0x20 or byte > 0x7E for byte in line) or b":" not in line:
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "bad header bytes")
+        raw_name, raw_value = line.split(b":", 1)
+        if _HEADER_NAME.fullmatch(raw_name.decode("ascii")) is None:
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "bad header name")
+        if not raw_value.startswith(b" "):
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "header separator must be ': '")
+        raw_value = raw_value[1:]
+        name = raw_name.decode("ascii").lower()
+        value = raw_value.decode("ascii")
+        if name in headers:
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_DUPLICATE_HEADER", "duplicate header")
+        # Один ведущий пробел после двоеточия — разделитель, второй уже не каноничен.
+        # Для Content-Length оставляем его лексическому парсеру: ожидаемый код BAD_LENGTH.
+        if (value.startswith(" ") or value.endswith(" ")) and name != "content-length":
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "non-canonical header value")
+        headers[name] = value
+
+    if "transfer-encoding" in headers:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_CHUNKED_FORBIDDEN", "transfer encoding is forbidden")
+    if "expect" in headers:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_EXPECT_FORBIDDEN", "expect is forbidden")
+    allowed = REQUEST_HEADERS if method == "POST" else frozenset({"host", "connection"})
+    for name in headers:
+        if name not in allowed:
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_FORBIDDEN_HEADER", "header is not allowed")
+
+    host = headers.get("host", "")
+    if _HOST_VALUE.fullmatch(host) is None:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_BAD_HOST", "host is missing or malformed")
+    if host.startswith("["):
+        port_text = host[host.index("]") + 2:]
+    elif ":" in host:
+        port_text = host.rsplit(":", 1)[1]
+    else:
+        port_text = ""
+    if port_text and not 1 <= int(port_text) <= 65535:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_BAD_HOST", "host port is out of range")
+    if headers.get("connection", "").lower() != "close":
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_CONNECTION", "connection must be close")
+    if "x-request-id" in headers and _REQUEST_ID.fullmatch(headers["x-request-id"]) is None:
+        raise _BridgeHTTPError(400, "BRIDGE_HTTP_MALFORMED", "bad request id")
+
+    token: str | None = None
+    length = 0
+    if method == "POST":
+        if headers.get("content-type", "").lower() != "application/json":
+            raise _BridgeHTTPError(415, "BRIDGE_HTTP_CONTENT_TYPE", "content type must be application/json")
+        authorization = headers.get("authorization", "")
+        auth_match = re.fullmatch(r"(?i:Bearer) ([!-~]+)", authorization)
+        if auth_match is None:
+            raise _BridgeHTTPError(401, "BRIDGE_HTTP_UNAUTHORIZED", "local bearer token is required")
+        token = authorization.split(" ", 1)[1]
+        raw_length = headers.get("content-length", "")
+        if _LENGTH.fullmatch(raw_length) is None:
+            raise _BridgeHTTPError(400, "BRIDGE_HTTP_BAD_LENGTH", "content length is not canonical")
+        length = int(raw_length)
+        if length > MAX_BODY:
+            raise _BridgeHTTPError(413, "BRIDGE_HTTP_LENGTH_CAP", "request body exceeds 8 MiB")
+    return _HTTPRequest(method, path, headers, length, token)
+
+
 def make_handler(bridge: Bridge):
-    class Handler(BaseHTTPRequestHandler):
-        protocol_version = "HTTP/1.1"
+    class Handler(BaseRequestHandler):
+        def setup(self) -> None:
+            # connect deadline принятого сокета и отдельный write deadline ответа.
+            self.request.settimeout(HTTP_CONNECT_TIMEOUT)
+            self._path = "?"
 
-        def log_message(self, *args):  # noqa: D401 — глушим стандартный лог: он пишет URL
-            return
-
-        def _reject(self, code: int, reason: str) -> None:
-            payload = json.dumps({"error": reason}, ensure_ascii=False).encode("utf-8")
-            self.send_response(code)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(payload)))
-            self.end_headers()
-            self.wfile.write(payload)
-
-        def do_POST(self) -> None:  # noqa: N802 — имя требует http.server
-            started = time.monotonic()
-            if not self.path.startswith(ALLOWED_PREFIX):
-                bridge.log({"ts": time.time(), "path": "?", "status": 404, "reason": "путь вне /v1"})
-                self._reject(404, "только /v1/*")
+        def _respond(self, status: int, payload: bytes,
+                     content_type: str = "application/json") -> None:
+            status = canonical_response_status(status)
+            reasons = {
+                200: "OK", 400: "Bad Request", 401: "Unauthorized", 404: "Not Found",
+                405: "Method Not Allowed", 408: "Request Timeout", 413: "Payload Too Large",
+                415: "Unsupported Media Type", 429: "Too Many Requests", 500: "Internal Server Error",
+                502: "Bad Gateway", 503: "Service Unavailable", 504: "Gateway Timeout",
+            }
+            reason = reasons.get(status, "Upstream Response")
+            head = (
+                f"HTTP/1.1 {status} {reason}\r\n"
+                f"Content-Type: {content_type}\r\n"
+                f"Content-Length: {len(payload)}\r\n"
+                "Connection: close\r\n\r\n"
+            ).encode("ascii")
+            self.request.settimeout(HTTP_WRITE_TIMEOUT)
+            try:
+                self.request.sendall(head + payload)
+            except OSError:
+                # Клиент уже ушёл; попытка ответа не должна печатать заголовки/тело в stderr.
                 return
 
-            auth = self.headers.get("Authorization", "")
-            token = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
-            if not token or token != bridge.local_token:
+        def _reject(self, status: int, code: str, message: str) -> None:
+            bridge.log({"ts": time.time(), "path": self._path, "status": status, "reason": code})
+            payload = json.dumps(
+                {"code": code, "message": message}, ensure_ascii=False, separators=(",", ":"),
+            ).encode("utf-8")
+            self._respond(status, payload)
+
+        def _reject_problem(self, problem: _BridgeHTTPError) -> None:
+            self._reject(problem.status, problem.code, problem.message)
+
+        def handle(self) -> None:
+            reader = _SocketReader(self.request)
+            try:
+                head = reader.read_head()
+            except EOFError:
+                return
+            except _BridgeHTTPError as problem:
+                self._reject_problem(problem)
+                return
+            except Exception:  # noqa: BLE001 — сырой запрос не попадает в traceback
+                self._reject(500, "BRIDGE_HTTP_INTERNAL", "request parsing failed")
+                return
+
+            try:
+                http_request = _parse_http_request(head)
+                self._path = http_request.path
+                if http_request.token is not None and not hmac.compare_digest(
+                    http_request.token.encode("ascii"), bridge.local_token.encode("utf-8"),
+                ):
+                    raise _BridgeHTTPError(401, "BRIDGE_HTTP_UNAUTHORIZED", "invalid local token")
+                body = reader.read_body(http_request.length) if http_request.method == "POST" else b""
+                reader.assert_no_trailing()
+            except EOFError:
+                self._reject(400, "BRIDGE_HTTP_BAD_BODY", "request body ended early")
+                return
+            except _BridgeHTTPError as problem:
+                self._reject_problem(problem)
+                return
+            except Exception:  # noqa: BLE001 — fail-closed без отражения входных данных
+                self._reject(500, "BRIDGE_HTTP_INTERNAL", "request validation failed")
+                return
+
+            try:
+                self._dispatch(http_request, body, reader.started)
+            except _BridgeHTTPError as problem:
+                self._reject_problem(problem)
+            except Exception as error:  # noqa: BLE001 — в журнал только тип, не содержимое
                 bridge.log({
-                    "ts": time.time(), "path": self.path, "status": 401,
-                    "reason": "неверный локальный токен",
+                    "ts": time.time(), "path": self._path, "status": 500,
+                    "reason": f"downstream: {type(error).__name__}",
                 })
-                self._reject(401, "нужен локальный токен моста")
+                self._reject(500, "BRIDGE_HTTP_INTERNAL", "downstream request failed")
+
+        def _dispatch(self, http_request: _HTTPRequest, body: bytes, started: float) -> None:
+            if http_request.method == "GET":
+                self._respond(200, b'{"ok":true}')
                 return
 
-            length = int(self.headers.get("Content-Length") or 0)
-            if length <= 0 or length > MAX_BODY:
-                bridge.log({"ts": time.time(), "path": self.path, "status": 413,
-                            "reason": f"длина {length}"})
-                self._reject(413, "тело пустое или слишком большое")
-                return
-
-            body = self.rfile.read(length)
             # Приём событий журнала: авторитетную копию ведёт хост, комнате остаётся кэш.
             # Отдельный путь, чтобы «событие» нельзя было спутать с запросом к модели.
-            if self.path.rstrip("/") == "/v1/journal":
+            if http_request.path == "/v1/journal":
                 try:
                     from bin import host_journal  # запуск как модуль
                 except Exception:  # noqa: BLE001 — запуск как `python bin/bridge.py`
                     try:
                         import host_journal  # type: ignore[no-redef]
                     except Exception as exc:  # noqa: BLE001
-                        self._reject(500, f"журнал хоста недоступен: {type(exc).__name__}")
-                        return
+                        raise _BridgeHTTPError(
+                            500, "BRIDGE_HTTP_JOURNAL_UNAVAILABLE",
+                            f"журнал хоста недоступен: {type(exc).__name__}",
+                        ) from None
                 try:
                     request = json.loads(body.decode("utf-8"))
                     run = str(request["run"])
                     event = str(request["event"])
                 except (ValueError, KeyError, TypeError) as exc:
-                    bridge.log({"ts": time.time(), "path": self.path, "status": 400,
+                    bridge.log({"ts": time.time(), "path": self._path, "status": 400,
                                 "reason": f"плохое событие: {type(exc).__name__}"})
-                    self._reject(400, "нужно {run, event}")
-                    return
+                    raise _BridgeHTTPError(400, "BRIDGE_HTTP_BAD_JSON", "нужно {run, event}") from None
                 try:
                     entry = host_journal.append(run, event)
                 except OSError as exc:
-                    bridge.log({"ts": time.time(), "path": self.path, "status": 500,
+                    bridge.log({"ts": time.time(), "path": self._path, "status": 500,
                                 "reason": f"запись: {type(exc).__name__}"})
-                    self._reject(500, "не записать событие")
-                    return
-                bridge.log({"ts": time.time(), "path": self.path, "status": 200,
+                    raise _BridgeHTTPError(500, "BRIDGE_HTTP_JOURNAL_WRITE", "не записать событие") from None
+                bridge.log({"ts": time.time(), "path": self._path, "status": 200,
                             "run": run, "seq": entry["seq"]})
-                answer = json.dumps({"seq": entry["seq"], "sha256": entry["sha256"]}).encode()
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", str(len(answer)))
-                self.end_headers()
-                self.wfile.write(answer)
+                answer = json.dumps(
+                    {"seq": entry["seq"], "sha256": entry["sha256"]}, separators=(",", ":"),
+                ).encode("utf-8")
+                self._respond(200, answer)
                 return
+
             # Выход в сеть для агента (ADR-0054): `search …`, `open 3`, `links`,
             # `follow 2`. Разбор — в bin/net.py, здесь только транспорт: мост не
             # ходит по адресам из запроса, он передаёт строку одному исполнителю.
-            if self.path.rstrip("/") == "/v1/net":
+            if http_request.path == "/v1/net":
                 try:
                     request = json.loads(body.decode("utf-8"))
                     line = str(request["request"]).strip()
                 except (ValueError, KeyError, TypeError):
-                    self._reject(400, "нужно {request}")
-                    return
+                    raise _BridgeHTTPError(400, "BRIDGE_HTTP_BAD_JSON", "нужно {request}") from None
                 if not line:
-                    self._reject(400, "пустой запрос")
-                    return
+                    raise _BridgeHTTPError(400, "BRIDGE_HTTP_BAD_JSON", "пустой запрос")
                 try:
                     # Разбор строки — как у оболочки, но без оболочки: shlex
                     # сохраняет кавычки («search "два слова"»), а split() их
@@ -375,10 +634,9 @@ def make_handler(bridge: Bridge):
                         argv = line.split()
                     command, why = bridge.net_command(argv)
                     if not command:
-                        bridge.log({"ts": time.time(), "path": self.path, "status": 503,
+                        bridge.log({"ts": time.time(), "path": self._path, "status": 503,
                                     "reason": why})
-                        self._reject(503, why)
-                        return
+                        raise _BridgeHTTPError(503, "BRIDGE_HTTP_NET_UNAVAILABLE", why)
                     result = subprocess.run(
                         command,
                         capture_output=True, text=True, encoding="utf-8",
@@ -386,20 +644,20 @@ def make_handler(bridge: Bridge):
                         env=net_child_env(), close_fds=True,
                     )
                 except subprocess.TimeoutExpired:
-                    bridge.log({"ts": time.time(), "path": self.path, "status": 504,
+                    bridge.log({"ts": time.time(), "path": self._path, "status": 504,
                                 "reason": "таймаут net"})
-                    self._reject(504, "сеть не ответила за 120 с")
-                    return
+                    raise _BridgeHTTPError(504, "BRIDGE_HTTP_NET_TIMEOUT", "сеть не ответила за 120 с") from None
                 output = (result.stdout or "").strip()
                 error = (result.stderr or "").strip()
                 # Лаунчер не смог поднять изоляцию уже после успешной пробы:
                 # это отказ механизма, а не ошибка net.py; вызывающий видит 503.
                 if result.returncode != 0 and "LOWIL_REFUSED=1" in error:
-                    bridge.log({"ts": time.time(), "path": self.path, "status": 503,
+                    bridge.log({"ts": time.time(), "path": self._path, "status": 503,
                                 "reason": "win_lowil отказал"})
-                    self._reject(503, "win_lowil не смог запустить изоляцию (fail-closed)")
-                    return
-                bridge.log({"ts": time.time(), "path": self.path, "status": 200,
+                    raise _BridgeHTTPError(
+                        503, "BRIDGE_HTTP_NET_ISOLATION", "win_lowil не смог запустить изоляцию (fail-closed)",
+                    )
+                bridge.log({"ts": time.time(), "path": self._path, "status": 200,
                             "cmd": line.split()[0], "code": result.returncode,
                             "bytes": len(output)})
                 # Отказ возвращается как есть, с кодом: пустой список выглядел бы
@@ -407,15 +665,15 @@ def make_handler(bridge: Bridge):
                 answer = json.dumps(
                     {"output": output} if result.returncode == 0
                     else {"error": error.split(":")[0] or "net", "message": error or output},
-                    ensure_ascii=False).encode("utf-8")
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Content-Length", str(len(answer)))
-                self.end_headers()
-                self.wfile.write(answer)
+                    ensure_ascii=False, separators=(",", ":"),
+                ).encode("utf-8")
+                self._respond(200, answer)
                 return
+
             status, payload, reason = bridge.forward(
-                body, self.path, {"content-type": self.headers.get("Content-Type", "")})
+                body, http_request.path,
+                {"content-type": http_request.headers.get("content-type", "")},
+            )
             usage = {}
             try:
                 parsed = json.loads(payload.decode("utf-8"))
@@ -428,33 +686,18 @@ def make_handler(bridge: Bridge):
                 usage = {}
             bridge.log({
                 "ts": time.time(),
-                "path": self.path,
+                "path": self._path,
                 "status": status,
                 "bytes_in": len(body),
                 "bytes_out": len(payload),
                 "ms": round((time.monotonic() - started) * 1000),
-                "token": token_fingerprint(token),
+                "token": token_fingerprint(http_request.token or ""),
                 "reason": reason or None,
                 "usage": usage or None,
                 "session": token_fingerprint(bridge.session),
                 # тела и заголовки не пишем: в них запрос пользователя и ключ провайдера
             })
-            self.send_response(status)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(payload)))
-            self.end_headers()
-            self.wfile.write(payload)
-
-        def do_GET(self) -> None:  # noqa: N802
-            if self.path == "/health":
-                payload = b'{"ok": true}'
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", str(len(payload)))
-                self.end_headers()
-                self.wfile.write(payload)
-                return
-            self._reject(404, "только POST /v1/*")
+            self._respond(status, payload)
 
     return Handler
 

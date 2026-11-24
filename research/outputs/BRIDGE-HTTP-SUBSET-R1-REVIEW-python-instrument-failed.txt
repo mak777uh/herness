@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\tests\test_bridge_http_review.py", line 228, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\tests\test_bridge_http_review.py", line 150, in main
+    raw = read_all(sock, 2.0)
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\tests\test_bridge_http_review.py", line 37, in read_all
+    chunk = sock.recv(65536)
+ConnectionAbortedError: [WinError 10053] Программа на вашем хост-компьютере разорвала установленное подключение
+
+REVIEW_RC=1

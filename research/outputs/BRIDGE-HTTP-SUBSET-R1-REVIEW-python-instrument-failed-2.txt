@@ -1,0 +1,11 @@
+[FAIL] header-separator: header-separator: ожидался 4xx/5xx, получено 200
+[FAIL] auth-before-body: status=401, elapsed=0.004s
+[FAIL] delayed-pipeline: delayed-pipeline: ожидался 4xx/5xx, получено None
+[FAIL] connect-timeout: status=None, code=None, elapsed=1.504s
+[ok] header-idle-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=5.022s
+[ok] total-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=0.219s
+[ok] write-timeout: timeout=0.2, elapsed=0.201s
+[FAIL] status-policy: module 'bin.bridge' has no attribute 'canonical_response_status'
+проверок: 8; провалов: 5
+
+REVIEW_RC=1

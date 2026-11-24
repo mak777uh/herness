@@ -12,13 +12,13 @@
 
 from __future__ import annotations
 
+import http.client
 import os
 import pathlib
 import socket
 import subprocess
 import sys
 import time
-import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PORT = 8794
@@ -46,11 +46,20 @@ def start(port: int) -> subprocess.Popen:
 
 
 def health(port: int) -> int:
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
     try:
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=3) as r:
-            return r.status
+        connection.putrequest("GET", "/health", skip_host=True, skip_accept_encoding=True)
+        connection.putheader("Host", f"127.0.0.1:{port}")
+        connection.putheader("Connection", "close")
+        connection.endheaders()
+        connection.sock.shutdown(socket.SHUT_WR)
+        response = connection.getresponse()
+        response.read()
+        return int(response.status)
     except Exception:  # noqa: BLE001
         return 0
+    finally:
+        connection.close()
 
 
 def main() -> int:

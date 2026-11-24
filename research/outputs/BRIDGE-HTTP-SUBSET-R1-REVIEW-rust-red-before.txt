@@ -1,0 +1,14 @@
+Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs)
+Finished `release` profile [optimized] target(s) in 15.95s
+test model::tests::review_emit_rejects_empty_body ... FAILED
+test model::tests::review_emit_rejects_dns_hostname ... FAILED
+test model::tests::review_response_rejects_obs_text ... FAILED
+test model::tests::review_response_requires_json_content_type ... FAILED
+test model::tests::review_response_requires_header_separator ... FAILED
+test model::tests::review_response_accepts_policy_statuses ... FAILED
+test result: FAILED. 166 passed; 6 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+error: test failed, to rerun pass `--lib`
+
+[FAIL] провалов: 6
+
+REVIEW_RC=1

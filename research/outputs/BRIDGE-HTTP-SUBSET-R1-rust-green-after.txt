@@ -1,0 +1,35 @@
+BRIDGE-HTTP-SUBSET-R1 — Rust GREEN after implementation (scoped result)
+Baseline commit: eb35b99cdf9e3119d56bdb45cb1c997250cd82a8
+Command: python bin/rust_tests.py
+Working directory: C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness
+Return code: 1
+Implementation: core-rs/src/model.rs only; preregistration and thresholds unchanged.
+
+Full command output:
+Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs)
+Finished `release` profile [optimized] target(s) in 20.60s
+test result: ok. 162 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test отказ_сети_тоже_помечен_как_внешний ... FAILED
+test успешный_ответ_помечен_как_внешний ... FAILED
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+error: test failed, to rerun pass `--test external_taint`
+
+[FAIL] провалов: 2
+
+Scoped model.rs controls after implementation:
+- Canonical route emits: 3/3 passed with exact request bytes for chat, journal, and net.
+- Emit negatives: 6/6 passed; invalid inputs were rejected before socket connection/write.
+- Response negatives: 12/12 passed. The two baseline guards (chunked body and 3xx) remain guards; the other ten are newly closed.
+- Canonical 200/error response positives: 2/2 passed.
+- Incomplete-response propagation: journal 1/1 and net 1/1 passed.
+- Unknown-cost positive control: passed.
+
+Verdict:
+- model.rs unit binary: GREEN, 162 passed / 0 failed.
+- Full requested command: NOT GREEN, 162 passed / 2 failed.
+- Residual limitation: tests/external_taint.rs is outside the user's one-file edit scope and still emits two legacy responses without Content-Length or Connection: close. The strict net client correctly rejects both with "нет Content-Length". Those fixtures require canonical Content-Length + Connection: close before the full suite can be green; weakening the parser to accommodate them would violate the task.
+
+A focused diagnostic command, `cargo test --release --test external_taint -- --nocapture`, returned rc=101 and confirmed both failures are the missing Content-Length in that out-of-scope fixture file.

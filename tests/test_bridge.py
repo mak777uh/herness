@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import http.client
 import json
+import socket
 import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -71,16 +71,31 @@ def with_bridge(upstream_url: str, log_path: Path):
     return server.server_address[1], token
 
 
-def post(port: int, path: str, token: str | None, body: bytes) -> tuple[int, bytes]:
-    request = urllib.request.Request(f"http://127.0.0.1:{port}{path}", data=body, method="POST")
-    request.add_header("Content-Type", "application/json")
-    if token:
-        request.add_header("Authorization", f"Bearer {token}")
+def exchange(port: int, method: str, path: str, headers: list[tuple[str, str]],
+            body: bytes = b"") -> tuple[int, bytes]:
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
     try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            return int(response.status), response.read()
-    except urllib.error.HTTPError as error:
-        return int(error.code), error.read()
+        connection.putrequest(method, path, skip_host=True, skip_accept_encoding=True)
+        for name, value in headers:
+            connection.putheader(name, value)
+        connection.endheaders(body)
+        connection.sock.shutdown(socket.SHUT_WR)
+        response = connection.getresponse()
+        return int(response.status), response.read()
+    finally:
+        connection.close()
+
+
+def post(port: int, path: str, token: str | None, body: bytes) -> tuple[int, bytes]:
+    headers = [("Host", f"127.0.0.1:{port}")]
+    if token:
+        headers.append(("Authorization", f"Bearer {token}"))
+    headers.extend([
+        ("Content-Type", "application/json"),
+        ("Content-Length", str(len(body))),
+        ("Connection", "close"),
+    ])
+    return exchange(port, "POST", path, headers, body)
 
 
 @case("без локального токена — 401, провайдер не тронут")

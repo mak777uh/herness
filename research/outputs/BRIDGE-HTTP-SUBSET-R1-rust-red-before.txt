@@ -1,0 +1,33 @@
+BRIDGE-HTTP-SUBSET-R1 — Rust RED before implementation
+Baseline commit: eb35b99cdf9e3119d56bdb45cb1c997250cd82a8
+Command: python bin/rust_tests.py
+Working directory: C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness
+Return code: 1
+Implementation state: core-rs/src/model.rs production code unchanged; tests and fixtures adjusted first.
+
+Full command output:
+Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs)
+test model::tests::response_rejects_missing_content_length ... FAILED
+test model::tests::response_rejects_plus_content_length ... FAILED
+test model::tests::response_rejects_short_body ... FAILED
+test model::tests::response_rejects_trailing_body_byte ... FAILED
+test model::tests::response_rejects_transfer_encoding ... FAILED
+test model::tests::response_rejects_oversized_response ... FAILED
+test model::tests::emit_rejects_empty_token ... FAILED
+test model::tests::emit_rejects_unknown_path ... FAILED
+test model::tests::emit_rejects_token_crlf ... FAILED
+test model::tests::emit_rejects_path_query ... FAILED
+test result: FAILED. 143 passed; 19 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+error: test failed, to rerun pass `--lib`
+
+[FAIL] провалов: 19
+
+RED control inventory (from the executed test assertions):
+- Canonical route emits: 2/3 passed; /v1/net emitted the mutable chat path and failed exact-byte comparison.
+- Emit negatives: 0/6 met the new contract. Host CRLF and port 0 failed only because the test requires typed host/port validation rather than a generic transport error; token CRLF, unknown path, path query, and empty token reached the loopback socket.
+- Response negatives: 10/12 failed because baseline accepted the malformed framing; chunked-body and 3xx were existing guards and already passed. The 10 unsafe acceptances were HTTP/1.0, LF-only, missing Content-Length, duplicate Content-Length, +5 Content-Length, Transfer-Encoding, short body, trailing body byte, oversized response, and bad status line.
+- Canonical 200/error response positives: 2/2 passed.
+- Additional incomplete-response propagation controls: journal and net both failed; baseline discarded the read result and reported a later generic error.
+- Unknown-cost positive control passed on baseline.
+
+The test binary failed, so integration test binaries were not reached by this RED run.
