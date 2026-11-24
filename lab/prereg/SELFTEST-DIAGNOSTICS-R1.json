@@ -1,0 +1,36 @@
+{
+  "schema": 2,
+  "id": "SELFTEST-DIAGNOSTICS-R1",
+  "date": "2026-11-25",
+  "question": "Как сделать причину failed suite в CI selftest диагностируемой, не меняя pass/fail, thresholds, N/A и существующий corpus?",
+  "hypothesis": "Если hs.py selftest выводит bounded tail уже сохранённого SuiteResult.output только для failed suite тем же способом, что test_manifest, то CI покажет конкретный FAIL, а успешные suite, rc, thresholds и N/A останутся без изменений.",
+  "criterion": "PASS только если baseline bin/hs.py SHA-256 05c13c057e209adf67931fddd171b8fbd6c198172cd831c846f179fc673f492f и tests/test-manifest.json SHA-256 30580fbd4d8098f8938c6f35f5de44114f591a4a6bea9877596c1da31c5b54b4 зафиксированы до кода; R1 focused даёт 6/6 на Windows/POSIX; failed suite печатает summary, note и последние не более 30 строк output; successful suite не печатает payload; пустой output безопасен; cmd_selftest сохраняет rc=1 на synthetic failed suite; manifest thresholds, N/A и gates не ослаблены.",
+  "arms": [
+    "A (baseline RED): cmd_selftest сохраняет SuiteResult.output, но печатает только result.summary(); точная причина CI FAIL в логе отсутствует.",
+    "B (R1 correction): отдельный formatter добавляет note и bounded tail только при result.ok=false; cmd_selftest использует его без изменения логики result.ok и итогового rc.",
+    "C (controls): failed diagnostics, 30-line bound, successful payload suppression, empty output, note visibility и интеграционный synthetic failed suite с rc=1."
+  ],
+  "sensitivity": "Проверяются наличие диагностического маркера, отсутствие старой строки за 30-line bound, отсутствие payload успешного suite, безопасный empty output, note и интеграционный rc. Порог 6/6 не снижается; N/A не превращается в PASS.",
+  "unit_of_analysis": "один SuiteResult и один проход cmd_selftest с synthetic manifest result",
+  "primary_metric": "focused_controls=6/6; focused_failed=0; windows_rc=0; posix_rc=0; synthetic_failed_rc=1; successful_payload_leaked=0; lines_beyond_tail=0",
+  "test": "python tests/test_selftest_diagnostics.py; python bin/test_manifest.py --check; python bin/hs.py selftest; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate",
+  "stopping_rule": "Сначала запечатать prereg и сохранить RED. Затем изменить только bin/hs.py, добавить tests/test_selftest_diagnostics.py и один manifest entry. Остановиться при изменении rc/threshold/N/A, печати payload успешного suite, выходе за 30 строк, ослаблении gates или любом focused провале.",
+  "fixture": "Synthetic SuiteResult и monkeypatch test_manifest в tempdir; сеть, секреты, owner keys и реальные аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX повтор выполняется отдельно",
+    "network": "не требуется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском",
+    "baseline_head": "1e7e02c3e8e54002aaf06a61663faef862bb9274",
+    "baseline_hs_sha256": "05c13c057e209adf67931fddd171b8fbd6c198172cd831c846f179fc673f492f",
+    "baseline_manifest_sha256": "30580fbd4d8098f8938c6f35f5de44114f591a4a6bea9877596c1da31c5b54b4",
+    "ci_run": "45496321658"
+  },
+  "known_limits": [
+    "Диагностика не исправляет сами CI residuals и не доказывает их причину",
+    "Tail ограничен 30 строками и не шире уже существующего вывода test_manifest",
+    "Успешный suite по-прежнему печатает только summary; N/A остаётся не-PASS"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-residuals"]
+}

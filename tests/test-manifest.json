@@ -65,6 +65,7 @@
     {"id": "test_rust_tests_summary.py", "path": "tests/test_rust_tests_summary.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_seal.py", "path": "tests/test_seal.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_selfref.py", "path": "tests/test_selfref.py", "runner": "custom-main", "minimum_checks": 1},
+    {"id": "test_selftest_diagnostics.py", "path": "tests/test_selftest_diagnostics.py", "runner": "custom-main", "minimum_checks": 6},
     {"id": "test_store.py", "path": "tests/test_store.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_test_manifest.py", "path": "tests/test_test_manifest.py", "runner": "custom-main", "minimum_checks": 17},
     {"id": "test_tool_card.py", "path": "tests/test_tool_card.py", "runner": "custom-main", "minimum_checks": 1},

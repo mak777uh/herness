@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-11-24",
+ "updated_at": "2026-11-25",
  "program": {
   "name": "herness",
   "phase": "M0: прибор собран, внешних задач нет; идёт проверка предпосылки ядра",
@@ -791,6 +791,15 @@
    "claim": "C-0352",
    "conclusion": "research/outputs/PREREG-CORRECTION-OVERLAY-R2-CLOSURE.txt",
    "note": "PASS: 8/8 focused controls на Windows/POSIX, prereg rc=0 и 65/65 sensitivity, verify_claims --fast 313/0 после регистрации C-0352, seals 53/53. E-0075 сохранён открытым историческим RED 5/8 и 63/64. Sealed E-0074/E-0075/source/sidecars не изменены; unrelated incomplete prereg остаётся FAIL.",
+   "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0077",
+   "title": "SELFTEST-DIAGNOSTICS-R1: bounded diagnostics для failed suite",
+   "hypothesis": "Selftest может печатать bounded tail уже сохранённого SuiteResult.output только для failed suite, не меняя rc, thresholds, N/A и corpus.",
+   "prereg": "lab/prereg/SELFTEST-DIAGNOSTICS-R1.json",
+   "status": "open",
+   "note": "Prereg запечатан до кода: 5a6442e4c31c56f2…; baseline hs.py 05c13c05… и manifest 30580fbd…. Исторический RED сохранён: Windows/POSIX focused 0/6, rc=1; CI residuals не считаются исправленными.",
    "updated": "2026-11-25"
   }
  ]

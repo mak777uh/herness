@@ -1880,6 +1880,23 @@ def cmd_tests(args) -> int:
     return manifest_main(command)
 
 
+def selftest_suite_message(result) -> str:
+    """Summary для любого suite; bounded diagnostics только для failed suite.
+
+    Граница совпадает с `test_manifest`: note и последние не более 30 строк уже
+    сохранённого output. Успешный suite не печатает payload, verdict и rc не меняются.
+    """
+    message = result.summary()
+    if result.ok:
+        return message
+    details: list[str] = []
+    if result.note:
+        details.append(f"   - {result.note}")
+    tail = result.output.strip().splitlines()[-30:]
+    details.extend(f"   | {line}" for line in tail)
+    return "\n".join([message, *details])
+
+
 def cmd_selftest(args) -> int:
     """Negative tests: a gate that cannot fail proves nothing."""
     results: list[tuple[bool, str]] = []
@@ -1946,7 +1963,7 @@ def cmd_selftest(args) -> int:
         if problems:
             results.append((False, "test manifest: " + "; ".join(problems)))
         for result in suite_results:
-            results.append((result.ok, f"{result.id}: {result.summary()}"))
+            results.append((result.ok, f"{result.id}: {selftest_suite_message(result)}"))
 
     with tempfile.TemporaryDirectory() as tmp3:
         docs = Path(tmp3) / "docs"
