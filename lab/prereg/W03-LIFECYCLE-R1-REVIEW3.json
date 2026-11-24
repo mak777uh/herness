@@ -1,0 +1,64 @@
+{
+  "schema": 2,
+  "id": "W03-LIFECYCLE-R1-REVIEW3",
+  "date": "2026-11-24",
+  "question": "Закрывают ли сбалансированные зарегистрированные фикстуры и acceptance-bypass metakontrol три findings независимого review E-0069 без переписывания sealed Review2 и без нового production-механизма?",
+  "hypothesis": "Если wrong-first, duplicate-end и after-end потоки иначе корректны, а после полного удаления соответствующей проверки helper становится пустым и acceptance становится PASS, то oracle доказывает именно acceptance bypass. Сбалансированный no-end при этом остаётся no-done, а валидный поток — PASS.",
+  "criterion": "PASS только при 9/9 Python Review3 controls на Windows и POSIX без N/A; три acceptance-bypass metakontrol обязаны показать пустой helper и PASS после in-memory удаления проверки. Исходные W03/Review1/Review2 prereg, corpus, Review1/Review2 tests, production Python/Rust и пороги 32/16/11 неизменны. Любой провал, N/A или ослабление означает отсутствие PASS.",
+  "arms": [
+    "A (review baseline): wrong-first Review2 содержит standalone step и после удаления guard остаётся FAIL по посторонним дефектам; Q03/Q06 не совпадают с зарегистрированными входами; exact_diagnostics=4 противоречит Q01–Q05.",
+    "B (correction): отдельный Review3 suite с balanced wrong-first/duplicate-end/after-end/no-end фикстурами, точными diagnostics, полными acceptance-bypass metakontrol, positive control и hash-integrity control; sealed E-0069 не редактируется."
+  ],
+  "sensitivity": "R02/R04/R06 не ограничиваются исчезновением строки: после in-memory удаления first guard, обоих post-end guards или after-end guard они требуют helper=[] и acceptance PASS на иначе корректном потоке. R07 отдельно требует no-done при пустом lifecycle helper. R09 сверяет байтовые SHA-256 всех защищённых артефактов.",
+  "unit_of_analysis": "один synthetic event stream, одна exact lifecycle diagnostic или один acceptance-bypass metakontrol",
+  "primary_metric": "python_review3_controls=9; exact_diagnostics=3; acceptance_bypass_metacontrols=3; false_pass=0; source_prereg_changed=0; source_corpus_changed=0; production_changed=0; threshold_changed=0; platform_na=0",
+  "test": "python tests/test_w03_lifecycle_review3.py; python tests/test_w03_lifecycle_review2.py; python tests/test_w03_lifecycle_review1.py; python tests/test_w03_lifecycle.py; python bin/seal.py verify-all; python bin/lab.py validate; полный Windows test manifest; отдельный POSIX focused run",
+  "stopping_rule": "Сначала сохранить independent review3 и refs search, зарегистрировать и запечатать E-0070/E-0071. Затем сохранить in-memory pre-guard RED на Windows/POSIX, добавить только Review3 instrument и manifest entry, выполнить focused/regression и полный Windows manifest. Остановиться при первом необъяснённом провале; не менять production, sealed corpus, thresholds и refusal-code dictionary.",
+  "fixture": "Только tempfile и синтетические HSJ2 event streams; in-memory source mutation и monkeypatch исключительно для metakontrol; реальные секреты, модель, сеть, QEMU и внешние аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется; cargo offline",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует (rc=2); пусто не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "R01", "input": "note перед + корректный call→result→step + run/end", "expect": "FAIL и exact первое событие note, а не run/start"},
+    {"id": "R02", "input": "R01 после удаления first-event guard", "expect": "helper=[] и acceptance PASS; исходный bypass воспроизведён"},
+    {"id": "R03", "input": "корректный call→result→step + два run/end", "expect": "FAIL и exact повторный run/end"},
+    {"id": "R04", "input": "R03 после удаления duplicate-end и post-end guard для run/end", "expect": "helper=[] и acceptance PASS; исходный bypass воспроизведён"},
+    {"id": "R05", "input": "корректный call→result→step + run/end + note", "expect": "FAIL и exact событие note после run/end"},
+    {"id": "R06", "input": "R05 после удаления after-end guard", "expect": "helper=[] и acceptance PASS; исходный bypass воспроизведён"},
+    {"id": "R07", "input": "корректный call→result→step без run/end", "expect": "helper=[]; criteria no-done PASS; criteria done FAIL"},
+    {"id": "R08", "input": "две корректные пары call→result→step + run/end", "expect": "helper=[] и acceptance PASS"},
+    {"id": "R09", "input": "SHA-256 защищённых prereg/corpus/tests/production", "expect": "все хеши равны baseline_sha256"}
+  ],
+  "threshold": {
+    "python_review3_controls": 9,
+    "windows_python_passed": 9,
+    "posix_python_passed": 9,
+    "acceptance_bypass_metacontrols": 3,
+    "rust_review2_windows_passed": 1,
+    "rust_review2_posix_passed": 1,
+    "rust_w03_windows_passed": 4,
+    "platform_na": 0,
+    "false_pass": 0
+  },
+  "baseline_sha256": {
+    "bin/accept.py": "83983535a3b579ae59f15b0090c77b4c89d349dab2d9c6ccaec03887c2890651",
+    "core-rs/src/loopmod.rs": "74c77403d64f31c2fbc772fbc49c937fcbad238c8f1bb244eb387cb40e4fb2583",
+    "tests/test_w03_lifecycle_review2.py": "1ae69126de8131ada2c2c514569d672a6a489ec7042b17178bee4ba13ebda05c",
+    "tests/test_w03_lifecycle_review1.py": "d5838df9b76706e01410d0413037fa063196b74ea2424cdd61e65ed0154e676b",
+    "tests/vectors/w03-lifecycle.json": "81f7a62c26a718695df27b8d652d1d34f834ae92beef5ac5249656649fd7eaef",
+    "lab/prereg/W03-LIFECYCLE-R1.json": "555c990eded8fe81f4e0e04b8d6f2f807b9198796203eabe6e85789884e5a175",
+    "lab/prereg/W03-LIFECYCLE-R1-REVIEW1.json": "2464eebf54c9b58acc367fdc30fc0d719aa6d5aa675a098c3983218987a968ff",
+    "lab/prereg/W03-LIFECYCLE-R1-REVIEW2.json": "c1fb818115114402473fed00199d78b74f4c2901bfac429e557768dc2df72e28"
+  },
+  "known_limits": [
+    "Review3 — instrument correction; production Python/Rust не меняется",
+    "Python намеренно не требует последний run/end в lifecycle helper; Rust дополнительно проверяет wrong-last",
+    "Review2 suite остаётся историческим evidence E-0069; её несбалансированные фикстуры не переписываются",
+    "PASS Review3 не закрывает W03 без независимого review, aggregate gates и отдельной metric correction E-0071"
+  ],
+  "owner_decision": "Автономная разработка в утверждённых W03 gates; commits/push в herness разрешены, production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-w03-lifecycle-r1-review3"]
+}

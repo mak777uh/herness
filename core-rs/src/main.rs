@@ -719,10 +719,8 @@ fn init_mode() -> ExitCode {
         };
         if env::var(hs_core::loopmod::LOOP_GUARD).is_ok() {
             // Рекурсия: цикл запустил сам себя. Это не «ещё один прогон», а утечка памяти.
-            println!("цикл: отказ — уже внутри цикла (защита от рекурсии)");
-            loop {
-                thread::sleep(Duration::from_secs(3600));
-            }
+            eprintln!("цикл: отказ — уже внутри цикла (защита от рекурсии)");
+            return ExitCode::FAILURE;
         }
         // Первый настоящий круг: цикл в комнате зовёт модель через мост на хосте (plain HTTP,
         // без TLS внутри — ADR-0046). Адрес 10.0.2.2 — это хост в сети QEMU user-mode.
@@ -786,8 +784,19 @@ fn init_mode() -> ExitCode {
                     unmount_workspace();
                 }
                 report_order_from_file("/journal.bin");
+                return if hs_core::loopmod::loop_succeeded_with_journal(
+                    &outcome,
+                    std::path::Path::new("/journal.bin"),
+                ) {
+                    ExitCode::SUCCESS
+                } else {
+                    ExitCode::FAILURE
+                };
             }
-            Err(error) => println!("цикл: не запустился ({error})"),
+            Err(error) => {
+                eprintln!("цикл: не запустился ({error})");
+                return ExitCode::FAILURE;
+            }
         }
     }
 

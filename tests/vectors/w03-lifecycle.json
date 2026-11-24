@@ -1,0 +1,52 @@
+{
+  "schema": "w03-lifecycle-corpus-v1",
+  "frozen": "2026-11-24",
+  "terminal": [
+    {"id": "done", "reply": "DONE готово", "expect": {"kind": "done", "text": "готово"}},
+    {"id": "done-bare", "reply": "DONE", "expect": {"kind": "done", "text": ""}},
+    {"id": "done-tab", "reply": "DONE\tготово", "expect": {"kind": "done", "text": "готово"}},
+    {"id": "blocked", "reply": "BLOCKED нужен доступ", "expect": {"kind": "blocked", "text": "нужен доступ"}},
+    {"id": "no-work", "reply": "NO-WORK устарело", "expect": {"kind": "no-work", "text": "устарело"}},
+    {"id": "tool", "reply": "TOOL read /mnt/a.md", "expect": {"kind": "tool", "name": "read", "arg": "/mnt/a.md"}},
+    {"id": "done-collision", "reply": "DONEXYZ", "expect": {"error": true}},
+    {"id": "blocked-collision", "reply": "BLOCKEDXYZ", "expect": {"error": true}},
+    {"id": "no-work-collision", "reply": "NO-WORKXYZ", "expect": {"error": true}}
+  ],
+  "statuses": [
+    {"id": "done", "events": ["run/start task: x", "claim/anchored /mnt/a.md:1", "run/end готово"], "expect": "done"},
+    {"id": "unverified", "events": ["run/start task: x", "claim/unverified нет опоры", "run/end готово"], "expect": "unverified"},
+    {"id": "done-no-anchor", "events": ["run/start task: x", "run/end готово"], "expect": "done-без-опоры"},
+    {"id": "unrecorded", "events": ["run/start task: x", "step/error хост не подтвердил шаг", "run/end готово"], "expect": "unrecorded"},
+    {"id": "budget-money", "events": ["run/start task: x", "step/error бюджет денег исчерпан", "run/end остановлен бюджетом"], "expect": "budget-money"},
+    {"id": "budget-time", "events": ["run/start task: x", "step/error бюджет времени исчерпан", "run/end остановлен бюджетом"], "expect": "budget-time"},
+    {"id": "unknown-cost", "events": ["run/start task: x", "claim/anchored /mnt/a.md:1", "step/error провайдер не сообщил расход: бюджет проверить нельзя", "run/end готово"], "expect": "unknown-cost"},
+    {"id": "no-end", "events": ["run/start task: x"], "expect": "no-done"},
+    {"id": "exhausted", "events": ["run/start task: x", "run/end шаги кончились без сигнала завершения"], "expect": "no-done"},
+    {"id": "blocked-precedes-error", "events": ["run/start task: x", "step/error провайдер не сообщил расход", "run/blocked нужен человек", "run/end ждёт человека"], "expect": "blocked"},
+    {"id": "no-work-precedes-error", "events": ["run/start task: x", "step/error хост не подтвердил шаг", "run/no-work устарело", "run/end делать нечего"], "expect": "no-work"},
+    {"id": "blocked-precedes-no-work", "events": ["run/start task: x", "run/no-work устарело", "run/blocked нужен человек", "run/end ждёт человека"], "expect": "blocked"},
+    {"id": "anchored-precedes-unverified", "events": ["run/start task: x", "claim/unverified нет опоры", "claim/anchored /mnt/a.md:1", "run/end готово"], "expect": "done"}
+  ],
+  "pairing": [
+    {"id": "valid", "events": ["run/start", "tool/call read a", "tool/result ok a", "step 1, потрачено 0", "run/end"], "valid": true},
+    {"id": "orphan", "events": ["run/start", "tool/result ok a", "run/end"], "valid": false},
+    {"id": "missing", "events": ["run/start", "tool/call read a", "run/end"], "valid": false},
+    {"id": "nested", "events": ["run/start", "tool/call read a", "tool/call read b", "tool/result ok b", "tool/result ok a", "step 1, потрачено 0", "step 2, потрачено 0", "run/end"], "valid": false},
+    {"id": "double-result", "events": ["run/start", "tool/call read a", "tool/result ok a", "tool/result ok a", "step 1, потрачено 0", "run/end"], "valid": false},
+    {"id": "step-mismatch", "events": ["run/start", "tool/call read a", "tool/result ok a", "run/end"], "valid": false}
+  ],
+  "authority": [
+    {"id": "structured-refusal", "granted": ["search"], "result": "err S6_CLOSURE_BREACH: инструмент write не выдан в этом прогоне", "accepted": true},
+    {"id": "legacy-refusal", "granted": ["search"], "result": "err инструмент write не выдан в этом прогоне", "accepted": false},
+    {"id": "unknown-code", "granted": ["search"], "result": "err S99_MADE_UP: инструмент write не выдан", "accepted": false},
+    {"id": "wrong-code", "granted": ["search"], "result": "err S1_SCHEMA: инструмент write не выдан", "accepted": false},
+    {"id": "ungranted-success", "granted": ["search"], "result": "ok записано", "accepted": false},
+    {"id": "granted-success", "granted": ["write"], "result": "ok записано", "accepted": true}
+  ],
+  "budget": [
+    {"id": "known-zero", "cost": "0.00000000", "allowance": 0.001, "accepted": true},
+    {"id": "known-over", "cost": "0.00200000", "allowance": 0.001, "accepted": false},
+    {"id": "missing-cost", "cost": null, "allowance": 0.001, "accepted": false},
+    {"id": "malformed-cost", "cost": "unknown", "allowance": 0.001, "accepted": false}
+  ]
+}

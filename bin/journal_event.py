@@ -35,6 +35,11 @@ class EventError(ValueError):
     """Отказ typed boundary; сырые данные в сообщение не попадают."""
 
 
+def exact_grant_refusal(detail: str, tool: str) -> bool:
+    """Только точный per-run grant refusal; другие closure breaches не являются denied."""
+    return detail == f"err S6_CLOSURE_BREACH: инструмент {tool} не выдан в этом прогоне"
+
+
 def canonical(value: dict) -> bytes:
     return json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False,
@@ -161,18 +166,24 @@ def _project(
     call_id = None
     refs: list[dict[str, str]] = []
     if kind == "tool/call":
+        if state["pending"] is not None:
+            raise EventError("nested tool/call without result")
         call_seq = int(state["call_seq"]) + 1
         state["call_seq"] = call_seq
         call_id = f"call-{call_seq:06d}"
         state["pending"] = call_id
         tool = detail.split(" ", 1)[0]
+        state["pending_tool"] = tool
         if TOOL_RE.fullmatch(tool):
             refs.append({"id": tool, "kind": "tool"})
     elif kind == "tool/result":
         call_id = state["pending"]
-        if pending := call_id:
-            refs.append({"id": pending, "kind": "call"})
+        if call_id is None:
+            raise EventError("tool/result without preceding tool/call")
+        pending_tool = state["pending_tool"]
+        refs.append({"id": call_id, "kind": "call"})
         state["pending"] = None
+        state["pending_tool"] = None
     elif kind == "claim/anchored":
         match = re.search(r"(?<![A-Za-z0-9_])C-[0-9]{4}(?![A-Za-z0-9_])", detail)
         if match:
@@ -193,7 +204,7 @@ def _project(
         head = detail.split(" ", 1)[0].lower()
         if head == "ok":
             status = "ok"
-        elif detail.startswith("не выдан"):
+        elif exact_grant_refusal(detail, str(pending_tool)):
             status = "denied"
         elif head in {"err", "error", "ошибка", "failed"}:
             status = "error"
@@ -213,22 +224,27 @@ def project(events: list[tuple[str, str]], session: str) -> list[dict]:
     """Проекция того же вида, что и Rust host_event; состояние вызовов идёт по всему потоку."""
     if not valid_session(session):
         raise EventError("invalid session")
-    state: dict[str, int | str | None] = {"call_seq": 0, "pending": None}
-    return [
+    state: dict[str, int | str | None] = {"call_seq": 0, "pending": None, "pending_tool": None}
+    projected = [
         _project(kind, detail, f"{kind} {detail}", session, state)
         for kind, detail in events
     ]
+    if state["pending"] is not None:
+        raise EventError("tool/call without tool/result at projection end")
+    return projected
 
 
 def project_payloads(payloads: list[str], session: str) -> list[dict]:
     """Проекция точных local payload: digest покрывает исходную строку без strip/reconstruction."""
     if not valid_session(session):
         raise EventError("invalid session")
-    state: dict[str, int | str | None] = {"call_seq": 0, "pending": None}
+    state: dict[str, int | str | None] = {"call_seq": 0, "pending": None, "pending_tool": None}
     out: list[dict] = []
     for line in payloads:
         kind, _, detail = line.partition(" ")
         out.append(_project(kind, detail, line, session, state))
+    if state["pending"] is not None:
+        raise EventError("tool/call without tool/result at projection end")
     return out
 
 

@@ -679,6 +679,77 @@
    "claim": "C-0349",
    "note": "PASS: независимый final review не нашёл substantive findings; 14 focused suites на Windows/POSIX, 45 дополнительных probes на платформу и пять Review9 metakontrol-регрессий подтверждены. Manifest 74/1253/0, seals 42/42, gates 31 оценено/2 прежних N/A/0 FAIL, baseline 44/44 без изменений. W07B закрыт только в authority/acceptance границе; исторические E-0054–E-0063 статусы/corpus не переписаны, activation и внешняя публикация запрещены.",
    "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0066",
+   "title": "W03-LIFECYCLE-R1: единый статус, строгие токены и batch fail-closed",
+   "hypothesis": "Общий Python↔Rust corpus, structured S6_CLOSURE_BREACH, строгая call/result пара и явный one-shot lifecycle устраняют ложный PASS без потери положительного done с известной стоимостью.",
+   "prereg": "lab/prereg/W03-LIFECYCLE-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано до production-изменений. refs search NOT PROVIDED. Требуются RED, 32/32 Python controls, 4/4 Rust W03 tests на Windows/POSIX и независимый review; corpus и пороги после RED не меняются. Несогласованность описательной метрики 41/32 устранена отдельной sealed instrument correction E-0067 без изменения исходного prereg.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0067",
+   "title": "W03-LIFECYCLE-R1-METRIC-CORRECTION: согласование sealed метрики 41/32",
+   "hypothesis": "Отдельная прозрачная instrument correction согласует primary_metric с уже неизменными criterion/threshold 32/32 Python и 4/4 Rust, сохраняя исходный prereg, corpus и RED.",
+   "prereg": "lab/prereg/W03-LIFECYCLE-R1-METRIC-CORRECTION.json",
+   "status": "closed",
+   "claim": "C-0350",
+   "conclusion": "research/outputs/W03-LIFECYCLE-R1-REVIEW3-CLOSURE.txt",
+   "note": "PASS в составе финальной W03 Review3 closure. Исходный prereg SHA-256 555c990e… и corpus SHA-256 81f7a62c… сохранены; correction запечатана 7285ab56…. Production, corpus и thresholds не менялись. Исторические E-0066/E-0068/E-0069 остаются open.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0068",
+   "title": "W03-LIFECYCLE-R1-REVIEW1: correction substantive review findings",
+   "hypothesis": "Exact pending-tool refusal, общий unknown-cost marker, строгий call→result→step lifecycle и on-disk fresh proof закроют воспроизведённые обходы независимых review без изменения исходного W03 corpus и порогов.",
+   "prereg": "lab/prereg/W03-LIFECYCLE-R1-REVIEW1.json",
+   "status": "open",
+   "note": "Зарегистрировано до correction production-правок после двух независимых verdict FAIL/NEEDS_CHANGES. Требуются 16/16 Python controls на Windows/POSIX, 4/4 Rust review1 tests и новый независимый review. Исходный corpus/prereg/thresholds не меняются; batch scope и native Windows linker остаются явными ограничениями. Независимый review2 вернул NEEDS_CHANGES по трём oracle findings; исправления вынесены в E-0069. refs search NOT PROVIDED (rc=2).",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0069",
+   "title": "W03-LIFECYCLE-R1-REVIEW2: exact lifecycle diagnostics и wrong-first guard",
+   "hypothesis": "Отдельные balanced fixtures с exact diagnostics, four branch-removal metakontrol и Python first-event guard закроют три oracle findings review2 без изменения sealed W03/Review1 corpus и порогов.",
+   "prereg": "lab/prereg/W03-LIFECYCLE-R1-REVIEW2.json",
+   "status": "open",
+   "note": "Зарегистрировано до RED и production-правок после независимого verdict NEEDS_CHANGES. Требуются 11/11 Python Review2 и 1/1 Rust Review2 на Windows/POSIX без N/A; sealed W03 corpus/prereg/Review1 и исходные thresholds неизменны. refs search NOT PROVIDED (rc=2). Следующий независимый review3 вернул NEEDS_CHANGES: wrong-first metakontrol не доказывал acceptance bypass, Q03/Q06 расходились с prereg, exact_diagnostics=4 противоречил Q01–Q05. Исправления прибора вынесены в E-0070/E-0071; исходный E-0069 не переписывается.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0070",
+   "title": "W03-LIFECYCLE-R1-REVIEW3: balanced lifecycle oracle и acceptance-bypass metakontrol",
+   "hypothesis": "Сбалансированные wrong-first/duplicate-end/after-end/no-end фикстуры и метаконтроль, требующие PASS после полного удаления guard, докажут исходные acceptance bypass вместо посторонних lifecycle-дефектов.",
+   "prereg": "lab/prereg/W03-LIFECYCLE-R1-REVIEW3.json",
+   "status": "closed",
+   "claim": "C-0350",
+   "conclusion": "research/outputs/W03-LIFECYCLE-R1-REVIEW3-CLOSURE.txt",
+   "note": "PASS: независимый review не нашёл substantive findings. Review3 9/9 и regression 32/16/11 на Windows/POSIX без W03 N/A; три acceptance-bypass metakontrol подтверждены; native Windows и WSL Rust 1/1 + 4/4; полный Windows manifest 78/1341/0; gates 31/33 с двумя прежними N/A, seals 49/49. Production, sealed E-0069, corpus и thresholds не менялись. E-0072 исправляет только описательную hash-опечатку; исторические E-0066/E-0068/E-0069 остаются open.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0071",
+   "title": "W03-LIFECYCLE-R1-REVIEW2-METRIC-CORRECTION: exact diagnostics 4→5",
+   "hypothesis": "Отдельная прозрачная instrument correction фиксирует пять exact diagnostics Q01–Q05, сохраняя sealed E-0069, его sidecar, 11 controls и пороги.",
+   "prereg": "lab/prereg/W03-LIFECYCLE-R1-REVIEW2-METRIC-CORRECTION.json",
+   "status": "closed",
+   "claim": "C-0350",
+   "conclusion": "research/outputs/W03-LIFECYCLE-R1-REVIEW3-CLOSURE.txt",
+   "note": "PASS в составе финальной W03 Review3 closure. Исходный E-0069 SHA-256 c1fb8181… остаётся с primary_metric=4; correction фиксирует 5. Production, corpus, sidecar и thresholds не менялись.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0072",
+   "title": "W03-LIFECYCLE-R1-REVIEW3-BASELINE-CORRECTION: hash 65→64",
+   "hypothesis": "Отдельная прозрачная instrument correction исправляет 65-символьную опечатку SHA-256 loopmod.rs, сохраняя sealed E-0070, его sidecar и hash-integrity control.",
+   "prereg": "lab/prereg/W03-LIFECYCLE-R1-REVIEW3-BASELINE-CORRECTION.json",
+   "status": "closed",
+   "claim": "C-0350",
+   "conclusion": "research/outputs/W03-LIFECYCLE-R1-REVIEW3-CLOSURE.txt",
+   "note": "PASS в составе финальной W03 Review3 closure. Исходный E-0070 SHA-256 1de08b9f… сохраняется с ошибочной длиной 65; correction задаёт фактический 64-символьный hash 74c77403…2583. Production, corpus, sidecar и thresholds не менялись.",
+   "updated": "2026-11-24"
   }
  ]
 }

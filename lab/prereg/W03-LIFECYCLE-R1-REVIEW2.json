@@ -1,0 +1,62 @@
+{
+  "schema": 2,
+  "id": "W03-LIFECYCLE-R1-REVIEW2",
+  "date": "2026-11-24",
+  "question": "Закрывают ли отдельные exact-diagnostic controls и wrong-first guard три substantive findings независимого review E-0068, не переписывая исходный sealed W03 corpus и не меняя его пороги?",
+  "hypothesis": "Если step-position, duplicate-end и after-end проверяются точными диагностиками на отдельных сбалансированных фикстурах, удаление каждой соответствующей production-ветки делает свой metakontrol красным, а Python отвергает поток без первого run/start, сохраняя no-end как отдельный статус no-done, то oracle перестаёт принимать одну ветку за доказательство другой.",
+  "criterion": "PASS только при 11/11 Python Review2 controls и 1/1 Rust Review2 test на Windows и POSIX без N/A; все четыре metakontrol удаления проверяемой ветки обязаны обнаружить исчезновение exact diagnostic. Исходный W03 prereg SHA-256 555c990eded8fe81f4e0e04b8d6f2f807b9198796203eabe6e85789884e5a175, corpus SHA-256 81f7a62c26a718695df27b8d652d1d34f834ae92beef5ac5249656649fd7eaef, Review1 prereg SHA-256 2464eebf54c9b58acc367fdc30fc0d719aa6d5aa675a098c3983218987a968ff и пороги 32 Python/4 W03 Rust/16 Review1 неизменны. Любой провал, N/A или ослабление означает отсутствие PASS.",
+  "arms": [
+    "A (review baseline): R08/R09 Review1 падают также из-за missing step; R11/R12 принимают любую строку с run/end; все шесть pairing vectors начинаются run/start и заканчиваются run/end; Python не проверяет wrong-first.",
+    "B (correction): новые Review2 фикстуры с завершающим step и точными assertions; отдельные duplicate-end и non-End after-end fixtures; Python first-event guard; no-end сохраняется как no-done; каждый guard имеет metakontrol удаления."
+  ],
+  "sensitivity": "Q01/Q02 добавляют завершающий step и проверяют разные exact diagnostics; Q03/Q04 разделяют duplicate-end и after-end; Q05 меняет только первое событие; Q06 сохраняет отсутствие end; Q07 — валидный positive; Q08–Q11 по отдельности удаляют одну production-проверку в памяти и требуют исчезновения соответствующего diagnostic.",
+  "unit_of_analysis": "один synthetic event stream и одна exact lifecycle diagnostic/metakontrol",
+  "primary_metric": "python_review2_controls=11; rust_review2_tests=1; exact_diagnostics=4; branch_removal_metacontrols=4; false_pass=0; source_prereg_changed=0; source_corpus_changed=0; threshold_changed=0; platform_na=0",
+  "test": "python tests/test_w03_lifecycle_review2.py; cargo test --release --lib review2_order_oracles; python bin/seal.py verify lab/prereg/W03-LIFECYCLE-R1.json; python bin/seal.py verify lab/prereg/W03-LIFECYCLE-R1-REVIEW1.json; python bin/lab.py validate",
+  "stopping_rule": "Сначала сохранить review2 и запечатать prereg/registry. Затем зафиксировать RED до production fixes. После одного минимального fix batch выполнить Windows/POSIX focused и regression, полный manifest и новый независимый review. Остановиться при первом необъяснённом провале; не менять исходный corpus, thresholds и refusal-code dictionary.",
+  "fixture": "Только tempfile и синтетические HSJ2 event streams; in-memory source mutation исключительно для metakontrol; реальные секреты, модель, сеть, QEMU и внешние аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется; cargo offline",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует (rc=2); пусто не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "Q01", "input": "call→step→result→step с завершающим step", "expect": "FAIL и exact step до tool/result"},
+    {"id": "Q02", "input": "step→call→result→step с завершающим step", "expect": "FAIL и exact step без предшествующего tool/result"},
+    {"id": "Q03", "input": "единственный корректный блок + второй run/end", "expect": "FAIL и exact повторный run/end"},
+    {"id": "Q04", "input": "run/end + note после него", "expect": "FAIL и exact событие note после run/end"},
+    {"id": "Q05", "input": "note перед первым run/start", "expect": "FAIL и exact первое событие note, а не run/start"},
+    {"id": "Q06", "input": "run/start + step без run/end", "expect": "статус no-done, не done/PASS исходного criteria"},
+    {"id": "Q07", "input": "две корректные пары call→result→step", "expect": "PASS, lifecycle problems пусты"},
+    {"id": "Q08", "input": "удаление ветки step до tool/result", "expect": "Q01 exact diagnostic исчезает; oracle краснеет"},
+    {"id": "Q09", "input": "удаление ветки повторный run/end", "expect": "Q03 exact diagnostic исчезает; oracle краснеет"},
+    {"id": "Q10", "input": "удаление ветки событие после run/end", "expect": "Q04 exact diagnostic исчезает; oracle краснеет"},
+    {"id": "Q11", "input": "удаление first-event guard", "expect": "Q05 exact diagnostic исчезает; oracle краснеет"}
+  ],
+  "threshold": {
+    "python_review2_controls": 11,
+    "rust_review2_tests": 1,
+    "windows_python_passed": 11,
+    "posix_python_passed": 11,
+    "rust_review2_windows_passed": 1,
+    "rust_review2_posix_passed": 1,
+    "branch_removal_metacontrols": 4,
+    "platform_na": 0,
+    "false_pass": 0
+  },
+  "baseline_sha256": {
+    "bin/accept.py": "1b88643ea90620f609f1753775163980954a5cd48766aaeef96d96ab5955a4ec",
+    "core-rs/src/loopmod.rs": "2658d6b0b2e2ca0c80846ff739ec5f68b9e3c458a1f3cfcbf24d34c11cefe07f",
+    "tests/test_w03_lifecycle_review1.py": "d5838df9b76706e01410d0413037fa063196b74ea2424cdd61e65ed0154e676b",
+    "tests/vectors/w03-lifecycle.json": "81f7a62c26a718695df27b8d652d1d34f834ae92beef5ac5249656649fd7eaef"
+  },
+  "known_limits": [
+    "Python намеренно не требует последний run/end в lifecycle helper: отсутствие end остаётся отдельным статусом no-done; Rust дополнительно сообщает wrong-last",
+    "Review1 suite остаётся историческим evidence E-0068 и не переписывается; новые exact controls находятся в отдельном Review2 suite",
+    "Batch budget/flail rc=0, native Windows пять Unix-only symlink tests, resume/retry и activation вне correction",
+    "PASS Review2 не закрывает W03 без финального независимого review и aggregate gates"
+  ],
+  "owner_decision": "Автономная разработка в утверждённых W03 gates; commits/push в herness разрешены, production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-w03-lifecycle-r1-review2"]
+}

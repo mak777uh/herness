@@ -135,6 +135,60 @@ def payloads(records: list[tuple[int, str]]) -> list[str]:
     return [payload for kind, payload in records if kind == 1]
 
 
+def tool_pairing_problems(evs: list[tuple[str, str]]) -> list[str]:
+    """Lifecycle пар: call→result→step; duplicate run/end и события после него запрещены.
+
+    Первое событие обязано быть run/start. Отсутствие run/end остаётся отдельным
+    статусом no-done; требование последнего run/end дополнительно проверяет Rust
+    verify_order. Исходный pairing corpus не содержит wrong-first/wrong-last границ.
+    """
+    problems: list[str] = []
+    if not evs:
+        return ["событий нет"]
+    if evs[0][0] != "run/start":
+        problems.append(f"первое событие {evs[0][0]}, а не run/start")
+
+    phase = "idle"  # idle → waiting-result → waiting-step → idle
+    ended = False
+    calls = 0
+    steps = 0
+    for kind, _rest in evs:
+        if ended:
+            problems.append(f"событие {kind} после run/end")
+        if kind == "run/end":
+            if ended:
+                problems.append("повторный run/end")
+            ended = True
+        elif kind == "tool/call":
+            calls += 1
+            if phase == "waiting-result":
+                problems.append("tool/call без result предшествующего вызова")
+            elif phase == "waiting-step":
+                problems.append("tool/call без завершающего step предшествующего вызова")
+            else:
+                phase = "waiting-result"
+        elif kind == "tool/result":
+            if phase != "waiting-result":
+                problems.append("tool/result без предшествующего tool/call")
+            else:
+                phase = "waiting-step"
+        elif kind == "step":
+            steps += 1
+            if phase == "waiting-result":
+                problems.append("step до tool/result")
+            elif phase != "waiting-step":
+                problems.append("step без предшествующего tool/result")
+            else:
+                phase = "idle"
+    if phase == "waiting-result":
+        problems.append("tool/call без tool/result")
+    elif phase == "waiting-step":
+        problems.append("tool/call без завершающего step")
+    if steps != calls:
+        problems.append(f"шагов {steps}, вызовов {calls}")
+    return problems
+
+
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
     "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events", "min_objects",
@@ -202,18 +256,22 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
         # Стадия выводится одним правилом «чего прогон ждёт», а не собирается в трёх местах
         # (H-0008): сначала терминальные исходы, потом наличие опоры, потом всё остальное.
         errors = [rest for kind, rest in evs if kind == "step/error"]
+        if "run/blocked" in kinds:
+            return "blocked"
+        if "run/no-work" in kinds:
+            return "no-work"
         if any("хост не подтвердил" in text for text in errors):
             return "unrecorded"
         if any("бюджет денег" in text for text in errors):
             return "budget-money"
         if any("бюджет времени" in text for text in errors):
             return "budget-time"
-        if "run/blocked" in kinds:
-            return "blocked"
-        if "run/no-work" in kinds:
-            return "no-work"
+        if any("не сообщил расход" in text for text in errors):
+            return "unknown-cost"
         if "run/end" not in kinds:
-            return "нет run/end"
+            return "no-done"
+        if any(kind == "run/end" and rest.startswith("шаги кончились") for kind, rest in evs):
+            return "no-done"
         anchored = "claim/anchored" in kinds
         if "claim/unverified" in kinds and not anchored:
             return "unverified"
@@ -281,21 +339,40 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
                      f"шагов: {steps}"))
 
     if "max_allowance" in criteria:
-        spent = 0.0
-        for kind, rest in evs:
-            if kind != "step":
-                continue
-            match = re.search(r"потрачено ([0-9.eE+-]+)", rest)
-            if match:
-                spent = max(spent, float(match.group(1)))
+        costs = [rest for kind, rest in evs if kind == "step"]
+        values: list[float] = []
+        cost_problem = "нет стоимости шагов"
+        number = r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?"
+        for detail in costs:
+            match = re.fullmatch(rf"[0-9]+, потрачено ({number})", detail)
+            if match is None:
+                cost_problem = "неизвестная или malformed стоимость"
+                break
+            value = float(match.group(1))
+            if not math.isfinite(value) or value < 0:
+                cost_problem = "стоимость отрицательная или не конечна"
+                break
+            values.append(value)
+        unknown_cost = any(
+            kind == "step/error" and "не сообщил расход" in rest
+            for kind, rest in evs
+        )
+        spent = max(values) if values else 0.0
+        passed = bool(values) and len(values) == len(costs) and not unknown_cost and spent <= criteria["max_allowance"]
+        detail = f"потрачено: {spent:.8f} (оценка провайдера, не факт биллинга)"
+        if not costs:
+            detail = "нет стоимости шагов; бюджет проверить нельзя"
+        elif cost_problem != "нет стоимости шагов" or len(values) != len(costs):
+            detail = cost_problem + "; бюджет проверить нельзя"
+        elif unknown_cost:
+            detail = "провайдер не сообщил расход; бюджет проверить нельзя"
         # F-MONEY-2 (08.11.2026). Число из журнала — это `usage.allowance`
         # провайдера, то есть ОЦЕНКА расхода, а не факт биллинга. Раньше оно
         # подавалось как «потрачено», и оценка выглядела фактом: в знаменатель
         # CostPerVerifiedSuccess (AGENTS.md §5) годится только факт.
         # Формат `потрачено: N` сохранён — на него смотрят парсеры и тесты;
         # пометка добавлена рядом.
-        rows.append((f"расход ≤ {criteria['max_allowance']}", spent <= criteria["max_allowance"],
-                     f"потрачено: {spent:.8f} (оценка провайдера, не факт биллинга)"))
+        rows.append((f"расход ≤ {criteria['max_allowance']}", passed, detail))
 
     if "tools" in criteria:
         # Выдача инструментов — полномочие. Проверяем не «что модель просила», а «что сработало»:
@@ -307,7 +384,10 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
             if kind == "tool/call":
                 pending = rest.split(" ", 1)[0]
             elif kind == "tool/result" and pending:
-                if pending not in granted and "не выдан" not in rest:
+                if pending not in granted and not (
+                    journal_event is not None
+                    and journal_event.exact_grant_refusal(rest, pending)
+                ):
                     violations.append(pending)
                 pending = None
         rows.append((f"работали только выданные {sorted(granted)}", not violations,
@@ -429,6 +509,12 @@ def check(criteria: dict, records: list[tuple[int, str]],
     if problems:
         detail += "; " + "; ".join(problems[:3])
     rows.append(("журнал прочитан полностью", complete, detail))
+    pairing_problems = tool_pairing_problems(evs)
+    rows.append((
+        "каждый tool/call имеет ровно один tool/result",
+        not pairing_problems,
+        "; ".join(pairing_problems) if pairing_problems else "пары корректны",
+    ))
 
     # Неизвестное условие — это не «пропустим», а провал: опечатка в имени условия иначе тихо
     # отключала бы проверку.

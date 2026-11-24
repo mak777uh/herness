@@ -72,7 +72,7 @@ def run(criteria: dict, events: list[str], **kwargs) -> tuple[bool, list]:
 def _():
     ok, rows = run(CRITERIA, OK_RUN)
     assert ok, rows
-    assert len(rows) == 8, rows
+    assert len(rows) == 9, rows
 
 
 @case("невызванный инструмент валит приёмку")
@@ -233,6 +233,7 @@ def _():
     events = list(OK_RUN)
     events.insert(-1, "tool/call write /mnt/x текст")
     events.insert(-1, "tool/result ok записано")
+    events.insert(-1, "step 2, потрачено 0.00010000")
     ok, rows = run(dict(CRITERIA, tools=["search", "read"]), events)
     assert not ok, rows
     assert any("вне выдачи" in detail for _, passed, detail in rows if not passed), rows
@@ -242,7 +243,8 @@ def _():
 def _():
     events = list(OK_RUN)
     events.insert(-1, "tool/call write /mnt/x текст")
-    events.insert(-1, "tool/result err инструмент write не выдан в этом прогоне")
+    events.insert(-1, "tool/result err S6_CLOSURE_BREACH: инструмент write не выдан в этом прогоне")
+    events.insert(-1, "step 2, потрачено 0.00010000")
     ok, rows = run(dict(CRITERIA, tools=["search", "read"], must_not_call=[]), events)
     assert ok, rows
 

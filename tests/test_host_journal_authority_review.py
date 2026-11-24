@@ -124,11 +124,17 @@ def _():
                 host_journal.append(RUN, canonical(payload).decode("utf-8"), directory)
             records, tail, problems = accept.parse_journal(hsj2.journal([(hsj2.DATA, line) for line in lines]))
             assert not tail and not problems, (tail, problems)
+            # Вектор проверяет точные байты host projection, но содержит step без call.
+            # W03 не принимает такой event stream как lifecycle: host-match остаётся
+            # доказанным, а общий итог обязан быть FAIL по строгой pairing row.
             ok, rows = accept.check(
                 {"host_run": RUN, "host_session": SESSION, "host_match": True},
                 records, show_hidden=True,
             )
-            assert ok, rows
+            assert not ok, rows
+            host_rows = [row for row in rows if "хост" in row[0] or "совпадает" in row[0]]
+            assert len(host_rows) == 2 and all(passed for _, passed, _ in host_rows), rows
+            assert any("tool/call" in name and not passed for name, passed, _ in rows), rows
         finally:
             host_journal.DEFAULT_DIR = old_default
 

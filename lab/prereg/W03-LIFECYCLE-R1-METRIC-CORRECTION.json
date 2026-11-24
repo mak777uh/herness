@@ -1,0 +1,31 @@
+{
+  "schema": 2,
+  "id": "W03-LIFECYCLE-R1-METRIC-CORRECTION",
+  "date": "2026-11-24",
+  "question": "Как устранить внутреннее противоречие sealed W03-LIFECYCLE-R1: primary_metric указывает python_controls=41, тогда как criterion, threshold и исполняемый прибор устанавливают 32?",
+  "hypothesis": "Отдельная прозрачная instrument correction согласует описательную метрику с уже запечатанными и неизменными порогами 32/32 Python и 4/4 Rust; исходный prereg, corpus, RED и production-семантика не переписываются.",
+  "criterion": "PASS correction только если исходный SHA-256 555c990eded8fe81f4e0e04b8d6f2f807b9198796203eabe6e85789884e5a175 и corpus SHA-256 81f7a62c26a718695df27b8d652d1d34f834ae92beef5ac5249656649fd7eaef сохранены, correction оставляет 32 Python controls и 4 Rust tests, а registry связывает correction с E-0066.",
+  "arms": [
+    "A (обнаружено до итогового GREEN): исходный sealed primary_metric=41; criterion/threshold=32; фактический custom-main прибор=32.",
+    "B (correction): primary_metric=32 и rust_w03_tests=4; ни один control, corpus vector, threshold, RED и production gate не изменяются."
+  ],
+  "sensitivity": "Проверяются только hash исходного prereg/corpus, число зарегистрированных CASES и threshold. Это исправление метаданных, не новый production mechanism и не ослабление гейта.",
+  "unit_of_analysis": "одна несогласованная метрика в sealed prereg",
+  "primary_metric": "python_controls=32; rust_w03_tests=4; source_prereg_changed=0; source_corpus_changed=0; threshold_changed=0",
+  "test": "python bin/seal.py verify lab/prereg/W03-LIFECYCLE-R1.json; python -c с проверкой SHA-256 corpus, threshold и длины CASES; python bin/lab.py validate",
+  "stopping_rule": "Зарегистрировать и запечатать correction до итогового W03 GREEN. Исходный sealed файл не редактировать и не перепечатывать. При любом расхождении hash/count/threshold W03 PASS не выдаётся.",
+  "fixture": "Только чтение sealed prereg/corpus и прибора; сеть, секреты и реальные аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300",
+    "network": "не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+  },
+  "known_limits": [
+    "Correction не превращает незавершённый W03 в PASS и не закрывает E-0066",
+    "Прогоны Windows/POSIX и независимый review остаются обязательными для E-0066",
+    "Первый focused probe и ошибки прибора сохраняются как evidence, а не удаляются"
+  ],
+  "owner_decision": "Автономная разработка в утверждённых W03 gates; commits/push в herness разрешены, production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-w03-lifecycle-r1"]
+}

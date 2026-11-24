@@ -50,6 +50,15 @@ pub enum Step {
     NoWork { text: String },
 }
 
+fn terminal_rest<'a>(line: &'a str, token: &str) -> Option<&'a str> {
+    let rest = line.strip_prefix(token)?;
+    if rest.is_empty() || rest.chars().next().is_some_and(char::is_whitespace) {
+        Some(rest.trim())
+    } else {
+        None
+    }
+}
+
 /// Разобрать ответ провайдера в шаг. Ошибка — это результат, а не пустая строка.
 pub fn parse_step(reply: &str) -> Result<Step, String> {
     if reply.len() > crate::model::MAX_REPLY {
@@ -72,14 +81,14 @@ pub fn parse_step(reply: &str) -> Result<Step, String> {
         }
         return Ok(Step::Tool { name, arg });
     }
-    if let Some(rest) = line.strip_prefix("BLOCKED") {
-        return Ok(Step::Blocked { text: rest.trim().to_string() });
+    if let Some(rest) = terminal_rest(&line, "BLOCKED") {
+        return Ok(Step::Blocked { text: rest.to_string() });
     }
-    if let Some(rest) = line.strip_prefix("NO-WORK") {
-        return Ok(Step::NoWork { text: rest.trim().to_string() });
+    if let Some(rest) = terminal_rest(&line, "NO-WORK") {
+        return Ok(Step::NoWork { text: rest.to_string() });
     }
-    if let Some(rest) = line.strip_prefix("DONE") {
-        return Ok(Step::Done { text: rest.trim().to_string() });
+    if let Some(rest) = terminal_rest(&line, "DONE") {
+        return Ok(Step::Done { text: rest.to_string() });
     }
     // Ответ без метки TOOL, но начинающийся с имени известного инструмента, — это тот же шаг.
     // Зачем: в живых прогонах модель несколько раз писала «read /mnt/CLAIMS.md 91» вместо
@@ -308,6 +317,17 @@ impl Outcome {
     pub fn order_ok(&self) -> bool {
         self.problems.is_empty()
     }
+}
+
+/// Fresh batch завершается успешно только для доказанного done с валидным порядком.
+pub fn loop_succeeded(outcome: &Outcome) -> bool {
+    outcome.order_ok() && outcome.status == "done"
+}
+
+/// Fresh success требует не только in-memory done, но и цельный корректный журнал на диске.
+pub fn loop_succeeded_with_journal(outcome: &Outcome, journal_path: &Path) -> bool {
+    loop_succeeded(outcome)
+        && matches!(order_from_journal(journal_path), Ok(problems) if problems.is_empty())
 }
 
 fn record(
@@ -1335,7 +1355,9 @@ pub fn derive_status(events: &[Event]) -> &'static str {
 /// только сузить набор, но не расширить его. Тестового флага, обходящего обе проверки, нет.
 fn tool_authority(name: &str, granted: &[String]) -> Result<(), String> {
     if !granted.iter().any(|tool| tool == name) {
-        return Err(format!("инструмент {name} не выдан в этом прогоне"));
+        return Err(format!(
+            "S6_CLOSURE_BREACH: инструмент {name} не выдан в этом прогоне"
+        ));
     }
     Ok(())
 }
@@ -1590,28 +1612,58 @@ pub fn verify_order(events: &[Event]) -> Vec<String> {
         problems.push(format!("последнее событие {}, а не run/end", last.kind));
     }
 
-    let mut open_calls = 0i64;
+    #[derive(PartialEq)]
+    enum Phase { Idle, WaitingResult, WaitingStep }
+    let mut phase = Phase::Idle;
+    let mut ended = false;
     let mut calls = 0usize;
     let mut steps = 0usize;
     for event in events {
+        if ended {
+            problems.push(format!("событие {} после run/end", event.kind));
+        }
         match event.kind {
-            "tool/call" => {
-                open_calls += 1;
-                calls += 1;
-            }
-            "tool/result" => {
-                if open_calls == 0 {
-                    problems.push("tool/result без предшествующего tool/call".to_string());
+            "run/end" => {
+                if ended {
+                    problems.push("повторный run/end".to_string());
                 } else {
-                    open_calls -= 1;
+                    ended = true;
                 }
             }
-            "step" => steps += 1,
+            "tool/call" => {
+                calls += 1;
+                if phase == Phase::WaitingResult {
+                    problems.push("tool/call без result предшествующего вызова".to_string());
+                } else if phase == Phase::WaitingStep {
+                    problems.push("tool/call без завершающего step предшествующего вызова".to_string());
+                } else {
+                    phase = Phase::WaitingResult;
+                }
+            }
+            "tool/result" => {
+                if phase != Phase::WaitingResult {
+                    problems.push("tool/result без предшествующего tool/call".to_string());
+                } else {
+                    phase = Phase::WaitingStep;
+                }
+            }
+            "step" => {
+                steps += 1;
+                if phase == Phase::WaitingResult {
+                    problems.push("step до tool/result".to_string());
+                } else if phase != Phase::WaitingStep {
+                    problems.push("step без предшествующего tool/result".to_string());
+                } else {
+                    phase = Phase::Idle;
+                }
+            }
             _ => {}
         }
     }
-    if open_calls != 0 {
-        problems.push(format!("вызовов без результата: {open_calls}"));
+    match phase {
+        Phase::WaitingResult => problems.push("tool/call без tool/result".to_string()),
+        Phase::WaitingStep => problems.push("tool/call без завершающего step".to_string()),
+        Phase::Idle => {}
     }
     if steps != calls {
         problems.push(format!("шагов {steps}, вызовов {calls}"));
@@ -1772,8 +1824,8 @@ fn run_task_from(
         // `unknown-cost` вместо `done` (план этап 1.5).
         match link.last_usage() {
             Some(usage) => match usage.allowance {
-                Some(money) => spent += money,
-                None => cost_unknown = true,
+                Some(money) if money.is_finite() && money >= 0.0 => spent += money,
+                _ => cost_unknown = true,
             },
             None => cost_unknown = true,
         }
@@ -1915,6 +1967,13 @@ fn run_task_from(
                 break;
             }
             Step::Done { text } => {
+                // Финальный ответ тоже оплачивается: известный overspend не становится done.
+                if spent > budget.allowance {
+                    record(&mut journal, &mut events, "step/error",
+                           format!("бюджет денег исчерпан: {spent:.8} > {:.8}", budget.allowance))?;
+                    record(&mut journal, &mut events, "run/end", "остановлен бюджетом".to_string())?;
+                    break;
+                }
                 // Протокол (доказан в Lean, bin/session_types.py): DONE не может быть первым
                 // шагом — нечего завершать. Без TOOL опоры не будет, и «готово» окажется пустым.
                 if calls == 0 {
@@ -2062,9 +2121,17 @@ pub fn order_from_journal(journal_path: &Path) -> std::io::Result<Vec<String>> {
     }
 
     let mut events: Vec<Event> = Vec::new();
+    let mut blocks = 0usize;
     let mut ends_with_commit = false;
     for entry in &walked.entries {
         if entry.kind == crate::journal::Kind::Commit {
+            blocks += 1;
+            if events.is_empty() {
+                problems.push("пустой блок перед маркером коммита".to_string());
+            } else {
+                problems.extend(verify_order(&events));
+            }
+            events.clear();
             ends_with_commit = true;
             continue;
         }
@@ -2076,7 +2143,12 @@ pub fn order_from_journal(journal_path: &Path) -> std::io::Result<Vec<String>> {
         events.push(event);
     }
 
-    problems.extend(verify_order(&events));
+    if !events.is_empty() {
+        problems.push("незавершённый блок после последнего коммита".to_string());
+    }
+    if blocks == 0 {
+        problems.push("в журнале нет завершённых блоков".to_string());
+    }
     if !ends_with_commit {
         problems.push("журнал не заканчивается маркером коммита".to_string());
     }
@@ -2396,7 +2468,10 @@ mod tests {
     fn вызов_без_результата_это_дефект() {
         let events = vec![event("run/start"), event("tool/call"), event("run/end")];
         let problems = verify_order(&events);
-        assert!(problems.iter().any(|p| p.contains("без результата")), "{problems:?}");
+        assert_eq!(
+            problems,
+            vec!["tool/call без tool/result".to_string(), "шагов 0, вызовов 1".to_string()]
+        );
     }
 
     #[test]
@@ -2409,6 +2484,295 @@ mod tests {
     #[test]
     fn пустой_журнал_событий_это_дефект() {
         assert!(!verify_order(&[]).is_empty());
+    }
+
+    #[test]
+    fn review2_order_oracles() {
+        let sequence = |kinds: &[&'static str]| -> Vec<Event> {
+            kinds.iter().map(|kind| event(kind)).collect()
+        };
+        let valid = vec![
+            "run/start",
+            "tool/call", "tool/result", "step",
+            "tool/call", "tool/result", "step",
+            "run/end",
+        ];
+        assert!(verify_order(&sequence(&valid)).is_empty());
+        let invalid = [
+            (
+                vec!["run/start", "tool/call", "step", "tool/result", "step", "run/end"],
+                "step до tool/result",
+            ),
+            (
+                vec!["run/start", "step", "tool/call", "tool/result", "step", "run/end"],
+                "step без предшествующего tool/result",
+            ),
+            (
+                vec!["run/start", "run/end", "run/end"],
+                "повторный run/end",
+            ),
+            (
+                vec!["run/start", "run/end", "note"],
+                "событие note после run/end",
+            ),
+            (
+                vec!["note", "run/start", "run/end"],
+                "первое событие note, а не run/start",
+            ),
+        ];
+        for (kinds, expected) in invalid {
+            let problems = verify_order(&sequence(&kinds));
+            assert!(
+                problems.iter().any(|problem| problem == expected),
+                "нет exact diagnostic {expected}: {problems:?}"
+            );
+        }
+        let no_end = verify_order(&sequence(&["run/start"]));
+        assert!(no_end.iter().any(|problem| problem == "последнее событие run/start, а не run/end"));
+    }
+
+    #[test]
+    fn review1_exact_grant_refusal() {
+        let cases = [
+            ("err S6_CLOSURE_BREACH: инструмент write не выдан в этом прогоне", "denied"),
+            ("err S6_CLOSURE_BREACH: путь вне корня", "error"),
+            ("err S6_CLOSURE_BREACH: инструмент read не выдан в этом прогоне", "error"),
+            ("err S6_CLOSURE_BREACH: инструмент write не выдан в этом прогоне лишнее", "error"),
+            ("err инструмент write не выдан в этом прогоне", "error"),
+        ];
+        for (result, expected) in cases {
+            let projected = crate::host_event::project_events(
+                "11111111-1111-4111-8111-111111111111",
+                [("tool/call", "write /mnt/x"), ("tool/result", result)],
+            ).unwrap();
+            assert_eq!(projected[1]["status"], expected, "{result}");
+        }
+    }
+
+    #[test]
+    fn review1_unknown_cost_parity() {
+        for detail in [
+            "не сообщил расход",
+            "провайдер не сообщил расход: бюджет проверить нельзя",
+        ] {
+            let events = vec![
+                event("run/start"),
+                Event { kind: "step/error", detail: detail.to_string() },
+                event("run/end"),
+            ];
+            assert_eq!(derive_status(&events), "unknown-cost", "{detail}");
+        }
+    }
+
+    #[test]
+    fn review1_order_state_machine() {
+        let sequence = |kinds: &[&'static str]| -> Vec<Event> {
+            kinds.iter().map(|kind| event(kind)).collect()
+        };
+        let valid = vec![
+            "run/start",
+            "tool/call", "tool/result", "step",
+            "tool/call", "tool/result", "step",
+            "run/end",
+        ];
+        assert!(verify_order(&sequence(&valid)).is_empty());
+        let invalid = vec![
+            vec!["run/start", "tool/call", "step", "tool/result", "run/end"],
+            vec!["run/start", "step", "tool/call", "tool/result", "run/end"],
+            vec!["run/start", "tool/call", "tool/result", "run/end"],
+            vec!["run/start", "run/end", "run/end"],
+            vec![
+                "run/start", "tool/call", "tool/result", "step", "run/end",
+                "run/start", "tool/call", "tool/result", "step", "run/end",
+            ],
+        ];
+        for kinds in invalid {
+            let problems = verify_order(&sequence(&kinds));
+            assert!(!problems.is_empty(), "ложный PASS: {kinds:?}");
+        }
+    }
+
+    #[test]
+    fn review1_fresh_disk_proof() {
+        let dir = fixture("review1-fresh-disk-proof");
+        let valid = dir.join("valid.bin");
+        let mut journal = Journal::open(&valid).unwrap();
+        journal.append(b"run/start task: x", Kind::Data).unwrap();
+        journal.append("run/end готово".as_bytes(), Kind::Data).unwrap();
+        journal.append(b"", Kind::Commit).unwrap();
+        journal.sync().unwrap();
+        let outcome = Outcome {
+            steps: 0, calls: 0, events: 2, records: 3, commits: 1,
+            status: "done", problems: vec![], anchor: None,
+        };
+        assert!(loop_succeeded(&outcome));
+        assert!(loop_succeeded_with_journal(&outcome, &valid));
+
+        let invalid = dir.join("invalid.bin");
+        std::fs::write(&invalid, b"NOT-HSJ2\0\0\0\0").unwrap();
+        assert!(loop_succeeded(&outcome), "in-memory done остаётся done");
+        assert!(!loop_succeeded_with_journal(&outcome, &invalid));
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn w03_differential_corpus() {
+        let vector: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/vectors/w03-lifecycle.json"
+        ))
+        .unwrap();
+        for row in vector["terminal"].as_array().unwrap() {
+            let actual = parse_step(row["reply"].as_str().unwrap());
+            let expected = &row["expect"];
+            if expected["error"].as_bool().unwrap_or(false) {
+                assert!(actual.is_err(), "terminal collision принята: {}", row["id"]);
+                continue;
+            }
+            let step = actual.unwrap_or_else(|error| panic!("{}: {error}", row["id"]));
+            match expected["kind"].as_str().unwrap() {
+                "done" => assert_eq!(step, Step::Done { text: expected["text"].as_str().unwrap().to_string() }),
+                "blocked" => assert_eq!(step, Step::Blocked { text: expected["text"].as_str().unwrap().to_string() }),
+                "no-work" => assert_eq!(step, Step::NoWork { text: expected["text"].as_str().unwrap().to_string() }),
+                "tool" => assert_eq!(step, Step::Tool {
+                    name: expected["name"].as_str().unwrap().to_string(),
+                    arg: expected["arg"].as_str().unwrap().to_string(),
+                }),
+                other => panic!("неизвестный expected kind: {other}"),
+            }
+        }
+        let static_kind = |kind: &str| -> &'static str {
+            match kind {
+                "run/start" => "run/start",
+                "run/end" => "run/end",
+                "run/blocked" => "run/blocked",
+                "run/no-work" => "run/no-work",
+                "step/error" => "step/error",
+                "tool/call" => "tool/call",
+                "tool/result" => "tool/result",
+                "step" => "step",
+                "claim/anchored" => "claim/anchored",
+                "claim/unverified" => "claim/unverified",
+                other => panic!("неизвестный kind: {other}"),
+            }
+        };
+        let events = |lines: &[String]| -> Vec<Event> {
+            lines.iter().map(|line| {
+                let (kind, detail) = line.split_once(' ').unwrap_or((line.as_str(), ""));
+                Event { kind: static_kind(kind), detail: detail.to_string() }
+            }).collect()
+        };
+        for row in vector["statuses"].as_array().unwrap() {
+            let lines: Vec<String> = row["events"].as_array().unwrap().iter()
+                .map(|value| value.as_str().unwrap().to_string()).collect();
+            assert_eq!(derive_status(&events(&lines)), row["expect"].as_str().unwrap(), "{}", row["id"]);
+        }
+        for row in vector["pairing"].as_array().unwrap() {
+            let lines: Vec<String> = row["events"].as_array().unwrap().iter()
+                .map(|value| value.as_str().unwrap().to_string()).collect();
+            assert_eq!(verify_order(&events(&lines)).is_empty(), row["valid"].as_bool().unwrap(), "{}", row["id"]);
+            let projection_input: Vec<(&str, &str)> = lines.iter().map(|line| {
+                line.split_once(' ').unwrap_or((line.as_str(), ""))
+            }).collect();
+            let projected = crate::host_event::project_events(
+                "11111111-1111-4111-8111-111111111111", projection_input,
+            );
+            if row["id"] == "step-mismatch" {
+                assert!(projected.is_ok(), "valid projection pairs: {:?}", projected.err());
+            } else {
+                assert_eq!(projected.is_ok(), row["valid"].as_bool().unwrap(), "host projection {}", row["id"]);
+            }
+        }
+        for row in vector["authority"].as_array().unwrap() {
+            let result = row["result"].as_str().unwrap();
+            let projected = crate::host_event::project_events(
+                "11111111-1111-4111-8111-111111111111",
+                [("tool/call", "write /mnt/x"), ("tool/result", result)],
+            ).unwrap();
+            let expected = if row["id"] == "structured-refusal" {
+                "denied"
+            } else if result.starts_with("ok") {
+                "ok"
+            } else {
+                "error"
+            };
+            assert_eq!(projected[1]["status"], expected, "authority {}", row["id"]);
+        }
+    }
+
+    #[test]
+    fn w03_grant_refusal_is_structured() {
+        let error = tool_authority("write", &["search".to_string()]).unwrap_err();
+        assert!(error.starts_with("S6_CLOSURE_BREACH:"), "{error}");
+        let outcome = |status, problems: Vec<String>| Outcome {
+            steps: 1, calls: 1, events: 5, records: 6, commits: 1,
+            status, problems, anchor: Some("a.md".to_string()),
+        };
+        assert!(loop_succeeded(&outcome("done", vec![])));
+        assert!(!loop_succeeded(&outcome("unverified", vec![])));
+        assert!(!loop_succeeded(&outcome("done", vec!["нарушение порядка".to_string()])));
+    }
+
+    #[test]
+    fn w03_final_known_cost_overspend_is_not_done() {
+        struct CostSequence { replies: Vec<String>, costs: Vec<Option<f64>>, index: usize }
+        impl ModelLink for CostSequence {
+            fn complete(&mut self, _prompt: &str) -> Reply {
+                let reply = self.replies.get(self.index).cloned().unwrap_or_default();
+                self.index += 1;
+                Reply::Text(reply)
+            }
+            fn last_usage(&self) -> Option<crate::model::Usage> {
+                Some(crate::model::Usage {
+                    prompt_tokens: 0,
+                    completion_tokens: 0,
+                    allowance: self.costs.get(self.index - 1).copied().flatten(),
+                })
+            }
+        }
+        let replies = vec!["TOOL list /".to_string(), "DONE готово: a.md".to_string()];
+        let vector: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/vectors/w03-lifecycle.json"
+        )).unwrap();
+        // Corpus исполняется напрямую: null и malformed cost становятся отсутствующим Usage,
+        // а не нулём. Дополнительные invalid-finite cases проверяют ту же fail-closed границу.
+        let mut cases: Vec<(String, Option<f64>, f64, bool, &str)> = vector["budget"]
+            .as_array().unwrap().iter().map(|row| {
+                let cost = row["cost"].as_str().and_then(|value| value.parse::<f64>().ok());
+                let allowance = row["allowance"].as_f64().unwrap();
+                let expected = match row["id"].as_str().unwrap() {
+                    "known-zero" => "done",
+                    "known-over" => "budget-money",
+                    _ => "unknown-cost",
+                };
+                (row["id"].as_str().unwrap().to_string(), cost, allowance,
+                 row["accepted"].as_bool().unwrap(), expected)
+            }).collect();
+        cases.extend([
+            ("nan".to_string(), Some(f64::NAN), 0.01, false, "unknown-cost"),
+            ("infinite".to_string(), Some(f64::INFINITY), 0.01, false, "unknown-cost"),
+            ("negative".to_string(), Some(-0.01), 0.01, false, "unknown-cost"),
+        ]);
+        let mut failures = Vec::new();
+        for (name, final_cost, allowance, accepted, expected) in cases {
+            let dir = fixture(&format!("w03-final-cost-{name}"));
+            let journal = dir.join("journal.bin");
+            let mut link = CostSequence {
+                replies: replies.clone(), costs: vec![Some(0.0), final_cost], index: 0,
+            };
+            let outcome = run_task_with_budget(
+                &journal, "проверить финальный расход", &mut link,
+                Budget { steps: 4, seconds: 10.0, allowance },
+                all_tools(),
+            ).unwrap();
+            if outcome.status != expected || !outcome.order_ok()
+                || loop_succeeded(&outcome) != accepted
+                || loop_succeeded_with_journal(&outcome, &journal) != accepted
+            {
+                failures.push(format!("{name}: статус {}, проблемы {:?}", outcome.status, outcome.problems));
+            }
+            std::fs::remove_dir_all(&dir).ok();
+        }
+        assert!(failures.is_empty(), "{}", failures.join("; "));
     }
 
     #[test]
@@ -2800,6 +3164,7 @@ mod tests {
     // --- восемь запрещённых классов ---------------------------------------------------------
 
     #[test]
+    #[cfg(unix)]
     fn симлинк_на_файл_снаружи_отклонён() {
         let (root, outside) = write_fixture("link-file");
         let link = root.join("work/escape.md");
@@ -2812,6 +3177,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn симлинк_на_каталог_снаружи_отклонён() {
         let (root, outside) = write_fixture("link-dir");
         let link = root.join("work/outdir");
@@ -2824,6 +3190,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn цепочка_симлинков_отклонена() {
         let (root, outside) = write_fixture("link-chain");
         let first = root.join("work/l1");
@@ -2856,6 +3223,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn симлинк_внутри_корня_тоже_отклонён() {
         // RESOLVE_NO_SYMLINKS запрещает ЛЮБОЙ симлинк, в том числе ведущий внутрь корня.
         // Это строже, чем «не выйти за корень», и так и задумано: симлинк в рабочем каталоге
@@ -2871,6 +3239,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn симлинк_на_несуществующий_файл_снаружи_отклонён() {
         // Симлинк на путь, которого ещё нет: запись создала бы файл снаружи.
         let (root, outside) = write_fixture("link-dangling");

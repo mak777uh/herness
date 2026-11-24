@@ -1,0 +1,34 @@
+{
+  "schema": 2,
+  "id": "W03-LIFECYCLE-R1-REVIEW3-BASELINE-CORRECTION",
+  "date": "2026-11-24",
+  "question": "Как исправить 65-символьную опечатку SHA-256 core-rs/src/loopmod.rs в sealed E-0070, не переписывая исходный prereg и не ослабляя hash-integrity control?",
+  "hypothesis": "Отдельная sealed correction E-0072 сохраняет ошибочное исходное значение как исторический факт и задаёт проверенный 64-символьный baseline; Review3 R09 читает correction, а production, corpus и thresholds остаются неизменными.",
+  "criterion": "PASS correction только если SHA-256 исходного E-0070 равен 1de08b9f4cfd13bbb792bd65a4ca873c66733b11d6dcd8e990a820d680e8e92b, его ошибочное значение остаётся 65-символьным, correction содержит 64-символьный фактический SHA-256, фактические байты core-rs/src/loopmod.rs дают этот хеш, а registry связывает E-0072 с E-0070.",
+  "arms": [
+    "A (instrument RED): R09 нового Review3 suite даёт 8/9; baseline E-0070 для loopmod.rs имеет длину 65 вместо 64.",
+    "B (correction): отдельный E-0072 задаёт фактический 64-символьный хеш; исходный E-0070 и sidecar не редактируются и не перепечатываются."
+  ],
+  "sensitivity": "Проверяются исходный SHA-256, длина и точное значение ошибочного baseline, длина и совпадение исправленного baseline, фактический SHA-256 файла и registry link. Ослабление или нормализация ошибочной строки не допускается.",
+  "unit_of_analysis": "одна описательная hash-опечатка в sealed Review3 prereg",
+  "primary_metric": "source_baseline_length=65; corrected_baseline_length=64; source_prereg_changed=0; source_sidecar_changed=0; production_changed=0; threshold_changed=0",
+  "test": "python bin/seal.py verify lab/prereg/W03-LIFECYCLE-R1-REVIEW3.json; python -c с проверкой исходного SHA-256, длин 65/64, фактического SHA-256 loopmod.rs и registry link; python tests/test_w03_lifecycle_review3.py; python bin/lab.py validate",
+  "stopping_rule": "Зарегистрировать и запечатать correction до итогового Review3 GREEN. Исходный sealed E-0070 не редактировать и не перепечатывать. При любом расхождении hash/count/threshold W03 PASS не выдаётся.",
+  "fixture": "Только чтение sealed E-0070, sidecar, registry и production Rust-файла; сеть, секреты и реальные аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300",
+    "network": "не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+  },
+  "corrected_baseline_sha256": {
+    "core-rs/src/loopmod.rs": "74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583"
+  },
+  "known_limits": [
+    "Correction не превращает незавершённый W03 в PASS и не закрывает E-0070",
+    "Balanced oracle, metric correction E-0071 и независимый review остаются обязательными",
+    "Первый 8/9 запуск сохраняется как instrument RED, а не как production regression"
+  ],
+  "owner_decision": "Автономная разработка в утверждённых W03 gates; commits/push в herness разрешены, production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-w03-lifecycle-r1-review3"]
+}

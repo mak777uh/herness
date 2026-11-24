@@ -103,6 +103,11 @@ def run_task(task: dict) -> dict:
     }
 
 
+def batch_exit_code(rows: list[dict]) -> int:
+    """Ошибка цикла — ошибка batch-команды, а не успешный отчёт с текстом ошибки."""
+    return 1 if any(row.get("status") == "error" or row.get("error") for row in rows) else 0
+
+
 def main() -> int:
     only = {arg for arg in sys.argv[1:] if not arg.startswith("-")}
     tasks = [task for task in TASKS if not only or task["id"] in only]
@@ -120,7 +125,7 @@ def main() -> int:
         print(f"{row['id']:<12}{row['status']:<10}{row['steps']:<6}{row['calls']:<8}"
               f"{row['repeats']:<9}{row['failed_tools']:<8}{row['seconds']}")
     print(f"\nрезультаты: {out}")
-    return 0
+    return batch_exit_code(rows)
 
 
 if __name__ == "__main__":

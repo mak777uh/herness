@@ -1,0 +1,57 @@
+{
+  "schema": 2,
+  "id": "W03-LIFECYCLE-R1-REVIEW1",
+  "date": "2026-11-24",
+  "question": "Закрывают ли отдельные correction controls подтверждённые независимыми review обходы W03: широкий prefix S6_CLOSURE_BREACH, разные unknown-cost predicates, счётчики вместо lifecycle order и fresh success без проверки журнала на диске?",
+  "hypothesis": "Если отказ grant проверяется точным сообщением с именем pending tool, unknown-cost использует общий короткий marker, call→result→step является единственным допустимым tool lifecycle, run/end единственен и завершает блок, а fresh success требует done и целого корректного on-disk журнала, то все обходы review дают FAIL, а валидные done/granted/order controls остаются PASS.",
+  "criterion": "PASS correction только при 16/16 Python controls и 4/4 Rust review1 tests на Windows/POSIX без N/A; исходный prereg SHA-256 555c990eded8fe81f4e0e04b8d6f2f807b9198796203eabe6e85789884e5a175, corpus SHA-256 81f7a62c26a718695df27b8d652d1d34f834ae92beef5ac5249656649fd7eaef и исходный порог 32 Python/4 W03 Rust неизменны. Любой провал, N/A, ослабление проверки или изменение исходного corpus/threshold после RED означает отсутствие PASS.",
+  "arms": [
+    "A (review baseline): prefix S6_CLOSURE_BREACH принимает неверную причину/tool/suffix; Python не видит короткий unknown-cost; call→step→result, step→call→result, duplicate/early run/end проходят; main возвращает SUCCESS по in-memory Outcome без on-disk integrity/order.",
+    "B (correction): exact structured refusal и pending-tool binding; общий unknown-cost marker; state machine Idle→WaitingResult→WaitingStep→Idle и единственный финальный run/end; fresh success конъюнктивно требует in-memory done и пустого списка on-disk integrity/order problems."
+  ],
+  "sensitivity": "Каждый негатив меняет один аспект: reason/tool/suffix/code только у refusal; короткая/полная форма только у unknown-cost; размещение step, отсутствие step, duplicate/early end только у order; неверный HSJ2 header только у disk proof. Положительные exact refusal, granted success, две корректные пары и валидный on-disk done защищают от fail-closed во всём.",
+  "unit_of_analysis": "один ungranted tool result; один event stream; один fresh success decision с парой Outcome/on-disk journal",
+  "primary_metric": "python_controls=16; rust_review1_tests=4; false_pass=0; source_prereg_changed=0; source_corpus_changed=0; threshold_changed=0; platform_na=0",
+  "test": "python tests/test_w03_lifecycle_review1.py; cargo test --release --lib review1_; python bin/seal.py verify lab/prereg/W03-LIFECYCLE-R1.json; python bin/lab.py validate",
+  "stopping_rule": "Сначала сохранить оба review и запечатать correction. Затем зафиксировать RED для всех controls до production fixes; разрешена отдельная запись compilation RED для ещё не реализованного disk-proof contract. После одного минимального fix batch выполнить Windows/POSIX focused и regression, полный manifest и новый независимый review. Остановиться при первом необъяснённом провале; не менять corpus, исходные thresholds и refusal-code dictionary.",
+  "fixture": "Только tempfile, синтетические event streams, Stub/Metered provider, локальный Rust journal fixture и чтение исходников; реальные секреты, модель, сеть, QEMU и внешние аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется; cargo offline",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует (rc=2); пусто не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "R01", "input": "точный S6_CLOSURE_BREACH для pending ungranted tool", "expect": "acceptance PASS, host projection denied"},
+    {"id": "R02-R04", "input": "неверная причина, неверный tool, лишний suffix", "expect": "FAIL, projection error, никогда denied"},
+    {"id": "R05", "input": "legacy unstructured refusal", "expect": "FAIL, projection error"},
+    {"id": "R06", "input": "step/error не сообщил расход", "expect": "Python/Rust unknown-cost, require_status done FAIL"},
+    {"id": "R07", "input": "полный провайдер не сообщил расход", "expect": "unknown-cost FAIL, позитивная граница сохранена"},
+    {"id": "R08-R09", "input": "call→step→result и step→call→result", "expect": "FAIL в Python и Rust"},
+    {"id": "R10", "input": "call→result без завершающего step", "expect": "FAIL"},
+    {"id": "R11-R12", "input": "duplicate run/end и early run/end перед вторым циклом", "expect": "FAIL"},
+    {"id": "R13", "input": "две корректные пары call→result→step", "expect": "PASS"},
+    {"id": "R14", "input": "granted tool success", "expect": "PASS, projection ok"},
+    {"id": "R15", "input": "неверный HSJ2 header при in-memory done", "expect": "fresh disk-proof FAIL"},
+    {"id": "R16", "input": "корректный on-disk done journal", "expect": "fresh disk-proof PASS"}
+  ],
+  "threshold": {
+    "python_controls": 16,
+    "rust_review1_tests": 4,
+    "windows_python_passed": 16,
+    "posix_python_passed": 16,
+    "rust_review1_posix_passed": 4,
+    "platform_na": 0,
+    "false_pass": 0
+  },
+  "known_limits": [
+    "Batch budget/flail rc=0 не расширяется: sealed W03 явно ограничивает batch FAIL exception/status=error; это остаётся отдельным scope decision",
+    "Terminal raw replies применимы только к Rust parser; Python core потребляет уже разобранные Step, поэтому 9 terminal vectors не объявляются Python differential corpus",
+    "Статус/pairing/authority/budget corpus остаётся общим; correction не переписывает исходный JSON",
+    "Нативный Windows Rust linker GetHostNameW остаётся отдельным evidence gap и не превращается в PASS",
+    "Production QEMU/bridge launch, resume idempotency, retry semantics, W06/W09 и activation вне correction",
+    "Host projection проверяет классификацию и pairing, но не подменяет lifecycle acceptance"
+  ],
+  "owner_decision": "Автономная разработка в утверждённых W03 gates; commits/push в herness разрешены, production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-w03-lifecycle-r1-review1"]
+}

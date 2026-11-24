@@ -1,0 +1,31 @@
+{
+  "schema": 2,
+  "id": "W03-LIFECYCLE-R1-REVIEW2-METRIC-CORRECTION",
+  "date": "2026-11-24",
+  "question": "Как прозрачно исправить описательную метрику sealed E-0069 exact_diagnostics=4, когда Q01–Q05 проверяют пять различных exact diagnostics, не переписывая исходный prereg и не меняя пороги?",
+  "hypothesis": "Отдельная sealed instrument correction фиксирует review2_exact_diagnostics=5 и связывает E-0071 с E-0069; исходный файл, sidecar, 11 controls, четыре branch-removal metakontrol и production-семантика остаются неизменными.",
+  "criterion": "PASS correction только если SHA-256 исходного E-0069 равен c1fb818115114402473fed00199d78b74f4c2901bfac429e557768dc2df72e28, его primary_metric.exact_diagnostics остаётся 4, critical_controls Q01–Q05 содержат пять различных expect diagnostics, correction указывает 5, threshold python_review2_controls=11 не изменён, а registry связывает E-0071 с E-0069.",
+  "arms": [
+    "A (review baseline): sealed E-0069 primary_metric.exact_diagnostics=4; Q01–Q05 перечисляют пять различных exact diagnostics.",
+    "B (correction): отдельный E-0071 фиксирует 5; исходный E-0069 и его sidecar не редактируются и не перепечатываются."
+  ],
+  "sensitivity": "Проверяются исходный SHA-256, исходное значение 4, число и различность Q01–Q05 expect, correction 5 и registry link. Это исправление метаданных, не новый production mechanism и не ослабление гейта.",
+  "unit_of_analysis": "одна несогласованная описательная метрика в sealed Review2 prereg",
+  "primary_metric": "review2_exact_diagnostics=5; source_metric=4; source_prereg_changed=0; source_sidecar_changed=0; threshold_changed=0; production_changed=0",
+  "test": "python bin/seal.py verify lab/prereg/W03-LIFECYCLE-R1-REVIEW2.json; python -c с проверкой SHA-256, source metric=4, пяти различных Q01–Q05 expect, correction=5 и registry link; python bin/lab.py validate",
+  "stopping_rule": "Зарегистрировать и запечатать correction до итогового Review3 GREEN. Исходный sealed файл не редактировать и не перепечатывать. При любом расхождении hash/count/threshold W03 PASS не выдаётся.",
+  "fixture": "Только чтение sealed Review2 prereg, sidecar и registry; сеть, секреты и реальные аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300",
+    "network": "не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+  },
+  "known_limits": [
+    "Correction не превращает незавершённый W03 в PASS и не закрывает E-0069",
+    "Balanced oracle correction E-0070 и независимый review остаются обязательными",
+    "Исторические RED/GREEN и Review2 suite сохраняются без переписывания"
+  ],
+  "owner_decision": "Автономная разработка в утверждённых W03 gates; commits/push в herness разрешены, production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-w03-lifecycle-r1-review3"]
+}

@@ -1,0 +1,70 @@
+W03-LIFECYCLE-R1-REVIEW3 — CLOSURE CONCLUSION
+Дата: 2026-11-24
+Вердикт: PASS — финальная correction-попытка E-0070 в заявленном W03 scope.
+Baseline HEAD до closure-коммита: 9b4c101.
+Production-код в Review3 не менялся; hash baseline подтверждён отдельно и совпадает с E-0072 correction.
+
+ЧТО ЗАКРЫТО
+- Общий differential corpus Python↔Rust сохранён: terminal 9, status 13, pairing 6, authority 6, budget 4.
+- Терминальный токен требует пустого rest или whitespace boundary; DONEXYZ/NO-WORKXYZ/BLOCKEDXYZ не становятся терминальными командами.
+- unknown-cost и окончательный overspend не проходят budget; настоящий done с известной стоимостью остаётся положительным контролем.
+- Отказ по per-run grant распознаётся только точным structured message S6_CLOSURE_BREACH с совпадающим именем pending tool; другие closure breaches остаются error.
+- Lifecycle enforced как Idle→WaitingResult→WaitingStep→Idle: каждый call требует result и завершающий step; nested/orphan/double result, step до result, повторный run/end и события после run/end дают FAIL.
+- Fresh success требует одновременно outcome.status=done, order_ok и пустого списка integrity/order problems, прочитанных из on-disk HSJ2. In-memory done недостаточен.
+- Fresh loop-bridge после цикла завершает процесс по success/failure; интерактивный resume остаётся отдельным путём.
+
+RED/GREEN МАТРИЦА
+Windows:
+- Review3 pre-guard RED — 6/9, harness rc=0; три удалённые guard действительно воспроизвели acceptance bypass.
+- Review3 GREEN — 9/9, провалов 0, N/A 0.
+- Регрессия — W03 32/32, Review1 16/16, Review2 11/11, accept 24/24, manifest probes 17/17; 0 провалов.
+- Native Windows Rust — review2_order_oracles 1/1, W03 Rust 4/4, aggregate_rc=0.
+- Полный зарегистрированный manifest — 78 suites, 1341 checks, 0 провалов, rc=0.
+
+POSIX (WSL Ubuntu):
+- Review3 pre-guard RED — 6/9, harness rc=0.
+- Review3 GREEN — 9/9, провалов 0, N/A 0.
+- Регрессия — W03 32/32, Review1 16/16, Review2 11/11, accept 24/24, manifest probes 17/17; 0 провалов.
+- Rust — review2_order_oracles 1/1, W03 Rust 4/4, aggregate_rc=0; stdout/stderr захвачены раздельно.
+- Выбранный W03/Rust manifest aggregate — 10 suites, 522 checks, 0 провалов, rc=0.
+Ожидаемый rc=2 у head_slice_host в полном manifest — заявленный negative-smoke контракт, не W03 PASS и не N/A.
+
+НЕЗАВИСИМЫЙ REVIEW
+Вердикт PASS, substantive findings нет. Полный текст — research/outputs/W03-LIFECYCLE-R1-REVIEW3-INDEPENDENT-VERDICT.txt.
+Reviewer независимо повторил Windows Python suites, seals, registry и три acceptance-bypass metakontrol; Rust/POSIX статически или отдельными прогонами, не независимым повтором reviewer.
+
+FINDINGS И CORRECTIONS
+- Wrong-first fixture больше не содержит постороннего standalone step; metakontrol доказывает helper=[] и acceptance PASS после удаления guard.
+- Q03/Q06 приведены к буквально зарегистрированным входам; no-end остаётся no-done.
+- E-0071 исправляет только описательную метрику exact_diagnostics 4→5; sealed E-0069 и его sidecar сохранены.
+- E-0072 исправляет только 65-символьную hash-опечатку baseline; sealed E-0070 и его sidecar сохранены.
+- Исходные sealed preregs, corpus, thresholds и manifest minimums не ослаблялись и не переписывались.
+
+BASELINE SHA-256
+bin/accept.py = 83983535a3b579ae59f15b0090c77b4c89d349dab2d9c6ccaec03887c2890651
+core-rs/src/loopmod.rs = 74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583
+tests/test_w03_lifecycle_review2.py = 1ae69126de8131ada2c2c514569d672a6a489ec7042b17178bee4ba13ebda05c
+tests/test_w03_lifecycle_review1.py = d5838df9b76706e01410d0413037fa063196b74ea2424cdd61e65ed0154e676b
+tests/vectors/w03-lifecycle.json = 81f7a62c26a718695df27b8d652d1d34f834ae92beef5ac5249656649fd7eaef
+lab/prereg/W03-LIFECYCLE-R1-REVIEW3.json = 1de08b9f4cfd13bbb792bd65a4ca873c66733b11d6dcd8e990a820d680e8e92b
+
+ФИНАЛЬНЫЕ ПРОВЕРКИ ДО ЗАКРЫТИЯ
+- hs.py gates --profile auto — rc=0; 31 из 33 оценено, 2 N/A (журналы, индекс прогонов), 0 FAIL; fast probes 17/17.
+- hs.py selftest — rc=0.
+- verify_claims.py --fast — 311 исполняемых утверждений, 0 провалов.
+- coverage — 343/343 anchored 1.00; strict 192/340 = 0.56; ANCHORED_WEAK. Это не 100% строгой проверяемости.
+- seal.py verify-all — 49 печатей, 0 проблем.
+- lab.py validate — 72 эксперимента, 7 следующих гипотез.
+- test_manifest.py --check — 74 Python + 4 Rust entries.
+- git diff --check — rc=0.
+
+ИСТОРИЧЕСКАЯ ЦЕЛОСТНОСТЬ
+E-0066, E-0068 и E-0069 сохраняют статус open как исторические FAIL/NEEDS_CHANGES; их verdicts не переписываются. Закрываются E-0070 и instrument corrections E-0067/E-0071/E-0072. Ошибочные локальные запуски сохранены как INSTRUMENT-ERROR; смешанный stdout/stderr не выдавался за чистый evidence.
+
+ЧТО ЭТО НЕ ДОКАЗЫВАЕТ
+- Не запускались QEMU/bridge/provider, production activation или реальные внешние действия.
+- Resume idempotency/retry и ранний crash-resume остаются отдельной работой.
+- Clean-clone/CI-run, Windows directory durability и полный POSIX manifest не закрыты этим прогоном.
+- W03 не доказывает Lean↔Rust equivalence, K9_proven, отсутствие всех обходов или пригодность для публичного security approval.
+- Полный manifest содержит две явные Windows N/A в отдельном host-journal durability suite; W03 focused N/A=0. N/A не PASS.
+- Внешняя публикация не выполнялась.

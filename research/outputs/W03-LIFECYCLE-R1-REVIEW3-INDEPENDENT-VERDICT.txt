@@ -1,0 +1,44 @@
+W03-LIFECYCLE-R1-REVIEW3 — НЕЗАВИСИМЫЙ VERDICT
+Дата: 2026-11-24
+Вердикт: PASS — для текущей Review3 correction E-0070 и instrument corrections E-0071/E-0072.
+Substantive findings нет. Это не ретроактивный PASS исторических E-0066/E-0068/E-0069.
+
+НЕЗАВИСИМО ВОСПРОИЗВЕДЕНО НА WINDOWS
+Все команды запущены с PYTHONDONTWRITEBYTECODE=1, rc=0:
+- tests/test_w03_lifecycle_review3.py — 9/9;
+- tests/test_w03_lifecycle.py — 32/32;
+- tests/test_w03_lifecycle_review1.py — 16/16;
+- tests/test_w03_lifecycle_review2.py — 11/11;
+- tests/test_accept.py — 24/24;
+- tests/test_host_journal_accept_integrity.py — 6/6, N/A 0;
+- tests/test_false_done.py — 3/3 ложных «готово» отвергнуты;
+- tests/test_test_manifest.py — 17/17;
+- bin/test_manifest.py --check — 74 Python + 4 Rust entries;
+- bin/seal.py verify-all — 49 печатей, 0 проблем;
+- bin/lab.py validate — 72 эксперимента, 7 следующих гипотез.
+
+Отдельный probe подтвердил: исходные wrong-first/duplicate-end/after-end дают exact diagnostics; после удаления соответствующей защиты все три дают helper == [] и accept.check(...) == True.
+
+FINDING-BY-FINDING
+1. MEDIUM wrong-first oracle — закрыт. Фикстура содержит корректный call→result→step до run/end, а metakontrol требует одновременно пустой helper и acceptance PASS. См. tests/test_w03_lifecycle_review3.py:23-26,120-124.
+2. LOW Q03/Q06 — закрыт. Входами являются корректный блок + второй run/end и корректный блок без run/end. No-end остаётся no-done, а не done/PASS. См. tests/test_w03_lifecycle_review3.py:27-38,127-157.
+3. LOW exact_diagnostics — закрыт. E-0071 описывает пять уникальных exact diagnostics Q01–Q05, сохраняя исходную метрику E-0069 exact_diagnostics=4, 11 controls и порог 11. См. lab/prereg/W03-LIFECYCLE-R1-REVIEW2-METRIC-CORRECTION.json:6-15.
+
+BASELINE И THRESHOLDS
+Фактические SHA-256 независимо сверены главным агентом:
+- bin/accept.py — 83983535a3b579ae59f15b0090c77b4c89d349dab2d9c6ccaec03887c2890651;
+- core-rs/src/loopmod.rs — 74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583;
+- tests/test_w03_lifecycle_review2.py — 1ae69126de8131ada2c2c514569d672a6a489ec7042b17178bee4ba13ebda05c;
+- tests/test_w03_lifecycle_review1.py — d5838df9b76706e01410d0413037fa063196b74ea2424cdd61e65ed0154e676b;
+- tests/vectors/w03-lifecycle.json — 81f7a62c26a718695df27b8d652d1d34f834ae92beef5ac5249656649fd7eaef;
+- W03 prereg — 555c990eded8fe81f4e0e04b8d6f2f807b9198796203eabe6e85789884e5a175;
+- Review1 prereg — 2464eebf54c9b58acc367fdc30fc0d719aa6d5aa675a098c3983218987a968ff;
+- Review2 prereg — c1fb818115114402473fed00199d78b74f4c2901bfac429e557768dc2df72e28.
+E-0072 сохраняет ошибочную 65-символьную запись E-0070 и задаёт фактический 64-символьный hash. Correction sidecars: E-0071 bb5c7767…d41c21, E-0072 150011ae…b83e66.
+Пороги не ослаблены: W03 32 Python/4 Rust, Review1 16/4, Review2 11/1, Review3 9; corpus 9/13/6/6/4. Manifest minimums совпадают.
+
+СТАТИЧЕСКИЙ SCOPE
+Проверены fail-closed границы exact refusal, unknown-cost, budget/final overspend, terminal token boundary, lifecycle state machine, disk proof и fresh/resume split: core-rs/src/loopmod.rs:53-60,322-330,1304-1349,1600-1670,1823-1831,1937-1951,1969-1975,2108-2155; core-rs/src/main.rs:720-800,803-887.
+
+ОГРАНИЧЕНИЯ
+Reviewer не компилировал и не запускал Rust и не повторял POSIX; эти поверхности проверены статически или отдельными сохранёнными прогонами. Полный manifest и test_host_journal_authority_review.py reviewer не запускал. QEMU/bridge launch, resume idempotency/retry, clean-clone/CI, Windows directory durability, production activation и Lean↔Rust equivalence вне scope. N/A не считается PASS. Reviewer ничего не редактировал, не коммитил и не создавал evidence-файлов.

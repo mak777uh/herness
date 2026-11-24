@@ -70,7 +70,11 @@
     {"id": "test_tools.py", "path": "tests/test_tools.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_verify_repo.py", "path": "tests/test_verify_repo.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_vsock_probe.py", "path": "tests/test_vsock_probe.py", "runner": "custom-main", "minimum_checks": 5},
-    {"id": "test_webfetch.py", "path": "tests/test_webfetch.py", "runner": "custom-main", "minimum_checks": 1}
+    {"id": "test_webfetch.py", "path": "tests/test_webfetch.py", "runner": "custom-main", "minimum_checks": 1},
+    {"id": "test_w03_lifecycle.py", "path": "tests/test_w03_lifecycle.py", "runner": "custom-main", "minimum_checks": 32},
+    {"id": "test_w03_lifecycle_review1.py", "path": "tests/test_w03_lifecycle_review1.py", "runner": "custom-main", "minimum_checks": 16},
+    {"id": "test_w03_lifecycle_review2.py", "path": "tests/test_w03_lifecycle_review2.py", "runner": "custom-main", "minimum_checks": 11},
+    {"id": "test_w03_lifecycle_review3.py", "path": "tests/test_w03_lifecycle_review3.py", "runner": "custom-main", "minimum_checks": 9}
   ],
   "rust": [
     {"id": "rust:lib", "runner": "cargo-test", "args": ["--lib"], "minimum_tests": 1},

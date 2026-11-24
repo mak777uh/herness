@@ -1,0 +1,73 @@
+{
+  "schema": 2,
+  "id": "W03-LIFECYCLE-R1",
+  "date": "2026-11-24",
+  "question": "Закрывает ли единый Python↔Rust corpus ложный PASS при terminal-token collisions, unknown-cost, неструктурированном отказе, нарушении call/result pairing, batch error и fallthrough fresh loop-bridge?",
+  "hypothesis": "Если terminal tokens принимаются только на границе слова, Python и Rust выводят статус по одному corpus, неизвестная стоимость никогда не проходит max_allowance, ungranted tool признаётся отказавшим только по точному структурированному S6_CLOSURE_BREACH, каждый call имеет ровно один result, batch error возвращает FAIL, а fresh loop-bridge возвращается после одного прогона, то заявленные W03 негативы дают fail-closed, а настоящий done с известной нулевой стоимостью остаётся PASS.",
+  "criterion": "PASS только при 32/32 Python controls и 4/4 W03 Rust tests на Windows и POSIX без N/A. Обязательны общий corpus 9 terminal/13 status/6 pairing, positive done/zero-cost, три token collision, unknown-cost и отсутствующая/malformed стоимость, structured grant refusal и три его подделки, orphan/missing/nested/double-result, batch exception/error FAIL, fresh bridge return/error/non-done FAIL и сохранение отдельного resume/interactive sleep. Любой провал, N/A, ослабление порога или изменение corpus после RED означает отсутствие PASS.",
+  "arms": [
+    "A (до фикса): Rust принимает терминальный prefix без границы; Python не знает unknown-cost/no-done, отсутствующая стоимость равна нулю, отказ определяется подстрокой, pairing перезаписывает pending; batch всегда rc=0; fresh loop-bridge падает в общий sleep.",
+    "B (после фикса): token boundary и единый статус; стоимость обязательна и конечна для budget; точный structured refusal; строгая пара call→result; batch error rc=1; fresh bridge возвращает success только при done и валидном порядке, resume остаётся отдельным интерактивным путём."
+  ],
+  "sensitivity": "Каждый негатив меняет один аспект. Terminal corpus проверяет positives и collisions; status corpus фиксирует precedence; authority corpus меняет только код/результат; pairing corpus меняет только порядок; budget corpus меняет только стоимость; final-reply Rust probe проверяет известный overspend именно на DONE. Fresh/resume разделение проверяется исполнением чистого helper и точной структурной проверкой веток, но не выдаётся за production QEMU launch.",
+  "unit_of_analysis": "один terminal reply; один event stream; один ungranted result; одна call/result последовательность; одна стоимость; один batch row; одна fresh/resume branch",
+  "primary_metric": "python_controls=41; rust_w03_tests=4; terminal_vectors=9; status_vectors=13; pairing_vectors=6; authority_vectors=6; budget_vectors=4; false_pass=0; platform_na=0",
+  "test": "python tests/test_w03_lifecycle.py; cargo test --release --lib w03",
+  "stopping_rule": "Один W03 batch: сохранить RED на production baseline, реализовать только перечисленные lifecycle/acceptance исправления, один Windows GREEN и один POSIX GREEN. После GREEN один независимый review. Остановиться при первом необъяснённом провале; не менять corpus, thresholds, structured-code семантику и platform criteria после RED. W06/W09/resume idempotency/production activation не смешивать.",
+  "fixture": "Только tempfile, синтетические HSJ2/event streams, Stub/Metered provider, локальный Rust tool fixture и чтение исходников; реальные секреты, модель, сеть и внешние аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется; cargo offline",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "C01-C06", "input": "шесть положительных terminal/tool replies", "expect": "точный разбор без потери смысла"},
+    {"id": "C07-C09", "input": "DONEXYZ/BLOCKEDXYZ/NO-WORKXYZ", "expect": "ошибка разбора, не терминальный success"},
+    {"id": "C10", "input": "13 общих status streams", "expect": "Python и Rust совпадают с corpus"},
+    {"id": "C11", "input": "anchored done + unknown-cost error", "expect": "unknown-cost, require_status done FAIL"},
+    {"id": "C12", "input": "max_allowance без стоимости", "expect": "FAIL, неизвестное не равно нулю"},
+    {"id": "C13", "input": "известная нулевая стоимость", "expect": "done PASS"},
+    {"id": "C14", "input": "известная стоимость выше allowance", "expect": "FAIL"},
+    {"id": "C15", "input": "final DONE с известным overspend", "expect": "Rust budget-money, не done"},
+    {"id": "C16", "input": "err S6_CLOSURE_BREACH для ungranted write", "expect": "отказ, нарушением выдачи не считается"},
+    {"id": "C17-C19", "input": "legacy/unknown/wrong refusal code", "expect": "FAIL, подстрока не доказывает отказ"},
+    {"id": "C20", "input": "валидная call/result пара", "expect": "PASS"},
+    {"id": "C21", "input": "orphan/missing/nested/double-result", "expect": "FAIL в Python, Rust order и host projection"},
+    {"id": "C22", "input": "batch exception/status=error", "expect": "exit code 1; success row 0"},
+    {"id": "C23", "input": "fresh bridge outcome", "expect": "done+order success; error/non-done FAIL; return после прогона"},
+    {"id": "C24", "input": "loop-bridge-resume branch", "expect": "прежний отдельный интерактивный sleep сохранён"}
+  ],
+  "threshold": {
+    "python_controls": 32,
+    "rust_w03_tests": 4,
+    "windows_python_passed": 32,
+    "posix_python_passed": 32,
+    "platform_na": 0,
+    "terminal_vectors": 9,
+    "status_vectors": 13,
+    "pairing_vectors": 6,
+    "authority_vectors": 6,
+    "budget_vectors": 4
+  },
+  "known_limits": [
+    "Fresh/resume route доказывается pure helper и исходником веток; реальный QEMU/bridge launch не выполняется и не заявляется",
+    "Structured S6_CLOSURE_BREACH описывает выход за per-run closure; существующий словарь не расширяется и коды не переиспользуются",
+    "Batch FAIL применяется к exception/status=error; blocked/no-work остаются явными отчётами, а не маскируются под done",
+    "Resume cost_unknown state, retry idempotency, W06 SSRF, W09 streaming caps и production activation остаются вне W03",
+    "Host projection pairing исправляется, но её resume/retry идемпотентность остаётся отдельной работой"
+  ],
+  "kill_criteria": [
+    "Любой terminal collision принимается как команда",
+    "Python/Rust расходятся в статусе на общем corpus",
+    "Unknown/missing/malformed стоимость проходит max_allowance",
+    "Known final DONE overspend даёт done",
+    "Ungranted tool с legacy/fake/wrong code не считается нарушением",
+    "Nested/orphan/missing call-result принимается",
+    "Batch exception/error возвращает 0",
+    "Fresh bridge падает в общий sleep либо resume/interactive путь изменён",
+    "Порог/corpus ослаблен после RED"
+  ],
+  "owner_decision": "Утверждённый W03 и owner scope 2026-11-24: разработка и технические решения в рамках gates; commits/push в herness разрешены, production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-w03-lifecycle-r1"]
+}
