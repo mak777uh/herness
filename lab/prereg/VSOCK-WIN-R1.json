@@ -85,5 +85,22 @@
  "runs": [
   "runs/exp-vsock-win-r1"
  ],
- "closed": false
+ "result": {
+  "verdict": "RED",
+  "instrument_verdict": "PASS",
+  "device_start": false,
+  "qemu_launch_rc": 1,
+  "qemu_stderr": "C:\\Program Files\\qemu\\qemu-system-x86_64.exe: -device vhost-vsock-pci,guest-cid=3: 'vhost-vsock-pci' is not a valid device model name",
+  "fallback_calls": 0,
+  "metrics": null,
+  "instrument_controls": "5/5",
+  "evidence": [
+   "research/outputs/VSOCK-WIN-R1-2026-11-24.txt",
+   "research/outputs/VSOCK-WIN-R1-controls.txt",
+   "research/outputs/VSOCK-WIN-R1-gates.txt"
+  ],
+  "pre_closure_sha256": "9c88729a51ce4a1750d1f8bae87ae9b36f3c02713defa6760406607c1beade33"
+ },
+ "conclusion": "Фактический Windows QEMU 11.1.0 запуск с vhost-vsock-pci,guest-cid=3 завершился rc=1: устройство отсутствует в этой сборке. Прибор сохранил command/rc/stderr, fallback_calls=0 и metrics=null; 5/5 negative controls прошли. Это RED только для заявленного Windows/QEMU vhost-vsock пути, не N/A, не GREEN и не запрет других транспортов. Достаточность RED для HTTP-subset остаётся owner decision.",
+ "closed": true
 }

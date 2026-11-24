@@ -1,0 +1,7 @@
+[ok] missing-qemu-is-na
+[ok] device-failure-is-red-without-metrics
+[ok] startup-timeout-is-not-green
+[ok] clean-exit-is-not-green
+[ok] launch-has-no-fallback-channel
+проверок: 5; провалов: 0
+RC=0

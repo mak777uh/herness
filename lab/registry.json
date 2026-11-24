@@ -476,8 +476,10 @@
    "title": "VSOCK-WIN-R1: отдельная проба vhost-vsock на Windows без fallback",
    "hypothesis": "Windows/QEMU не поднимет vhost-vsock; корректный probe сохранит RED с command/rc/stderr, нулевыми fallback-вызовами и без выдуманных metrics.",
    "prereg": "lab/prereg/VSOCK-WIN-R1.json",
-   "status": "running",
-   "note": "Prereg зафиксирован до запуска; ожидаемый RED не является N/A или GREEN, достаточность решения оставляет владельцу.",
+   "status": "closed",
+   "conclusion": "research/outputs/VSOCK-WIN-R1-2026-11-24.txt",
+   "claim": "C-0340",
+   "note": "RED: фактический Windows QEMU 11.1.0 launch с vhost-vsock-pci,guest-cid=3 завершился rc=1, device model отсутствует; command/rc/stderr сохранены, fallback_calls=0, metrics=null, instrument controls 5/5. Это результат только заявленного vhost-vsock пути; достаточность RED для HTTP-subset остаётся owner decision.",
    "updated": "2026-11-24"
   },
   {

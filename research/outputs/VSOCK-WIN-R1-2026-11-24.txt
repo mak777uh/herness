@@ -1,0 +1,33 @@
+VSOCK-WIN-R1 — device-start probe
+Дата: 2026-11-24
+Хост: Windows 11 build 10.0.26300
+QEMU: C:\Program Files\qemu\qemu-system-x86_64.exe
+QEMU --version rc: 0
+QEMU --version output:
+QEMU emulator version 11.1.0 (v11.1.0-12130-ge470268ff4)
+Copyright (c) 2003-2026 Fabrice Bellard and the QEMU Project developers
+
+Launch command: "C:\Program Files\qemu\qemu-system-x86_64.exe" -machine q35 -accel whpx -m 256 -smp 1 -nodefaults -display none -monitor none -serial none -S -device vhost-vsock-pci,guest-cid=3
+Launch performed: yes
+Startup timeout seconds: 5
+Launch rc: 1
+Timed out: no
+Launch stdout:
+(пусто)
+Launch stderr:
+C:\Program Files\qemu\qemu-system-x86_64.exe: warning: host doesn't support requested feature: CPUID[eax=80000001h].ECX.svm [bit 2]
+C:\Program Files\qemu\qemu-system-x86_64.exe: -device vhost-vsock-pci,guest-cid=3: 'vhost-vsock-pci' is not a valid device model name
+
+VERDICT: RED
+REASON: device-start-failed
+fallback_calls: 0
+metrics: null
+echo_success: N/A
+p99_latency_ms: N/A
+lost_frames: N/A
+reconnect_ok: N/A
+reachable_non_host_cids: N/A
+
+Граница: это фактический Windows/QEMU device-start запуск, не Linux/WSL
+и не Hyper-V AF_HYPERV/VMBus. RED не запрещает другие транспорты и не
+разрешает fallback. Достаточность RED для HTTP-subset остаётся owner decision.
