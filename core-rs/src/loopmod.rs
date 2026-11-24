@@ -101,6 +101,48 @@ pub fn parse_step(reply: &str) -> Result<Step, String> {
 pub const KNOWN_TOOLS: [&str; 8] =
     ["seal", "netprobe", "net", "search", "list", "read", "write", "head"];
 
+/// Состояние выдачи инструментов. `Missing` и `Invalid` не являются пустым набором:
+/// оба означают отказ всего прогона, а не «разрешено всё».
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GrantState {
+    Missing,
+    Valid(Vec<String>),
+    Invalid(String),
+}
+
+/// Разобрать `/tools` строго: JSON-массив известных строк, без фильтрации плохих элементов.
+/// Пустой массив — валидный deny-all. Любая ошибка запрещает весь список.
+pub fn parse_grants(text: &str) -> Result<Vec<String>, String> {
+    let value: serde_json::Value = serde_json::from_str(text)
+        .map_err(|error| format!("malformed JSON: {error}"))?;
+    let items = value
+        .as_array()
+        .ok_or_else(|| "expected JSON array of tool names".to_string())?;
+    let mut granted = Vec::with_capacity(items.len());
+    for (index, item) in items.iter().enumerate() {
+        let name = item
+            .as_str()
+            .ok_or_else(|| format!("item {index} is not a string"))?;
+        if !KNOWN_TOOLS.contains(&name) {
+            return Err(format!("unknown tool at item {index}"));
+        }
+        granted.push(name.to_string());
+    }
+    Ok(granted)
+}
+
+/// Прочитать выдачу, сохраняя различие между отсутствующим и нечитаемым файлом.
+pub fn load_grants(path: &Path) -> GrantState {
+    match std::fs::read_to_string(path) {
+        Ok(text) => match parse_grants(&text) {
+            Ok(granted) => GrantState::Valid(granted),
+            Err(error) => GrantState::Invalid(error),
+        },
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => GrantState::Missing,
+        Err(error) => GrantState::Invalid(format!("read failed: {error}")),
+    }
+}
+
 /// Сколько знаков из результата попадает в строку истории.
 const HISTORY_BRIEF: usize = 120;
 /// Сколько знаков последнего результата показывается целиком.
@@ -1212,10 +1254,6 @@ fn tool_write(arg: &str) -> Result<String, String> {
     tool_write_in(arg, &root)
 }
 
-fn run_tool(name: &str, arg: &str) -> Result<String, String> {
-    run_tool_g(name, arg, None)
-}
-
 /// Отправить событие в хостовый журнал, если прогон объявлен хостовым (HS_HOST_RUN).
 ///
 /// Хост берётся из окружения, а не из аргументов: это не «настройка задачи», а адрес
@@ -1295,11 +1333,9 @@ pub fn derive_status(events: &[Event]) -> &'static str {
 ///
 /// Это не допуск инструмента: допуск выводится из `registry.state.json` ниже. Грант может
 /// только сузить набор, но не расширить его. Тестового флага, обходящего обе проверки, нет.
-fn tool_authority(name: &str, granted: Option<&[String]>) -> Result<(), String> {
-    if let Some(list) = granted {
-        if !list.iter().any(|tool| tool == name) {
-            return Err(format!("инструмент {name} не выдан в этом прогоне"));
-        }
+fn tool_authority(name: &str, granted: &[String]) -> Result<(), String> {
+    if !granted.iter().any(|tool| tool == name) {
+        return Err(format!("инструмент {name} не выдан в этом прогоне"));
     }
     Ok(())
 }
@@ -1351,7 +1387,7 @@ fn registry_allows(name: &str) -> bool {
 /// воспользоваться, и тогда граница прогона определяется её настроением, а не объявлением.
 /// В R8 все шесть legacy переведены в `quarantined`, `search` — в `rejected`, `head` остаётся
 /// `candidate`; поэтому запуск каждого из них обязан вернуть `S13_TOOL_INACTIVE`.
-fn run_tool_g(name: &str, arg: &str, granted: Option<&[String]>) -> Result<String, String> {
+fn run_tool_g(name: &str, arg: &str, granted: &[String]) -> Result<String, String> {
     tool_authority(name, granted)?;
     if !registry_allows(name) {
         return Err(format!(
@@ -1600,17 +1636,22 @@ pub fn run_task(
     task: &str,
     link: &mut dyn ModelLink,
 ) -> std::io::Result<Outcome> {
-    run_task_with_budget(journal_path, task, link, Budget::default())
+    // Legacy-путь локальной диагностики намеренно перечисляет весь известный набор.
+    // Bridge-путь сюда не заходит и обязан передать прочитанную выдачу явно.
+    let granted = KNOWN_TOOLS.iter().map(|name| name.to_string()).collect();
+    run_task_with_budget(journal_path, task, link, Budget::default(), granted)
 }
 
-/// То же, но с явным бюджетом. Проверка бюджета — часть прогона, а не пожелание снаружи.
+/// То же, но с явным бюджетом и явной выдачей. Пустой набор — deny-all;
+/// неявного «разрешено всё» в API прогона больше нет.
 pub fn run_task_with_budget(
     journal_path: &Path,
     task: &str,
     link: &mut dyn ModelLink,
     budget: Budget,
+    granted: Vec<String>,
 ) -> std::io::Result<Outcome> {
-    run_task_from(journal_path, task, link, budget, None, false, None)
+    run_task_from(journal_path, task, link, budget, None, false, granted)
 }
 
 /// Прогон с долговечным журналом: каждый шаг сбрасывается на диск.
@@ -1622,7 +1663,7 @@ pub fn run_task_durable(
     task: &str,
     link: &mut dyn ModelLink,
     budget: Budget,
-    granted: Option<Vec<String>>,
+    granted: Vec<String>,
 ) -> std::io::Result<Outcome> {
     run_task_from(journal_path, task, link, budget, None, true, granted)
 }
@@ -1636,7 +1677,7 @@ pub fn run_task_resume(
     journal_path: &Path,
     link: &mut dyn ModelLink,
     budget: Budget,
-    granted: Option<Vec<String>>,
+    granted: Vec<String>,
 ) -> std::io::Result<Outcome> {
     let state = resume_state(journal_path).map_err(|error| std::io::Error::other(error))?;
     if state.closed {
@@ -1670,7 +1711,7 @@ fn run_task_from(
     budget: Budget,
     start: Option<Resumed>,
     durable: bool,
-    granted: Option<Vec<String>>,
+    granted: Vec<String>,
 ) -> std::io::Result<Outcome> {
     let mut journal = Journal::open(journal_path)?;
     let mut events: Vec<Event> = Vec::new();
@@ -1785,7 +1826,7 @@ fn run_task_from(
                 steps += 1;
                 record(&mut journal, &mut events, "tool/call", format!("{name} {arg}"))?;
                 let mut result_tag = "err";
-                let result = run_tool_g(&name, &arg, granted.as_deref());
+                let result = run_tool_g(&name, &arg, &granted);
                 calls += 1;
                 match result {
                     Ok(text) => {
@@ -2211,9 +2252,79 @@ mod tests {
     }
 
     #[test]
+    fn выдача_различает_missing_valid_и_invalid() {
+        let dir = fixture("grants-state");
+        let path = dir.join("tools.json");
+        assert_eq!(load_grants(&path), GrantState::Missing);
+        assert_eq!(parse_grants("[]").unwrap(), Vec::<String>::new());
+        assert_eq!(parse_grants(r#"["net"]"#).unwrap(), vec!["net".to_string()]);
+        for bad in ["", "{", "{}", "null", r#""net""#, r#"["net",7]"#, r#"["net","unknown"]"#] {
+            assert!(parse_grants(bad).is_err(), "негодная выдача принята: {bad}");
+        }
+        std::fs::write(&path, r#"["net",7]"#).unwrap();
+        assert!(matches!(load_grants(&path), GrantState::Invalid(_)));
+        assert!(matches!(load_grants(&dir), GrantState::Invalid(_)));
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn пустая_выдача_запрещает_даже_активный_net() {
+        let granted = parse_grants("[]").unwrap();
+        // Положительный контроль: net действительно имеет derived допуск, поэтому отказ
+        // ниже исходит из per-run grant, а не из неактивного состояния реестра.
+        assert!(registry_allows("net"));
+        assert!(tool_authority("net", &granted).is_err());
+        assert!(tool_authority("net", &["net".to_string()]).is_ok());
+        let error = run_tool_g("net", "", &granted).unwrap_err();
+        assert!(error.contains("не выдан"), "{error}");
+    }
+
+    #[test]
+    fn fresh_и_resume_применяют_пустую_выдачу_одинаково() {
+        let dir = fixture("grants-runtime");
+        let fresh = dir.join("fresh.bin");
+        let mut link = crate::model::Stub::new(vec![
+            "TOOL net".to_string(),
+            "DONE проверено".to_string(),
+        ]);
+        run_task_with_budget(
+            &fresh,
+            "проверить отказ",
+            &mut link,
+            Budget { steps: 3, seconds: 10.0, allowance: 1.0 },
+            Vec::new(),
+        )
+        .unwrap();
+        let fresh_text = String::from_utf8_lossy(&std::fs::read(&fresh).unwrap()).into_owned();
+        assert!(fresh_text.contains("инструмент net не выдан"), "{fresh_text}");
+
+        let resumed = dir.join("resumed.bin");
+        {
+            let mut journal = Journal::open(&resumed).unwrap();
+            journal.append("run/start task: проверить отказ".as_bytes(), Kind::Data).unwrap();
+            journal.sync().unwrap();
+        }
+        let mut link = crate::model::Stub::new(vec![
+            "TOOL net".to_string(),
+            "DONE проверено".to_string(),
+        ]);
+        run_task_resume(
+            &resumed,
+            &mut link,
+            Budget { steps: 3, seconds: 10.0, allowance: 1.0 },
+            Vec::new(),
+        )
+        .unwrap();
+        let resumed_text = String::from_utf8_lossy(&std::fs::read(&resumed).unwrap()).into_owned();
+        assert!(resumed_text.contains("инструмент net не выдан"), "{resumed_text}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn legacy_и_head_не_запускаются_без_допуска() {
         for name in ["seal", "netprobe", "search", "list", "read", "write", "head"] {
-            let error = run_tool_g(name, "", None).unwrap_err();
+            let granted = vec![name.to_string()];
+            let error = run_tool_g(name, "", &granted).unwrap_err();
             assert!(
                 error.contains("S13_TOOL_INACTIVE"),
                 "{name}: ожидался S13_TOOL_INACTIVE, получено {error}"
@@ -2383,7 +2494,7 @@ mod tests {
         }
         assert!(resume_state(&path).unwrap().closed);
         let mut stub = crate::model::Stub::new(vec!["DONE готово".to_string()]);
-        let err = run_task_resume(&path, &mut stub, Budget::default(), None).unwrap_err();
+        let err = run_task_resume(&path, &mut stub, Budget::default(), Vec::new()).unwrap_err();
         assert!(err.to_string().contains("закрыт коммитом"), "{err}");
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -2396,7 +2507,7 @@ mod tests {
             "DONE первая строка прочитана".to_string(),
         ]);
         let budget = Budget { steps: 4, seconds: 10.0, allowance: 0.01 };
-        let outcome = run_task_resume(&path, &mut stub, budget, None).unwrap();
+        let outcome = run_task_resume(&path, &mut stub, budget, vec!["read".to_string()]).unwrap();
         assert_eq!(outcome.steps, 2, "шагов {}", outcome.steps);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         let state = resume_state(&path).unwrap();
@@ -2742,6 +2853,10 @@ mod tests {
         std::fs::remove_dir_all(root.parent().unwrap()).ok();
     }
 
+    fn all_tools() -> Vec<String> {
+        KNOWN_TOOLS.iter().map(|name| name.to_string()).collect()
+    }
+
     fn fixture(tag: &str) -> std::path::PathBuf {
         // Имя уникально для теста: тесты идут параллельно в одном процессе, общий каталог
         // приводил к тому, что один тест удалял фикстуру другого.
@@ -2963,7 +3078,7 @@ mod tests {
             usage: crate::model::Usage { prompt_tokens: 10, completion_tokens: 10, allowance: Some(0.02) },
         };
         let budget = Budget { steps: 10, seconds: 30.0, allowance: 0.01 };
-        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget, all_tools()).unwrap();
         assert_eq!(outcome.status, "budget-money", "{:?}", outcome.problems);
         assert_eq!(outcome.calls, 1, "после первого шага бюджет уже превышен");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
@@ -2976,7 +3091,7 @@ mod tests {
         let journal = dir.join("journal.bin");
         let mut link = crate::model::Stub::seal_method("/method.md");
         let budget = Budget { steps: 10, seconds: 0.0, allowance: 1.0 };
-        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget, all_tools()).unwrap();
         assert_eq!(outcome.status, "budget-time");
         assert_eq!(outcome.calls, 0);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
@@ -2989,7 +3104,7 @@ mod tests {
         let journal = dir.join("journal.bin");
         let mut link = crate::model::Stub::seal_many("/method.md", 5);
         let budget = Budget { steps: 2, seconds: 30.0, allowance: 1.0 };
-        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget, all_tools()).unwrap();
         assert_eq!(outcome.calls, 2, "ровно два шага");
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
         std::fs::remove_dir_all(&dir).ok();
@@ -3033,7 +3148,7 @@ mod tests {
             "DONE запечатано: method.md".to_string(),
         ]);
         let budget = Budget { steps: 5, seconds: 30.0, allowance: 1.0 };
-        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget, all_tools()).unwrap();
         // Опора есть (имя файла из результата), но стоимость неизвестна: это не `done`.
         assert_eq!(outcome.status, "unknown-cost", "{:?}", outcome.problems);
         assert!(outcome.order_ok(), "{:?}", outcome.problems);
@@ -3052,7 +3167,7 @@ mod tests {
             "DONE запечатано: method.md".to_string(),
         ]);
         let budget = Budget { steps: 5, seconds: 30.0, allowance: 1.0 };
-        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget).unwrap();
+        let outcome = run_task_with_budget(&journal, "тест", &mut link, budget, all_tools()).unwrap();
         assert_eq!(outcome.status, "done", "{:?}", outcome.problems);
         std::fs::remove_dir_all(&dir).ok();
     }

@@ -581,31 +581,20 @@ fn dns_probe(sandboxed: bool) -> ExitCode {
     }
 }
 
-/// Выдача инструментов из файла `/tools` (JSON-массив имён). Нет файла — выданы все.
-///
-/// Решает хост, а не модель: набор инструментов — это полномочие. Прогону «найди и назови»
-/// незачем `write` и `seal`, и объявить это надо до начала работы, а не после.
-fn grants() -> Option<Vec<String>> {
-    let text = fs::read_to_string("/tools").ok()?;
-    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
-    let list: Vec<String> = value
-        .as_array()?
-        .iter()
-        .filter_map(|item| item.as_str().map(str::to_string))
-        .collect();
-    if list.is_empty() {
-        return None;
+/// Обязательная выдача для обоих bridge-путей: missing/invalid останавливают прогон
+/// до модели, монтирования рабочего диска и создания журнала. Пустой массив валиден
+/// и означает deny-all, а не отсутствие ограничения.
+fn require_grants(path: &std::path::Path) -> Result<Vec<String>, String> {
+    match hs_core::loopmod::load_grants(path) {
+        hs_core::loopmod::GrantState::Missing => Err(format!(
+            "Missing: {} отсутствует; без выдачи инструментов прогон запрещён",
+            path.display()
+        )),
+        hs_core::loopmod::GrantState::Invalid(error) => {
+            Err(format!("Invalid: {}: {error}", path.display()))
+        }
+        hs_core::loopmod::GrantState::Valid(granted) => Ok(granted),
     }
-    let known = hs_core::loopmod::KNOWN_TOOLS;
-    let unknown: Vec<&String> = list
-        .iter()
-        .filter(|name| !known.contains(&name.as_str()))
-        .collect();
-    if !unknown.is_empty() {
-        println!("инструменты: неизвестные имена {:?} — отказ по всему списку", unknown);
-        return None;
-    }
-    Some(list)
 }
 
 /// Системная подсказка под выданный набор: модель не должна выбирать из того, чего у неё нет.
@@ -617,16 +606,21 @@ fn system_for(granted: &[String]) -> String {
             "search" => "search <путь> <подстрока>",
             "seal" => "seal <файл>",
             "netprobe" => "netprobe",
+            "net" => "net <search|open|links|follow>",
             "write" => "write <путь> <текст>",
             _ => "",
         }
     };
-    let list = granted
-        .iter()
-        .map(|name| usage(name))
-        .filter(|text| !text.is_empty())
-        .collect::<Vec<_>>()
-        .join("; ");
+    let list = if granted.is_empty() {
+        "нет".to_string()
+    } else {
+        granted
+            .iter()
+            .map(|name| usage(name))
+            .filter(|text| !text.is_empty())
+            .collect::<Vec<_>>()
+            .join("; ")
+    };
     format!(
         "Ты — цикл харнесса в изолированной системе. Рабочий каталог: /mnt, файлы задачи лежат там; пути можно писать относительно него.\n\
          Отвечай РОВНО одной строкой:\n\
@@ -702,6 +696,13 @@ fn init_mode() -> ExitCode {
     let scope = fs::read_to_string("/scope").ok().map(|text| text.trim().to_string());
 
     if mode_text == "loop-bridge" {
+        let granted = match require_grants(std::path::Path::new("/tools")) {
+            Ok(granted) => granted,
+            Err(error) => {
+                eprintln!("инструменты: отказ — {error}");
+                return ExitCode::FAILURE;
+            }
+        };
         if env::var(hs_core::loopmod::LOOP_GUARD).is_ok() {
             // Рекурсия: цикл запустил сам себя. Это не «ещё один прогон», а утечка памяти.
             println!("цикл: отказ — уже внутри цикла (защита от рекурсии)");
@@ -717,6 +718,8 @@ fn init_mode() -> ExitCode {
             .trim()
             .to_string();
         let mut link = hs_core::model::HttpBridge::new(&bridge_host(), 8790, &token, &model);
+        println!("инструменты: выданы {}", granted.join(", "));
+        link.system = system_for(&granted);
         // Токен нужен и отправке событий: без него хост отвечает 401 и прогон получает unrecorded.
         std::env::set_var("HS_BRIDGE_TOKEN", &token);
         // Если задана задача и есть диск — монтируем его: задаче нужны файлы, а не только /method.md.
@@ -758,6 +761,7 @@ fn init_mode() -> ExitCode {
             &task,
             &mut link,
             budget,
+            granted,
         );
         match outcome {
             Ok(outcome) => {
@@ -774,6 +778,14 @@ fn init_mode() -> ExitCode {
     }
 
     if mode_text == "loop-bridge-resume" {
+        // Тот же обязательный parser, что и у fresh-пути: resume не получает права шире.
+        let granted = match require_grants(std::path::Path::new("/tools")) {
+            Ok(granted) => granted,
+            Err(error) => {
+                eprintln!("инструменты: отказ — {error}");
+                return ExitCode::FAILURE;
+            }
+        };
         // Живой обрыв: журнал лежит на диске, поэтому переживает выключение питания. Второй
         // запуск видит незакрытый журнал и продолжает тот же прогон, а не начинает новый.
         let token = fs::read_to_string("/bridge-token").unwrap_or_default().trim().to_string();
@@ -807,12 +819,8 @@ fn init_mode() -> ExitCode {
         let mut link = hs_core::model::HttpBridge::new(&bridge_host(), 8790, &token, &model);
         // Токен нужен и отправке событий: без него хост отвечает 401 и прогон получает unrecorded.
         std::env::set_var("HS_BRIDGE_TOKEN", &token);
-        // Выдача инструментов на прогон: файл `/tools` пишет хост (из критерия), а не модель.
-        let granted = grants();
-        if let Some(list) = &granted {
-            println!("инструменты: выданы {}", list.join(", "));
-            link.system = system_for(list);
-        }
+        println!("инструменты: выданы {}", granted.join(", "));
+        link.system = system_for(&granted);
         let journal = std::path::Path::new("/mnt/journal.bin");
         let resumed = matches!(hs_core::loopmod::resume_state(journal), Ok(state) if !state.closed);
         let outcome = if resumed {
@@ -861,11 +869,16 @@ fn init_mode() -> ExitCode {
         // места, где остановился, а не начинаться заново (ADR-0051).
         let mut first = hs_core::model::Stub::seal_many("/method.md", 2);
         let budget_first = hs_core::loopmod::Budget { steps: 2, seconds: 20.0, allowance: 0.05 };
+        let all_tools: Vec<String> = hs_core::loopmod::KNOWN_TOOLS
+            .iter()
+            .map(|name| name.to_string())
+            .collect();
         match hs_core::loopmod::run_task_with_budget(
             std::path::Path::new("/journal.bin"),
             "запечатать /method.md",
             &mut first,
             budget_first,
+            all_tools.clone(),
         ) {
             Ok(outcome) => println!("первый заход: шагов {}, коммитов {}", outcome.steps, outcome.commits),
             Err(error) => println!("первый заход: не запустился ({error})"),
@@ -896,7 +909,7 @@ fn init_mode() -> ExitCode {
             std::path::Path::new("/journal.bin"),
             &mut second,
             budget,
-            None,
+            all_tools,
         ) {
             Ok(outcome) => {
                 report_loop(&outcome);
@@ -1073,6 +1086,28 @@ fn main() -> ExitCode {
                 }
                 Err(error) => {
                     eprintln!("не открыть журнал: {error}");
+                    ExitCode::from(3)
+                }
+            }
+        }
+        Some("grants-check") => {
+            // Исполняемая проверка контракта `/tools` без модели и сети. Missing/Invalid
+            // дают ненулевой код; пустой Valid — успешный разбор, но DENY_ALL=1.
+            let Some(path) = args.get(1) else {
+                eprintln!("usage: hs-core grants-check <файл>");
+                return ExitCode::from(2);
+            };
+            match require_grants(std::path::Path::new(path)) {
+                Ok(granted) => {
+                    println!("GRANTS_STATE=Valid");
+                    println!("GRANTS_COUNT={}", granted.len());
+                    println!("GRANTS_DENY_ALL={}", if granted.is_empty() { 1 } else { 0 });
+                    ExitCode::SUCCESS
+                }
+                Err(error) => {
+                    let state = if error.starts_with("Missing:") { "Missing" } else { "Invalid" };
+                    eprintln!("GRANTS_STATE={state}");
+                    eprintln!("инструменты: отказ — {error}");
                     ExitCode::from(3)
                 }
             }
