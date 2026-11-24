@@ -1,0 +1,109 @@
+[FAIL] strict-local-utf8 — AssertionError: invalid UTF-8 0xff принят: [('хост подтвердил прогон w07b-authority-run', True, 'записей: 2'), ('журнал комнаты совпадает с хостовым', True, 'хост видел 2 событий, в комнате 2')]
+[FAIL] exact-whitespace — AssertionError: 
+[ok] typed-mismatched-session
+[ok] typed-expired-binding
+[ok] session-before-read
+[FAIL] claim-unverified-status — AssertionError: (200, {'seq': 1, 'sha256': 'ac48e081107a000d3e6b2fd5db2380d96d21394ab3ccc38737789c8aa62a988b'})
+[FAIL] rust-receipt-shape — AssertionError:    Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs)
+warning: variable `result_tag` is assigned to, but never used
+    --> src/loopmod.rs:1829:25
+     |
+1829 |                 let mut result_tag = "err";
+     |                         ^^^^^^^^^^
+     |
+     = note: consider using `_result_tag` instead
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: value assigned to `result_tag` is never read
+    --> src/loopmod.rs:1834:25
+     |
+1834 |                         result_tag = "ok";
+     |                         ^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` on by default
+
+warning: variable does not need to be mutable
+   --> src/model.rs:932:13
+    |
+932 |         let mut link = HttpBridge::new("127.0.0.1", 9, "local-tk\r\nX: y", "m");
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+    --> src/loopmod.rs:2608:8
+     |
+2608 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+     |
+     = note: `#[warn(non_snake_case)]` on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+    --> src/model.rs:1150:8
+     |
+1150 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+    --> src/model.rs:1195:8
+     |
+1195 |     fn недоступный_мост_это_Error_а_не_End() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 6 warnings (run `cargo fix --lib -p hs-core --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 9.86s
+     Running unittests src/lib.rs (target/release/deps/hs_core-b7add760f2fe9504)
+
+running 6 tests
+test model::tests::emit_journal_receipt_exact ... ok
+test model::tests::emit_journal_receipt_duplicate_seq ... FAILED
+test model::tests::emit_journal_receipt_zero_seq ... FAILED
+test model::tests::emit_journal_receipt_extra_field ... FAILED
+test model::tests::emit_journal_receipt_bad_hash ... FAILED
+test model::tests::emit_journal_receipt_missing_hash ... FAILED
+
+failures:
+
+---- model::tests::emit_journal_receipt_duplicate_seq stdout ----
+
+thread 'model::tests::emit_journal_receipt_duplicate_seq' panicked at src/model.rs:877:9:
+assertion failed: post_journal_receipt(body).is_err()
+
+---- model::tests::emit_journal_receipt_zero_seq stdout ----
+
+thread 'model::tests::emit_journal_receipt_zero_seq' panicked at src/model.rs:888:9:
+assertion failed: post_journal_receipt(body).is_err()
+
+---- model::tests::emit_journal_receipt_extra_field stdout ----
+
+thread 'model::tests::emit_journal_receipt_extra_field' panicked at src/model.rs:871:9:
+assertion failed: post_journal_receipt(body).is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- model::tests::emit_journal_receipt_bad_hash stdout ----
+
+thread 'model::tests::emit_journal_receipt_bad_hash' panicked at src/model.rs:882:9:
+assertion failed: post_journal_receipt("{\"seq\":7,\"sha256\":\"ABC\"}").is_err()
+
+---- model::tests::emit_journal_receipt_missing_hash stdout ----
+
+thread 'model::tests::emit_journal_receipt_missing_hash' panicked at src/model.rs:865:9:
+assertion failed: post_journal_receipt("{\"seq\":7}").is_err()
+
+
+failures:
+    model::tests::emit_journal_receipt_bad_hash
+    model::tests::emit_journal_receipt_duplicate_seq
+    model::tests::emit_journal_receipt_extra_field
+    model::tests::emit_journal_receipt_missing_hash
+    model::tests::emit_journal_receipt_zero_seq
+
+test result: FAILED. 1 passed; 5 failed; 0 ignored; 0 measured; 178 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`
+
+
+host journal authority review: 3/7 ok; N/A 0; провалов: 4

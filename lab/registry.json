@@ -547,6 +547,61 @@
    "claim": "C-0345",
    "note": "PASS: POSIX RED 2/4, GREEN 4/4; Windows 2 passed + 2 явных POSIX-only N/A. R1 34/34, R1-REVIEW Windows 11/11/POSIX 10 + 1 N/A, R2-TIP 12/12 на обеих платформах. Независимый review не оставил findings. Граница: Windows directory fsync N/A; гарантия зависит от файловой системы; W07B не затронут.",
    "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0054",
+   "title": "HOST-JOURNAL-SAFETY-W07B-AUTHORITY: host-issued run/session и refs-only события",
+   "hypothesis": "Host-issued expected run/session, expiry и strict refs-only schema закроют произвольный run/event и canary sinks; host_match через event digests сохранит полное сравнение без сырого содержимого.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-AUTHORITY.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "Зарегистрировано до RED. refs search: NOT PROVIDED. Windows/POSIX 14/14, но независимый review вернул NEEDS_CHANGES; E-0054 остаётся open без conclusion/claim. W07A durability thresholds остаются обязательными.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0055",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW: strict UTF-8, exact projection, isolated binding и receipt shape",
+   "hypothesis": "Отдельные correction controls закроют пять findings независимого W07B review без изменения исходного 14-control corpus и прежних W07A/W07B порогов.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "Зарегистрировано до RED. refs search: NOT PROVIDED. Независимый correction review вернул NEEDS_CHANGES: valid prefix + invalid UTF-8 tail всё ещё даёт direct accept.check() PASS, потому что tail/problems не передаются в records. E-0055 остаётся open без conclusion/claim; corpus не переписывается.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0056",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW2: fail-closed parse metadata для damaged journal tail",
+   "hypothesis": "Сохранение tail/problems в records и обязательная проверка complete в accept.check/host_match закроют trailing-tail обход без зависимости от CLI или памяти прямых callers.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW2.json",
+   "status": "open",
+   "conclusion": null,
+   "claim": null,
+   "note": "Зарегистрировано до RED. refs search: NOT PROVIDED. Независимый correction review вернул NEEDS_CHANGES: tail-fix работает, но integrity row создаёт metadata-only PASS, а direct-callers fixture останавливается на seq до UTF-8. E-0056 остаётся open без conclusion/claim; correction вынесена в E-0057, sealed corpus не переписывается.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0057",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW3: substantive checks и exact UTF-8 direct-caller control",
+   "hypothesis": "Явный учёт содержательных строк до integrity row закроет metadata-only PASS, сохранив hidden-only критерии; отдельный seq=8 вектор докажет отказ прямых callers именно на invalid UTF-8, а не на нарушении последовательности.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW3.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-conclusion.txt",
+   "claim": "C-0346",
+   "note": "PASS: Windows/POSIX RED 3/7, GREEN 7/7; metadata-only PASS закрыт, hidden-only substantive сохранён, exact seq=8 invalid UTF-8 direct-caller отказ подтверждён. Прежние W07B/W07A thresholds сохранены; независимый review PASS без substantive findings. E-0054/E-0055/E-0056 остаются open; residual pre-existing host_match/hidden typo вынесены отдельно.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0058",
+   "title": "HOST-JOURNAL-SAFETY-W07B-REVIEW4: host_match binding и hidden unknown-key fail-closed",
+   "hypothesis": "Явная проверка host_match→host_run и unknown keys внутри hidden закроют два pre-existing fail-open: положительное условие больше не маскирует отсутствующую привязку или опечатку скрытого критерия, при этом show_hidden=False не раскрывает имя скрытого ключа.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-W07B-REVIEW4.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-conclusion.txt",
+   "claim": "C-0347",
+   "note": "PASS: Windows/POSIX RED 3/7, GREEN 7/7; host_match=true без host_run и unknown hidden key отклоняются рядом с real positive, no-leak и положительные controls сохранены. Промежуточная review3 interaction regression объяснена и закрыта классификацией binding rows без изменения sealed corpus. Полный manifest 69/1200/0, seals 35/35, независимый review PASS. E-0054/E-0055/E-0056 остаются open.",
+   "updated": "2026-11-24"
   }
  ]
 }

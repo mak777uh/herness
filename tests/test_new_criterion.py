@@ -48,10 +48,18 @@ def _():
     assert without_write["must_not_call"] == ["write"]
 
 
-@case("хостовый прогон включает сверку содержимого")
+@case("хостовый прогон включает обязательную session и сверку содержимого")
 def _():
-    criteria = new_criterion.build("t", r"C-\d{4}", host_run="run-1")
+    session = "11111111-1111-4111-8111-111111111111"
+    criteria = new_criterion.build("t", r"C-\d{4}", host_run="run-1", host_session=session)
     assert criteria["host_run"] == "run-1" and criteria["host_match"] is True
+    assert criteria["host_session"] == session
+    try:
+        new_criterion.build("t", r"C-\d{4}", host_run="run-1")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("host_run без host_session принят")
 
 
 @case("готовый критерий пропускает честный прогон")

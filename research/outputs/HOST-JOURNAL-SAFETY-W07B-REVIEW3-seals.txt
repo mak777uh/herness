@@ -1,0 +1,5 @@
+C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\lab\prereg\HOST-JOURNAL-SAFETY-W07B-AUTHORITY.json: печать сходится (53b74514ca90…)
+C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\lab\prereg\HOST-JOURNAL-SAFETY-W07B-REVIEW.json: печать сходится (558aa7d541a1…)
+C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\lab\prereg\HOST-JOURNAL-SAFETY-W07B-REVIEW2.json: печать сходится (98232785fa6d…)
+C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\lab\prereg\HOST-JOURNAL-SAFETY-W07B-REVIEW3.json: печать сходится (25b1090a7f6a…)
+печатей проверено: 34, проблем: 0

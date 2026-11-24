@@ -1,0 +1,11 @@
+$ wsl -d Ubuntu -- bash -lc 'cd /mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness && python3 tests/test_host_journal_accept_review4.py'
+[FAIL] host-match-missing-run-visible — AssertionError: [('статус = done', True, 'фактически: done'), ('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] host-match-missing-run-hidden — AssertionError: [('журнал прочитан полностью', True, 'tail=0; problems=0'), ('скрытая часть критерия', True, 'выполнена')]
+[ok] host-match-false-no-run
+[ok] hidden-unknown-only
+[FAIL] hidden-unknown-with-positive — AssertionError: [('журнал прочитан полностью', True, 'tail=0; problems=0'), ('скрытая часть критерия', True, 'выполнена')]
+[ok] hidden-real-positive
+[FAIL] hidden-unknown-no-leak — AssertionError: [('журнал прочитан полностью', True, 'tail=0; problems=0'), ('скрытая часть критерия', True, 'выполнена')]
+
+host journal accept review4: 3/7 ok; N/A 0; провалов: 4
+exit code: 1

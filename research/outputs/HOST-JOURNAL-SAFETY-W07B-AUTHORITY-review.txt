@@ -1,0 +1,18 @@
+Независимый review HOST-JOURNAL-SAFETY-W07B-AUTHORITY
+Дата: 2026-11-24
+Вердикт: NEEDS_CHANGES
+
+Официальные Windows/POSIX 14/14 воспроизводятся, но этого недостаточно для PASS.
+
+Находки:
+1. MEDIUM — bin/accept.py нормализует invalid UTF-8 через decode("utf-8", "replace"). Reviewer воспроизвёл полный host_match PASS на локальном журнале с изменёнными невалидными байтами и корректно пересчитанными HSJ2 CRC/seq.
+2. MEDIUM — Python .strip() и Rust .trim() расходятся для завершающего U+001C. Заявленный digest полной локальной строки не имеет единой спецификации whitespace.
+3. MEDIUM — зарегистрированные mismatched-session и expired-binding controls посылают legacy body, поэтому отказ может быть вызван запрещёнными legacy-полями, а не проверкой session/expiry. Ad hoc typed запросы production отклоняются, но corpus не доказывает mutation-kill.
+4. LOW — claim/unverified со статусом ok принимается, хотя Rust всегда проецирует recorded.
+5. LOW — Rust post_event() читает только seq и игнорирует sha256/лишние поля; существующий unit test принимает {"seq":7}.
+
+Disposition:
+- Исходный sealed W07B corpus, 14 controls, hash domain и thresholds не меняются.
+- E-0054 остаётся open без conclusion/claim.
+- Findings закрываются отдельной W07B-REVIEW correction-попыткой с новым prereg и RED.
+- До независимого correction review W07B не называется PASS.

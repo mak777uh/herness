@@ -640,14 +640,28 @@ fn init_mode() -> ExitCode {
     // Режимы с диском: пишем цикл на /mnt и проверяем его после обрыва.
     let mode_text = fs::read_to_string("/mode").unwrap_or_default().trim().to_string();
 
-    // Хостовый прогон: окружение хоста в комнату не переносится, поэтому имя прогона приходит
-    // файлом. Если файла нет — прогон локальный, и это не ошибка, а другой уровень свидетельства.
-    if let Ok(run) = fs::read_to_string("/host-run") {
-        let run = run.trim().to_string();
-        if !run.is_empty() {
-            std::env::set_var("HS_HOST_RUN", &run);
-            println!("хост: прогон объявлен хостовым ({run})");
+    // Хостовый прогон: run и session приходят файлами от хоста. Частичная связка — отказ,
+    // а не локальный прогон с ложным уровнем свидетельства. Если файлов нет, прогон локальный.
+    let host_run = fs::read_to_string("/host-run")
+        .ok()
+        .map(|text| text.trim().to_string())
+        .filter(|text| !text.is_empty());
+    let host_session = fs::read_to_string("/host-session")
+        .ok()
+        .map(|text| text.trim().to_string())
+        .filter(|text| !text.is_empty());
+    if host_run.is_some() != host_session.is_some() {
+        eprintln!("хост: отказ — нужны обе файлы host-run и host-session");
+        return ExitCode::FAILURE;
+    }
+    if let (Some(run), Some(session)) = (host_run, host_session) {
+        if !hs_core::host_event::valid_session(&session) {
+            eprintln!("хост: отказ — host-session не является canonical UUID");
+            return ExitCode::FAILURE;
         }
+        std::env::set_var("HS_HOST_RUN", &run);
+        std::env::set_var("HS_HOST_SESSION", &session);
+        println!("хост: прогон объявлен хостовым ({run})");
     }
 
     // /dev — раньше всего: Rust при spawn открывает /dev/null для stdin, и без него любой запуск

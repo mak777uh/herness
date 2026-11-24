@@ -1,0 +1,11 @@
+$ python tests/test_host_journal_accept_review3.py
+[FAIL] metadata-task-only — AssertionError: metadata-only criterion принят: {'task': 'x'}, rows=[('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] metadata-comment-only — AssertionError: metadata-only criterion принят: {'comment': 'x'}, rows=[('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[FAIL] metadata-host-match-only — AssertionError: metadata-only criterion принят: {'host_match': True}, rows=[('журнал прочитан полностью', True, 'tail=0; problems=0')]
+[ok] hidden-only-substantive
+[ok] exact-utf8-direct-callers
+[ok] clean-positive
+[FAIL] cli-no-content — AssertionError: (0, 'задача: x; записей: 0\n  [ok] журнал прочитан полностью — tail=0; problems=0\nитог: PASS\n')
+
+host journal accept review3: 3/7 ok; N/A 0; провалов: 4
+exit code: 1

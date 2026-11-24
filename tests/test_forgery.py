@@ -16,7 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from bin import accept, host_journal  # noqa: E402
+from bin import accept, host_journal, journal_event  # noqa: E402
+
+SESSION = "11111111-1111-4111-8111-111111111111"
 
 ORIGINAL = [
     "run/start task: найти statistics",
@@ -74,15 +76,17 @@ def main() -> int:
     criteria = {
         "task": "t",
         "host_run": "forge-run",
+        "host_session": SESSION,
         "host_match": True,
         "require_status": "done",
         "anchor_regex": r"C-\d{4}",
     }
     with tempfile.TemporaryDirectory() as tmp:
         directory = Path(tmp)
-        # хост видел ЧЕСТНЫЕ события целиком: цикл шлёт весь поток, а не только шаги
-        for line in ORIGINAL:
-            host_journal.append("forge-run", line, directory)
+        # Хост видел честные refs-only проекции всего потока, но не сырые detail.
+        local = [tuple(line.split(" ", 1)) for line in ORIGINAL]
+        for payload in journal_event.project(local, SESSION):
+            host_journal.append("forge-run", journal_event.canonical(payload).decode("utf-8"), directory)
         accept.host_journal.DEFAULT_DIR = directory  # приёмка смотрит в этот каталог
 
         honest = accept.parse_journal(journal_bytes(ORIGINAL))[0]

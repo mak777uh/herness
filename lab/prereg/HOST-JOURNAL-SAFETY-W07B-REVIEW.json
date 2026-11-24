@@ -1,0 +1,73 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-W07B-REVIEW",
+ "date": "2026-11-24",
+ "question": "Закрывают ли отдельные correction controls strict UTF-8 локального журнала, точную digest-нормализацию, изолированные session/expiry отказы, согласованный claim status и строгую форму Rust host receipt, не переписывая W07B corpus?",
+ "hypothesis": "Если parse_journal останавливается на invalid UTF-8 без replacement, Python/Rust/accept хешируют точную локальную строку без strip/trim, typed session и expiry проверяются отдельно от schema, claim/unverified допускает только recorded, а Rust принимает только точный receipt {seq,sha256}, то все пять находок независимого review перестают воспроизводиться, а прежние W07B/W07A пороги сохраняются.",
+ "criterion": "PASS только при review 7/7 на Windows и POSIX без N/A, W07B authority 14/14 на обеих платформах, R1 34/34, R1-REVIEW Windows 11/11 либо POSIX 10 passed с одним явным Windows-only N/A, R2-TIP 12/12, durability Windows 2 passed + 2 явных POSIX-only N/A либо POSIX 4/4. Обязательны: два invalid UTF-8 byte mutant с корректными CRC не дают host_match PASS; четыре exact-whitespace вектора совпадают Python/Rust/accept побайтно; typed mismatched session даёт точный 400; typed expired binding даёт точный 403; host_match без session не вызывает verify/events; claim/unverified status=ok даёт точный 400; Rust receipt принимает точную пару и отвергает пять mutant forms. Любой провал, лишний N/A, ослабление прежних порогов или изменение corpus после RED означает отсутствие PASS.",
+ "arms": [
+  "A (W07B до review fix): invalid UTF-8 заменяется на U+FFFD; Python .strip() и Rust .trim() нормализуют пробелы по-разному; session/expiry controls замаскированы legacy schema refusal; claim/unverified допускает произвольный общий status; Rust receipt читает только seq.",
+  "B (review fix): invalid UTF-8 даёт оборванный хвост/problems и отказ host_match; точная локальная строка хешируется без нормализации во всех трёх проекциях; correction controls меняют ровно один аспект; claim/unverified жёстко сопоставлен recorded; Rust receipt строго разбирает ровно seq и sha256 с duplicate/unknown/type/range проверками."
+ ],
+ "sensitivity": "UTF-8 control меняет один байт payload на 0xFF и 0xFE при корректных CRC/seq; оба варианта декодировались в один и тот же U+FFFD до фикса. Whitespace vector включает завершающий U+001C, ведущий пробел detail, завершающий пробел и tab. Typed session/expiry controls используют валидную typed schema и меняют только session либо monotonic expiry. Session-before-read подменяет verify/events функцией, которая падает при вызове. Claim control меняет только status. Rust receipt suite содержит exact positive и пять отдельных mutant forms.",
+ "unit_of_analysis": "одна invalid UTF-8 локальная запись; одна exact local line; один typed session mismatch; один expired binding; один критерий без session; один claim status; одна Rust receipt form",
+ "primary_metric": "review_controls=7; windows_passed=7; posix_passed=7; review_na=0; authority_controls=14; r1_controls=34; tip_controls=12; invalid_utf8_accepted=0; exact_whitespace_vectors=4; receipt_variants=6; receipt_mutants_accepted=0",
+ "test": "python tests/test_host_journal_authority_review.py",
+ "stopping_rule": "Один W07B review batch: сохранить RED на текущем production-коде, исправить только пять findings review, затем один Windows GREEN и один POSIX GREEN. После GREEN провести один независимый correction review. Остановиться при первом необъяснённом провале; не менять W07B/W07A/review corpus, hash domain, schema, session/expiry критерии и platform thresholds после RED. W03/W06/W09 и production activation не смешивать.",
+ "fixture": "Только tempfile, синтетические HSJ2 байты, loopback HTTP, общий review vector и дочерние Rust/Python процессы того же репозитория; реальные секреты, модель, сеть и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+  "network": "только loopback fixture; внешняя сеть не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+ },
+ "critical_controls": [
+  {"id": "strict-local-utf8", "input": "два local journal byte mutant 0xFF/0xFE с корректными CRC/seq и одной U+FFFD host projection", "expect": "parse даёт tail/problems; host_match FAIL в обоих вариантах"},
+  {"id": "exact-whitespace", "input": "четыре local line с U+001C/leading/trailing space/trailing tab", "expect": "Python, Rust и accept дают одинаковые exact payload/digests"},
+  {"id": "typed-mismatched-session", "input": "валидный typed event, изменена только session", "expect": "точный 400, journal не изменён"},
+  {"id": "typed-expired-binding", "input": "валидный typed event, изменён только monotonic expiry", "expect": "точный 403, journal не изменён"},
+  {"id": "session-before-read", "input": "host_match без host_session, verify/events подменены падающими spies", "expect": "accept FAIL; spies не вызваны"},
+  {"id": "claim-unverified-status", "input": "claim/unverified status=ok, остальные поля валидны", "expect": "точный 400, journal не изменён"},
+  {"id": "rust-receipt-shape", "input": "точный {seq,sha256} и пять mutant forms", "expect": "positive принят; missing/extra/duplicate/bad-hash/zero-seq отвергнуты"}
+ ],
+ "threshold": {
+  "review_controls": 7,
+  "windows_passed": 7,
+  "posix_passed": 7,
+  "review_na": 0,
+  "authority_controls": 14,
+  "r1_controls": 34,
+  "r1_review_windows": 11,
+  "r1_review_posix": 10,
+  "r1_review_posix_na": 1,
+  "tip_controls": 12,
+  "durability_windows_passed": 2,
+  "durability_windows_na": 2,
+  "durability_posix_passed": 4,
+  "invalid_utf8_accepted": 0,
+  "exact_whitespace_vectors": 4,
+  "receipt_variants": 6,
+  "receipt_mutants_accepted": 0
+ },
+ "known_limits": [
+  "W07B-AUTHORITY остаётся отдельным экспериментом с вердиктом NEEDS_CHANGES; correction PASS не переписывает его исходный corpus",
+  "Strict UTF-8 защищает целостность локального доказательства, но не создаёт trust boundary против процесса, способного переписать и локальный, и хостовый журналы согласованно",
+  "Exact digest фиксирует байты локальной строки, но не доказывает истинность detail",
+  "Receipt shape защищает протокол клиента, но ACK по-прежнему не является acceptance",
+  "Windows directory durability остаётся N/A из W07A",
+  "Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation остаются отдельными работами"
+ ],
+ "kill_criteria": [
+  "Invalid UTF-8 с корректным CRC даёт host_match PASS",
+  "Python/Rust/accept расходятся в exact local line digest",
+  "Typed session/expiry отказ обусловлен legacy schema, а не целевой проверкой",
+  "host_match без session читает host chain",
+  "claim/unverified принимает status, отличный от recorded",
+  "Rust принимает receipt без sha256, с лишним/duplicate key, плохим hash или seq=0",
+  "Прежние W07B/W07A platform thresholds не проходят либо corpus/порог ослаблен после RED"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; correction после независимого review регистрируется отдельно",
+ "runs": [
+  "runs/exp-host-journal-safety-w07b-review"
+ ]
+}

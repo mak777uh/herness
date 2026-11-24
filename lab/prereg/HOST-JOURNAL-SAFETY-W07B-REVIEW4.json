@@ -1,0 +1,117 @@
+{
+  "schema": 2,
+  "id": "HOST-JOURNAL-SAFETY-W07B-REVIEW4",
+  "date": "2026-11-24",
+  "question": "Закроет ли явная валидация host_match→host_run и unknown keys внутри hidden два pre-existing fail-open, не раскрывая скрытые имена при show_hidden=False и не ломая положительные критерии?",
+  "hypothesis": "Если _rows всегда добавляет FAIL для host_match=true без host_run, а hidden wrapper учитывает unknown keys наряду с реальными hidden conditions, то положительное visible/hidden условие больше не маскирует отсутствующую привязку или опечатку скрытого критерия. Имя скрытого ключа остаётся скрытым при show_hidden=False.",
+  "criterion": "PASS только при review4 7/7 на Windows и POSIX без N/A: host_match=true без host_run даёт FAIL рядом с visible positive и рядом с hidden positive; host_match=false без host_run не создаёт лишнего отказа; hidden unknown-only и hidden unknown+real positive дают FAIL; hidden real positive остаётся PASS; show_hidden=False не раскрывает имя unknown hidden key. Обязательны прежние review3 7/7, review2 6/6, W07B/W07A platform thresholds. Любой принятый invalid combo, раскрытое скрытое имя, потеря позитива, лишний N/A, ослабление порогов или изменение E-0054–E-0057 corpus после RED означает отсутствие PASS.",
+  "arms": [
+    "A (до fix): host_match без host_run не создаёт строку и может быть замаскирован проходящим visible/hidden условием; unknown key внутри hidden не валидируется, если рядом есть проходящее реальное hidden-условие.",
+    "B (fix): _rows добавляет явную FAIL-строку host_match→host_run; hidden wrapper вычисляет unknown keys и включает их в hidden_ok, раскрывая имена только при show_hidden=True."
+  ],
+  "sensitivity": "Каждый негативный контроль меняет ровно один аспект: отсутствующий host_run при host_match=true, unknown hidden key отдельно или рядом с одним реальным max_steps. Позитив host_match=false отличается только значением false; hidden real positive не содержит unknown key. No-leak контроль использует тот же mixed hidden критерий с show_hidden=False.",
+  "unit_of_analysis": "один acceptance criterion и один полный чистый HSJ2 журнал",
+  "primary_metric": "review4_controls=7; windows_passed=7; posix_passed=7; review4_na=0; host_match_missing_run_rejected=2; host_match_false_positive_passed=1; hidden_unknown_rejected=2; hidden_positive_passed=1; hidden_unknown_not_leaked=1; review3_controls=7; review3_windows_passed=7; review3_posix_passed=7; review2_controls=6; review2_windows_passed=6; review2_posix_passed=6; authority_controls=14; prior_review_controls=7; r1_controls=34; tip_controls=12",
+  "test": "python tests/test_host_journal_accept_review4.py",
+  "stopping_rule": "Один correction batch: сохранить RED на текущем production-коде, исправить только host_match binding и hidden unknown-key validation, добавить новый независимый suite, затем один Windows GREEN и один POSIX GREEN. После GREEN провести один независимый correction review. Остановиться при первом необъяснённом провале; не менять W07B/W07A/W07B-REVIEW/W07B-REVIEW2/W07B-REVIEW3 corpus, hash domain, schema, session/expiry критерии и platform thresholds после RED. W03/W06/W09 и production activation не смешивать.",
+  "fixture": "Только синтетические HSJ2 байты в памяти и вызовы accept.check; сеть, секреты, модель, внешние аккаунты и файловые записи не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "host-match-missing-run-visible", "input": "clean done journal; require_status=done + host_match=true без host_run", "expect": "overall FAIL и host_match→host_run row FAIL"},
+    {"id": "host-match-missing-run-hidden", "input": "clean journal; hidden max_steps=1 + host_match=true без host_run", "expect": "overall FAIL, host_match row FAIL, hidden row PASS"},
+    {"id": "host-match-false-no-run", "input": "clean done journal; require_status=done + host_match=false без host_run", "expect": "overall PASS"},
+    {"id": "hidden-unknown-only", "input": "clean journal; hidden={typo:true}", "expect": "overall FAIL и hidden wrapper FAIL"},
+    {"id": "hidden-unknown-with-positive", "input": "clean journal; hidden={max_steps:1,typo:true}, show_hidden=True", "expect": "overall FAIL, hidden wrapper FAIL, detail содержит unknown typo"},
+    {"id": "hidden-real-positive", "input": "clean journal; hidden={max_steps:1}", "expect": "overall PASS и hidden wrapper PASS"},
+    {"id": "hidden-unknown-no-leak", "input": "тот же mixed hidden критерий, show_hidden=False", "expect": "overall FAIL; строка typo отсутствует в names/details"}
+  ],
+  "threshold": {
+    "review4_controls": 7,
+    "windows_passed": 7,
+    "posix_passed": 7,
+    "review4_na": 0,
+    "host_match_missing_run_rejected": 2,
+    "host_match_false_positive_passed": 1,
+    "hidden_unknown_rejected": 2,
+    "hidden_positive_passed": 1,
+    "hidden_unknown_not_leaked": 1,
+    "review3_controls": 7,
+    "review3_windows_passed": 7,
+    "review3_posix_passed": 7,
+    "review2_controls": 6,
+    "review2_windows_passed": 6,
+    "review2_posix_passed": 6,
+    "authority_controls": 14,
+    "prior_review_controls": 7,
+    "r1_controls": 34,
+    "r1_review_windows": 11,
+    "r1_review_posix": 10,
+    "r1_review_posix_na": 1,
+    "tip_controls": 12,
+    "durability_windows_passed": 2,
+    "durability_windows_na": 2,
+    "durability_posix_passed": 4
+  },
+  "known_limits": [
+    "E-0054/E-0055/E-0056 остаются open без conclusion/claim; E-0057 уже closed PASS и не переписывается",
+    "host_match с заданными host_run/host_session и реальной host chain проверяется authority-suite; review4 закрывает только отсутствующую привязку host_run",
+    "Unknown hidden key валидируется, но его имя раскрывается только при show_hidden=True",
+    "Метаданные целостности сохраняются при прямой передаче результата parse_journal; вручную сконструированный plain list считается чистым по прежнему API",
+    "Fail-closed критерий не доказывает истинность события или внешнего результата",
+    "Windows directory durability остаётся N/A из W07A",
+    "Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation остаются отдельными работами"
+  ],
+  "kill_criteria": [
+    "host_match=true без host_run даёт overall PASS рядом с visible или hidden positive",
+    "host_match=false без host_run создаёт лишний FAIL при проходящем реальном условии",
+    "Hidden unknown-only или mixed unknown+positive даёт overall PASS",
+    "show_hidden=False раскрывает имя unknown hidden key",
+    "Hidden real positive перестаёт проходить",
+    "Прежние review3/review2/W07B/W07A thresholds не проходят либо corpus/порог ослаблен после RED"
+  ],
+  "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; correction после независимого review регистрируется отдельно",
+  "runs": [
+    "runs/exp-host-journal-safety-w07b-review4"
+  ],
+  "result": {
+    "verdict": "PASS",
+    "instrument_verdict": "PASS",
+    "registered_controls": "Windows 7/7; POSIX 7/7; N/A 0",
+    "red_before": "Windows 3/7 и POSIX 3/7; по четыре ожидаемых провала",
+    "review": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-review.txt",
+    "substantive_findings": [],
+    "interaction_regression": "Первая Windows regression chain дала review3 6/7: binding FAIL-строка ошибочно считалась substantive и вытесняла no-content refusal. Failure сохранён отдельно; production-классификация исправлена без изменения corpus/thresholds, повторная Windows/POSIX chain зелёная.",
+    "aggregates": {
+      "manifest_suites": 69,
+      "manifest_checks": 1200,
+      "manifest_failures": 0,
+      "gates_evaluated": 31,
+      "gates_na": 2,
+      "seals_checked": 35,
+      "claims_closed": 339,
+      "claims_total": 339
+    },
+    "evidence": [
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-windows-red-before.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-posix-red-before.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-windows-regressions.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-posix-regressions.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-windows-regression-interaction-fail.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-manifest.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-selftest.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-gates.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-seals.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-coverage.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-review.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-conclusion.txt"
+    ],
+    "pre_closure_sha256": "63356dd570bdad36eed4317efd009792f70cee08ab51b5c06592c0e4cd19506e"
+  },
+  "conclusion": "E-0058 PASS: host_match=true без host_run и unknown hidden key больше не маскируются реальным positive, show_hidden=False не раскрывает скрытое имя, host_match=false и hidden real positive сохранены. Binding validation не вытесняет E-0057 no-content refusal. Windows/POSIX 7/7, прежние W07B/W07A thresholds сохранены, независимый review не оставил substantive findings. PASS ограничен E-0058; E-0054/E-0055/E-0056 остаются open.",
+  "closed": true
+}

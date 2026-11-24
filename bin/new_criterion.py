@@ -37,7 +37,8 @@ COMMENT = (
 
 
 def build(task: str, anchor: str, tools: list[str] | None = None,
-          host_run: str | None = None, scope: list[str] | None = None) -> dict:
+          host_run: str | None = None, scope: list[str] | None = None,
+          host_session: str | None = None) -> dict:
     criteria: dict = {"task": task, "comment": COMMENT}
     criteria.update(DEFAULTS)
     # anchor_regex обязателен: без него приёмка не может отличить опору от общего слова.
@@ -47,8 +48,11 @@ def build(task: str, anchor: str, tools: list[str] | None = None,
         # Если запись не выдана, запрет на неё дублируется отдельно: выдача — полномочие,
         # запрет — условие, и падать они должны независимо.
         criteria["must_not_call"] = ["write"] if "write" not in tools else []
+    if bool(host_run) != bool(host_session):
+        raise ValueError("host_run и host_session задаются вместе")
     if host_run:
         criteria["host_run"] = host_run
+        criteria["host_session"] = host_session
         criteria["host_match"] = True
     if scope:
         criteria["scope"] = scope
@@ -61,13 +65,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--anchor", required=True, help="регулярное выражение опоры, например C-\\d{4}")
     parser.add_argument("--tools", default="", help="через запятую; пусто — все")
     parser.add_argument("--host-run", default="", help="имя хостового прогона (включает сверку)")
+    parser.add_argument("--host-session", default="", help="host-issued UUID; обязателен с --host-run")
     parser.add_argument("--scope", default="", help="рамки через точку с запятой")
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
     tools = [item.strip() for item in args.tools.split(",") if item.strip()] or None
     scope = [item.strip() for item in args.scope.split(";") if item.strip()] or None
-    criteria = build(args.task, args.anchor, tools, args.host_run or None, scope)
+    try:
+        criteria = build(
+            args.task, args.anchor, tools, args.host_run or None, scope,
+            args.host_session or None,
+        )
+    except ValueError as exc:
+        print(f"критерий не собран: {exc}", file=sys.stderr)
+        return 2
 
     try:
         from bin import accept  # noqa: PLC0415 — проверка ключей живёт в приёмке

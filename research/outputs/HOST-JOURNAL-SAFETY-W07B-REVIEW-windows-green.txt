@@ -1,0 +1,9 @@
+[ok] strict-local-utf8
+[ok] exact-whitespace
+[ok] typed-mismatched-session
+[ok] typed-expired-binding
+[ok] session-before-read
+[ok] claim-unverified-status
+[ok] rust-receipt-shape
+
+host journal authority review: 7/7 ok; N/A 0; провалов: 0

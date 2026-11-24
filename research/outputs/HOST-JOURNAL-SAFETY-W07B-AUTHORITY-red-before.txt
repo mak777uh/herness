@@ -1,0 +1,16 @@
+[FAIL] bound-positive — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[ok] missing-binding
+[FAIL] partial-binding — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] forged-run — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] mismatched-session — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] expired-binding — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] raw-canary — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] oversized-body — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] strict-schema — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] host-match-positive — AttributeError: module 'bin.hsj2' has no attribute 'header'
+[FAIL] forged-local — AttributeError: module 'bin.hsj2' has no attribute 'header'
+[FAIL] required-session — AssertionError: host_match без ожидаемой session принят
+[FAIL] rust-python-vector — AssertionError: 
+[FAIL] receipt-semantics — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+
+host journal authority: 1/14 ok; N/A 0; провалов: 13

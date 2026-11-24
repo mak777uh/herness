@@ -1,0 +1,66 @@
+Независимый correction review E-0056
+Дата: 2026-11-24
+Вердикт: NEEDS_CHANGES
+
+Основной tail-fix воспроизводимо закрывает исходный обход, но обнаружены две находки.
+
+[HIGH] metadata-only критерий может дать PASS без содержательной проверки
+bin/accept.py:363 добавляет integrity-строку всегда, а bin/accept.py:382 считает PASS по всем
+строкам. Поэтому criterion без содержательных строк получает PASS от одной integrity-строки.
+Воспроизведение: accept.check({"task":"x","host_match":True}, parse_journal(empty_valid_hsj2)[0])
+вернул True и только ('журнал прочитан полностью', True, ...). HEAD на том же критерии
+возвращал False []. CLI с пустым корректным HSJ2 и {"task":"x","host_match":true} также
+напечатал PASS, rc=0. Среди текущих accept/**/*.json таких критериев не найдено, но публичный
+API/CLI regression остаётся. Требуется regression test для task-only/comment-only/
+host_match-only и пустого чистого журнала; integrity-строка не должна создавать PASS при
+отсутствии содержательных проверок.
+
+[MEDIUM] direct-callers fixture не изолирует заявленный UTF-8 tail
+tests/test_host_journal_accept_integrity.py:113 добавляет frame(seq=7) после data_journal(LINES),
+который уже содержит семь записей и commit seq=7. Parser останавливается на нарушении seq до
+UTF-8 decode. Для fixture получено problems=['оборванный хвост 24 байт']; при следующем seq=8
+получено ['invalid UTF-8 в записи 8', 'оборванный хвост 24 байт']. Контроль доказывает generic
+damaged-tail отказ прямых callers, но не заявленный однофакторный invalid UTF-8 из prereg.
+Требуется отдельная correction-попытка с seq=8 и явной проверкой invalid UTF-8, без изменения
+sealed E-0056 corpus.
+
+Проверено:
+- prereg E-0056 и cumulative diff прочитаны; seal совпал:
+  98232785fa6dff675f33239540f5a5781f8c22bb526372bcb8384646ad5cff57.
+- python tests/test_host_journal_accept_integrity.py — 6/6, rc=0.
+- python tests/test_accept.py — 24/24, rc=0.
+- SHA-256 research/outputs/acceptance-metrics.txt до/между/после targeted runs неизменен:
+  bb221d198bc3e9a8dbceddb416795ad0518825cf26ebfe7d318b39c5f817c13f.
+- Дополнительные independent probes: CRC-valid invalid UTF-8 data tail, invalid UTF-8 commit
+  tail, bad CRC и torn frame после полного валидного совпадающего префикса дают direct FAIL и
+  host_match FAIL; clean positive даёт PASS.
+- Bad header, short header, bad version и прочие early-break пути возвращают JournalRecords с
+  metadata; empty input имеет tail=0, но непустые problems и complete=False.
+- 1000 детерминированных malformed/truncated/bit-flip проб — исключений нет.
+- Grep по bin/*.py: 13 прямых production callers accept.check; потери metadata через
+  list(records), copying, serialization или иную передачу не обнаружено.
+- Documented limit подтверждён: list(records) теряет metadata и считается чистым; production
+  callers так не делают.
+- Control IDs совпадают с prereg: authority 14, prior review 7, review2 6.
+- Девять общих regression-threshold ключей W07B/W07A совпадают.
+- E-0054/E-0055/E-0056 остаются open, conclusion=null, claim=null.
+- Отслеживаемые W07A storage/test файлы не изменены относительно HEAD afe84dd.
+
+Instrument correction:
+Изоляция judge_metrics.ROOT/JOURNALS/INDEX/all_criteria/musique_order через tempfile и finally —
+допустимая correction: vectors, controls, expectations и thresholds не менялись; реальный
+metrics-артефакт восстановлен байт-в-байт из HEAD и не меняется при повторном targeted run.
+Первый GREEN был непригоден из-за загрязнения артефакта, поэтому исправленный GREEN может
+считаться первым валидным GREEN. Находка №2 означает, что соответствие fixture prereg ещё
+не идеально.
+
+Ограничения:
+- Review выполнен на Windows; POSIX результаты независимо не перезапускались.
+- Полный manifest, gates, selftest и Rust authority-suite не перезапускались.
+- N/A и предоставленные результаты не засчитывались как независимо проверенный PASS.
+- E-0054/E-0055 corpus — untracked; byte snapshots на момент RED отсутствуют. Подтверждение
+  основано на seals, control IDs, thresholds, chronology и документации.
+- Ничего не редактировалось, не коммитилось и не пушься.
+
+Решение: E-0056 остаётся open без conclusion/claim. Требуется отдельная E-0057 correction-
+попытка; E-0054/E-0055/E-0056 sealed corpus не переписывается.

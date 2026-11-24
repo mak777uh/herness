@@ -36,6 +36,7 @@ import argparse
 import hashlib
 import hmac
 import json
+import math
 import os
 import re
 import shutil
@@ -71,6 +72,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from bin import journal_event  # noqa: E402 — root added for `python bin/bridge.py`
 from core.http_boundary import (  # noqa: E402 — root added for `python bin/bridge.py`
     NoRedirectHandler,
     UpstreamError,
@@ -162,7 +164,24 @@ class Bridge:
     def __init__(self, upstream: str, provider_key: str, local_token: str,
                  log_path: Path | None, session: str | None = None, *,
                  allow_loopback_http: bool = False,
-                 allowed_origins: tuple[str, ...] | None = None):
+                 allowed_origins: tuple[str, ...] | None = None,
+                 host_run: str | None = None, host_session: str | None = None,
+                 expires_at: float | None = None):
+        binding = (host_run, host_session, expires_at)
+        if any(value is not None for value in binding) and not all(value is not None for value in binding):
+            raise ValueError("host journal binding требует host_run, host_session и expires_at")
+        if host_run is not None and not journal_event.valid_run(host_run):
+            raise ValueError("host_run не является opaque run ID")
+        if host_session is not None and not journal_event.valid_session(host_session):
+            raise ValueError("host_session не является canonical UUID")
+        if expires_at is not None and (
+            isinstance(expires_at, bool) or not isinstance(expires_at, (int, float))
+            or not math.isfinite(expires_at)
+        ):
+            raise ValueError("expires_at должен быть конечным monotonic timestamp")
+        self.host_run = host_run
+        self.host_session = host_session
+        self.expires_at = expires_at
         self.allow_loopback_http = allow_loopback_http
         self.allowed_origins = tuple(allowed_origins) if allowed_origins is not None else None
         allowed, why = upstream_allowed(
@@ -181,6 +200,14 @@ class Bridge:
         self.session = session or str(uuid.uuid4())
         self._unshare_ok: bool | None = None
         self._win_lowil_ok: bool | None = None
+
+    def journal_binding_problem(self) -> str | None:
+        """Binding задаёт хост; комната не может выбрать run/session или продлить срок."""
+        if self.host_run is None or self.host_session is None or self.expires_at is None:
+            return "missing"
+        if time.monotonic() >= self.expires_at:
+            return "expired"
+        return None
 
     def unshare_works(self, unshare: str) -> bool:
         """Рабочий ли unshare, а не только найденный в PATH.
@@ -549,6 +576,20 @@ def make_handler(bridge: Bridge):
                     http_request.token.encode("ascii"), bridge.local_token.encode("utf-8"),
                 ):
                     raise _BridgeHTTPError(401, "BRIDGE_HTTP_UNAUTHORIZED", "invalid local token")
+                if http_request.path == "/v1/journal":
+                    if http_request.length > journal_event.MAX_BODY_BYTES:
+                        raise _BridgeHTTPError(
+                            413, "BRIDGE_HTTP_JOURNAL_LENGTH_CAP", "journal body exceeds 16 KiB",
+                        )
+                    binding_problem = bridge.journal_binding_problem()
+                    if binding_problem == "missing":
+                        raise _BridgeHTTPError(
+                            503, "BRIDGE_HTTP_JOURNAL_UNAVAILABLE", "host journal binding отсутствует",
+                        )
+                    if binding_problem == "expired":
+                        raise _BridgeHTTPError(
+                            403, "BRIDGE_HTTP_JOURNAL_BINDING_EXPIRED", "host journal binding истёк",
+                        )
                 body = reader.read_body(http_request.length) if http_request.method == "POST" else b""
                 reader.assert_no_trailing()
             except EOFError:
@@ -580,6 +621,15 @@ def make_handler(bridge: Bridge):
             # Приём событий журнала: авторитетную копию ведёт хост, комнате остаётся кэш.
             # Отдельный путь, чтобы «событие» нельзя было спутать с запросом к модели.
             if http_request.path == "/v1/journal":
+                binding_problem = bridge.journal_binding_problem()
+                if binding_problem is not None:
+                    raise _BridgeHTTPError(
+                        503 if binding_problem == "missing" else 403,
+                        "BRIDGE_HTTP_JOURNAL_UNAVAILABLE" if binding_problem == "missing"
+                        else "BRIDGE_HTTP_JOURNAL_BINDING_EXPIRED",
+                        "host journal binding отсутствует" if binding_problem == "missing"
+                        else "host journal binding истёк",
+                    )
                 try:
                     from bin import host_journal  # запуск как модуль
                 except Exception:  # noqa: BLE001 — запуск как `python bin/bridge.py`
@@ -591,21 +641,22 @@ def make_handler(bridge: Bridge):
                             f"журнал хоста недоступен: {type(exc).__name__}",
                         ) from None
                 try:
-                    request = json.loads(body.decode("utf-8"))
-                    run = str(request["run"])
-                    event = str(request["event"])
-                except (ValueError, KeyError, TypeError) as exc:
+                    request = journal_event.decode(body, bridge.host_session)
+                    event = journal_event.canonical(request).decode("utf-8")
+                except journal_event.EventError:
                     bridge.log({"ts": time.time(), "path": self._path, "status": 400,
-                                "reason": f"плохое событие: {type(exc).__name__}"})
-                    raise _BridgeHTTPError(400, "BRIDGE_HTTP_BAD_JSON", "нужно {run, event}") from None
+                                "reason": "typed journal event rejected"})
+                    raise _BridgeHTTPError(
+                        400, "BRIDGE_HTTP_BAD_EVENT", "нужна canonical refs-only event схема",
+                    ) from None
                 try:
-                    entry = host_journal.append(run, event)
+                    entry = host_journal.append(bridge.host_run, event)
                 except OSError as exc:
                     bridge.log({"ts": time.time(), "path": self._path, "status": 500,
                                 "reason": f"запись: {type(exc).__name__}"})
                     raise _BridgeHTTPError(500, "BRIDGE_HTTP_JOURNAL_WRITE", "не записать событие") from None
                 bridge.log({"ts": time.time(), "path": self._path, "status": 200,
-                            "run": run, "seq": entry["seq"]})
+                            "run": bridge.host_run, "seq": entry["seq"]})
                 answer = json.dumps(
                     {"seq": entry["seq"], "sha256": entry["sha256"]}, separators=(",", ":"),
                 ).encode("utf-8")
@@ -713,6 +764,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--upstream", required=True, help="полный URL провайдера")
     parser.add_argument("--token-file", required=True, help="файл с локальным токеном клиента")
     parser.add_argument("--log", default=None, help="файл журнала (по умолчанию stderr)")
+    parser.add_argument("--host-run", default=None, help="host-issued opaque run ID для /v1/journal")
+    parser.add_argument("--host-session", default=None, help="host-issued canonical UUID session")
+    parser.add_argument("--host-expiry-seconds", type=float, default=None,
+                        help="срок journal binding в секундах; обязателен вместе с --host-run")
     args = parser.parse_args(argv)
 
     if not args.allow_remote and args.bind not in ("127.0.0.1", "::1", "localhost"):
@@ -734,14 +789,33 @@ def main(argv: list[str] | None = None) -> int:
 
     local_token = read_token(Path(args.token_file))
     log_path = Path(args.log) if args.log else None
-    bridge = Bridge(
-        args.upstream,
-        provider_key,
-        local_token,
-        log_path,
-        allow_loopback_http=args.allow_loopback_http,
-        allowed_origins=(args.upstream,),
-    )
+    expires_at = None
+    if args.host_run is not None:
+        if args.host_session is None or args.host_expiry_seconds is None:
+            print("--host-run требует --host-session и --host-expiry-seconds", file=sys.stderr)
+            return 2
+        if not math.isfinite(args.host_expiry_seconds) or args.host_expiry_seconds <= 0:
+            print("--host-expiry-seconds должен быть конечным и положительным", file=sys.stderr)
+            return 2
+        expires_at = time.monotonic() + args.host_expiry_seconds
+    elif args.host_session is not None or args.host_expiry_seconds is not None:
+        print("--host-session/--host-expiry-seconds требуют --host-run", file=sys.stderr)
+        return 2
+    try:
+        bridge = Bridge(
+            args.upstream,
+            provider_key,
+            local_token,
+            log_path,
+            allow_loopback_http=args.allow_loopback_http,
+            allowed_origins=(args.upstream,),
+            host_run=args.host_run,
+            host_session=args.host_session,
+            expires_at=expires_at,
+        )
+    except ValueError as exc:
+        print(f"host journal binding отклонён: {exc}", file=sys.stderr)
+        return 2
 
     # F-BRIDGE-1 (09.11.2026). Раньше мост на занятом порту НЕ падал: у
     # ThreadingHTTPServer по умолчанию allow_reuse_address=1, и на Windows это

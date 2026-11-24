@@ -1,0 +1,49 @@
+HOST-JOURNAL-SAFETY-W07B-REVIEW4 — conclusion
+Дата: 2026-11-24
+Вердикт: PASS
+
+E-0058 закрыл два pre-existing fail-open из independent review E-0057 без изменения
+sealed corpus E-0054–E-0057 и без снижения порогов.
+
+RED:
+- Windows: review4 3/7, N/A 0, четыре ожидаемых провала.
+- POSIX: review4 3/7, N/A 0, четыре ожидаемых провала.
+- Проваливали оба host_match=true без host_run, hidden unknown-only и mixed unknown+positive.
+
+Production correction:
+- host_match=true без host_run добавляет обязательную FAIL-строку даже рядом с real positive.
+- hidden wrapper включает unknown keys в hidden_ok; при show_hidden=False имя не раскрывается.
+- Binding validation rows не считаются самостоятельными substantive checks. Это сохраняет
+  E-0057 metadata-only FAIL и явный no-content refusal, не создавая нового fail-open.
+
+GREEN:
+- Windows review4: 7/7, N/A 0.
+- POSIX review4: 7/7, N/A 0.
+- host_match=false без host_run остаётся PASS при реальном visible positive.
+- Hidden real positive остаётся PASS; mixed hidden unknown даёт FAIL без утечки имени.
+
+Регрессии:
+- Windows: review3 7/7; integrity 6/6; accept 24/24; authority 14/14;
+  prior authority review 7/7; R1 34/34; R1-review 11/11; tip 12/12;
+  durability 2 passed + 2 явных POSIX-only N/A.
+- POSIX: review3 7/7; integrity 6/6; accept 24/24; authority 14/14;
+  prior authority review 7/7; R1 34/34; R1-review 10 passed + 1 Windows-only N/A;
+  tip 12/12; durability 4/4.
+- Полный manifest: 69 suites, 1200 checks, 0 failures.
+- Selftest: rc=0.
+- Gates: 31/33 оценено, 2 явных N/A (журналы, индекс прогонов); probes 17/17.
+- Seals: 35/35, проблем 0.
+- Coverage: 339/339, strict 0.57, ANCHORED_WEAK.
+
+Независимый review:
+- research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-review.txt
+- Вердикт PASS, substantive findings отсутствуют.
+
+Границы:
+- PASS относится только к E-0058 и не закрывает W07B целиком.
+- E-0054/E-0055/E-0056 остаются open без conclusion/claim.
+- Вручную сконструированный plain list по-прежнему считается чистым; production callers
+  сохраняют metadata parse_journal.
+- Fail-closed criterion не доказывает истинность события или внешнего результата.
+- Windows directory durability остаётся N/A; N/A не считается PASS.
+- Resume/retry идемпотентность, W03/W06/W09 и production activation не затронуты.

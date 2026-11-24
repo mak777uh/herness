@@ -1,0 +1,72 @@
+{
+  "schema": 2,
+  "id": "HOST-JOURNAL-SAFETY-W07B-REVIEW2",
+  "date": "2026-11-24",
+  "question": "Сохраняет ли accept.check() fail-closed отказ при повреждённом хвосте журнала после валидного совпадающего префикса, без зависимости от CLI и от того, сохраняет ли caller отдельные tail/problems?",
+  "hypothesis": "Если parse_journal переносит tail/problems в метаданные возвращённого records, а check и host_match проверяют эту целостность, то валидный prefix повреждённого журнала не может дать PASS ни напрямую, ни через judge_metrics/verify_answers; чистый журнал продолжает проходить.",
+  "criterion": "PASS только при review2 6/6 на Windows и POSIX без N/A, W07B authority 14/14 и W07B review 7/7 на обеих платформах, R1 34/34, R1-REVIEW Windows 11/11 либо POSIX 10 passed с одним явным Windows-only N/A, R2-TIP 12/12, durability Windows 2 passed + 2 явных POSIX-only N/A либо POSIX 4/4. Обязательны четыре damaged-tail позиции после валидного совпадающего префикса: invalid UTF-8 data record, invalid UTF-8 commit, bad CRC record и torn frame; каждая даёт непустые tail/problems, overall FAIL и отдельную FAIL-строку host_match. Прямые judge_metrics и verify_answers не считают такой журнал принятым. Clean positive остаётся PASS. Любой провал, лишний N/A, ослабление прежних порогов или изменение corpus после RED означает отсутствие PASS.",
+  "arms": [
+    "A (до fix): parse_journal возвращает валидный prefix и отдельные tail/problems, но records теряют метаданные; check/host_match видят только prefix и могут вернуть PASS, а caller отбрасывает проблемы.",
+    "B (fix): records сохраняют tail/problems и свойство complete; check добавляет fail-closed integrity row, host_match требует complete; API и список parsed records сохраняются, чистый журнал не меняется."
+  ],
+  "sensitivity": "Каждый негативный вектор меняет ровно один аспект: один невалидный UTF-8 байт в data payload, один невалидный UTF-8 байт в commit payload, один бит CRC второго кадра или четыре байта неполного заголовка после коммита. Прямые callers получают тот же clean-prefix плюс один повреждённый хвост. Позитивный контроль использует тот же полный журнал без повреждения.",
+  "unit_of_analysis": "один локальный HSJ2 журнал с валидным совпадающим префиксом и одним damaged-tail вариантом; один прямой caller на тот же журнал",
+  "primary_metric": "review2_controls=6; windows_passed=6; posix_passed=6; review2_na=0; damaged_tail_variants=4; damaged_tail_accepted=0; host_match_false_rows=4; direct_callers_rejecting=2; clean_positive_passed=1; authority_controls=14; prior_review_controls=7; r1_controls=34; tip_controls=12",
+  "test": "python tests/test_host_journal_accept_integrity.py",
+  "stopping_rule": "Один correction batch: сохранить RED на текущем production-коде, исправить только передачу parse metadata и fail-closed семантику check/host_match, затем один Windows GREEN и один POSIX GREEN. После GREEN провести один независимый correction review. Остановиться при первом необъяснённом провале; не менять W07B/W07A/W07B-REVIEW corpus, hash domain, schema, session/expiry критерии и platform thresholds после RED. W03/W06/W09 и production activation не смешивать.",
+  "fixture": "Только tempfile, синтетические HSJ2 байты, локальный host journal и вызовы Python caller-функций того же репозитория; реальные секреты, модель, сеть и внешние аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "trailing-invalid-utf8-data", "input": "валидный host/local prefix и следующая CRC-valid data запись с 0xFF", "expect": "tail/problems непусты; overall FAIL; host_match row FAIL"},
+    {"id": "trailing-invalid-utf8-commit", "input": "валидные host/local data события и commit payload с 0xFE", "expect": "tail/problems непусты; overall FAIL; host_match row FAIL"},
+    {"id": "trailing-bad-crc", "input": "валидный prefix и второй кадр с изменённым CRC", "expect": "tail/problems непусты; overall FAIL; host_match row FAIL"},
+    {"id": "trailing-torn-frame", "input": "полный чистый журнал и четыре байта неполного заголовка", "expect": "tail/problems непусты; overall FAIL; host_match row FAIL"},
+    {"id": "direct-callers", "input": "judge_metrics и verify_answers на clean-prefix + invalid UTF-8 tail", "expect": "оба caller сообщают ноль принятых"},
+    {"id": "clean-positive", "input": "тот же полный журнал без повреждения", "expect": "overall PASS и host_match row PASS"}
+  ],
+  "threshold": {
+    "review2_controls": 6,
+    "windows_passed": 6,
+    "posix_passed": 6,
+    "review2_na": 0,
+    "damaged_tail_variants": 4,
+    "damaged_tail_accepted": 0,
+    "host_match_false_rows": 4,
+    "direct_callers_rejecting": 2,
+    "clean_positive_passed": 1,
+    "authority_controls": 14,
+    "prior_review_controls": 7,
+    "r1_controls": 34,
+    "r1_review_windows": 11,
+    "r1_review_posix": 10,
+    "r1_review_posix_na": 1,
+    "tip_controls": 12,
+    "durability_windows_passed": 2,
+    "durability_windows_na": 2,
+    "durability_posix_passed": 4
+  },
+  "known_limits": [
+    "E-0054 и E-0055 остаются open без conclusion/claim; review2 PASS не переписывает их sealed corpus",
+    "Метаданные целостности сохраняются при прямом передаче результата parse_journal; список, вручную сконструированный caller, считается чистым по прежнему API",
+    "Fail-closed tail защищает принятие доказательства, но не процесс, способный согласованно переписать и локальный, и хостовый журналы",
+    "Host_match по-прежнему доказывает совпадение проекции, а не истинность события или внешний результат",
+    "Windows directory durability остаётся N/A из W07A",
+    "Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation остаются отдельными работами"
+  ],
+  "kill_criteria": [
+    "Любой damaged-tail вектор после валидного префикса даёт overall PASS",
+    "Host_match row остаётся PASS при непустых tail/problems",
+    "judge_metrics или verify_answers считает damaged-tail журнал принятым",
+    "Clean positive перестаёт проходить",
+    "Прежние W07B/W07A platform thresholds не проходят либо corpus/порог ослаблен после RED"
+  ],
+  "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; correction после независимого review регистрируется отдельно",
+  "runs": [
+    "runs/exp-host-journal-safety-w07b-review2"
+  ]
+}

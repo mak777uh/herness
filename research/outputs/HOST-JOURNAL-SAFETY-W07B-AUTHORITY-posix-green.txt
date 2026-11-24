@@ -1,0 +1,16 @@
+[ok] bound-positive
+[ok] missing-binding
+[ok] partial-binding
+[ok] forged-run
+[ok] mismatched-session
+[ok] expired-binding
+[ok] raw-canary
+[ok] oversized-body
+[ok] strict-schema
+[ok] host-match-positive
+[ok] forged-local
+[ok] required-session
+[ok] rust-python-vector
+[ok] receipt-semantics
+
+host journal authority: 14/14 ok; N/A 0; провалов: 0

@@ -6,6 +6,7 @@
 pub mod admission;
 pub mod clock;
 pub mod head;
+pub mod host_event;
 pub mod journal;
 pub mod loopmod;
 pub mod model;

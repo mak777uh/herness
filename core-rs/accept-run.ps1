@@ -27,7 +27,8 @@ param(
     # restrict=on: гость не ходит наружу, единственный канал — guestfwd.
     [switch]$NetRestrict,
     # Объявить прогон хостовым: события должны подтверждаться хостом (H-0007).
-    [switch]$HostRun
+    [switch]$HostRun,
+    [string]$HostSession = ""
 )
 $ErrorActionPreference = "Stop"
 $root = "C:\111\herness"
@@ -66,7 +67,14 @@ $env:HS_MODE = $Mode
 $bridgeHost = if ($NetRestrict) { '10.0.2.15' } else { '10.0.2.2' }
 $env:HS_BRIDGE_HOST = $bridgeHost
 # Хостовый прогон: события должны подтверждаться хостом, иначе done не выдаётся (H-0007).
-if ($HostRun) { $env:HS_HOST_RUN = "accept-" + (Get-Date -Format "yyyyMMdd-HHmmss") } else { Remove-Item Env:\HS_HOST_RUN -ErrorAction SilentlyContinue }
+if ($HostRun) {
+    $env:HS_HOST_RUN = "accept-" + (Get-Date -Format "yyyyMMdd-HHmmss")
+    if (-not $HostSession) { $HostSession = [guid]::NewGuid().ToString() }
+    $env:HS_HOST_SESSION = $HostSession
+} else {
+    Remove-Item Env:\HS_HOST_RUN -ErrorAction SilentlyContinue
+    Remove-Item Env:\HS_HOST_SESSION -ErrorAction SilentlyContinue
+}
 # Связка: если критерий требует хостовый журнал, комната обязана слать события. Иначе граница
 # держалась бы на том, что запускающий не забыл флаг — то есть на дисциплине, а не на контракте.
 $hostRunFromCriteria = $null
@@ -82,7 +90,11 @@ if (Test-Path $criteriaPath) {
 # как «шаги кончились» (F-0045).
 $budget.seconds = [int]$TimeoutSec
     $env:HS_BUDGET = ($budget | ConvertTo-Json -Compress)
-    if ($spec.host_run) { $env:HS_HOST_RUN = [string]$spec.host_run }
+    if ($spec.host_run) {
+        if (-not $spec.host_session) { throw "критерий требует host_run без host_session" }
+        $env:HS_HOST_RUN = [string]$spec.host_run
+        $env:HS_HOST_SESSION = [string]$spec.host_session
+    }
     # Рамки задачи: read-only файл в комнате, объявлен критерием (H-0010).
     if ($null -ne $spec.scope) { $env:HS_SCOPE = ($spec.scope | ConvertTo-Json -Compress) } else { Remove-Item Env:\HS_SCOPE -ErrorAction SilentlyContinue }
     # Выдача инструментов: объявлена в критерии, значит комната получает ровно её, а не весь набор.
@@ -92,6 +104,9 @@ $budget.seconds = [int]$TimeoutSec
         Remove-Item Env:\HS_TOOLS -ErrorAction SilentlyContinue
     }
 } else { Remove-Item Env:\HS_BUDGET -ErrorAction SilentlyContinue; Remove-Item Env:\HS_TOOLS -ErrorAction SilentlyContinue }
+if ($HostSession -and -not $env:HS_HOST_RUN) { throw "-HostSession требует -HostRun или host_run в критерии" }
+# Мост запускается отдельно и обязан получить тот же --host-run/--host-session и свой срок expiry.
+# Этот скрипт не активирует production bridge и не угадывает его процесс.
 if ($Task) { $env:HS_TASK = $Task } else { Remove-Item Env:\HS_TASK -ErrorAction SilentlyContinue }
 if ($Net) {
     # Токен моста и имя модели — не секрет провайдера: ключ остаётся на хосте (ADR-0046).

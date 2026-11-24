@@ -21,11 +21,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from bin import bridge as bridge_mod  # noqa: E402
-from bin import host_journal  # noqa: E402
+from bin import host_journal, journal_event  # noqa: E402
 
 TOKEN = "local-" + "token-canary-w17"  # синтетический canary, не секрет
 CANARY = "PROVIDER-KEY-CANARY-W17"
 MAX_BODY = 8 * 1024 * 1024
+JOURNAL_RUN = "w17"
+JOURNAL_SESSION = "11111111-1111-4111-8111-111111111111"
+JOURNAL_BODY = journal_event.canonical(
+    journal_event.project([("run/start", "task: HTTP subset")], JOURNAL_SESSION)[0]
+)
 
 
 class FakeUpstream(BaseHTTPRequestHandler):
@@ -323,6 +328,9 @@ def main() -> int:
             TOKEN,
             log_path,
             allow_loopback_http=True,
+            host_run=JOURNAL_RUN,
+            host_session=JOURNAL_SESSION,
+            expires_at=time.monotonic() + 300,
         )
         counters = {"chat": 0, "journal": 0, "net": 0}
         original_forward = bridge.forward
@@ -381,7 +389,7 @@ def main() -> int:
             positives = [
                 ("health", health_request(port), None),
                 ("chat", post_request(port, body=b'{"model":"m"}'), "chat"),
-                ("journal", post_request(port, path="/v1/journal", body=b'{"run":"w17","event":"run/start"}'), "journal"),
+                ("journal", post_request(port, path="/v1/journal", body=JOURNAL_BODY), "journal"),
                 ("net", post_request(port, path="/v1/net", body=b'{"request":"search test"}'), "net"),
             ]
             for label, payload, downstream in positives:

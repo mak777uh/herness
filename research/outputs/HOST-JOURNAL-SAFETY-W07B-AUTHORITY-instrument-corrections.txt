@@ -1,0 +1,25 @@
+W07B AUTHORITY — поправки прибора после сохранённого RED
+Дата: 2026-11-24
+Prereg SHA-256 (sidecar, не изменён): 53b74514ca90c5355bd71abb5e96ebc2b603eba38a2809b4b3678dd736bcc07d
+
+Сохранённые RED-файлы не переписывались:
+- HOST-JOURNAL-SAFETY-W07B-AUTHORITY-red-before.txt
+- HOST-JOURNAL-SAFETY-W07B-AUTHORITY-red-before-instrument-corrected.txt
+- HOST-JOURNAL-SAFETY-W07B-AUTHORITY-posix-red-before.txt
+
+Поправки прибора:
+1. partial-binding: ожидаемый ValueError конструктора для каждой неполной связки теперь считается успешным negative control. Сохранены все три исходных tuple: только run; только session; run+session без expiry. До поправки корректный fail-closed конструктор ошибочно помечался FAIL.
+2. missing-binding: зарегистрированное ожидание «journal route отказ» уточнено до точного 503. Прежний helper принимал только 4xx и поэтому помечал корректный отказ как провал.
+3. strict-schema: все исходные варианты сохранены. Production validation получила reserved-invalid правило для digest 0x000...000 (64 нуля). Это не ослабление: синтаксически валидный, но семантически отсутствующий digest отвергается; произвольный ненулевой SHA-256 по-прежнему является непроверенным утверждением комнаты до host_match.
+
+Поправки реализации, не меняющие corpus:
+- Rust host_event импортирует sha2::Digest; обновлён существующий тест отказа отправки без моста под новую typed-сигнатуру.
+- В typed projection добавлен реально существующий local kind claim/unverified.
+- Python и Rust claim refs используют одинаковые ASCII-границы C-[0-9]{4}; Unicode-буква рядом больше не создаёт расхождения.
+
+Известное ограничение control mismatched-session:
+- Сохранённый RED corpus посылает legacy-тело с лишним session. Такой запрос отвергается и без проверки typed session, поэтому этот control сам по себе НЕ изолирует только mismatched session.
+- Control не ужесточён и не заменён после RED. Independent review должен явно решить, достаточно ли остальных strict-schema/typed-positive доказательств или нужна отдельная correction-попытка с typed mismatched-session.
+- W07B нельзя закрывать утверждением «mismatched session доказан изолированно этим control».
+
+Пороги, 14 control IDs, hash domain, session/expiry критерий и W07A thresholds не снижались.

@@ -8,10 +8,13 @@
 //! Три исхода ответа, а не два: текст, «сценарий кончился» и ошибка. Смешивать последние два
 //! нельзя — иначе «модель не ответила» станет неотличимо от «мы закончили».
 
+use std::fmt;
 use std::io::{Read, Write};
 use std::net::{IpAddr, Shutdown, SocketAddr, TcpStream};
 use std::time::{Duration, Instant};
 
+use serde::de::{self, MapAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 
 /// Формат ответа, который цикл умеет разбирать. Одна строка — одно решение.
@@ -46,6 +49,7 @@ enum RequestError {
     Token,
     EmptyBody,
     BodyTooLarge,
+    JournalBodyTooLarge,
 }
 
 impl RequestError {
@@ -57,6 +61,7 @@ impl RequestError {
             Self::Token => "некорректный token".to_string(),
             Self::EmptyBody => "тело запроса пусто".to_string(),
             Self::BodyTooLarge => "тело запроса больше 8 MiB".to_string(),
+            Self::JournalBodyTooLarge => "журнальное событие больше 16 KiB".to_string(),
         }
     }
 }
@@ -87,6 +92,9 @@ fn canonical_request(
     }
     if body.is_empty() {
         return Err(RequestError::EmptyBody);
+    }
+    if path == "/v1/journal" && body.len() > crate::host_event::MAX_BODY_BYTES {
+        return Err(RequestError::JournalBodyTooLarge);
     }
     if body.len() > MAX_REQUEST_BODY {
         return Err(RequestError::BodyTooLarge);
@@ -283,24 +291,81 @@ impl HttpBridge {
     }
 }
 
+struct JournalReceipt {
+    seq: u64,
+}
+
+impl<'de> Deserialize<'de> for JournalReceipt {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ReceiptVisitor;
+
+        impl<'de> Visitor<'de> for ReceiptVisitor {
+            type Value = JournalReceipt;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("точный journal receipt {seq,sha256}")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut seq = None;
+                let mut sha256 = None;
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        "seq" if seq.is_none() => seq = Some(map.next_value::<u64>()?),
+                        "sha256" if sha256.is_none() => {
+                            sha256 = Some(map.next_value::<String>()?);
+                        }
+                        "seq" => return Err(de::Error::duplicate_field("seq")),
+                        "sha256" => return Err(de::Error::duplicate_field("sha256")),
+                        _ => {
+                            return Err(de::Error::unknown_field(
+                                &key,
+                                &["seq", "sha256"],
+                            ));
+                        }
+                    }
+                }
+                let seq = seq.ok_or_else(|| de::Error::missing_field("seq"))?;
+                let sha256 = sha256.ok_or_else(|| de::Error::missing_field("sha256"))?;
+                if seq == 0 {
+                    return Err(de::Error::custom("seq должен быть положительным"));
+                }
+                if sha256.len() != 64
+                    || !sha256
+                        .bytes()
+                        .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                {
+                    return Err(de::Error::custom("sha256 не является lowercase hex"));
+                }
+                Ok(JournalReceipt { seq })
+            }
+        }
+
+        deserializer.deserialize_map(ReceiptVisitor)
+    }
+}
+
 impl HttpBridge {
     /// Отправить событие журнала на хост и получить номер записи в хостовом журнале.
     ///
     /// Зачем: авторитетную копию ведёт хост, комнате остаётся кэш. Если хост не подтвердил —
     /// это не «мелкая ошибка сети», а отсутствие свидетельства, и цикл обязан об этом сказать
     /// (см. статус `unrecorded` в loopmod).
-    pub fn post_event(&mut self, run: &str, event: &str) -> Result<u64, String> {
-        let body = serde_json::json!({ "run": run, "event": event }).to_string();
+    pub fn post_event(&mut self, event: &Value) -> Result<u64, String> {
+        let body = crate::canonical_json(event);
         let response = self.send_request("/v1/journal", body.as_bytes())?;
         if response.status != 200 {
             return Err(format!("хост не принял событие: {}", response.status));
         }
-        let value: Value = serde_json::from_slice(&response.body)
-            .map_err(|error| format!("ответ не JSON: {error}"))?;
-        value
-            .get("seq")
-            .and_then(|seq| seq.as_u64())
-            .ok_or_else(|| "в ответе нет seq".to_string())
+        let receipt: JournalReceipt = serde_json::from_slice(&response.body)
+            .map_err(|error| format!("ответ journal receipt невалиден: {error}"))?;
+        Ok(receipt.seq)
     }
 
     /// Выход в сеть через мост (ADR-0054): `search …`, `open 3`, `links`, `follow 2`.
@@ -831,13 +896,66 @@ mod tests {
         );
     }
 
-    #[test]
-    fn emit_journal_exact() {
-        let body = "{\"seq\":7}";
+    fn journal_event_fixture() -> Value {
+        serde_json::json!({
+            "schema": "host-journal-event-v1",
+            "session": "11111111-1111-4111-8111-111111111111",
+            "type": "run/start", "call_id": null, "status": "started", "refs": [],
+            "digests": {"event": "0000000000000000000000000000000000000000000000000000000000000000"}
+        })
+    }
+
+    fn post_journal_receipt(body: &str) -> Result<u64, String> {
         let (port, handle) = serve_once(canonical_response("200 OK", body));
         let mut link = HttpBridge::new("127.0.0.1", port, "local-tk", "journal");
-        assert_eq!(link.post_event("run-1", "start"), Ok(7));
-        let request_body = serde_json::json!({ "run": "run-1", "event": "start" }).to_string();
+        let result = link.post_event(&journal_event_fixture());
+        let request = handle.join().unwrap();
+        assert!(String::from_utf8_lossy(&request).starts_with("POST /v1/journal "));
+        result
+    }
+
+    #[test]
+    fn emit_journal_receipt_exact() {
+        let body = "{\"seq\":7,\"sha256\":\"1111111111111111111111111111111111111111111111111111111111111111\"}";
+        assert_eq!(post_journal_receipt(body), Ok(7));
+    }
+
+    #[test]
+    fn emit_journal_receipt_missing_hash() {
+        assert!(post_journal_receipt("{\"seq\":7}").is_err());
+    }
+
+    #[test]
+    fn emit_journal_receipt_extra_field() {
+        let body = "{\"seq\":7,\"sha256\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"accepted\":true}";
+        assert!(post_journal_receipt(body).is_err());
+    }
+
+    #[test]
+    fn emit_journal_receipt_duplicate_seq() {
+        let body = "{\"seq\":7,\"seq\":8,\"sha256\":\"1111111111111111111111111111111111111111111111111111111111111111\"}";
+        assert!(post_journal_receipt(body).is_err());
+    }
+
+    #[test]
+    fn emit_journal_receipt_bad_hash() {
+        assert!(post_journal_receipt("{\"seq\":7,\"sha256\":\"ABC\"}").is_err());
+    }
+
+    #[test]
+    fn emit_journal_receipt_zero_seq() {
+        let body = "{\"seq\":0,\"sha256\":\"1111111111111111111111111111111111111111111111111111111111111111\"}";
+        assert!(post_journal_receipt(body).is_err());
+    }
+
+    #[test]
+    fn emit_journal_exact() {
+        let body = "{\"seq\":7,\"sha256\":\"1111111111111111111111111111111111111111111111111111111111111111\"}";
+        let (port, handle) = serve_once(canonical_response("200 OK", body));
+        let mut link = HttpBridge::new("127.0.0.1", port, "local-tk", "journal");
+        let event = journal_event_fixture();
+        assert_eq!(link.post_event(&event), Ok(7));
+        let request_body = crate::canonical_json(&event);
         assert_eq!(
             handle.join().unwrap(),
             expected_request("127.0.0.1", port, "local-tk", "/v1/journal", &request_body)
@@ -1063,7 +1181,7 @@ mod tests {
     fn journal_propagates_incomplete_response() {
         let (port, handle) = serve_drop_once();
         let mut link = HttpBridge::new("127.0.0.1", port, "local-tk", "journal");
-        let error = link.post_event("run-1", "start").unwrap_err();
+        let error = link.post_event(&serde_json::json!({"schema": "host-journal-event-v1"})).unwrap_err();
         assert!(error.contains("заголов"), "{error}");
         handle.join().unwrap();
     }

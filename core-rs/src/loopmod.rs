@@ -1258,7 +1258,7 @@ fn tool_write(arg: &str) -> Result<String, String> {
 ///
 /// Хост берётся из окружения, а не из аргументов: это не «настройка задачи», а адрес
 /// свидетельства, и он должен задаваться снаружи комнаты.
-fn post_to_host(run: &str, event: &str) -> Result<(), String> {
+fn post_to_host(event: &serde_json::Value) -> Result<(), String> {
     // Адрес моста: сначала файл в образе, потом окружение, потом адрес хоста по умолчанию.
     // Файл — потому что при restrict=on адрес должен быть ГОСТЕВЫМ (10.0.2.15), а переменная
     // окружения в комнату не доходит: initramfs собирается из фиксированного списка (этап 1.3).
@@ -1274,7 +1274,7 @@ fn post_to_host(run: &str, event: &str) -> Result<(), String> {
         .unwrap_or(8790);
     let token = std::env::var("HS_BRIDGE_TOKEN").unwrap_or_default();
     let mut link = crate::model::HttpBridge::new(&host, port, &token, "journal");
-    link.post_event(run, event).map(|_| ())
+    link.post_event(event).map(|_| ())
 }
 
 /// Стадия прогона, выведенная из журнала одним правилом: «чего он ждёт».
@@ -1757,6 +1757,7 @@ fn run_task_from(
         .unwrap_or_default();
     let mut prompt = compose_prompt(task, &history, last.as_deref());
     let host_run = std::env::var("HS_HOST_RUN").ok();
+    let host_session = std::env::var("HS_HOST_SESSION").ok();
 
     while attempts < budget.steps && steps < budget.steps {
         if started.elapsed().as_secs_f64() > budget.seconds {
@@ -1985,19 +1986,40 @@ fn run_task_from(
         record(&mut journal, &mut events, "run/end", reason)?;
     }
     status = derive_status(&events);
-    // Подтверждение хостом: отправляем ВЕСЬ поток событий, а не только шаги. Иначе подделка
-    // claim/anchored или run/start не ловится сверкой (асимметрия, отмеченная в отчёте).
-    if let Some(run) = host_run.as_deref() {
-        for event in &events {
-            let line = format!("{} {}", event.kind, event.detail).trim().to_string();
-            if let Err(error) = post_to_host(run, &line) {
-                record(&mut journal, &mut events, "step/error",
-                       format!("хост не подтвердил событие: {error}"))?;
-                status = "unrecorded";
-                record(&mut journal, &mut events, "run/end",
-                       "нет подтверждения хоста: свидетельство неполное".to_string())?;
-                break;
+    // Подтверждение хостом: отправляем ВЕСЬ поток как refs-only проекции, а не только шаги.
+    // Иначе подделка claim/anchored или run/start не ловится сверкой. Run выбирает хост: тело
+    // /v1/journal его не содержит; session приходит из host-issued файла образа.
+    if host_run.is_some() {
+        let mut failure = if host_session.is_none() {
+            Some("хост не выдал session для журнала".to_string())
+        } else {
+            None
+        };
+        if failure.is_none() {
+            let mut projection = crate::host_event::ProjectionState::default();
+            for event in &events {
+                let payload = match crate::host_event::project_event(
+                    event.kind, &event.detail, host_session.as_deref().unwrap_or_default(),
+                    &mut projection,
+                ) {
+                    Ok(payload) => payload,
+                    Err(error) => {
+                        failure = Some(error);
+                        break;
+                    }
+                };
+                if let Err(error) = post_to_host(&payload) {
+                    failure = Some(error);
+                    break;
+                }
             }
+        }
+        if let Some(error) = failure {
+            record(&mut journal, &mut events, "step/error",
+                   format!("хост не подтвердил событие: {error}"))?;
+            status = "unrecorded";
+            record(&mut journal, &mut events, "run/end",
+                   "нет подтверждения хоста: свидетельство неполное".to_string())?;
         }
     }
 
@@ -2462,7 +2484,14 @@ mod tests {
         // подтверждённое хостом» было бы словом, а не состоянием.
         std::env::set_var("HS_BRIDGE_HOST", "127.0.0.1");
         std::env::set_var("HS_BRIDGE_PORT", "9");
-        let result = post_to_host("run-test", "step 1");
+        let event = crate::host_event::project_event(
+            "step",
+            "1",
+            "11111111-1111-4111-8111-111111111111",
+            &mut crate::host_event::ProjectionState::default(),
+        )
+        .unwrap();
+        let result = post_to_host(&event);
         std::env::remove_var("HS_BRIDGE_HOST");
         std::env::remove_var("HS_BRIDGE_PORT");
         assert!(result.is_err(), "без моста событие не должно считаться отправленным");

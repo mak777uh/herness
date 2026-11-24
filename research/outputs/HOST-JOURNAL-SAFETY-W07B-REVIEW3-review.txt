@@ -1,0 +1,89 @@
+Независимый correction review E-0057
+Дата: 2026-11-24
+Вердикт: PASS
+
+E-0057 закрывает обе проблемы, выявленные в E-0056, в пределах заявленного scope.
+Блокирующих findings нет. PASS относится к E-0057; E-0054/E-0055/E-0056 остаются
+открытыми, и их заключения этим вердиктом не присваиваются.
+
+Подтверждённые свойства:
+- task-only, comment-only, scope-only, host_match-only, unknown-only и пустой критерий
+  дают FAIL. Integrity row, unknown row и hidden wrapper не увеличивают
+  has_substantive_checks; реальные visible/hidden _rows учитываются.
+- Clean seq=1..7 + CRC-valid seq=8 payload 0xFF даёт problems 'invalid UTF-8 в записи 8',
+  а не только sequence/tail error. Прямой accept.check FAIL; judge_metrics даёт 0 принятых
+  и pass@1 0.00; verify_answers печатает 'принятых прогонов нет'.
+- Clean positive и hidden-only substantive проходят.
+- E-0056 fixture не переписан: tests/test_host_journal_accept_integrity.py:113 всё ещё
+  использует hsj2.frame(7, ...). E-0057 использует seq=8 в
+  tests/test_host_journal_accept_review3.py:103.
+
+Неблокирующие предшествующие наблюдения:
+1. host_match без host_run игнорируется при наличии проходящего реального visible-условия:
+   bin/accept.py:270. accept.check({"require_status":"done","host_match":True},
+   clean_done_records) возвращает True. HEAD ведёт себя так же; это pre-existing
+   поведение вне scope E-0057, не новая fail-open регрессия.
+2. Неизвестный ключ внутри hidden не валидируется, если рядом есть проходящее реальное
+   hidden-условие: bin/accept.py:375. accept.check({"hidden":{"max_steps":1,"typo":True}},
+   clean_records) возвращает True. HEAD ведёт себя так же; это pre-existing residual gap,
+   не регрессия E-0057.
+Новых ложных PASS/FAIL или исключений в изменённой E-0057 логике не обнаружено.
+
+Реально выполненные проверки:
+- Prereg seal совпал полностью:
+  25b1090a7f6abf1a6f2c54beb7c34addac7bb89b38c88d4e6fa6a36e5cc3bdcb.
+- E-0054/E-0055/E-0056/E-0057 в registry: status=open, conclusion=null, claim=null
+  на момент review.
+- Seals E-0054/E-0055/E-0056 совпали.
+- Historical .pyc authority/review/integrity, созданные до E-0057, имеют code objects,
+  равные freshly compiled текущим исходникам; это дополнительно подтверждает неизменность
+  sealed corpus.
+- Control IDs и thresholds совпали с prereg.
+- Worktree diff накопительный; E-0057 hunk соответствует заявленному изменению
+  has_substantive_checks/hidden handling.
+
+Targeted tests:
+Windows:
+- test_host_journal_accept_review3.py — 7/7, N/A 0.
+- test_accept.py — 24/24.
+- test_host_journal_accept_integrity.py — 6/6, N/A 0.
+WSL Ubuntu POSIX:
+- test_host_journal_accept_review3.py — 7/7, N/A 0.
+- test_accept.py — 24/24.
+Дополнительные классификационные и direct-caller пробы выполнены через временные
+Python-скрипты и TemporaryDirectory.
+
+Manifest и побочные эффекты:
+- tests/test-manifest.json:39 содержит ровно одну запись review3 с minimum_checks=7.
+- Побочных runs/accept журналов или новых tracked/untracked путей review не создал.
+- git diff --check прошёл.
+- Начальное и финальное состояние worktree совпало.
+- Ничего не редактировалось, не коммитилось и не пушься.
+
+acceptance-metrics.txt:
+- Raw SHA-256 до и после targeted сессии:
+  bb221d198bc3e9a8dbceddb416795ad0518825cf26ebfe7d318b39c5f817c13f.
+- cmp с HEAD:research/outputs/acceptance-metrics.txt успешен; байты идентичны.
+- Git показывает modified из-за line-ending warnings, но фактического content diff нет.
+
+Platform evidence:
+- review3: Windows 7/7, POSIX 7/7.
+- review2: Windows 6/6, POSIX 6/6.
+- authority: 14/14 на обеих.
+- prior review: 7/7 на обеих.
+- R1: 34/34 на обеих.
+- R1-review: Windows 11/11; POSIX 10/11 + 1 Windows-only N/A.
+- tip: 12/12 на обеих.
+- durability: Windows 2/4 + 2 POSIX-only N/A; POSIX 4/4.
+N/A нигде не засчитывался как PASS.
+
+Ограничения:
+- Полный manifest, gates, selftest и authority-suite не перезапускались. Сохранённые
+  результаты 68/1193/0 failures, gates 31/33 с 2 N/A, seals 34/34 и coverage 338/338
+  проверены как evidence, но не воспроизведены заново.
+- WSL POSIX использовал тот же /mnt/c worktree, а не отдельный clean clone.
+- Byte snapshots на момент RED для всех untracked corpus отсутствуют; историческая
+  неизменность подтверждена seals, control IDs, thresholds, mtimes, seq=7 fixture и
+  совпадением historical bytecode.
+- Предшествующие замечания по host_match и unknown hidden keys не входят в scope E-0057
+  и не меняют вердикт этой коррекции.

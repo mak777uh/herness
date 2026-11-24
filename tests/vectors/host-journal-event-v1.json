@@ -1,0 +1,91 @@
+{
+  "schema": "host-journal-event-vector-v1",
+  "session": "11111111-1111-4111-8111-111111111111",
+  "events": [
+    {
+      "local": "run/start task: CANARY-W07B-RAW-SECRET",
+      "expected": {
+        "schema": "host-journal-event-v1",
+        "session": "11111111-1111-4111-8111-111111111111",
+        "type": "run/start",
+        "call_id": null,
+        "status": "started",
+        "refs": [],
+        "digests": {
+          "event": "cd9adc768fc7243f2bf6461103f127afbc864f5e8290216ed213a20d74d139de"
+        }
+      }
+    },
+    {
+      "local": "tool/call read /mnt/CANARY-W07B-RAW-SECRET",
+      "expected": {
+        "schema": "host-journal-event-v1",
+        "session": "11111111-1111-4111-8111-111111111111",
+        "type": "tool/call",
+        "call_id": "call-000001",
+        "status": "recorded",
+        "refs": [
+          {
+            "id": "read",
+            "kind": "tool"
+          }
+        ],
+        "digests": {
+          "event": "64a4a81575188d710e87dd1fe48a26e3886e2029feaca1ae563af7132e7ae5de"
+        }
+      }
+    },
+    {
+      "local": "tool/result ok найдено C-0345 CANARY-W07B-RAW-SECRET",
+      "expected": {
+        "schema": "host-journal-event-v1",
+        "session": "11111111-1111-4111-8111-111111111111",
+        "type": "tool/result",
+        "call_id": "call-000001",
+        "status": "ok",
+        "refs": [
+          {
+            "id": "call-000001",
+            "kind": "call"
+          }
+        ],
+        "digests": {
+          "event": "c7bdde292188c47a8c637ae7e385e89d0db3122aeecabeb7993c8eacf099d948"
+        }
+      }
+    },
+    {
+      "local": "claim/anchored C-0345",
+      "expected": {
+        "schema": "host-journal-event-v1",
+        "session": "11111111-1111-4111-8111-111111111111",
+        "type": "claim/anchored",
+        "call_id": null,
+        "status": "recorded",
+        "refs": [
+          {
+            "id": "c-0345",
+            "kind": "claim"
+          }
+        ],
+        "digests": {
+          "event": "8c73ffeb8b9fac2e71c29398d2cce1cc11ec6ec39ab0530000f4863277b5b184"
+        }
+      }
+    },
+    {
+      "local": "run/end C-0345 CANARY-W07B-RAW-SECRET",
+      "expected": {
+        "schema": "host-journal-event-v1",
+        "session": "11111111-1111-4111-8111-111111111111",
+        "type": "run/end",
+        "call_id": null,
+        "status": "ended",
+        "refs": [],
+        "digests": {
+          "event": "d2dfa68a5d98b40181a71c09f330daba0557ce7de0afb66268376a4c199ef273"
+        }
+      }
+    }
+  ]
+}

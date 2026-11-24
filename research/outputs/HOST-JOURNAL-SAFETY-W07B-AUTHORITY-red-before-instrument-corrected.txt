@@ -1,0 +1,73 @@
+[FAIL] bound-positive — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[ok] missing-binding
+[FAIL] partial-binding — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] forged-run — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] mismatched-session — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] expired-binding — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] raw-canary — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] oversized-body — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] strict-schema — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+[FAIL] host-match-positive — AssertionError: [('хост подтвердил прогон w07b-authority-run', True, 'записей: 2'), ('журнал комнаты совпадает с хостовым', False, 'хост видел 2 событий, в комнате 2; события расходятся'), ('условие host_session понятно', False, 'неизвестное условие критерия')]
+[ok] forged-local
+[FAIL] required-session — AssertionError: host_match без ожидаемой session принят
+[FAIL] rust-python-vector — AssertionError:    Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs)
+warning: variable `result_tag` is assigned to, but never used
+    --> src/loopmod.rs:1828:25
+     |
+1828 |                 let mut result_tag = "err";
+     |                         ^^^^^^^^^^
+     |
+     = note: consider using `_result_tag` instead
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: value assigned to `result_tag` is never read
+    --> src/loopmod.rs:1833:25
+     |
+1833 |                         result_tag = "ok";
+     |                         ^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` on by default
+
+warning: variable does not need to be mutable
+   --> src/model.rs:874:13
+    |
+874 |         let mut link = HttpBridge::new("127.0.0.1", 9, "local-tk\r\nX: y", "m");
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+    --> src/loopmod.rs:2579:8
+     |
+2579 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+     |
+     = note: `#[warn(non_snake_case)]` on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+    --> src/model.rs:1092:8
+     |
+1092 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+    --> src/model.rs:1137:8
+     |
+1137 |     fn недоступный_мост_это_Error_а_не_End() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 6 warnings (run `cargo fix --lib -p hs-core --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 9.46s
+     Running unittests src/lib.rs (target/release/deps/hs_core-b7add760f2fe9504)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 176 filtered out; finished in 0.00s
+
+
+[FAIL] receipt-semantics — TypeError: Bridge.__init__() got an unexpected keyword argument 'host_run'
+
+host journal authority: 2/14 ok; N/A 0; провалов: 12

@@ -1,0 +1,54 @@
+HOST-JOURNAL-SAFETY-W07B-REVIEW3 — conclusion
+Дата: 2026-11-24
+Вердикт: PASS
+
+E-0057 закрыл две находки независимого review E-0056 без изменения sealed corpus
+E-0054/E-0055/E-0056 и без снижения порогов.
+
+RED:
+- Windows: review3 3/7, N/A 0, четыре ожидаемых провала.
+- POSIX: review3 3/7, N/A 0, четыре ожидаемых провала.
+Проваливали metadata-task-only, metadata-comment-only, metadata-host-match-only и
+cli-no-content; hidden-only substantive, exact UTF-8 direct callers и clean positive
+уже проходили.
+
+Production correction:
+- accept.check отслеживает наличие реальных visible/hidden _rows до добавления integrity
+  row; integrity/unknown/hidden wrapper не создают substantive check.
+- При отсутствии содержательной проверки добавляется явная FAIL-строка.
+- Hidden-only критерий с реальным условием сохраняет PASS.
+
+GREEN:
+- Windows review3: 7/7, N/A 0.
+- POSIX review3: 7/7, N/A 0.
+- Exact UTF-8 control: clean seq=1..7 + CRC-valid seq=8 payload 0xFF содержит
+  'invalid UTF-8 в записи 8'; прямой check, judge_metrics и verify_answers отказывают.
+- Реальный research/outputs/acceptance-metrics.txt побайтно совпадает с HEAD,
+  SHA-256 bb221d198bc3e9a8dbceddb416795ad0518825cf26ebfe7d318b39c5f817c13f.
+
+Регрессии:
+- Windows: review2 6/6; authority 14/14; prior review 7/7; R1 34/34;
+  R1-review 11/11; tip 12/12; durability 2 passed + 2 явных POSIX-only N/A;
+  test_accept 24/24.
+- POSIX: review2 6/6; authority 14/14; prior review 7/7; R1 34/34;
+  R1-review 10 passed + 1 Windows-only N/A; tip 12/12; durability 4/4;
+  test_accept 24/24.
+- Полный manifest: 68 suites, 1193 checks, 0 failures.
+- Selftest: rc=0.
+- Gates: 31/33 оценено, 2 явных N/A (журналы, индекс прогонов); probes 17/17.
+- Seals: 34/34, проблем 0.
+- Coverage: 338/338, strict 0.57, ANCHORED_WEAK.
+
+Независимый review:
+- research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-review.txt
+- Вердикт PASS, substantive_findings=[].
+
+Границы:
+- PASS относится только к E-0057 и не закрывает W07B целиком.
+- E-0054/E-0055/E-0056 остаются open без conclusion/claim.
+- Pre-existing host_match без host_run рядом с другим проходящим условием и unknown key
+  внутри hidden остаются отдельными наблюдениями; они не являются регрессией E-0057.
+- Вручную сконструированный plain list по-прежнему считается чистым; production callers
+  не теряют metadata.
+- Windows directory durability остаётся N/A; N/A не считается PASS.
+- Production activation, реальные внешние аккаунты, публикация и owner keys не затронуты.

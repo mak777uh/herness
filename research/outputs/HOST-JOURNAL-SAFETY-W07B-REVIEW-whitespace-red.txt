@@ -1,0 +1,72 @@
+warning: variable `result_tag` is assigned to, but never used
+    --> src/loopmod.rs:1829:25
+     |
+1829 |                 let mut result_tag = "err";
+     |                         ^^^^^^^^^^
+     |
+     = note: consider using `_result_tag` instead
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: value assigned to `result_tag` is never read
+    --> src/loopmod.rs:1834:25
+     |
+1834 |                         result_tag = "ok";
+     |                         ^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` on by default
+
+warning: variable does not need to be mutable
+   --> src/model.rs:932:13
+    |
+932 |         let mut link = HttpBridge::new("127.0.0.1", 9, "local-tk\r\nX: y", "m");
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+    --> src/loopmod.rs:2608:8
+     |
+2608 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+     |
+     = note: `#[warn(non_snake_case)]` on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+    --> src/model.rs:1150:8
+     |
+1150 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+    --> src/model.rs:1195:8
+     |
+1195 |     fn недоступный_мост_это_Error_а_не_End() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 6 warnings (run `cargo fix --lib -p hs-core --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.77s
+     Running unittests src/lib.rs (target/release/deps/hs_core-b7add760f2fe9504)
+
+running 1 test
+test host_event::tests::host_event_review_vector ... FAILED
+
+failures:
+
+---- host_event::tests::host_event_review_vector stdout ----
+
+thread 'host_event::tests::host_event_review_vector' panicked at src/host_event.rs:235:9:
+assertion `left == right` failed
+  left: [Object {"call_id": Null, "digests": Object {"event": String("36304dfade7b48dd8cb14a25c5b8b3e8795446236b89d96092f424011f0208bd")}, "refs": Array [], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("started"), "type": String("run/start")}, Object {"call_id": Null, "digests": Object {"event": String("6ee765455651ae3277e5e3a77db90ae40d99900cc25c9043e5611926d6ea08f1")}, "refs": Array [], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("recorded"), "type": String("step")}, Object {"call_id": Null, "digests": Object {"event": String("8c73ffeb8b9fac2e71c29398d2cce1cc11ec6ec39ab0530000f4863277b5b184")}, "refs": Array [Object {"id": String("c-0345"), "kind": String("claim")}], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("recorded"), "type": String("claim/anchored")}, Object {"call_id": Null, "digests": Object {"event": String("4b792b467d458289e90db8f7e4b54569c4ad6c1c80b7b2cb8285b3062f857113")}, "refs": Array [], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("ended"), "type": String("run/end")}]
+ right: [Object {"call_id": Null, "digests": Object {"event": String("36304dfade7b48dd8cb14a25c5b8b3e8795446236b89d96092f424011f0208bd")}, "refs": Array [], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("started"), "type": String("run/start")}, Object {"call_id": Null, "digests": Object {"event": String("6ee765455651ae3277e5e3a77db90ae40d99900cc25c9043e5611926d6ea08f1")}, "refs": Array [], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("recorded"), "type": String("step")}, Object {"call_id": Null, "digests": Object {"event": String("ec8ec15aad00344dae135766aa9fe100db1a99e3d56b78fbcf65353c014685ba")}, "refs": Array [Object {"id": String("c-0345"), "kind": String("claim")}], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("recorded"), "type": String("claim/anchored")}, Object {"call_id": Null, "digests": Object {"event": String("11c072ab843822d81d6752d75ae857f716696c799e896e4f791c40da9ed052de")}, "refs": Array [], "schema": String("host-journal-event-v1"), "session": String("11111111-1111-4111-8111-111111111111"), "status": String("ended"), "type": String("run/end")}]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    host_event::tests::host_event_review_vector
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 183 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

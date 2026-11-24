@@ -72,7 +72,7 @@ def run(criteria: dict, events: list[str], **kwargs) -> tuple[bool, list]:
 def _():
     ok, rows = run(CRITERIA, OK_RUN)
     assert ok, rows
-    assert len(rows) == 7, rows
+    assert len(rows) == 8, rows
 
 
 @case("невызванный инструмент валит приёмку")
@@ -126,8 +126,9 @@ def _():
 @case("оборванный хвост не чинится и валит приёмку")
 def _():
     records, tail, problems = accept.parse_journal(journal_bytes(OK_RUN, torn=b"\x10\x00\x00\x00"))
-    ok, _rows = accept.check(CRITERIA, records)
-    assert ok, "содержимое целых записей должно читаться"
+    ok, rows = accept.check(CRITERIA, records)
+    assert not ok, "валидный prefix не делает повреждённый журнал принятым"
+    assert any(name == "журнал прочитан полностью" and not passed for name, passed, _ in rows), rows
     assert tail == 4 and problems, (tail, problems)
 
 

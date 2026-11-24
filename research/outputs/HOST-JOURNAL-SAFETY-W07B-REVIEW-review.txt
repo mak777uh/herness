@@ -1,0 +1,36 @@
+HOST-JOURNAL-SAFETY-W07B-REVIEW — независимый correction review
+Дата: 2026-11-24
+Исход: E-0055
+Вердикт: NEEDS_CHANGES
+
+КРИТИЧЕСКАЯ НАХОДКА
+Invalid UTF-8 после валидного совпадающего префикса всё ещё может дать host_match PASS через прямой accept.check().
+
+Воспроизведение:
+1. Хост содержит одну валидную run/start projection.
+2. Локальный HSJ2 содержит совпадающую первую запись.
+3. Следующая CRC-valid запись содержит payload step 1\xff или commit\xfe.
+4. parse_journal() возвращает валидный prefix, tail=24 и UTF-8/tail problems.
+5. accept.check(...) возвращает ok=True и строку host_match=True.
+
+Причина:
+check() получает только records и не получает tail/problems. CLI дополнительно требует not problems, но прямые callers, включая bin/judge_metrics.py:101 и bin/verify_answers.py:102, отбрасывают проблемы и считают префикс принятым.
+
+Correction corpus E-0055 проверяет invalid UTF-8 только в первой записи и не покрывает позицию trailing record после валидного префикса.
+
+ПОДТВЕРЖДЕНО REVIEWER
+- exact local-line digest больше не применяет strip/trim/reconstruction;
+- typed session/expiry controls изолированы;
+- claim/unverified принимает только status=recorded;
+- Rust receipt parser требует точную форму {seq,sha256};
+- invalid/missing session предотвращает чтение host chain;
+- prereg seals E-0054 53b74514ca90… и E-0055 558aa7d541a1… совпадают;
+- перечисленные targeted suites и W07A regressions в предоставленных артефактах прошли.
+
+ОГРАНИЧЕНИЯ REVIEW
+- Выполнен на Windows host; Rust запускался через WSL.
+- Reviewer не перезапускал полный manifest, gates и POSIX durability.
+- N/A не засчитан как PASS.
+
+РЕШЕНИЕ
+E-0055 остаётся open без conclusion/claim. Sealed corpus E-0055 не меняется после RED. Дефект передаётся в отдельную correction-попытку E-0056: метаданные повреждения журнала должны сохраняться вместе с records и fail-closed учитываться самим accept.check(), без зависимости от CLI или памяти конкретного caller.

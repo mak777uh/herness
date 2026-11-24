@@ -1,0 +1,20 @@
+E-0056 instrument correction — 2026-11-24
+
+Найдено после первого GREEN:
+- direct-callers control вызывал judge_metrics.main() с реальным module ROOT;
+- judge_metrics.main() записывает research/outputs/acceptance-metrics.txt;
+- синтетический probe случайно заменил реальный артефакт, из-за чего gates сообщили три старых claim failures (C-0206/C-0212/C-0259).
+
+Исправление фикстуры:
+- judge_metrics.ROOT временно указывает на tempfile вместе с JOURNALS/INDEX/all_criteria/musique_order;
+- после вызова все подмены восстанавливаются в finally;
+- vectors, шесть controls, ожидания, minimum_checks и platform thresholds не менялись.
+
+Восстановление:
+- research/outputs/acceptance-metrics.txt восстановлен точными байтами из HEAD;
+- git diff --exit-code по артефакту = 0.
+
+Проверка изоляции:
+- SHA-256 реального acceptance-metrics.txt до и после Windows control = одинаковый;
+- SHA-256 до и после POSIX control = одинаковый;
+- Windows 6/6, POSIX 6/6, N/A 0.

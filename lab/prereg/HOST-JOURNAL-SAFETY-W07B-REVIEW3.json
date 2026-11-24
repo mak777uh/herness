@@ -1,0 +1,104 @@
+{
+  "schema": 2,
+  "id": "HOST-JOURNAL-SAFETY-W07B-REVIEW3",
+  "date": "2026-11-24",
+  "question": "Сохраняет ли accept.check() fail-closed отказ, когда критерий не порождает содержательных строк, и проверяет ли новый прямой caller-контроль именно invalid UTF-8 tail, а не более раннее нарушение sequence?",
+  "hypothesis": "Если check явно учитывает наличие содержательных строк до integrity row и требует хотя бы одну такую проверку, metadata-only критерии не дают PASS, а hidden-only критерии с реальным условием сохраняют PASS. Отдельный clean-journal + seq=8 invalid UTF-8 вектор с проверкой problems докажет отказ judge_metrics и verify_answers именно на UTF-8.",
+  "criterion": "PASS только при review3 7/7 на Windows и POSIX без N/A: task-only, comment-only и host_match-only критерии дают FAIL; CLI для task-only пустого чистого журнала возвращает ненулевой rc; hidden-only критерий с max_steps остаётся PASS; exact seq=8 invalid UTF-8 vector содержит проблему invalid UTF-8 и оба прямых caller сообщают ноль принятых; clean positive остаётся PASS. Обязательны прежние W07B/W07A platform thresholds и review2 6/6 как regression. Любой PASS metadata-only критерия, принятый damaged journal, потеря hidden-only позитива, лишний N/A, ослабление порогов или изменение E-0054/E-0055/E-0056 corpus после RED означает отсутствие PASS.",
+  "arms": [
+    "A (до fix): E-0056 всегда добавляет integrity row; metadata-only критерий получает PASS от неё, а direct-callers fixture E-0056 использует повторный seq=7 и потому останавливается до UTF-8 decode.",
+    "B (fix): check отслеживает содержательные строки visible/hidden до integrity row, добавляет явный FAIL при их отсутствии и не меняет hidden-only PASS; новый независимый suite использует следующий seq=8 и явно проверяет invalid UTF-8 в problems."
+  ],
+  "sensitivity": "Metadata-only controls меняют только metadata key: task, comment или host_match без host_run; содержательных условий нет во всех трёх. Exact UTF-8 control добавляет ровно один CRC-valid frame seq=8 с payload step 2 + 0xFF к полному чистому журналу из семи записей. Clean positive использует тот же журнал без восьмого кадра. Hidden-only позитив отличается только наличием реального hidden max_steps условия.",
+  "unit_of_analysis": "один критерий и один локальный HSJ2 журнал; для direct callers — один и тот же exact UTF-8 журнал, переданный двум caller-функциям",
+  "primary_metric": "review3_controls=7; windows_passed=7; posix_passed=7; review3_na=0; metadata_only_rejected=3; cli_metadata_only_rejected=1; hidden_positive_passed=1; exact_utf8_problem_present=1; direct_callers_rejecting=2; damaged_direct_accepted=0; clean_positive_passed=1; review2_controls=6; review2_windows_passed=6; review2_posix_passed=6; authority_controls=14; prior_review_controls=7; r1_controls=34; tip_controls=12",
+  "test": "python tests/test_host_journal_accept_review3.py",
+  "stopping_rule": "Один correction batch: сохранить RED на текущем production-коде, исправить только учёт substantive rows в accept.check и добавить новый независимый suite, затем один Windows GREEN и один POSIX GREEN. После GREEN провести один независимый correction review. Остановиться при первом необъяснённом провале; не менять W07B/W07A/W07B-REVIEW/W07B-REVIEW2 corpus, hash domain, schema, session/expiry критерии и platform thresholds после RED. W03/W06/W09 и production activation не смешивать.",
+  "fixture": "Только tempfile, синтетические HSJ2 байты и вызовы Python caller-функций того же репозитория; judge_metrics ROOT изолирован tempfile, SHA-256 реального research/outputs/acceptance-metrics.txt проверяется до и после; сеть, секреты, модель и внешние аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+    "network": "внешняя сеть не используется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+  },
+  "critical_controls": [
+    {"id": "metadata-task-only", "input": "пустой корректный HSJ2 и критерий {task}", "expect": "overall FAIL и явная FAIL-строка отсутствия содержательной проверки"},
+    {"id": "metadata-comment-only", "input": "пустой корректный HSJ2 и критерий {comment}", "expect": "overall FAIL и явная FAIL-строка отсутствия содержательной проверки"},
+    {"id": "metadata-host-match-only", "input": "пустой корректный HSJ2 и критерий {host_match:true} без host_run", "expect": "overall FAIL и явная FAIL-строка отсутствия содержательной проверки"},
+    {"id": "hidden-only-substantive", "input": "полный чистый журнал и критерий {hidden:{max_steps:1}}", "expect": "overall PASS и hidden row PASS"},
+    {"id": "exact-utf8-direct-callers", "input": "полный чистый журнал seq=1..7 и CRC-valid seq=8 data payload step 2 + 0xFF", "expect": "problems содержит invalid UTF-8; direct check FAIL; judge_metrics и verify_answers сообщают ноль принятых"},
+    {"id": "clean-positive", "input": "тот же полный чистый журнал seq=1..7 без seq=8", "expect": "direct check PASS и integrity row PASS"},
+    {"id": "cli-no-content", "input": "пустой корректный HSJ2, task-only criterion и accept.main", "expect": "rc=1 и итог FAIL, не PASS"}
+  ],
+  "threshold": {
+    "review3_controls": 7,
+    "windows_passed": 7,
+    "posix_passed": 7,
+    "review3_na": 0,
+    "metadata_only_rejected": 3,
+    "cli_metadata_only_rejected": 1,
+    "hidden_positive_passed": 1,
+    "exact_utf8_problem_present": 1,
+    "direct_callers_rejecting": 2,
+    "damaged_direct_accepted": 0,
+    "clean_positive_passed": 1,
+    "review2_controls": 6,
+    "review2_windows_passed": 6,
+    "review2_posix_passed": 6,
+    "authority_controls": 14,
+    "prior_review_controls": 7,
+    "r1_controls": 34,
+    "r1_review_windows": 11,
+    "r1_review_posix": 10,
+    "r1_review_posix_na": 1,
+    "tip_controls": 12,
+    "durability_windows_passed": 2,
+    "durability_windows_na": 2,
+    "durability_posix_passed": 4
+  },
+  "known_limits": [
+    "E-0054/E-0055/E-0056 остаются open без conclusion/claim; review3 PASS не переписывает их sealed corpus",
+    "Sealed direct-callers fixture E-0056 остаётся с seq=7 и доказывает generic damaged-tail отказ; exact UTF-8 доказательство даёт только новый review3 suite",
+    "Метаданные целостности сохраняются при прямой передаче результата parse_journal; список, вручную сконструированный caller, считается чистым по прежнему API",
+    "Fail-closed tail защищает принятие доказательства, но не процесс, способный согласованно переписать локальный и хостовый журналы",
+    "Host_match доказывает совпадение проекции, а не истинность события или внешний результат",
+    "Windows directory durability остаётся N/A из W07A",
+    "Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation остаются отдельными работами"
+  ],
+  "kill_criteria": [
+    "Любой task-only, comment-only или host_match-only критерий даёт overall PASS",
+    "CLI task-only критерия печатает PASS или возвращает rc=0",
+    "Hidden-only критерий с реальным max_steps условием перестаёт проходить",
+    "Exact seq=8 fixture не содержит invalid UTF-8 в problems либо любой прямой caller считает журнал принятым",
+    "Clean positive перестаёт проходить",
+    "Прежние W07B/W07A/review2 thresholds не проходят либо corpus/порог ослаблен после RED"
+  ],
+  "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; correction после независимого review регистрируется отдельно",
+  "runs": [
+    "runs/exp-host-journal-safety-w07b-review3"
+  ],
+  "result": {
+    "verdict": "PASS",
+    "instrument_verdict": "PASS",
+    "registered_controls": "Windows 7/7; POSIX 7/7; N/A 0",
+    "red_before": "Windows 3/7 и POSIX 3/7; по четыре ожидаемых провала",
+    "review": "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-review.txt",
+    "substantive_findings": [],
+    "evidence": [
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-windows-red-before.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-posix-red-before.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-windows-regressions.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-posix-regressions.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-manifest.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-selftest.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-gates.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-seals.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-coverage.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-review.txt",
+      "research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW3-conclusion.txt"
+    ],
+    "pre_closure_sha256": "25b1090a7f6abf1a6f2c54beb7c34addac7bb89b38c88d4e6fa6a36e5cc3bdcb"
+  },
+  "conclusion": "E-0057 PASS: metadata-only критерии больше не получают PASS от integrity row, hidden-only substantive сохранён, exact seq=8 invalid UTF-8 vector доказывает отказ прямых check/judge_metrics/verify_answers. Windows/POSIX 7/7, прежние W07B/W07A thresholds сохранены, независимый review не оставил substantive findings. PASS ограничен E-0057; E-0054/E-0055/E-0056 остаются open.",
+  "closed": true
+}

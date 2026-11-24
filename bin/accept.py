@@ -30,12 +30,14 @@ from __future__ import annotations
 # Журнал хоста нужен приёмке для проверки подтверждения. Два пути импорта: как пакет (`bin.accept`)
 # и как скрипт (`python bin/accept.py`), где пакета `bin` на пути нет.
 try:
-    from bin import host_journal  # type: ignore[import-not-found]
+    from bin import host_journal, journal_event  # type: ignore[import-not-found]
 except Exception:  # noqa: BLE001
     try:
         import host_journal  # type: ignore[import-not-found,no-redef]
+        import journal_event  # type: ignore[import-not-found,no-redef]
     except Exception:  # noqa: BLE001
         host_journal = None  # type: ignore[assignment]
+        journal_event = None  # type: ignore[assignment]
 
 import hashlib
 import json
@@ -49,6 +51,24 @@ RECORD_HEADER = 17
 VERSION = 2  # HSJ2 (ADR-0056): CRC покрывает len+seq+kind+payload; старые HSJ1 отвергаются
 
 
+class JournalRecords(list[tuple[int, str]]):
+    """Parsed records вместе с целостностью всего журнала.
+
+    API parse_journal сохранён: records ведёт себя как обычный список, но прямой
+    ``accept.check(criteria, records)`` больше не теряет tail/problems, если caller
+    не сохранил их отдельно. Вручную сконструированный список считается чистым.
+    """
+
+    def __init__(self, records=(), *, tail: int = 0, problems: list[str] | None = None):
+        super().__init__(records)
+        self.tail = tail
+        self.problems = list(problems or [])
+
+    @property
+    def complete(self) -> bool:
+        return self.tail == 0 and not self.problems
+
+
 def parse_journal(data: bytes) -> tuple[list[tuple[int, str]], int, list[str]]:
     """Разобрать журнал: (записи (kind, payload), длина хвоста, проблемы).
 
@@ -56,10 +76,12 @@ def parse_journal(data: bytes) -> tuple[list[tuple[int, str]], int, list[str]]:
     """
     problems: list[str] = []
     if len(data) < 8 or data[:4] != MAGIC:
-        return ([], len(data), ["нет заголовка HSJ2"])
+        problems = ["нет заголовка HSJ2"]
+        return (JournalRecords(tail=len(data), problems=problems), len(data), problems)
     version = int.from_bytes(data[4:8], "little")
     if version != VERSION:
-        return ([], len(data), [f"версия {version} не поддерживается (нужен HSJ2)"])
+        problems = [f"версия {version} не поддерживается (нужен HSJ2)"]
+        return (JournalRecords(tail=len(data), problems=problems), len(data), problems)
 
     pos = 8
     expected_seq = 1
@@ -82,13 +104,18 @@ def parse_journal(data: bytes) -> tuple[list[tuple[int, str]], int, list[str]]:
         expected_crc = int.from_bytes(digest[:4], "little")
         if expected_crc != crc or seq != expected_seq or kind not in (1, 2):
             break
-        records.append((kind, payload.decode("utf-8", "replace")))
+        try:
+            text = payload.decode("utf-8")
+        except UnicodeDecodeError:
+            problems.append(f"invalid UTF-8 в записи {seq}")
+            break
+        records.append((kind, text))
         expected_seq += 1
         pos = end
     tail = len(data) - pos
     if tail:
         problems.append(f"оборванный хвост {tail} байт")
-    return (records, tail, problems)
+    return (JournalRecords(records, tail=tail, problems=problems), tail, problems)
 
 
 def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
@@ -102,11 +129,26 @@ def events(records: list[tuple[int, str]]) -> list[tuple[str, str]]:
     return out
 
 
+def payloads(records: list[tuple[int, str]]) -> list[str]:
+    """Точные payload событий данных: host_match хеширует байты без реконструкции."""
+    return [payload for kind, payload in records if kind == 1]
+
+
 KNOWN_KEYS = {
     "task", "comment", "hidden", "require_status", "must_call", "must_not_call",
     "anchor_regex", "max_steps", "max_allowance", "require_commit", "require_events", "min_objects",
-    "tools", "host_run", "scope", "host_match", "max_repeat_ratio", "max_calls_without_claim",
+    "tools", "host_run", "host_session", "scope", "host_match", "max_repeat_ratio", "max_calls_without_claim",
 }
+# Это проверки формы метаданных, а не самостоятельные критерии приёмки. Они должны валить
+# malformed criterion, но не заменять реальное visible/hidden условие (W07B-REVIEW3/REVIEW4).
+_BINDING_VALIDATION_ROWS = {
+    "host_session привязана к host_run",
+    "host_match привязан к host_run",
+}
+
+
+def _has_substantive_rows(rows: list[tuple[str, bool, str]]) -> bool:
+    return any(name not in _BINDING_VALIDATION_ROWS for name, _ok, _detail in rows)
 
 
 def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
@@ -232,10 +274,21 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
     for wanted in criteria.get("require_events", []):
         rows.append((f"есть событие {wanted}", wanted in kinds, f"виды: {sorted(set(kinds))}"))
 
+    if "host_session" in criteria and "host_run" not in criteria:
+        rows.append(("host_session привязана к host_run", False, "нет ожидаемого host_run"))
+
+    if criteria.get("host_match") and "host_run" not in criteria:
+        rows.append(("host_match привязан к host_run", False, "нет ожидаемого host_run"))
+
     if "host_run" in criteria:
         # Подтверждение хостом: авторитетную копию ведёт хост, и без неё прогон не принимается.
-        # Проверяется не наличие файла, а сходимость цепочки — файл можно переписать.
-        if host_journal is None:
+        # host_match требует ожидаемую host_session ДО чтения цепочки: иначе критерий может
+        # случайно подтвердить события другого прогона/сессии.
+        session = criteria.get("host_session")
+        session_ok = journal_event is not None and journal_event.valid_session(session)
+        if criteria.get("host_match") and not session_ok:
+            rows.append(("ожидаемая host_session задана", False, "host_match без canonical host_session"))
+        elif host_journal is None:
             rows.append(("журнал хоста проверен", False, "модуль host_journal недоступен"))
         else:
             good, problems = host_journal.verify(str(criteria["host_run"]))
@@ -244,18 +297,26 @@ def _rows(criteria: dict, evs: list[tuple[str, str]], kinds: list[str],
                 good > 0 and not problems,
                 f"записей: {good}" + (f"; проблемы: {problems[:1]}" if problems else ""),
             ))
-            # Сравнение содержимого (host_match): хост получает ВЕСЬ поток событий, поэтому
-            # сверяем списки целиком, без проекций и догадок о том, что доехало.
             if criteria.get("host_match"):
-                host_events = [entry for entry in host_journal.events(str(criteria["host_run"])) if entry]
-                room_events = [f"{kind} {rest}".strip() for kind, rest in evs]
-                prefix_ok = bool(host_events) and room_events == host_events
-                rows.append((
-                    "журнал комнаты совпадает с хостовым",
-                    prefix_ok,
-                    f"хост видел {len(host_events)} событий, в комнате {len(room_events)}"
-                    + ("" if prefix_ok else "; события расходятся"),
-                ))
+                try:
+                    host_events = [
+                        journal_event.canonical(journal_event.decode_host_event(entry, session))
+                        for entry in host_journal.events(str(criteria["host_run"])) if entry
+                    ]
+                    room_events = [
+                        journal_event.canonical(payload)
+                        for payload in journal_event.project_payloads(payloads(records), session)
+                    ]
+                    complete = getattr(records, "complete", True)
+                    matched = complete and bool(host_events) and room_events == host_events
+                    detail = f"хост видел {len(host_events)} событий, в комнате {len(room_events)}"
+                    if not complete:
+                        detail += "; журнал комнаты повреждён"
+                except (journal_event.EventError, ValueError, TypeError):
+                    matched = False
+                    detail = "typed host/room projection невалидна"
+                rows.append(("журнал комнаты совпадает с хостовым", matched,
+                             detail + ("" if matched else "; события расходятся")))
 
     if "max_calls_without_claim" in criteria:
         # Второй режим провала (C-0189): прогон идёт вперёд без повторов, тратит много вызовов
@@ -306,6 +367,16 @@ def check(criteria: dict, records: list[tuple[int, str]],
     evs = events(records)
     kinds = [kind for kind, _ in evs]
     rows = _rows(criteria, evs, kinds, records)
+    # Integrity — обязательная проверка, но не заменяет содержательный критерий. Иначе
+    # task/comment/host_match без проверяемых условий получали PASS от одной этой строки.
+    has_substantive_checks = _has_substantive_rows(rows)
+    complete = getattr(records, "complete", True)
+    tail = getattr(records, "tail", 0)
+    problems = getattr(records, "problems", [])
+    detail = f"tail={tail}; problems={len(problems)}"
+    if problems:
+        detail += "; " + "; ".join(problems[:3])
+    rows.append(("журнал прочитан полностью", complete, detail))
 
     # Неизвестное условие — это не «пропустим», а провал: опечатка в имени условия иначе тихо
     # отключала бы проверку.
@@ -315,16 +386,24 @@ def check(criteria: dict, records: list[tuple[int, str]],
     hidden = criteria.get("hidden")
     if isinstance(hidden, dict) and hidden:
         hidden_rows = _rows(hidden, evs, kinds, records)
-        hidden_ok = bool(hidden_rows) and all(ok for _, ok, _ in hidden_rows)
+        has_substantive_checks = has_substantive_checks or _has_substantive_rows(hidden_rows)
+        hidden_unknown = sorted(set(hidden) - KNOWN_KEYS)
+        hidden_ok = bool(hidden_rows) and not hidden_unknown and all(ok for _, ok, _ in hidden_rows)
         if hidden_ok:
             detail = "выполнена"
         elif show_hidden:
-            detail = "не выполнена: " + "; ".join(name for name, ok, _ in hidden_rows if not ok)
+            failures = [name for name, ok, _ in hidden_rows if not ok]
+            failures += [f"неизвестное условие {key}" for key in hidden_unknown]
+            detail = "не выполнена: " + "; ".join(failures)
         else:
             detail = "не выполнена (какие условия — на хосте, см. --show-hidden)"
         rows.append(("скрытая часть критерия", hidden_ok, detail))
 
-    return (bool(rows) and all(ok for _, ok, _ in rows), rows)
+    if not has_substantive_checks:
+        rows.append(("есть содержательная проверка", False,
+                     "критерий не задаёт содержательных проверок"))
+
+    return (has_substantive_checks and all(ok for _, ok, _ in rows), rows)
 
 
 def _load_criteria(path: Path) -> dict:

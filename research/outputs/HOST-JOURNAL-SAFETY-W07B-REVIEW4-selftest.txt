@@ -1,0 +1,72 @@
+[ok] детектор секретов ловит посаженный ключ (найдено 1)
+[ok] линтер утверждений отбивает «доказано» без proof (найдено 2)
+[ok] проверка ссылок ловит битую
+[ok] проба гейта возвращает точные байты каталога (CRLF)
+[ok] проба гейта возвращает точные байты файла (CRLF)
+[ok] CLI-резолвер отбивает несуществующий путь
+[ok] test_accept.py: 38/1 checks, rc=0: провалов: 0
+[ok] test_anchor.py: 13/1 checks, rc=0: провалов: 0
+[ok] test_assert_bound.py: 6/1 checks, rc=0: провалов: 0
+[ok] test_audit.py: 5/1 checks, rc=0: аудит: 5/5 ok
+[ok] test_binary_version.py: 4/1 checks, rc=0: провалов: 0
+[ok] test_bridge.py: 11/1 checks, rc=0: upstream отклонён: http:// допустим только для явного test-only loopback
+[ok] test_bridge_key_isolation.py: 7/1 checks, rc=0: ВЕРДИКТ: PASS — дочерний процесс /v1/net не получает ключ из окружения
+[ok] test_bridge_net_namespace.py: 16/1 checks, rc=0: ВЕРДИКТ: PASS — /v1/net не видит ключ через /proc; без рабочего unshare отказ
+[ok] test_bridge_redirects.py: 62/1 checks, rc=0: ВЕРДИКТ: PASS — upstream redirects запрещены, ключ не перенесён
+[ok] test_bridge_http_subset.py: 79/79 checks, rc=0: проверок: 79; провалов: 0
+[ok] test_bridge_http_review.py: 8/8 checks, rc=0: проверок: 8; провалов: 0
+[ok] test_bridge_http_hardening.py: 3/3 checks, rc=0: проверок: 3; провалов: 0
+[ok] test_bridge_win_isolation.py: 28/1 checks, rc=0: ВЕРДИКТ: PASS — low-IL ребёнок не видит env моста и не пишет в комнату; без рабочего лаунчера 503
+[ok] test_browser_search.py: 6/1 checks, rc=0: провалов: 0
+[ok] test_budget.py: 5/1 checks, rc=0: провалов: 0
+[ok] test_capabilities.py: 4/1 checks, rc=0: способности: 4/4 ok
+[ok] test_card_atoms.py: 34/1 checks, rc=0: проверок: 33, провалов: 0
+[ok] test_chain.py: 43/1 checks, rc=0: провалов: 0
+[ok] test_compile.py: 1/1 checks, rc=0: провалов: 0
+[ok] test_contracts.py: 20/1 checks, rc=0: контракты: 20/20 ok
+[ok] test_coverage.py: 5/1 checks, rc=0: провалов: 0
+[ok] test_evidence.py: 8/1 checks, rc=0: провалов: 0
+[ok] test_failures.py: 3/1 checks, rc=0: отказы: 3/3 ok
+[ok] test_false_done.py: 1/1 checks, rc=0: [ok] контрольный набор различает ложное и честное готово
+[ok] test_forgery.py: 2/1 checks, rc=0: [ok] подделка с пересчитанным CRC ловится сверкой с хостом
+[ok] test_frame_vector.py: 5/1 checks, rc=0: [ok] кросс-вектор HSJ2-кадра: Python-сторона сходится
+[ok] test_head_cards.py: 17/1 checks, rc=0: проверок: 17, провалов: 0
+[ok] test_hohfeld.py: 5/1 checks, rc=0: провалов: 0
+[ok] test_host_journal.py: 34/34 checks, rc=0: провалов: 0
+[ok] test_host_journal_review.py: 11/10 checks, rc=0: host journal review: 11/11 ok; N/A 0; провалов: 0
+[ok] test_host_journal_tip.py: 12/12 checks, rc=0: host journal tip: 12/12 ok; N/A 0; провалов: 0
+[ok] test_host_journal_tip_review.py: 2/2 checks, rc=0: host journal durability: 2/4 ok; N/A 2; провалов: 0
+[ok] test_host_journal_authority.py: 14/14 checks, rc=0: host journal authority: 14/14 ok; N/A 0; провалов: 0
+[ok] test_host_journal_authority_review.py: 7/7 checks, rc=0: host journal authority review: 7/7 ok; N/A 0; провалов: 0
+[ok] test_host_journal_accept_integrity.py: 6/6 checks, rc=0: host journal accept integrity: 6/6 ok; N/A 0; провалов: 0
+[ok] test_host_journal_accept_review3.py: 7/7 checks, rc=0: host journal accept review3: 7/7 ok; N/A 0; провалов: 0
+[ok] test_host_journal_accept_review4.py: 7/7 checks, rc=0: host journal accept review4: 7/7 ok; N/A 0; провалов: 0
+[ok] test_http_provider.py: 5/1 checks, rc=0: сеть провайдера: 5/5 ok
+[ok] test_journal_chain.py: 4/1 checks, rc=0: провалов: 0
+[ok] test_lean_imports.py: 5/1 checks, rc=0: провалов: 0
+[ok] test_live.py: 4/1 checks, rc=0: провалов: 0
+[ok] test_loop_budget.py: 1/1 checks, rc=0: провалов: 0
+[ok] test_loop_flail.py: 4/1 checks, rc=0: цикл: 4/4 ok
+[ok] test_m1_journal.py: 5/1 checks, rc=0: провалов: 0
+[ok] test_net_fs_write_barrier.py: 27/1 checks, rc=0: ВЕРДИКТ: PASS — запись внешнего ограничена runs/net (в т.ч. fd на 9p); старый ABI отвергнут до сети
+[ok] test_net_policy.py: 25/25 checks, rc=0: 25 passed in 0.10s
+[ok] test_new_criterion.py: 6/1 checks, rc=0: провалов: 0
+[ok] test_new_tool.py: 19/1 checks, rc=0: [FAIL] вывод вне lab/candidates: C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\lab\tools
+[ok] test_propagation.py: 5/1 checks, rc=0: перенос: 5/5 ok
+[ok] test_provider.py: 5/1 checks, rc=0: провайдер: 5/5 ok
+[ok] test_r8_repros.py: 18/1 checks, rc=0: проверок: 18, провалов: 0
+[ok] test_registry_state.py: 33/1 checks, rc=0: провалов: 0
+[ok] test_reply.py: 6/1 checks, rc=0: тип ответа: 6/6 ok
+[ok] test_report.py: 5/1 checks, rc=0: отчёт: 5/5 ok
+[ok] test_runner.py: 2/2 checks, rc=0: OK
+[ok] test_rust_tests_summary.py: 4/1 checks, rc=0: ВЕРДИКТ: PASS — провалы суммируются по всем тестовым бинарникам
+[ok] test_seal.py: 6/1 checks, rc=0: провалов: 0
+[ok] test_selfref.py: 6/1 checks, rc=0: провалов: 0
+[ok] test_store.py: 7/1 checks, rc=0: провалов: 0
+[ok] test_test_manifest.py: 17/17 checks, rc=0: проверок: 17; провалов: 0
+[ok] test_tool_card.py: 27/1 checks, rc=0: проверок: 27, провалов: 0
+[ok] test_tools.py: 6/1 checks, rc=0: провалов: 0
+[ok] test_verify_repo.py: 19/1 checks, rc=0: провалов: 0
+[ok] test_vsock_probe.py: 5/5 checks, rc=0: проверок: 5; провалов: 0
+[ok] test_webfetch.py: 6/1 checks, rc=0: провалов: 0
+[ok] реестр критериев отбивает строку без способа установления (3 замечаний)

@@ -1,0 +1,54 @@
+{
+ "schema": "host-journal-event-review-vector-v1",
+ "session": "11111111-1111-4111-8111-111111111111",
+ "events": [
+  {
+   "local": "run/start task: REVIEW-WHITESPACE\u001c",
+   "expected": {
+    "schema": "host-journal-event-v1",
+    "session": "11111111-1111-4111-8111-111111111111",
+    "type": "run/start",
+    "call_id": null,
+    "status": "started",
+    "refs": [],
+    "digests": {"event": "36304dfade7b48dd8cb14a25c5b8b3e8795446236b89d96092f424011f0208bd"}
+   }
+  },
+  {
+   "local": "step  leading",
+   "expected": {
+    "schema": "host-journal-event-v1",
+    "session": "11111111-1111-4111-8111-111111111111",
+    "type": "step",
+    "call_id": null,
+    "status": "recorded",
+    "refs": [],
+    "digests": {"event": "6ee765455651ae3277e5e3a77db90ae40d99900cc25c9043e5611926d6ea08f1"}
+   }
+  },
+  {
+   "local": "claim/anchored C-0345 ",
+   "expected": {
+    "schema": "host-journal-event-v1",
+    "session": "11111111-1111-4111-8111-111111111111",
+    "type": "claim/anchored",
+    "call_id": null,
+    "status": "recorded",
+    "refs": [{"id": "c-0345", "kind": "claim"}],
+    "digests": {"event": "ec8ec15aad00344dae135766aa9fe100db1a99e3d56b78fbcf65353c014685ba"}
+   }
+  },
+  {
+   "local": "run/end done\t",
+   "expected": {
+    "schema": "host-journal-event-v1",
+    "session": "11111111-1111-4111-8111-111111111111",
+    "type": "run/end",
+    "call_id": null,
+    "status": "ended",
+    "refs": [],
+    "digests": {"event": "11c072ab843822d81d6752d75ae857f716696c799e896e4f791c40da9ed052de"}
+   }
+  }
+ ]
+}

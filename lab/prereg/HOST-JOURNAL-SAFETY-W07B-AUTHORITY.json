@@ -1,0 +1,79 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-W07B-AUTHORITY",
+ "date": "2026-11-24",
+ "question": "Закрывает ли host-issued run/session binding и strict refs-only event schema принятие произвольных run/event, утечку сырого содержимого и выдачу host receipt за acceptance?",
+ "hypothesis": "Если мост получает ожидаемые run и session от хоста, игнорирует/запрещает run в теле, проверяет session и срок binding, принимает только каноническую типизированную схему refs/digests, а приёмка сравнивает полный локальный поток через доменно-разделённые SHA-256 проекции, то forged run, чужая session, raw canary и подделанное локальное событие дают fail-closed отказ. ACK моста остаётся только host_received/host_durable и не является истинностью или acceptance.",
+ "criterion": "PASS только при 14/14 зарегистрированных controls на Windows и POSIX без N/A, R1 34/34, R1-REVIEW Windows 11/11 либо POSIX 10 passed с одним явным Windows-only N/A, R2-TIP 12/12, durability Windows 2 passed + 2 явных POSIX-only N/A либо POSIX 4/4. Обязательны positive bound event; отсутствующий/частичный/истёкший binding; forged/mismatched run; mismatched session; raw/extra content и canary; oversized journal body до чтения; strict schema/duplicate keys/unknown type/status/ref/digest; точная host_match проекция; forged local event с пересчитанным CRC; обязательный expected session в критерии; Rust↔Python vector; receipt без acceptance-полей. Любой провал, N/A, ослабление прежних порогов или изменение corpus после RED означает отсутствие PASS.",
+ "arms": [
+  "A (до фикса): bridge берёт run и event из JSON тела с общим локальным токеном; session binding отсутствует; event сохраняется сырым; accept сравнивает сырые строки и не требует ожидаемую session.",
+  "B (после фикса): Bridge хранит host_run/host_session и monotonic expiry; /v1/journal запрещает run/raw fields, проверяет session и canonical typed schema, затем сохраняет canonical refs-only JSON через существующий host_journal v2. Rust проецирует локальные события в ту же схему с event SHA-256; accept требует host_session и сравнивает полные проекции, а не сырой текст."
+ ],
+ "sensitivity": "Каждый негативный control меняет один аспект запроса или критерия. Canary проверяется в journal, bridge log, stdout/stderr и HTTP response. Oversized control отправляет только headers и требует 413 до чтения тела. Forged local event получает корректные HSJ2 CRC/seq, но его event digest не совпадает с хостовой проекцией. Cross-language vector фиксирует session, call_id, status, refs и точные event digests.",
+ "unit_of_analysis": "один bound journal request; одна подменённая run/session/schema field; один oversized body; одна локальная event projection; один forged HSJ2 journal; один Rust↔Python vector",
+ "primary_metric": "authority_controls=14; windows_passed=14; posix_passed=14; authority_na=0; r1_controls=34; tip_controls=12; forged_run_accepted=0; mismatched_session_accepted=0; expired_binding_accepted=0; raw_canary_sinks=0; oversized_body_read=0; forged_local_accepted=0; receipt_acceptance_fields=0; cross_language_vectors=5",
+ "test": "python tests/test_host_journal_authority.py",
+ "stopping_rule": "Один W07B batch: сохранить RED на текущем production-коде, реализовать только authority binding и refs-only проекцию, затем один Windows GREEN и один POSIX GREEN. После GREEN провести один независимый review. Остановиться при первом необъяснённом провале; не менять 14 controls, hash domain, schema, session/expiry критерии и platform thresholds после RED. W03/W06/W09 и production activation не смешивать.",
+ "fixture": "Только tempfile, синтетические строки, loopback HTTP и дочерние процессы того же Python; реальные секреты, модель, сеть и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+  "network": "только loopback fixture; внешняя сеть не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+ },
+ "critical_controls": [
+  {"id": "bound-positive", "input": "host_run/host_session заданы, canonical typed event", "expect": "200, seq=1, canonical refs-only journal, raw detail отсутствует"},
+  {"id": "missing-binding", "input": "bridge без host_run/host_session", "expect": "journal route отказ, journal не создан"},
+  {"id": "partial-binding", "input": "задан только host_run или только host_session", "expect": "конструктор/старт fail-closed"},
+  {"id": "forged-run", "input": "тело содержит run или попытку подменить ожидаемый run", "expect": "отказ, чужой journal не создан"},
+  {"id": "mismatched-session", "input": "session отличается от host-issued", "expect": "отказ, journal не изменён"},
+  {"id": "expired-binding", "input": "monotonic expiry истёк", "expect": "отказ, journal не изменён"},
+  {"id": "raw-canary", "input": "raw event/content/detail с synthetic canary", "expect": "схема отвергнута; canary отсутствует во всех sink"},
+  {"id": "oversized-body", "input": "Content-Length больше 16 KiB, тело не отправляется", "expect": "413 до чтения body, journal не изменён"},
+  {"id": "strict-schema", "input": "duplicate key, unknown type/status/ref, плохой digest, лишнее поле", "expect": "каждый вариант fail-closed"},
+  {"id": "host-match-positive", "input": "room events и соответствующая refs-only host projection", "expect": "accept PASS"},
+  {"id": "forged-local", "input": "одно room event подменено, HSJ2 CRC/seq пересчитаны", "expect": "host chain валидна, accept FAIL"},
+  {"id": "required-session", "input": "host_match без host_session", "expect": "accept FAIL без чтения чужой цепочки"},
+  {"id": "rust-python-vector", "input": "пять фиксированных local events", "expect": "Rust и Python дают одинаковые canonical payload и digests"},
+  {"id": "receipt-semantics", "input": "успешный journal response", "expect": "только seq/sha256; нет accepted/verified/durable/truth полей"}
+ ],
+ "threshold": {
+  "authority_controls": 14,
+  "windows_passed": 14,
+  "posix_passed": 14,
+  "authority_na": 0,
+  "r1_controls": 34,
+  "r1_review_windows": 11,
+  "r1_review_posix": 10,
+  "r1_review_posix_na": 1,
+  "tip_controls": 12,
+  "durability_windows_passed": 2,
+  "durability_windows_na": 2,
+  "durability_posix_passed": 4,
+  "journal_body_max_bytes": 16384,
+  "cross_language_vectors": 5,
+  "receipt_acceptance_fields": 0
+ },
+ "known_limits": [
+  "Host receipt доказывает только принятие и durability по существующей W07A семантике, не истинность события и не acceptance",
+  "Refs-only схема не создаёт trust boundary против комнаты, которая одновременно подделывает локальный журнал и шлёт согласованную с ним ложную проекцию",
+  "Anchor/journal не защищают от враждебного хостового процесса, способного переписать оба файла",
+  "Windows directory durability остаётся N/A из W07A",
+  "Session expiry ограничивает время binding, но не отзывает уже выданный локальный bearer token",
+  "Resume/retry идемпотентность, W03 lifecycle, W06 SSRF, W09 streaming caps и production activation остаются отдельными работами"
+ ],
+ "kill_criteria": [
+  "Тело может выбрать ожидаемый run или сырой event/content сохраняется в journal",
+  "Чужая или истёкшая session принимается",
+  "Canary появляется в journal/log/stdout/stderr/response",
+  "Oversized journal body читается до 413",
+  "Валидная host chain с подделанным local event даёт accept PASS",
+  "host_match работает без обязательного expected session",
+  "Rust и Python расходятся в projections/digests",
+  "Receipt содержит acceptance/truth поля либо порог/corpus ослаблен после RED"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; storage safety и authority binding разделены на W07A/W07B",
+ "runs": [
+  "runs/exp-host-journal-safety-w07b-authority"
+ ]
+}

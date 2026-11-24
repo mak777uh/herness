@@ -1,0 +1,36 @@
+HOST-JOURNAL-SAFETY-W07B-REVIEW4 — independent correction review
+Дата: 2026-11-24
+Вердикт: PASS
+Substantive findings: нет
+
+Проверено:
+- Все 7 controls tests/test_host_journal_accept_review4.py:50-103 соответствуют prereg.
+- host_match=true без host_run отклоняется рядом с visible positive и hidden positive.
+- host_match=false без host_run не создаёт лишнего отказа при реальном positive.
+- Hidden unknown-only и mixed unknown+real positive дают FAIL; hidden real positive сохраняет PASS.
+- show_hidden=False не раскрывает имя unknown hidden key.
+- Interaction fix в bin/accept.py исключает binding validation rows из substantive checks:
+  malformed metadata всё равно валит критерий, но не вытесняет E-0057 no-content refusal.
+- Sealed corpus E-0054–E-0057 и inherited thresholds не изменялись после RED.
+
+Фактические read-only прогоны reviewer:
+- Windows review4 7/7, review3 7/7, integrity 6/6, test_accept 24/24; rc=0.
+- WSL POSIX review4 7/7, review3 7/7; rc=0.
+- bin/seal.py verify-all: 35/35, проблем 0.
+- Hash code/tests/prereg/evidence до и после focused-прогонов не изменились.
+
+Сверенные сохранённые aggregates:
+- RED Windows/POSIX: 3/7, N/A 0, четыре ожидаемых провала.
+- GREEN regressions Windows/POSIX: review3/review4 7/7; прежние W07B/W07A thresholds сохранены.
+- Промежуточный interaction failure сохранён отдельно:
+  research/outputs/HOST-JOURNAL-SAFETY-W07B-REVIEW4-windows-regression-interaction-fail.txt
+- Manifest: 69 suites, 1200 checks, 0 failures.
+- Selftest: rc=0.
+- Gates: 31/33 оценено, 2 явных N/A (журналы, индекс прогонов); probes 17/17.
+- Coverage: 339/339, strict 0.57, ANCHORED_WEAK.
+
+Ограничения:
+- Reviewer проверил сохранённые manifest/selftest/gates/coverage, но не перезапускал их.
+- WSL использовал тот же /mnt/c worktree, а не отдельный clean clone.
+- RED-time byte snapshots всех untracked suites отсутствуют; целостность E-0057 дополнительно
+  подтверждена prereg hash, control IDs и хронологией. Это не превращает N/A в PASS.

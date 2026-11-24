@@ -1,0 +1,24 @@
+[FAIL] trailing-invalid-utf8-data — AssertionError: ('журнал прочитан полностью', [('хост подтвердил прогон accept-integrity-review2', True, 'записей: 1'), ('журнал комнаты совпадает с хостовым', False, 'хост видел 1 событий, в комнате 0; события расходятся')])
+[FAIL] trailing-invalid-utf8-commit — AssertionError: damaged journal принят: tail=24, problems=['invalid UTF-8 в записи 7', 'оборванный хвост 24 байт'], rows=[('хост подтвердил прогон accept-integrity-review2', True, 'записей: 6'), ('журнал комнаты совпадает с хостовым', True, 'хост видел 6 событий, в комнате 6')])
+[FAIL] trailing-bad-crc — AssertionError: ('журнал прочитан полностью', [('хост подтвердил прогон accept-integrity-review2', True, 'записей: 1'), ('журнал комнаты совпадает с хостовым', False, 'хост видел 1 событий, в комнате 0; события расходятся')])
+[FAIL] trailing-torn-frame — AssertionError: damaged journal принят: tail=4, problems=['оборванный хвост 4 байт'], rows=[('хост подтвердил прогон accept-integrity-review2', True, 'записей: 6'), ('журнал комнаты совпадает с хостовым', True, 'хост видел 6 событий, в комнате 6')])
+[FAIL] direct-callers — AssertionError: # Метрики приёмки по журналам
+
+задача                              прогонов  принято  pass@1  pass^2
+probe                                      1        1    1.00       —
+
+заявлений «готово»: 1; подтверждено: 1; ложных: 0
+false_completion_rate: 0.00
+completion_precision: 1.00
+pass@1 (по всем прогонам): 1.00
+pass^2: —
+цена всех прогонов: 0.0001; цена принятого: 0.0001
+прогонов без заявления и без вердикта: 0
+
+# Оговорки: journal с неизвестным именем задачи пропущен; «заявлено» = claim/anchored;
+# pass^2 = вероятность, что ОБА прогона задачи приняты (надёжность, а не удача).
+
+
+[FAIL] clean-positive — AssertionError: ('журнал прочитан полностью', [('хост подтвердил прогон accept-integrity-review2', True, 'записей: 6'), ('журнал комнаты совпадает с хостовым', True, 'хост видел 6 событий, в комнате 6')])
+
+host journal accept integrity: 0/6 ok; N/A 0; провалов: 6
