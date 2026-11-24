@@ -172,10 +172,16 @@ def main() -> int:
         "registry: seq=8 неизменён, seq=9 canonical candidate, active=[]",
     )
 
-    # 11. V1/V6 proof-binding corpus.
+    # 11. V1/V6 proof-binding corpus и exact LF bytes proof artifact.
+    proof = (ROOT / "proofs/Proofs/ChainInstances.lean").read_bytes()
     chain = run_python("tests/test_chain.py")
-    check(chain.returncode == 0 and "провалов: 0" in chain.stdout,
-          f"V1/V6 chain: 0 провалов (rc={chain.returncode})")
+    check(
+        chain.returncode == 0 and "провалов: 0" in chain.stdout
+        and "proofs/Proofs/ChainInstances.lean text eol=lf" in attributes
+        and len(proof) == 2478 and proof.count(CRLF) == 0
+        and hashlib.sha256(proof).hexdigest() == "8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308",
+        f"V1/V6 chain и proof exact bytes: 0 провалов (rc={chain.returncode})",
+    )
 
     # 12. V4 canonical/legacy/schema/no-auto-conversion corpus.
     v4 = [run_python(path) for path in (

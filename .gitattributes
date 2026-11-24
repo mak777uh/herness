@@ -39,6 +39,10 @@ lab/tools/cards/head.json text eol=crlf
 # Git blob остаётся LF; pin делает checkout digest воспроизводимым на Linux/Windows.
 core-rs/src/loopmod.rs text eol=crlf
 
+# V6 proof-binding фикстур привязан к exact LF bytes ChainInstances.lean
+# (sha256:8cfe7c4d…). Windows CRLF checkout иначе даёт K9_PROVEN_HASH_MISMATCH.
+proofs/Proofs/ChainInstances.lean text eol=lf
+
 # бинарь
 *.zstd binary
 *.png binary
