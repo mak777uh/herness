@@ -1,0 +1,39 @@
+{
+  "schema": 2,
+  "id": "PREREG-CORRECTION-OVERLAY-R2",
+  "date": "2026-11-25",
+  "question": "Как завершить hash-verified inheritance для correction-overlay, который не содержит как базовые arms/sensitivity, так и schema-v2 поля, не переписывая sealed overlay и не ослабляя checker?",
+  "hypothesis": "Если наследовать из hash-verified source все отсутствующие обязательные поля REQUIRED+REQUIRED_V2, сохраняя явные поля overlay и требуя полный source, то sealed E-0074 станет проверяемым без изменения его байтов, а несвязанные неполные prereg останутся FAIL.",
+  "criterion": "PASS только если E-0075 SHA-256 9a0943985b697933b8686ad148e43bfc285ff1102552e8ac07ec40f72fbb570c, E-0074 SHA-256 9727c89059c077c275e9960c83507e9750721c0d0e66a2a36384c86038b5f87b, source PILOT-GENERATOR-R1 SHA-256 42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5 и их sidecars не изменены; baseline E-0075 сохранён как 5/8 и prereg 63/64; R2 даёт 8/8 focused controls, prereg check rc=0 и 65/65 sensitivity; wrong digest, missing source, traversal, incomplete source и unrelated incomplete prereg отвергаются; явные поля overlay имеют приоритет.",
+  "arms": [
+    "A (historical R1 RED): E-0075 наследовала только REQUIRED_V2; E-0074 остался без arms/sensitivity, focused 5/8, prereg 63/64.",
+    "B (R2 correction): из того же hash-verified source наследуются все отсутствующие REQUIRED+REQUIRED_V2; явные поля overlay не перезаписываются, source/overlay/sidecars не записываются.",
+    "C (controls): positive inheritance включая arms/sensitivity, реальный sealed E-0074, wrong digest, missing source, traversal, incomplete source, explicit precedence и unrelated incomplete FAIL."
+  ],
+  "sensitivity": "Проверяются raw SHA-256 source и всех sealed inputs, безопасность repo-relative пути, полнота source, наследование только отсутствующих обязательных полей, precedence явных полей и fail-closed negatives. Порог 65/65 sensitivity не снижается; unrelated incomplete prereg не получает исключения.",
+  "unit_of_analysis": "один correction-overlay, его hash-verified source и одна процедура проверки всех lab/prereg/*.json",
+  "primary_metric": "r1_controls=5/8; r1_sensitivity=63/64; r2_controls=8/8; r2_focused_failed=0; r2_prereg_rc=0; r2_sensitivity=65/65; sealed_inputs_changed=0; unrelated_incomplete_accepted=0",
+  "test": "python tests/test_prereg.py; python bin/prereg.py check; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate; python bin/test_manifest.py --check",
+  "stopping_rule": "Сначала сохранить R1 RED и запечатать R2. Затем изменить только bin/prereg.py и tests/test_prereg.py для наследования всех отсутствующих обязательных полей. Остановиться при изменении sealed E-0074/E-0075/source/sidecars, override явного поля, принятии unrelated incomplete prereg, ослаблении thresholds или любом focused провале.",
+  "fixture": "Настоящие sealed E-0074/E-0075/source PILOT-GENERATOR-R1 плюс синтетические tempdir source/overlay fixtures; сеть, секреты, owner keys и реальные аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX повтор выполняется отдельно",
+    "network": "не требуется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском",
+    "r1_prereg_sha256": "991f10613a9feb2a2d6115d7f1b6400fb0dc7487668ce2760b8081b8e208f083",
+    "r1_preregistration": "lab/prereg/PREREG-CORRECTION-OVERLAY-R1.json",
+    "r1_preregistration_sha256": "9a0943985b697933b8686ad148e43bfc285ff1102552e8ac07ec40f72fbb570c",
+    "source_overlay": "lab/prereg/PILOT-GENERATOR-R1-BASELINE-CORRECTION.json",
+    "source_overlay_sha256": "9727c89059c077c275e9960c83507e9750721c0d0e66a2a36384c86038b5f87b",
+    "source_prereg": "lab/prereg/PILOT-GENERATOR-R1.json",
+    "source_prereg_sha256": "42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5"
+  },
+  "known_limits": [
+    "R2 не переписывает исторический RED E-0075 и не превращает его задним числом в PASS",
+    "Наследование применяется только к явно помеченным source-bound correction-overlay",
+    "Полнота source обязательна; любой unrelated incomplete prereg остаётся FAIL"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-prereg-correction-overlay-r1"]
+}

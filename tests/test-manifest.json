@@ -54,6 +54,7 @@
     {"id": "test_net_policy.py", "path": "tests/test_net_policy.py", "runner": "pytest", "minimum_collected": 25, "minimum_executed": 25},
     {"id": "test_new_criterion.py", "path": "tests/test_new_criterion.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_new_tool.py", "path": "tests/test_new_tool.py", "runner": "custom-main", "minimum_checks": 1},
+    {"id": "test_prereg.py", "path": "tests/test_prereg.py", "runner": "custom-main", "minimum_checks": 8},
     {"id": "test_propagation.py", "path": "tests/test_propagation.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_provider.py", "path": "tests/test_provider.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_r8_repros.py", "path": "tests/test_r8_repros.py", "runner": "custom-main", "minimum_checks": 1},

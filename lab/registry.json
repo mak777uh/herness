@@ -756,18 +756,42 @@
    "title": "W18-CLEAN-CLONE-R1: HEAD-bound snapshot, EOL и stale pilot baseline",
    "hypothesis": "CRLF checkout pin, отдельная sealed pilot baseline correction и append-only canonical candidate event дают воспроизводимый clean clone без перезаписи sealed prereg и истории.",
    "prereg": "lab/prereg/W18-CLEAN-CLONE-R1.json",
-   "status": "open",
-   "note": "Зарегистрировано до исправлений после CI run 45483411240 и локального stale pilot RED. Baseline f292734; refs search NOT PROVIDED (rc=2). Требуются 14/14 W18 controls, Review3 9/9 и pilot verify rc=0 в Windows/POSIX clean clone; production Rust bytes, исходный pilot prereg, registry seq=8 и active=[] сохраняются. Полный CI-PASS не заявлен.",
-   "updated": "2026-11-24"
+   "status": "closed",
+   "claim": "C-0351",
+   "conclusion": "research/outputs/W18-CLEAN-CLONE-R1-CLOSURE.txt",
+   "note": "PASS snapshot gate: baseline f292734 дал Review3 8/9 и pilot rc=1; implementation 7e5a618 прошёл Windows/POSIX clean clone с W18 14/14, Review3 9/9, pilot rc=0, seals 51/51 и пустым worktree. Windows RED b32843d из-за proof EOL сохранён и исправлен отдельным LF pin. Production Rust, исходный pilot prereg, registry seq=8 и active=[] сохранены. Полный CI-PASS и independent review не заявлены.",
+   "updated": "2026-11-25"
   },
   {
    "id": "E-0074",
    "title": "PILOT-GENERATOR-R1-BASELINE-CORRECTION: fail-closed reseal chain",
    "hypothesis": "Отдельная sealed correction сохраняет исторические new_tool/generator digests и разрешает обновление только двух инженерных файлов без изменения thresholds и остальных frozen artifacts.",
    "prereg": "lab/prereg/PILOT-GENERATOR-R1-BASELINE-CORRECTION.json",
+   "status": "closed",
+   "claim": "C-0351",
+   "conclusion": "research/outputs/W18-CLEAN-CLONE-R1-CLOSURE.txt",
+   "note": "PASS в составе W18 snapshot gate. Исходный PILOT-GENERATOR-R1 SHA-256 42fb4a43…c2af5 сохранён; correction 9727c890…f87b задаёт new_tool e4db3fce…57b3 и generator 1d830fd8…e08. Verifier fail-closed на missing/tampered/foreign/threshold/digest мутантах в обоих clean clone; полный 20 specs/24 mutants прогон не повторялся.",
+   "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0075",
+   "title": "PREREG-CORRECTION-OVERLAY-R1: hash-verified inheritance для sealed correction",
+   "hypothesis": "Prereg checker сможет наследовать отсутствующие schema-v2 поля correction-overlay только из hash-verified source, сохраняя явные поля overlay и fail-closed для несвязанных неполных prereg.",
+   "prereg": "lab/prereg/PREREG-CORRECTION-OVERLAY-R1.json",
    "status": "open",
-   "note": "Зарегистрирована в W18 до clean-clone GREEN. Исходный PILOT-GENERATOR-R1 SHA-256 42fb4a43…c2af5 сохранён; correction 9727c890…f87b задаёт new_tool e4db3fce…57b3 и generator 1d830fd8…e08. Verifier fail-closed на missing/tampered/foreign/threshold/digest мутантах; полный 20 specs/24 mutants прогон не повторялся.",
-   "updated": "2026-11-24"
+   "note": "Исторический R1 RED: реализация наследовала только REQUIRED_V2 и оставила E-0074 без arms/sensitivity; focused 5/8, prereg 63/64. Исходные E-0074/source/sidecars не переписываются. Scope не расширяется задним числом; продолжение — E-0076.",
+   "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0076",
+   "title": "PREREG-CORRECTION-OVERLAY-R2: наследование всех отсутствующих обязательных полей",
+   "hypothesis": "Hash-verified source-bound overlay может наследовать все отсутствующие REQUIRED+REQUIRED_V2 поля без override явных полей и без ослабления unrelated incomplete FAIL.",
+   "prereg": "lab/prereg/PREREG-CORRECTION-OVERLAY-R2.json",
+   "status": "closed",
+   "claim": "C-0352",
+   "conclusion": "research/outputs/PREREG-CORRECTION-OVERLAY-R2-CLOSURE.txt",
+   "note": "PASS: 8/8 focused controls на Windows/POSIX, prereg rc=0 и 65/65 sensitivity, verify_claims --fast 313/0 после регистрации C-0352, seals 53/53. E-0075 сохранён открытым историческим RED 5/8 и 63/64. Sealed E-0074/E-0075/source/sidecars не изменены; unrelated incomplete prereg остаётся FAIL.",
+   "updated": "2026-11-25"
   }
  ]
 }

@@ -1,0 +1,82 @@
+W18-CLEAN-CLONE-R1 — CLOSURE CONCLUSION
+Дата: 2026-11-25
+Вердикт: PASS — W18 HEAD-bound snapshot gate для E-0073/E-0074; полный CI-PASS не заявлен.
+Baseline HEAD: f29273494e2bd415106e4de212ad6f848e83c48d
+Implementation HEAD: 7e5a618b9e6659ff4777a5de8b2c143d46b48d3a
+Historical intermediate HEAD: b32843dc914f951dfc0f80693a6c952a9ce6873c
+
+ЧТО ЗАКРЫТО
+- Baseline f292734 воспроизводимо даёт W03 Review3 8/9 и pilot_generator --verify rc=1: единственный Review3 провал — checkout hash loopmod.rs, pilot — stale new_tool digest.
+- .gitattributes закрепляет CRLF checkout core-rs/src/loopmod.rs; production Rust source и его Git blob не менялись.
+- Отдельная sealed correction PILOT-GENERATOR-R1-BASELINE-CORRECTION принимает текущий инженерный baseline только для bin/new_tool.py и bin/pilot_generator.py. Исходный prereg, thresholds, specs, mutants и остальные frozen files не переписывались.
+- Append-only registry seq=9 переводит candidate head на canonical lab/tools/cards/head.json. Исторический seq=8 и его draft path сохранены; active=[]; активация не выполнялась.
+- Clean clone одного implementation HEAD проверяет V1/V6, V4, W03 Review3, pilot correction, registry chain, checkout/blob EOL и чистоту worktree.
+
+RED/GREEN МАТЕРИЦА
+Baseline f292734, POSIX clean clone:
+- W03 Review3: 8/9 ok, провалов 1, rc=1; hash-control ожидал CRLF checkout 74c77403…, фактически читал LF Git blob b2ffec5d….
+- pilot_generator --verify: rc=1; frozen cadd56ad… != фактический e4db3fce… для bin/new_tool.py.
+- git status --porcelain: пусто.
+
+Historical intermediate b32843d:
+- POSIX clean clone: W18 controls 14/14 ok; провалов 0.
+- Windows clean clone: W18 controls 13/14 ok; провалов 1, rc=1. V1/V6 test_chain.py дал rc=1, потому что proofs/Proofs/ChainInstances.lean превращался LF→CRLF (2529 байт, 51 CRLF, SHA-256 cd514ba6… вместо exact LF 2478/0/8cfe7c4d…); наблюдался K9_PROVEN_HASH_MISMATCH.
+- Добавлено точечное правило proofs/Proofs/ChainInstances.lean text eol=lf; контроль V1/V6 усилен exact-byte проверкой. Этот RED не переписан в PASS.
+
+Final implementation HEAD 7e5a618:
+Windows clean clone:
+- python tests/test_w18_clean_clone.py — rc=0.
+- W18 controls: 14/14 ok; провалов: 0; mode=clean-clone.
+- python bin/pilot_generator.py --verify — rc=0.
+- python bin/registry_state.py --check — rc=0.
+- python bin/seal.py verify-all — 51 печать, 0 проблем.
+- python bin/lab.py validate — 74 эксперимента, 7 следующих гипотез.
+- git status --porcelain: пусто.
+
+POSIX/WSL clean clone:
+- python3 tests/test_w18_clean_clone.py — rc=0.
+- W18 controls: 14/14 ok; провалов: 0; mode=clean-clone.
+- python3 bin/pilot_generator.py --verify — rc=0.
+- python3 bin/registry_state.py --check — rc=0.
+- python3 bin/seal.py verify-all — 51 печать, 0 проблем.
+- python3 bin/lab.py validate — 74 эксперимента, 7 следующих гипотез.
+- git status --porcelain: пусто.
+
+ТОЧНЫЕ БАЙТЫ И ДАЙДЖЕСТЫ
+core-rs/src/loopmod.rs checkout:
+- 191435 байт; 3647 CRLF; SHA-256 74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583.
+core-rs/src/loopmod.rs Git blob:
+- 187788 байт; 0 CRLF; SHA-256 b2ffec5ddba1575eaedb6cb2310a4308ba83e46a64ae914a2b5dcc7a2f2802fe.
+proofs/Proofs/ChainInstances.lean checkout/blob:
+- 2478 байт; 0 CRLF; SHA-256 8cfe7c4de849e80e93712eb59de486d20c39c43e18aae49db38934e118a03308.
+lab/prereg/PILOT-GENERATOR-R1.json:
+- SHA-256 42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5; historical new_tool cadd56ad6569165704205e5a336fe9412be61d329363810e8da4d4e2d9c5e816; historical generator 93c44b990f96705402c6a13c24f713a4f4e5a9101761d9bc72b3f32677501c5b.
+lab/prereg/PILOT-GENERATOR-R1-BASELINE-CORRECTION.json:
+- SHA-256 9727c89059c077c275e9960c83507e9750721c0d0e66a2a36384c86038b5f87b; corrected new_tool e4db3fce3ab54ee912e3089b2dc4935aafcaa3f700bcad2eb673def4dbd057b3; corrected generator 1d830fd8ad2fde5ea319a68164786ec4b7bab2571c76fb95b21be79fde486e08.
+lab/tools/registry.events.jsonl:
+- prefix seq=0…8 SHA-256 6fbde54f5538ff69025ee613794825b43e45f496afdb03f0a5bd71b06261f2b8 сохранён; seq=9 candidate canonical; derived active=[].
+
+КОНТРОЛИ CORRECTION И СНИМКА
+W18-01…W18-14 выполнены на финальном HEAD в обоих clean clone:
+- missing correction, tampered sidecar, wrong source digest, wrong corrected new_tool/generator digests, foreign path и threshold mutation отвергнуты fail-closed.
+- V1/V6 test_chain.py — 0 провалов; V4 head_cards/tool_card/card_atoms — 0 провалов; W03 Review3 — 9/9.
+- Canonical head единствен, drafts пуст, legacy refusal и no-auto-conversion сохранены.
+- production_rust_changed=0; source_prereg_changed=0; source_registry_event_changed=0; active_count=0; platform_na=0; worktree_deviations=0.
+
+ИСТОРИЧЕСКАЯ ЦЕЛОСТНОСТЬ
+- Исходные sealed prereg и sidecars не переписывались; correction оформлена отдельным E-0074.
+- Registry seq=0…8 не редактировался; новый путь принят только seq=9.
+- CI RED run 45483411240 и промежуточный Windows RED b32843d сохраняются как исторические факты.
+- Независимый review W18 не проводился; этот closure не выдаёт его за выполненный.
+
+ЧТО ЭТО НЕ ДОКАЗЫВАЕТ
+- Полный CI-PASS: известные absolute Windows links, C-0340 platform behavior и POSIX selftest residuals требуют отдельного разбора. N/A не PASS.
+- Полный повтор 20 specs/24 mutants PILOT-GENERATOR-R1: correction обновляет только инженерный baseline.
+- Windows directory durability, resume idempotency/retry, QEMU/provider и реальные внешние действия.
+- Соответствие Lean-модели настоящему Rust runtime: K9 остаётся K9_model_checked, не K9_proven.
+- Owner admission, production activation, создание owner key или внешнюю публикацию: active пуст, эти действия не выполнялись.
+
+POST-CLOSURE INSTRUMENT REGRESSION
+- Общий verify_claims --fast обнаружил C-0082 RED: sealed E-0074 не содержала шесть обязательных методических полей. Snapshot PASS 7e5a618 остаётся историческим фактом, но regression не была оставлена незакрытой.
+- E-0075 R1 дал 5/8 и prereg 63/64; сохранён открытым историческим RED. E-0076 R2 исправил checker без переписывания E-0074/E-0075/source/sidecars.
+- Финально: E-0076 focused 8/8 на Windows/POSIX, prereg check 65/65 sensitivity, verify_claims --fast 312/0 до регистрации C-0352 и 313/0 после неё, seals 53/53, lab validate 76/7. Отдельное свидетельство — research/outputs/PREREG-CORRECTION-OVERLAY-R2-CLOSURE.txt, claim C-0352.

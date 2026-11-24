@@ -1,0 +1,37 @@
+{
+  "schema": 2,
+  "id": "PREREG-CORRECTION-OVERLAY-R1",
+  "date": "2026-11-25",
+  "question": "Как проверять sealed correction-overlay без переписывания его печати и без ослабления обязательной методической схемы prereg?",
+  "hypothesis": "Checker сможет наследовать только отсутствующие schema-v2 поля из source prereg, если overlay явно source-bound, source path безопасен, source_prereg_sha256 совпадает с точными байтами и сам source удовлетворяет схеме. Явные поля overlay не перезаписываются; несвязанный неполный prereg по-прежнему даёт FAIL.",
+  "criterion": "PASS только если исходный E-0074 SHA-256 9727c89059c077c275e9960c83507e9750721c0d0e66a2a36384c86038b5f87b и его sidecar не изменены; source PILOT-GENERATOR-R1.json SHA-256 42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5 совпадает с source_prereg_sha256; bin/prereg.py check даёт rc=0 и 63/63 sensitivity; восемь focused controls подтверждают positive inheritance, wrong digest, missing source, traversal, incomplete source, explicit-field precedence, unrelated incomplete FAIL и отсутствие записи/перепечати исходных файлов.",
+  "arms": [
+    "A (RED baseline): bin/prereg.py b2c8c2d85b7af77cca679334ad6b0571acecd412763c1b2c8ba4e25f7f5b49ef даёт rc=1: PILOT-GENERATOR-R1-BASELINE-CORRECTION.json не содержит arms, sensitivity, unit_of_analysis, primary_metric, test, stopping_rule.",
+    "B (source-bound inheritance): только schema-v2 поля, отсутствующие в overlay, наследуются из hash-verified source; явные поля overlay сохраняются, source и overlay не записываются.",
+    "C (negative controls): wrong source digest, missing source, unsafe traversal, incomplete source и unrelated incomplete prereg дают FAIL; положительный E-0074 даёт PASS без изменения печати."
+  ],
+  "sensitivity": "Проверяются raw SHA-256 source, безопасность repo-relative пути, наличие обязательных полей у source, наследование только отсутствующих v2-полей и fail-closed negatives. Порог 63/63 sensitivity не снижается; несвязанные неполные prereg не получают исключения.",
+  "unit_of_analysis": "один schema-v2 correction-overlay и одна процедура проверки всех lab/prereg/*.json",
+  "primary_metric": "baseline_prereg_rc=1; corrected_prereg_rc=0; sensitivity_complete=63/63; focused_controls=8; focused_failed=0; source_overlay_changed=0; source_sidecar_changed=0; unrelated_incomplete_accepted=0",
+  "test": "python bin/prereg.py check; python tests/test_prereg.py; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate",
+  "stopping_rule": "Сначала сохранить RED C-0082, зарегистрировать E-0075 и запечатать этот prereg. Затем изменить только bin/prereg.py, добавить tests/test_prereg.py и зарегистрировать suite в test-manifest. Остановиться при изменении E-0074/source/sidecar, принятии unrelated incomplete prereg, override явного поля overlay, ослаблении thresholds или любом focused провале.",
+  "fixture": "Настоящие sealed E-0074 и source PILOT-GENERATOR-R1 плюс синтетические tempdir source/overlay fixtures; сеть, секреты, owner keys и реальные аккаунты не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX повтор выполняется отдельно",
+    "network": "не требуется",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search \"sealed prereg correction overlay inherit methodology\" вернул rc=2, справочника нет; пусто не считается успешным поиском",
+    "baseline_prereg_sha256": "b2c8c2d85b7af77cca679334ad6b0571acecd412763c1b2c8ba4e25f7f5b49ef",
+    "source_overlay": "lab/prereg/PILOT-GENERATOR-R1-BASELINE-CORRECTION.json",
+    "source_overlay_sha256": "9727c89059c077c275e9960c83507e9750721c0d0e66a2a36384c86038b5f87b",
+    "source_prereg": "lab/prereg/PILOT-GENERATOR-R1.json",
+    "source_prereg_sha256": "42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5"
+  },
+  "known_limits": [
+    "Instrument correction не переписывает E-0074 и не добавляет поля в его файл",
+    "Наследование относится только к schema-v2 методическим полям и не делает неполный source допустимым",
+    "C-0082 остаётся историческим claim; новый результат подтверждается отдельным C-0352"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-prereg-correction-overlay-r1"]
+}

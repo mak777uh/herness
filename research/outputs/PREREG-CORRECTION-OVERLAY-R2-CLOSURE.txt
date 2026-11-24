@@ -1,0 +1,53 @@
+PREREG-CORRECTION-OVERLAY-R2 — CLOSURE CONCLUSION
+Дата: 2026-11-25
+Вердикт: PASS — E-0076; C-0082 regression закрыта без переписывания sealed E-0074.
+Baseline implementation HEAD: 7e5a618b9e6659ff4777a5de8b2c143d46b48d3a (closure worktree)
+
+ЧТО ЗАКРЫТО
+- bin/prereg.py принимает явно помеченный correction-overlay только при безопасном repo-relative source_prereg внутри lab/prereg, формате sha256:<64 hex> и совпадении source_prereg_sha256 с точными байтами source.
+- Из hash-verified source наследуются только отсутствующие обязательные поля REQUIRED+REQUIRED_V2. Явные поля overlay имеют приоритет.
+- Source сам обязан удовлетворять схеме. Несвязанный неполный prereg, missing source, wrong digest, traversal и incomplete source остаются fail-closed.
+- Исходные E-0074, E-0075, PILOT-GENERATOR-R1 и их sidecars не записывались и не перепечатывались.
+
+ИСТОРИЧЕСКИЕ RED
+- C-0082 baseline: prereg check rc=1, sensitivity 62/63; E-0074 не содержала arms, sensitivity, unit_of_analysis, primary_metric, test, stopping_rule.
+- E-0075 R1: наследование только REQUIRED_V2 дало focused 5/8 и prereg 63/64; E-0074 остался без arms/sensitivity. E-0075 сохранён открытым историческим RED, его scope не расширялся задним числом.
+- E-0076 первый test run: 7/8 из-за ошибочного ожидания теста, что явные question/hypothesis/criterion overlay должны равняться source. Production checker имел правильный precedence; тест уточнён до проверки наследования отсутствующих полей и сохранения явных.
+
+ФИНАЛЬНЫЕ ПРОВЕРКИ
+Windows:
+- python tests/test_prereg.py — rc=0; проверок: 8; провалов: 0.
+- python bin/prereg.py check — rc=0; пре-регистраций: 65; чувствительность: есть у 65 из 65.
+- python bin/verify_claims.py --fast — 312 исполняемых утверждений, 0 провалов до регистрации C-0352; после регистрации — 313/0.
+- python bin/check_artifacts.py C-0352 — rc=0; ожидаемое свидетельство найдено.
+- python bin/seal.py verify-all — 53 печати, 0 проблем.
+- python bin/lab.py validate — 76 экспериментов, 7 следующих гипотез.
+- python bin/test_manifest.py --check — 76 Python + 4 Rust entries.
+
+POSIX/WSL:
+- python3 tests/test_prereg.py — rc=0; проверок: 8; провалов: 0.
+- python3 bin/prereg.py check — rc=0; пре-регистраций: 65; чувствительность: есть у 65 из 65.
+
+ВОСЕМЬ КОНТРОЛЕЙ
+1. Positive synthetic overlay наследует отсутствующие arms/sensitivity/REQUIRED_V2 и сохраняет явные question/hypothesis/criterion.
+2. Настоящий sealed E-0074/source/sidecar не изменены; inheritance подтверждён.
+3. Wrong source digest отвергнут.
+4. Missing source отвергнут.
+5. Unsafe source path отвергнут.
+6. Incomplete source отвергнут.
+7. Explicit overlay field не перезаписан source.
+8. Unrelated incomplete prereg остаётся FAIL.
+
+ТОЧНЫЕ ДАЙДЖЕСТЫ
+bin/prereg.py = 9d69f153a06785dfe91a59922c75ededfbbb8760abb377e184f1e3884cbcbcd0
+tests/test_prereg.py = d4ff2d3961408ee5c343393713c73020c9b8ae10757e760f2eac7093421578a6
+PREREG-CORRECTION-OVERLAY-R2.json = 382bc4cd76b1ee0657ed910aa6f5db15f4958ef93e298123208aec4f93af448e
+PREREG-CORRECTION-OVERLAY-R1.json = 9a0943985b697933b8686ad148e43bfc285ff1102552e8ac07ec40f72fbb570c
+PILOT-GENERATOR-R1-BASELINE-CORRECTION.json = 9727c89059c077c275e9960c83507e9750721c0d0e66a2a36384c86038b5f87b
+PILOT-GENERATOR-R1.json = 42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5
+
+ЧТО ЭТО НЕ ДОКАЗЫВАЕТ
+- E-0075 не становится PASS: его 5/8 и 63/64 сохранены как исторический RED.
+- Inheritance не проверяет истинность методологии и не заменяет независимый review.
+- Полный CI-PASS, Windows directory durability, production activation и Lean↔Rust equivalence не закрыты.
+- Внешняя публикация не выполнялась; owner keys и реальные секреты не использовались.
