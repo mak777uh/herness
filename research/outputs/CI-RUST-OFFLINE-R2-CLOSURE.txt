@@ -9,6 +9,9 @@ RED conclusion не переписаны и не перепечатаны.
 
 Focused controls: 5/5; провалов: 0 (Windows и POSIX).
 Manifest selection test_ci_rust_prefetch.py: 5/5, rc=0 на Windows и POSIX.
+Полный Windows selftest commit a151ca165162eccd0bfa39115f1289df43eaa273:
+78 Python suites, rc=0; W18 clean-clone controls 14/14; status работы пуст.
+Лог SHA-256: 1e934d7638feb55fce6f6dbf7016258ca06bab9bd35907fc2b2b20df8a253819.
 
 Что измерено:
 1. Workflow correction содержит ровно один шаг `cargo fetch --locked` с
