@@ -1,0 +1,14 @@
+[FAIL] positive anchor повторяет точные journal hashes — AssertionError: 
+[FAIL] renumbered deletion даёт точный trusted prefix — AssertionError: (2, [])
+[FAIL] rehashed event mutation ловится anchor position — AssertionError: (3, [])
+[FAIL] prefix truncation не выдаётся за полный журнал — AssertionError: (2, [])
+[FAIL] unanchored suffix отвергается — AssertionError: (3, [])
+[FAIL] missing anchor не мигрируется — AssertionError: (1, [])
+[FAIL] malformed anchor отвергается — AssertionError: (1, [])
+[FAIL] torn anchor отвергается — AssertionError: (1, [])
+[FAIL] journal fsync наблюдён до anchor fsync и ACK — AssertionError: [('file', b'{"at":"2026-11-24T04:49:03.142118Z","event":"a","prev":"0000000000000000000000000000000000000000000000000000000000000000","run":"order-tip","seq":1,"sha256":"1054b93c78cfc04edc9f059f7b9814e3044ca3ad8615ff4643a2c506070a1f42","v":2}\n')]
+[FAIL] anchor fsync failure не даёт ACK — AssertionError: опасная операция завершилась успешно
+[FAIL] crash gap journal без anchor fail-closed — AssertionError: (2, [])
+[FAIL] 4 процесса дают 80 точных journal/anchor пар — AssertionError: 
+
+host journal tip: 0/12 ok; N/A 0; провалов: 12

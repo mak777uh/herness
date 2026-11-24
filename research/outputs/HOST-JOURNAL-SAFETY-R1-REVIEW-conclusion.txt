@@ -1,0 +1,40 @@
+HOST-JOURNAL-SAFETY-R1-REVIEW — conclusion
+Дата: 2026-11-24
+Статус: REFUTED; review threshold 11/11 не достигнут.
+Instrument verdict: PASS. Зарегистрированный corpus и пороги не менялись.
+Windows result: host journal review: 10/11 ok; N/A 0; провалов: 1
+
+Исходные evidence:
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-red-before.txt — первый RED 3/11; содержал ошибку инструмента Windows lseek и не используется как production RED.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-red-before-instrument-fix.txt — production RED 4/11, 7 провалов после исправления только инструмента.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-green-attempt.txt — после пяти точечных исправлений Windows 10/11, 1 провал.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-windows-r1.txt — Windows R1 34/34, провалов 0.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-posix-r1.txt — WSL POSIX R1 34/34, провалов 0.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-posix-green-attempt.txt — WSL POSIX review 9 passed, 1 явный Windows-only N/A, 1 провал.
+
+Что закрыто точечными исправлениями:
+- expected_prev=ZERO/previous sha256: ненулевой genesis prev и later prev с пересчитанными хешами отвергаются.
+- MAX_RECORD_BYTES=397312 и проверка canonical line до write: 65536-byte NUL/quote/backslash/multibyte events получают ACK и затем полностью верифицируются.
+- Windows ownership cleanup: инъецированный пост-transfer отказ закрывает CRT fd; leaked fds=0.
+- RecursionError/ValueError из json.loads нормализуются в JournalError; verify/events/append остаются fail-closed.
+- Фактические journal open flags содержат O_APPEND на Windows.
+- Исходный R1 corpus после исправлений: 34/34, провалов 0.
+- Review positives: 8 threads x10 = 80 непрерывных записей, fsync наблюдался после полной финальной записи, положительная связанная цепочка и platform dispatch прошли.
+
+Оставшийся существенный провал:
+- renumbered-deletion принимается: verify=(2, []), events возвращает оставшиеся события.
+- Контроль удаляет среднюю запись, перенумерует суффикс, пересчитывает его prev/sha256 и получает другую внутренне корректную цепочку. Явная prev-linkage этого не обнаруживает: у новой цепочки каждая ссылка корректна.
+- В зарегистрированном arm B нет внешнего закреплённого tip, поэтому выполнить этот контроль пятью перечисленными исправлениями невозможно. Ослаблять контроль или объявлять 10/11 PASS запрещено.
+
+Граница:
+- R1 остаётся REFUTED; этот review также остаётся REFUTED и не переписывает исходные результаты.
+- Исправления пяти находок подтверждены, но полная заявленная цепочка не доказана.
+- Для coherent deletion/truncation/rehash нужен отдельный зарегистрированный механизм внешнего tip и отдельные controls. Враждебный процесс с правом переписать и журнал, и весь host directory остаётся вне trust boundary.
+- W07B run/session authority, typed refs-only events, bridge strict schema и canary controls не затронуты.
+
+Hashes:
+- production bin/host_journal.py после пяти исправлений: fbdf4d2c19c1acb0c45895d64e4fd643f091a7dabd5297b0d98d670ce70c9f3f
+- frozen tests/test_host_journal_review.py: f223dafcd71575cf188b91d601f6b129ff71d8f467df7b13fa085d4fab18be7a
+- pre-closure prereg SHA-256: d59d4d98f4cede6287bfc4c54a6f8cbf6d7e79bbd251d7c63e57f2128d39ee21
+
+Решение: закрыть E-0050 как REFUTED и зарегистрировать отдельный E-0051/HOST-JOURNAL-SAFETY-R2-TIP до изменений production-кода.

@@ -1,0 +1,6 @@
+[ok] промежуточный anchor LF проверяется
+[ok] compound corruption не завышает trusted prefix
+[ok] POSIX append fsync закрепляет всю ancestry каталогов
+[ok] POSIX retry после directory fsync failure повторяет durability шаг
+
+host journal durability: 4/4 ok; N/A 0; провалов: 0

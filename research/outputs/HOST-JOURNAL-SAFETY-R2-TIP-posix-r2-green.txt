@@ -1,0 +1,14 @@
+[ok] positive anchor повторяет точные journal hashes
+[ok] renumbered deletion даёт точный trusted prefix
+[ok] rehashed event mutation ловится anchor position
+[ok] prefix truncation не выдаётся за полный журнал
+[ok] unanchored suffix отвергается
+[ok] missing anchor не мигрируется
+[ok] malformed anchor отвергается
+[ok] torn anchor отвергается
+[ok] journal fsync наблюдён до anchor fsync и ACK
+[ok] anchor fsync failure не даёт ACK
+[ok] crash gap journal без anchor fail-closed
+[ok] 4 процесса дают 80 точных journal/anchor пар
+
+host journal tip: 12/12 ok; N/A 0; провалов: 0

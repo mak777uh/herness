@@ -1,0 +1,18 @@
+HOST-JOURNAL-SAFETY-R2-DURABILITY — independent post-review
+Дата: 2026-11-24
+Статус: PASS within registered scope; substantive findings не осталось.
+
+Проверено:
+- bin/host_journal.py: journal и anchor fsync выполняются до безусловного fsync (base, *base.parents) deepest-to-root и до ACK.
+- Retry не зависит от created текущего вызова; после directory-fsync failure повторяет полный durability шаг.
+- Directory open/fsync/close ошибки проходят в JournalError и не достигают ACK.
+- Resolved absolute base включает filesystem root в POSIX ancestry.
+- Windows directory fsync остаётся явным no-op/N/A и не выдаётся за выполненный шаг.
+- tests/test_host_journal_tip_review.py наблюдает реальные directory descriptors, точную deepest-to-root ancestry, отказ первого ACK, сохранённые seq=1/anchor и успешный seq=2 retry с полной ancestry.
+- SHA-256 теста совпадает с зарегистрированным 753d3b108e87b6229388e4be9a45d3ef2f6e8b3b1280282b5aa1b621e48cae09.
+
+Независимые reruns:
+- Windows: 2 passed + 2 явных POSIX-only N/A.
+- WSL POSIX: 4/4 без N/A.
+
+Граница: вывод действует при корректной fsync семантике файловой системы; Windows directory durability не проверялась.

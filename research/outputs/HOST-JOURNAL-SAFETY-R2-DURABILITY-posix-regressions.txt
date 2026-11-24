@@ -1,0 +1,157 @@
+[ok] полный прогон по критерию проходит
+[ok] невызванный инструмент валит приёмку
+[ok] запрещённый инструмент валит приёмку
+[ok] опора не того вида валит приёмку
+[ok] без опоры прогон не считается выполненным
+[ok] превышение шагов валит приёмку
+[ok] превышение расхода валит приёмку
+[ok] оборванный хвост не чинится и валит приёмку
+[ok] испорченная CRC отсекает запись и всё после неё
+[ok] журнал без коммита валит приёмку
+[ok] чужой заголовок не разбирается
+[ok] пустой критерий не проходит
+задача: найти опору; записей: 7
+  [ok] статус = done — фактически: done
+  [ok] вызваны инструменты ['search'] — вызовы: ['search']; не хватает: []
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [ok] опора соответствует /CLAIMS\.md:\d+/ — опоры: ['/mnt/CLAIMS.md:4']
+  [ok] шагов ≤ 4 — шагов: 1
+  [ok] расход ≤ 0.001 — потрачено: 0.00010000 (оценка провайдера, не факт биллинга)
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: PASS
+задача: найти опору; записей: 7
+  [FAIL] статус = done — фактически: unverified
+  [ok] вызваны инструменты ['search'] — вызовы: ['search']; не хватает: []
+  [ok] не вызваны ['write'] — запрещённые вызовы: []
+  [FAIL] опора соответствует /CLAIMS\.md:\d+/ — опоры: []
+  [ok] шагов ≤ 4 — шагов: 1
+  [ok] расход ≤ 0.001 — потрачено: 0.00010000 (оценка провайдера, не факт биллинга)
+  [ok] журнал закрыт коммитом — последняя запись: коммит
+итог: FAIL
+[ok] критерий из файла читается CLI и печатает итог
+[ok] критерии в комнату не попадают: образа касается только names()
+[ok] скрытая часть проходит — приёмка проходит
+[ok] скрытая часть проваливается — приёмка падает, причина не раскрыта
+[ok] с --show-hidden автор видит, какое условие провалилось
+[ok] неизвестное условие критерия — провал, а не пропуск
+[ok] вызов вне объявленной выдачи валит приёмку
+[ok] отказ по невыданному инструменту нарушением не считается
+[ok] стадия берётся из журнала: unrecorded и blocked
+[ok] порог барахтания не отсекает ответ с опорой (ADR-0052)
+[ok] барахтание без опоры по-прежнему отказ
+[ok] много вызовов без опоры — отдельный отказ
+
+приёмка: 24/24 ok
+провалов: 0
+честный журнал: PASS
+подделка с CRC: разбор чистый (хвост 0, проблем 0), приёмка FAIL
+поймано сравнением с хостом: True; ['хост видел 6 событий, в комнате 6; события расходятся']
+[ok] переворот kind: переворот kind отвергнут: записей 0, хвост 54
+[ok] подделка с пересчитанным CRC ловится сверкой с хостом
+[ok] без локального токена — 401, провайдер не тронут
+[ok] с токеном — 200, провайдер получает настоящий ключ, а не локальный
+[ok] путь вне /v1 — 404 и никакой пересылки
+[ok] журнал не содержит ни тела, ни ключа, ни токена
+[ok] отпечаток токена в журнале есть, но не сам токен
+[ok] сессия стабильна между запросами (иначе нет prompt-cache)
+[ok] без ключа провайдера мост не стартует
+[ok] не-https upstream отвергается
+[ok] credentials и неоднозначный port в upstream отвергаются
+[ok] loopback HTTP требует явного test-only флага
+[ok] origin allowlist сравнивает точные hostname и port
+
+мост: 11/11 ok
+провалов: 0
+[ok] duplicate-content-length
+[ok] duplicate-host
+[ok] transfer-plus-length
+[ok] chunked-body
+[ok] obs-fold
+[ok] lf-only
+[ok] obs-text
+[ok] missing-length
+[ok] plus-length
+[ok] leading-zero-length
+[ok] space-length
+[ok] underscore-length
+[ok] get-post-route
+[ok] absolute-form
+[ok] unknown-header
+[ok] path-traversal
+[ok] http-10
+[ok] trailing-byte
+[ok] pipelined-request
+[ok] expect-continue
+[ok] length-cap
+[ok] negative-length
+[ok] path-0
+[ok] path-1
+[ok] path-2
+[ok] path-3
+[ok] path-4
+[ok] path-5
+[ok] method-0
+[ok] method-1
+[ok] method-2
+[ok] method-3
+[ok] method-4
+[ok] method-5
+[ok] version-0
+[ok] version-1
+[ok] version-2
+[ok] version-3
+[ok] version-4
+[ok] length-0
+[ok] length-1
+[ok] length-2
+[ok] length-3
+[ok] length-4
+[ok] length-5
+[ok] length-6
+[ok] header-value-0
+[ok] header-value-1
+[ok] header-value-2
+[ok] header-value-3
+[ok] header-value-4
+[ok] header-value-5
+[ok] header-value-6
+[ok] header-count-0
+[ok] header-count-1
+[ok] header-count-2
+[ok] header-count-3
+[ok] header-count-4
+[ok] header-count-5
+[ok] missing-host
+[ok] missing-auth
+[ok] missing-content-type
+[ok] missing-connection
+[ok] duplicate-auth
+[ok] duplicate-content-type
+[ok] duplicate-connection
+[ok] space-before-colon
+[ok] tab-indent
+[ok] bare-lf-header
+[ok] long-header
+[ok] empty-header-name
+[ok] double-space-request-line
+[ok] health
+[ok] chat
+[ok] journal
+[ok] net
+[ok] slowloris
+[ok] total-timeout
+[ok] no-secret
+проверок: 79; провалов: 0
+[ok] header-separator
+[ok] auth-before-body: status=401, elapsed=0.001s
+[ok] delayed-pipeline
+[ok] connect-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=0.201s
+[ok] header-idle-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=5.006s
+[ok] total-timeout: status=408, code=BRIDGE_HTTP_TIMEOUT, elapsed=0.201s
+[ok] write-timeout: timeout=0.2, elapsed=0.200s
+[ok] status-policy: [200, 400, 415, 418, 500, 599, 502, 502, 502]
+проверок: 8; провалов: 0
+[ok] header-total-boundary
+[ok] header-count-boundary
+[ok] header-line-boundary
+проверок: 3; провалов: 0

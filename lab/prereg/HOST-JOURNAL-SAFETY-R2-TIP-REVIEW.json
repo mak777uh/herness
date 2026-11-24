@@ -1,0 +1,77 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-R2-TIP-REVIEW",
+ "date": "2026-11-24",
+ "question": "Закрывают ли post-review исправления canonical anchor delimiters, compound-corruption trusted prefix и POSIX first-creation directory durability, не меняя R2-TIP 12 controls?",
+ "hypothesis": "R2-TIP 12/12 недостаточен: parser anchor игнорировал байт разделителя между строками, verify не сравнивал уже разобранный префикс с anchor при последующей chain error, а fsync нового leaf не делал durable entries новых родительских каталогов. Проверка каждого LF, объединённая journal/anchor валидация и fsync всех созданных каталогов от глубины к вершине закроют эти пробелы.",
+ "criterion": "PASS только при R1 34/34, R2-TIP 12/12 на Windows и POSIX, review Windows 11/11 либо POSIX 10 passed с одним явным Windows-only N/A, и новый review suite: Windows 2 passed + 1 явный POSIX-only N/A либо POSIX 3 passed без N/A. Обязательны: повреждение промежуточного anchor LF даёт problems/[]/отказ append; rehashed prefix плюс поздняя seq error даёт trusted prefix=0; первый append в новые вложенные каталоги на POSIX fsync делает journal, parent и вышележащий созданный каталог до ACK. Любой провал, лишний N/A, ослабление прежних порогов или изменение corpus после RED означает отсутствие PASS.",
+ "arms": [
+  "A (R2-TIP до review fix): anchor parser проверяет только общую длину и финальный LF; verify сравнивает anchor только при отсутствии journal problems; POSIX first-creation fsync ограничен leaf journal directory.",
+  "B (review fix): каждая anchor строка имеет точный разделитель LF; parsed journal prefix всегда сравнивается с anchor, problems объединяются, trusted prefix усекается до минимального; при первом создании journal directory выполняется fsync leaf и каждого нового родителя от глубины к вершине. Windows directory fsync остаётся явным N/A."
+ ],
+ "sensitivity": "Delimiter mutant меняет ровно один байт LF на hex, сохраняя длину и parsed hashes. Compound mutant делает ранний anchor mismatch и позднюю seq error, поэтому проверяет именно объединение двух источников проблем. Durability control создаёт два новых родительских каталога и наблюдает реальные directory fsync через /proc/self/fd, а не наличие данных в page cache.",
+ "unit_of_analysis": "одна повреждённая anchor строка; одна compound journal mutation; один первый append в новый вложенный каталог",
+ "primary_metric": "r1_controls=34; tip_controls=12; review_controls=3; windows_passed=2; windows_na=1; posix_passed=3; posix_na=0; compound_trusted_prefix=0; directory_fsync_min=3; ack_after_directory_fsync=true",
+ "test": "python tests/test_host_journal_tip_review.py",
+ "stopping_rule": "Один review batch: сохранить RED на R2-TIP-коде, исправить только три findings, затем один Windows GREEN и один POSIX GREEN. Остановиться при первом необъяснённом провале; не менять R1/R2-TIP/review corpus, hash domain, seq/lock/fsync критерии и platform thresholds после RED. W07B не смешивать.",
+ "fixture": "Только tempfile, синтетические journal/anchor mutations и дочерние каталоги; POSIX durability control использует os.fsync wrapper и /proc/self/fd; сеть, модель, секреты и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+  "network": "не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует"
+ },
+ "critical_controls": [
+  {"id": "anchor-delimiter", "input": "промежуточный anchor LF заменён на hex byte без изменения длины", "expect": "verify problems, events=[], append JournalError"},
+  {"id": "compound-prefix", "input": "первые две journal записи перехэшированы, третья имеет seq=99", "expect": "trusted prefix=0, problems содержат anchor mismatch"},
+  {"id": "posix-parent-fsync", "input": "первый append в root/new-parent/new-child/new-journal", "expect": "directory fsync наблюдался для new-journal, new-child и new-parent до ACK; Windows — явный N/A"}
+ ],
+ "threshold": {
+  "r1_controls": 34,
+  "tip_controls": 12,
+  "review_controls": 3,
+  "windows_passed": 2,
+  "windows_na": 1,
+  "posix_passed": 3,
+  "posix_na": 0,
+  "compound_trusted_prefix": 0,
+  "directory_fsync_min": 3,
+  "ack_after_directory_fsync": 0
+ },
+ "known_limits": [
+  "R2-TIP остаётся отдельным REFUTED экспериментом; review PASS не переписывает его 12/12",
+  "Windows directory fsync недоступен; POSIX-only durability control на Windows даёт явный N/A, а не PASS",
+  "Fsync новых родителей закрывает durable creation entries, но не заменяет файловую систему с корректной fsync семантикой и не защищает от сбоя питания во время самого вызова",
+  "Advisory lock и anchor в том же каталоге не создают trust boundary против процесса, способного переписать оба файла",
+  "Legacy v2 без anchor не мигрируется; W07B authority binding и refs-only policy не входят в review"
+ ],
+ "kill_criteria": [
+  "Любой не-LF разделитель anchor принимается",
+  "Compound corruption возвращает trusted prefix выше первой anchor mismatch",
+  "POSIX первый append получает ACK до fsync всех созданных directory entries",
+  "R1/R2-TIP/review platform thresholds больше не проходят",
+  "Порог снижен, corpus изменён после RED или POSIX-only проверка на Windows названа PASS"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24; исправления review регистрируются отдельно без переписывания R2-TIP",
+ "runs": [
+  "runs/exp-host-journal-safety-r2-tip-review"
+ ],
+ "result": {
+  "verdict": "REFUTED",
+  "instrument_verdict": "PASS",
+  "registered_controls": "Windows 2 passed + 1 POSIX-only N/A; POSIX 3/3, но post-review обнаружил два durability пробела",
+  "review": "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-conclusion.txt",
+  "substantive_findings": ["HIGH topmost new directory parent не fsync-ится", "HIGH retry после directory fsync failure может ACK без directory fsync"],
+  "evidence": [
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-posix-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-windows-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-posix-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-review.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-conclusion.txt"
+  ],
+  "pre_closure_sha256": "622cd7d790851d0eabb92185617eeaf2fd744d30a6b8bd961c1d8afbd00fbf82"
+ },
+ "conclusion": "Три зарегистрированных post-review control прошли, но независимый review воспроизвёл два durability пробела: topmost new directory parent не fsync-ится, а retry после directory-fsync failure может получить ACK без directory fsync. R2-TIP-REVIEW REFUTED; отдельный R2-DURABILITY зарегистрирован без снижения порогов.",
+ "closed": true
+}

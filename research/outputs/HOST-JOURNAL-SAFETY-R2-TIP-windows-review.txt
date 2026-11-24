@@ -1,0 +1,13 @@
+[ok] genesis prev с пересчётом hash отвергнут
+[ok] later prev с пересчётом цепочки отвергнут
+[ok] удаление середины с перенумерацией отвергнуто
+[ok] escaped events проходят append→verify round trip
+[ok] RecursionError нормализован в fail-closed отказ
+[ok] Windows fd закрыт при пост-transfer отказе
+[ok] journal open использует O_APPEND
+[ok] 8 threads дописывают 80 непрерывных записей
+[ok] fsync наблюдён после полной финальной записи
+[ok] положительная связанная цепочка проходит
+[ok] platform dispatch явно различает Windows и POSIX
+
+host journal review: 11/11 ok; N/A 0; провалов: 0

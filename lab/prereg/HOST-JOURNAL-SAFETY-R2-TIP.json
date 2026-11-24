@@ -1,0 +1,100 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-R2-TIP",
+ "date": "2026-11-24",
+ "question": "Закрывает ли отдельный закреплённый tip coherent deletion/truncation/rehash журнала, который остаётся внутренне корректной цепочкой после перенумерации и пересчёта hash?",
+ "hypothesis": "Сам hash chain не отличает исходную цепочку от другой цепочки с пересчитанными суффиксами. Если существующий per-run lock-файл дополнительно хранит append-only канонические SHA-256 каждой записи, валидируется один-к-одному с journal и fsync выполняется после journal fsync до ACK, то удаление, обрезание, замена или добавление только journal-записей даёт fail-closed отказ и точный доверенный префикс. Это не защищает от враждебного процесса, способного переписать оба файла.",
+ "criterion": "PASS только при R1 34/34, review Windows 11/11 без N/A либо POSIX 10 passed с ровно одним явным Windows-only N/A, и R2-TIP 12/12 на Windows и POSIX без N/A. Обязательны: точная positive anchor-цепочка; renumbered deletion даёт verify=1 с problems, events=[] и отказ append без изменения байтов; rehashed event mutation, prefix truncation, unanchored suffix, missing/malformed/torn anchor отвергаются; journal fsync наблюдён до anchor fsync и ACK; сбой anchor fsync не даёт ACK; crash gap journal без anchor fail-closed; 4 процесса x20 дают 80 записей, 80 непрерывных seq и 80 точных anchor lines. Любой провал, N/A, ослабление R1/review или изменение порога после RED означает отсутствие PASS.",
+ "arms": [
+  "A (до фикса): v2 journal имеет корректные prev/sha256, но lock-файл содержит только блокировку; coherent deletion с перенумерацией и пересчётом хешей принимается как verify=(2, []).",
+  "B (после фикса): тот же <run>.lock остаётся mutex и хранит append-only строки <64 lowercase hex>\\n по одной на запись; MAX_TIP_BYTES=64 MiB; чтение/валидация anchor идёт под тем же per-run lock; journal и anchor сравниваются по индексу и длине; append проверяет старое совпадение до journal write, пишет journal, fsync journal, пишет anchor write-loop, fsync anchor, проверяет identity/size и только затем возвращает ACK; POSIX directory fsync после первого создания выполняется до ACK; verify/events/append fail-closed, auto-repair и migration нет."
+ ],
+ "sensitivity": "Каждый негативный control меняет только journal или только anchor, либо инъецирует один fsync failure. Renumbered-deletion пересчитывает seq/prev/sha256 оставшегося суффикса, поэтому старый self-hash проверку не ловит; новый anchor comparison обязан указать первую несовпавшую позицию. Положительные controls исключают стратегию 'отвергать всё'. Конкурентный batch использует общий start gate и проверяет точное соответствие 80 journal hashes 80 anchor lines.",
+ "unit_of_analysis": "одна journal/anchor пара; одна mutированная запись; одна повреждённая anchor-строка; один инъецированный fsync failure; один concurrent batch 4x20",
+ "primary_metric": "r1_controls=34; review_windows_passed=11; review_windows_na=0; review_posix_passed=10; review_posix_na=1; tip_controls=12; tip_windows_passed=12; tip_posix_passed=12; tip_na=0; concurrent_records=80; unique_seq=80; anchor_lines=80; fsync_journal_before_anchor=true; ack_on_anchor_fsync_failure=0",
+ "test": "python tests/test_host_journal_tip.py",
+ "stopping_rule": "Один prereg batch: сохранить RED на текущем production-коде, реализовать только внешний tip в существующем lock-файле, затем один Windows GREEN и один POSIX GREEN. Остановиться при первом необъяснённом провале; не менять 12 controls, R1 34 controls, review corpus, hash domain, seq/lock/fsync критерии и platform thresholds после RED. W07B не смешивать с этим batch.",
+ "fixture": "Только tempfile-каталоги, синтетические строки и дочерние процессы того же Python; os.fsync инструментируется обёрткой, читающей содержимое дескриптора; сеть, модель, секреты и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+  "network": "не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+ },
+ "critical_controls": [
+  {"id": "anchor-positive", "input": "три обычных append", "expect": "lock содержит ровно три canonical hash lines; verify=3, problems=[]"},
+  {"id": "renumbered-deletion", "input": "средняя journal-запись удалена, seq/prev/sha256 пересчитаны", "expect": "verify=1 с problems, events=[], append отказ, journal bytes неизменны"},
+  {"id": "rehashed-mutation", "input": "event позднее переписан, собственный hash пересчитан", "expect": "первая несовпавшая anchor позиция определяет trusted prefix"},
+  {"id": "prefix-truncation", "input": "journal обрезан до валидного префикса, anchor не изменён", "expect": "missing anchored suffix даёт problems и events=[]"},
+  {"id": "unanchored-suffix", "input": "валидная journal-запись добавлена без anchor line", "expect": "unanchored record даёт problems и events=[]"},
+  {"id": "missing-anchor", "input": "существующий v2 journal без anchor lines", "expect": "fail-closed без migration"},
+  {"id": "malformed-anchor", "input": "не-hex или не lowercase anchor line", "expect": "fail-closed"},
+  {"id": "torn-anchor", "input": "anchor без завершающего LF или частичная строка", "expect": "fail-closed"},
+  {"id": "fsync-order", "input": "обёртка os.fsync читает journal и anchor дескрипторы", "expect": "полная journal запись наблюдаема до полной anchor line и ACK"},
+  {"id": "anchor-fsync-failure", "input": "journal fsync успешен, anchor fsync инъецированно падает", "expect": "append не возвращает ACK"},
+  {"id": "crash-gap", "input": "journal содержит запись, anchor отстаёт на одну строку", "expect": "verify problems, events=[], append отказ"},
+  {"id": "concurrent-anchor", "input": "4 процесса x20 append после общего start gate", "expect": "80 journal records, seq 1..80, 80 точных anchor lines, verify=80 без problems"}
+ ],
+ "threshold": {
+  "r1_controls": 34,
+  "review_cases": 11,
+  "review_windows_passed": 11,
+  "review_windows_na": 0,
+  "review_posix_passed": 10,
+  "review_posix_na": 1,
+  "tip_controls": 12,
+  "tip_windows_passed": 12,
+  "tip_posix_passed": 12,
+  "tip_na": 0,
+  "concurrent_processes": 4,
+  "appends_per_process": 20,
+  "concurrent_records": 80,
+  "anchor_lines": 80,
+  "max_tip_bytes": 67108864,
+  "ack_on_anchor_fsync_failure": 0
+ },
+ "known_limits": [
+  "R1 и R1-REVIEW остаются отдельными REFUTED экспериментами; R2-TIP PASS не переписывает их результаты",
+  "Anchor в том же каталоге обнаруживает изменение только одного из файлов, но не создаёт trust boundary против процесса, способного переписать journal и lock; это документированный residual",
+  "Advisory lock координирует только участников API; посторонний писатель не становится честным",
+  "Между journal fsync и anchor fsync нет атомарной двухфайловой транзакции; разрыв даёт fail-closed отказ и ручное расследование, а не auto-repair",
+  "Windows directory fsync недоступен и не выдаётся за выполненный; file fsync journal и anchor обязателен",
+  "Legacy v2 без anchor отвергается и не мигрируется; исторические байты не переписываются",
+  "W07B run/session authority, typed refs-only events, bridge strict schema и canary controls остаются отдельным срезом"
+ ],
+ "kill_criteria": [
+  "Renumbered deletion/rehashed mutation принимается или events возвращает изменённые события",
+  "Journal и anchor имеют разную длину или первую несовпавшую позицию, но verify не сообщает problems",
+  "Anchor пишется или fsync выполняется до journal fsync либо append возвращает ACK после anchor fsync failure",
+  "Concurrent batch даёт не 80 точных journal/anchor пар",
+  "R1 34/34 или review platform thresholds больше не проходят",
+  "Порог снижен, контроль изменён после RED или неисполненная проверка названа PASS"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; storage safety и authority binding разделены на W07A/W07B",
+ "runs": [
+  "runs/exp-host-journal-safety-r2-tip"
+ ],
+ "result": {
+  "verdict": "REFUTED",
+  "instrument_verdict": "PASS",
+  "registered_controls": "12/12 на Windows и POSIX, но post-review обнаружил дополнительные пробелы",
+  "red_before": "0/12",
+  "review": "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-conclusion.txt",
+  "substantive_findings": ["MEDIUM anchor delimiter", "MEDIUM compound trusted prefix", "MEDIUM POSIX parent directory durability"],
+  "evidence": [
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-r1.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-review.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-r1.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-review.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-posix-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-conclusion.txt"
+  ],
+  "pre_closure_sha256": "ac6e42876df5d08244f4d441c4bcc3f428d5cd1dcb740f62dac17657f07a5491"
+ },
+ "conclusion": "R2-TIP опровергнут post-review: 12/12 зарегистрированных controls прошли на Windows и POSIX, но intermediate anchor delimiter принимался, compound corruption завышала trusted prefix, а POSIX first-creation fsync не охватывал новых родителей. 12/12 не является PASS; отдельный R2-TIP-REVIEW зарегистрирован без изменения corpus/thresholds.",
+ "closed": true
+}

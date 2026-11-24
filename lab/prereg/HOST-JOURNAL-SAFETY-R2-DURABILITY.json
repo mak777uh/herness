@@ -1,0 +1,97 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-R2-DURABILITY",
+ "date": "2026-11-24",
+ "question": "Закрывают ли fsync полной directory ancestry перед каждым ACK и повтор directory fsync после неудачной попытки два durability finding, не снижая прежние журнальные пороги?",
+ "hypothesis": "R2-TIP-REVIEW прошёл свои 3 controls, но не закрепил entry самого верхнего нового каталога в существующем parent и позволял retry получить ACK без directory fsync. Fsync journal directory и каждого parent до filesystem root перед каждым ACK, независимо от created текущего вызова, закроет оба пробела.",
+ "criterion": "PASS только при R1 34/34, R1-REVIEW Windows 11/11 либо POSIX 10 passed с одним явным Windows-only N/A, R2-TIP 12/12 на Windows и POSIX, и strengthened review suite: Windows 2 passed + 2 явных POSIX-only N/A либо POSIX 4/4 без N/A. POSIX обязан наблюдать fsync journal directory и всех его parents от глубины до root до ACK; после инъецированного directory fsync failure первый ACK запрещён, retry seq=2 обязан повторить fsync полной ancestry. Любой провал, лишний N/A, ослабление прежних порогов или изменение corpus после RED означает отсутствие PASS.",
+ "arms": [
+  "A (R2-TIP-REVIEW): directory fsync выполняется только при создании journal текущим вызовом и только для ранее отсутствующих каталогов; существующий parent самого верхнего нового каталога пропущен, retry после сбоя может обойти directory fsync.",
+  "B (durability fix): перед каждым ACK выполняется fsync journal directory и каждого parent до filesystem root; порядок от глубины к вершине. Результат не зависит от созданных текущим вызовом каталогов или предыдущей неудачной попытки."
+ ],
+ "sensitivity": "Ancestry control наблюдает реальные directory fsync через /proc/self/fd и требует полный список [journal, *journal.parents], включая существующий parent верхнего нового каталога. Retry control один раз роняет leaf directory fsync, проверяет отсутствие ACK и наличие seq=1/anchor, затем требует seq=2 и повторный полный ancestry fsync.",
+ "unit_of_analysis": "один первый append в новый вложенный каталог; одна неудачная directory-fsync попытка с последующим retry",
+ "primary_metric": "r1_controls=34; r1_review_windows=11; r1_review_posix=10 plus 1 explicit N/A; tip_controls=12; durability_controls=4; windows_passed=2; windows_na=2; posix_passed=4; posix_na=0; full_ancestry_fsync=true; retry_seq=2; ack_on_directory_fsync_failure=0",
+ "test": "python tests/test_host_journal_tip_review.py",
+ "stopping_rule": "Один durability batch: сохранить RED на R2-TIP-REVIEW production-коде, исправить только два findings, затем один Windows GREEN и один POSIX GREEN. После GREEN провести один независимый review. Остановиться при первом необъяснённом провале; не менять corpus, hash domain, seq/lock/file-fsync критерии и platform thresholds после RED. W07B не смешивать.",
+ "fixture": "Только tempfile, синтетические journal/anchor mutations и дочерние каталоги; POSIX controls используют os.fsync wrapper и /proc/self/fd; сеть, модель, секреты и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и отдельный WSL Ubuntu POSIX run",
+  "network": "не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует"
+ },
+ "critical_controls": [
+  {"id": "anchor-delimiter", "input": "промежуточный anchor LF заменён на hex byte без изменения длины", "expect": "verify problems, events=[], append JournalError"},
+  {"id": "compound-prefix", "input": "первые две journal записи перехэшированы, третья имеет seq=99", "expect": "trusted prefix=0, problems содержат anchor mismatch"},
+  {"id": "posix-full-ancestry", "input": "первый append в root/new-parent/new-child/new-journal", "expect": "directory fsync наблюдается для new-journal, new-child, new-parent, root и всех вышележащих parents до ACK; Windows — явный N/A"},
+  {"id": "posix-fsync-retry", "input": "первый leaf directory fsync завершается инъецированной ошибкой, затем повторяется append", "expect": "первый ACK отсутствует; retry даёт seq=2 и повторяет directory fsync полной ancestry; Windows — явный N/A"}
+ ],
+ "threshold": {
+  "r1_controls": 34,
+  "r1_review_windows": 11,
+  "r1_review_posix": 10,
+  "r1_review_posix_na": 1,
+  "tip_controls": 12,
+  "durability_controls": 4,
+  "windows_passed": 2,
+  "windows_na": 2,
+  "posix_passed": 4,
+  "posix_na": 0,
+  "compound_trusted_prefix": 0,
+  "directory_fsync_min": 3,
+  "full_ancestry_fsync": 1,
+  "retry_seq": 2,
+  "ack_on_directory_fsync_failure": 0
+ },
+ "known_limits": [
+  "R2-TIP-REVIEW остаётся отдельным REFUTED экспериментом; durability PASS не переписывает его результат",
+  "Windows directory fsync недоступен; два POSIX-only durability controls на Windows дают явный N/A, а не PASS",
+  "Fsync полной ancestry дороже первого создания и выполняется перед каждым ACK; цена не измерялась и не выдаётся за оптимизацию",
+  "Гарантия зависит от корректной fsync семантики файловой системы и не защищает от сбоя питания во время самого вызова",
+  "Advisory lock и anchor в том же каталоге не создают trust boundary против процесса, способного переписать оба файла",
+  "Legacy v2 без anchor не мигрируется; W07B authority binding и refs-only policy не входят в durability round"
+ ],
+ "kill_criteria": [
+  "POSIX ACK выдан без fsync parent существующего верхнего нового каталога",
+  "После directory fsync failure retry получает ACK без повторного directory fsync",
+  "Первый append после инъецированного directory fsync failure возвращает ACK",
+  "R1/R1-REVIEW/R2-TIP platform thresholds больше не проходят",
+  "Порог снижен, corpus изменён после RED или POSIX-only проверка на Windows названа PASS"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24; исправления review регистрируются отдельно без переписывания R2-TIP-REVIEW",
+ "runs": [
+  "runs/exp-host-journal-safety-r2-durability"
+ ],
+ "result": {
+  "verdict": "PASS",
+  "instrument_verdict": "PASS",
+  "registered_controls": "Windows 2 passed + 2 явных POSIX-only N/A; POSIX 4/4",
+  "red_before": "POSIX 2/4; оба durability controls провалились",
+  "review": "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-conclusion.txt",
+  "substantive_findings": [],
+  "evidence": [
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-posix-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-windows-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-posix-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-windows-r3-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-windows-r3-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-r3-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-posix-r3-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-posix-r3-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-r3-green.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-review.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-conclusion.txt"
+  ],
+  "pre_closure_sha256": "a403d13c0f1bed1ae3572aab0d47701ea87468f027391bc3d20a7566f02f1b54"
+ },
+ "instrument_strengthening": {
+  "before_red": true,
+  "previous_test_sha256": "0afcb9e8a5bf4b8bc0d038af014338c4b38b599294ad89cc281571a0ed345f18",
+  "strengthened_test_sha256": "753d3b108e87b6229388e4be9a45d3ef2f6e8b3b1280282b5aa1b621e48cae09",
+  "change": "Два прежних cross-platform control сохранены; POSIX ancestry expectation усилен с трёх новых каталогов до полной ancestry, добавлен отдельный fsync-failure/retry control. Minimum_checks остаётся 2."
+ },
+ "conclusion": "Fsync полной directory ancestry перед каждым ACK закрыл оба durability finding: POSIX 4/4, Windows 2 passed + 2 явных POSIX-only N/A, прежние R1/R1-REVIEW/R2-TIP thresholds проходят, независимый post-review не оставил substantive findings. PASS ограничен зарегистрированной fsync семантикой; Windows directory durability остаётся N/A.",
+ "closed": true
+}

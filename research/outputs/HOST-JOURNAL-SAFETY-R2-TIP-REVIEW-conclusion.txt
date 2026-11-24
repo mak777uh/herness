@@ -1,0 +1,39 @@
+HOST-JOURNAL-SAFETY-R2-TIP-REVIEW — conclusion
+Дата: 2026-11-24
+Статус: REFUTED; независимый post-review обнаружил два durability пробела.
+Instrument verdict: PASS. Зарегистрированные 3 controls и пороги не менялись.
+Windows result: host journal tip review: 2/3 ok; N/A 1; провалов: 0
+POSIX result: host journal tip review: 3/3 ok; N/A 0; провалов: 0
+
+Evidence:
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-red-before.txt — Windows RED 0 passed, 1 POSIX-only N/A, 2 провала.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-posix-red-before.txt — POSIX RED 0/3.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-windows-green.txt — Windows 2 passed, 1 явный POSIX-only N/A.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-posix-green.txt — POSIX 3/3.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-windows-r2-green.txt — R1 Windows 34/34.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-windows-r2-green.txt — R1-REVIEW Windows 11/11.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-r2-green.txt — R2-TIP Windows 12/12.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-posix-r2-green.txt — R1 POSIX 34/34.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-posix-r2-green.txt — R1-REVIEW POSIX 10 passed, 1 явный Windows-only N/A.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-r2-green.txt — R2-TIP POSIX 12/12.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-review.txt — независимые оставшиеся findings.
+
+Что подтверждено:
+- Промежуточный anchor LF больше не принимается; verify сообщает problems, events=[], append отказывает.
+- Compound corruption с ранним anchor mismatch и поздней seq error даёт trusted prefix=0.
+- Первый POSIX append выполняет directory fsync для journal, new-child и new-parent до ACK.
+
+Post-review findings:
+1. HIGH — не fsync-ится существующий parent самого верхнего нового каталога; его собственная directory entry может не пережить power loss.
+2. HIGH — после directory-fsync failure retry видит уже созданные файлы и может получить ACK без directory fsync, потому что durability шаг привязан к created текущего вызова.
+
+Решение:
+- R2-TIP-REVIEW не PASS, несмотря на зелёные 3/3 controls.
+- Anchor delimiter и compound-prefix findings считаются закрытыми; два durability findings идут отдельным HOST-JOURNAL-SAFETY-R2-DURABILITY/E-0053.
+- R1/R1-REVIEW/R2-TIP остаются REFUTED; их corpus и thresholds не меняются.
+- Windows directory fsync остаётся явным N/A. W07B не затронут.
+
+Hashes:
+- pre-closure prereg SHA-256: 622cd7d790851d0eabb92185617eeaf2fd744d30a6b8bd961c1d8afbd00fbf82
+- production bin/host_journal.py после review fix: 1064b4a66b874132f61c002858d9d547821e503bb1a4348ceadaf2e640f5a190
+- frozen tests/test_host_journal_tip_review.py: 0afcb9e8a5bf4b8bc0d038af014338c4b38b599294ad89cc281571a0ed345f18

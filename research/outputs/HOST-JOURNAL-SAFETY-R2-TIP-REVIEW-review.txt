@@ -1,0 +1,18 @@
+HOST-JOURNAL-SAFETY-R2-TIP-REVIEW — independent post-review
+Дата: 2026-11-24
+Статус: REVIEW REQUIRED; два substantive durability findings остаются.
+
+Проверенные исправления:
+- anchor-delimiter: каждый 65-й байт обязан быть LF; Finding закрыт.
+- compound trusted prefix: parsed journal prefix всегда сравнивается с anchor, problems объединяются; Finding закрыт.
+
+Оставшиеся findings:
+1. HIGH — topmost new directory parent не fsync-ится.
+   bin/host_journal.py: _prepare_directory собирает только ранее отсутствующие каталоги; append fsync-ит их, но не существующий родитель, содержащий entry самого верхнего нового каталога. Fsync каталога сохраняет entries внутри него, а не его собственную entry в parent. Текущий POSIX control наблюдает new-journal/new-child/new-parent, но не root.
+2. HIGH — retry после directory-fsync failure может получить ACK без directory fsync.
+   Directory fsync в append условен по created текущего вызова. После записи и file fsync сбой directory fsync корректно не даёт ACK, но файлы и каталоги уже существуют. Retry получает created=False и created_directories=[] и может вернуть seq=2 без directory fsync.
+
+Решение:
+- R2-TIP-REVIEW не является PASS, несмотря на зелёные три зарегистрированных control.
+- Оба finding требуют отдельного R2-DURABILITY prereg/RED до production-фикса.
+- Прежние R1/R1-REVIEW/R2-TIP corpus и thresholds не снижаются.

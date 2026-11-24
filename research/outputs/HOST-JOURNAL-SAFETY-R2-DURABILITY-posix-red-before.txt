@@ -1,0 +1,6 @@
+[ok] промежуточный anchor LF проверяется
+[ok] compound corruption не завышает trusted prefix
+[FAIL] POSIX append fsync закрепляет всю ancestry каталогов — AssertionError: [PosixPath('/tmp/tmpel0vhyxu/new-parent/new-child/new-journal'), PosixPath('/tmp/tmpel0vhyxu/new-parent/new-child'), PosixPath('/tmp/tmpel0vhyxu/new-parent')]
+[FAIL] POSIX retry после directory fsync failure повторяет durability шаг — AssertionError: []
+
+host journal durability: 2/4 ok; N/A 0; провалов: 2

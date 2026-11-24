@@ -1,0 +1,88 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-R1-REVIEW",
+ "date": "2026-11-24",
+ "question": "Закрывают ли точечные исправления и отдельные controls пять находок независимого review R1, не меняя исходные 34 controls?",
+ "hypothesis": "R1 34/34 недостаточен: prev не привязан к предыдущей записи, escaped event может получить ACK и стать неверифицируемым, Windows fd течёт при пост-transfer отказе, RecursionError выходит из API, O_APPEND отсутствует. Явная prev-linkage проверка, worst-case canonical record cap до записи, корректная ownership очистка, нормализация parser recursion и append semantics закроют эти дефекты. Исходный R1 corpus/threshold остаётся неизменным.",
+ "criterion": "PASS только если исходный R1 34/34 остаётся зелёным, а review suite даёт Windows 11/11 без N/A либо POSIX 10/11 с ровно одним явным N/A для Windows-only handle-lifetime control. Обязательны: nonzero genesis prev с пересчётом hash отвергнут; later prev с пересчётом текущего и следующего hash отвергнут; удаление середины с перенумерацией и пересчётом hash отвергнуто; 65536-byte NUL/quote/backslash/multibyte events получают ACK и затем полностью верифицируются; глубокий JSON даёт problems/[]/отказ, а не исключение; Windows post-transfer validation failure закрывает CRT fd; POSIX open либо Windows CRT fd имеет O_APPEND; 8 threads x10 append дают 80 непрерывных seq; fsync наблюдён после полной финальной записи; положительная связанная цепочка проходит. Любой провал, лишний N/A, ослабление R1 или изменение порога после RED означает отсутствие PASS.",
+ "arms": [
+  "A (R1 после первого фикса): prev проверяется только как hex; MAX_RECORD_BYTES=MAX_EVENT_BYTES+4096 без проверки canonical line до write; Windows ownership transfer без fd cleanup; json.loads RecursionError не нормализован; POSIX/CRT open без O_APPEND.",
+  "B (review fix): expected_prev=ZERO/previous sha256 передаётся в parser; MAX_RECORD_BYTES=6*MAX_EVENT_BYTES+4096 и canonical line проверяется до write; Windows fd закрывается при любой ошибке после open_osfhandle; RecursionError/ValueError превращаются в JournalError; O_APPEND установлен на обеих платформах; thread/process locks и fsync-before-ACK сохраняются."
+ ],
+ "sensitivity": "Каждый prev mutant пересчитывает собственные hash, поэтому не может быть пойман старым hash-check: различим только явный expected_prev. Escaped-event control проверяет append→verify round trip, а не только размер входной строки. Handle control инъецирует отказ именно после передачи native handle в CRT fd и проверяет закрытие всех захваченных fd. O_APPEND control читает фактические flags открытия journal, а не исходный текст. Thread batch и fsync-full-record controls закрывают пробелы покрытия R1.",
+ "unit_of_analysis": "одна mutированная связанная запись; один escaped event; один инъецированный parser/handle/open failure; один thread batch 8x10; один fsync observation",
+ "primary_metric": "r1_controls=34; review_windows_passed=11; review_windows_na=0; review_posix_passed=10; review_posix_na=1; thread_records=80; unique_seq=80; fsync_complete_records>=1; leaked_fds=0; append_flag_observed=true",
+ "test": "python tests/test_host_journal_review.py",
+ "stopping_rule": "Один review batch: сохранить RED на R1-коде, исправить только пять findings, затем один Windows GREEN и один POSIX GREEN. Остановиться при необъяснённом провале; не менять R1 34 controls, review corpus, hash domain, event/record limits или platform thresholds после RED.",
+ "fixture": "Только tempfile, синтетические события и threads; Windows-only control использует реальный msvcrt.open_osfhandle с инъецированной пост-transfer validation ошибкой; сеть, модель, секреты и внешние аккаунты не используются",
+ "environment": {
+  "host": "Windows 11 build 26300 и отдельный WSL POSIX run",
+  "network": "не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует"
+ },
+ "critical_controls": [
+  {"id": "genesis-prev", "input": "prev != ZERO, собственный sha256 пересчитан", "expect": "verify problems, events [], append отказ"},
+  {"id": "later-prev", "input": "later prev неверен, текущий и следующий hash пересчитаны", "expect": "отказ на первой несвязанной записи"},
+  {"id": "renumbered-deletion", "input": "средняя запись удалена, seq/hash пересчитаны", "expect": "отказ, deletion не маскируется перенумерацией"},
+  {"id": "escaped-roundtrip", "input": "65536 UTF-8 bytes событий из NUL, quote, backslash и multibyte", "expect": "ACK затем verify=1 и events совпадают; canonical record в пределах cap"},
+  {"id": "recursion", "input": "глубоко вложенный JSON ниже record cap", "expect": "verify problems, events [], append JournalError"},
+  {"id": "windows-handle-lifetime", "input": "отказ _validate_descriptor после open_osfhandle", "expect": "0 открытых captured fd; POSIX — явный N/A"},
+  {"id": "append-semantics", "input": "фактические POSIX open/Windows CRT flags", "expect": "journal open содержит O_APPEND"},
+  {"id": "threads", "input": "8 threads x10 append", "expect": "80 записей, seq 1..80, 0 problems"},
+  {"id": "fsync-complete", "input": "os.fsync wrapper читает fd после синхронизации", "expect": "полная canonical запись с завершающим LF наблюдалась до ACK"},
+  {"id": "linked-positive", "input": "три обычные append", "expect": "verify=3, prev первого ZERO, каждый следующий prev = предыдущий sha256"},
+  {"id": "platform-dispatch", "input": "os.name", "expect": "Windows-only control исполнен на Windows; на POSIX напечатан явный N/A и dispatch control прошёл"}
+ ],
+ "threshold": {
+  "r1_controls": 34,
+  "review_cases": 11,
+  "windows_passed": 11,
+  "windows_na": 0,
+  "posix_passed": 10,
+  "posix_na": 1,
+  "max_event_bytes": 65536,
+  "max_record_bytes": 397312,
+  "threads": 8,
+  "appends_per_thread": 10,
+  "thread_records": 80,
+  "leaked_fds": 0
+ },
+ "known_limits": [
+  "R1 остаётся отдельным REFUTED экспериментом; review PASS не переписывает его результат",
+  "Windows file-symlink создание недоступно без привилегии; фактический junction/reparse control сохраняется, но file-symlink branch на Windows остаётся непокрытым",
+  "Advisory lock и safe-open не защищают от враждебного процесса с правом записи в host directory; замена base/lock inode остаётся residual",
+  "Windows directory fsync недоступен; file fsync обязателен, directory durability не заявляется",
+  "W07B run/session binding, typed refs-only events, bridge strict schema и canary controls не входят в этот review"
+ ],
+ "kill_criteria": [
+  "Любой связанный prev mutant принимается или events возвращает его",
+  "Escaped event получает ACK, но append→verify не равен 1",
+  "Инъецированный пост-transfer отказ оставляет открытый fd",
+  "RecursionError выходит из verify/events/append",
+  "Journal open не содержит O_APPEND",
+  "Thread batch даёт не 80 непрерывных seq",
+  "R1 34/34 больше не проходит или review threshold снижен"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24; независимый review требует отдельного prereg, а не переписывания R1",
+ "runs": [
+  "runs/exp-host-journal-safety-r1-review"
+ ],
+ "result": {
+  "verdict": "REFUTED",
+  "instrument_verdict": "PASS",
+  "registered_controls": "10/11 после пяти исправлений; renumbered-deletion остаётся принятым",
+  "red_before": "4/11 после исправления только инструмента; первоначальный 3/11 сохранён отдельно",
+  "review": "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-conclusion.txt",
+  "substantive_findings": ["coherent deletion/truncation/rehash требует внешнего закреплённого tip; пять зарегистрированных исправлений этого не обеспечивают"],
+  "evidence": [
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-red-before-instrument-fix.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-green-attempt.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-conclusion.txt"
+  ],
+  "pre_closure_sha256": "d59d4d98f4cede6287bfc4c54a6f8cbf6d7e79bbd251d7c63e57f2128d39ee21"
+ },
+ "conclusion": "R1-REVIEW опровергнут: пять точечных исправлений закрыли prev mutants, escaped-event round trip, fd lifetime, parser recursion и O_APPEND, а R1 остался 34/34. Однако coherent deletion с перенумерацией и пересчётом хешей по-прежнему даёт verify=(2, []): это другая внутренне корректная цепочка, и зарегистрированный arm B не содержит внешнего tip. 10/11 не является PASS; отдельный R2-TIP зарегистрируется без изменения этого corpus/threshold.",
+ "closed": true
+}

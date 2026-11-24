@@ -1,0 +1,36 @@
+HOST-JOURNAL-SAFETY-R1 — независимый code review
+Дата: 2026-11-24
+Статус: REVIEW REQUIRED; первый раунд не является PASS.
+
+Проверены целиком bin/host_journal.py, tests/test_host_journal.py,
+lab/prereg/HOST-JOURNAL-SAFETY-R1.json и call sites bridge/accept. Review read-only;
+воспроизведения выполнены в disposable tempfile-каталогах на Windows.
+
+R1 evidence:
+- research/outputs/HOST-JOURNAL-SAFETY-R1-red-before.txt — 10/34, 24 провала.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-red-before-instrument-fix.txt — 10/34 после исправления только инструментирования os.fsync/os.write.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-green-before-review.txt — 34/34, но review обнаружил недостающие инварианты.
+
+HIGH-1 — prev не проверяется как связь цепочки.
+bin/host_journal.py проверял только 64 hex символов prev. Мутант первой записи с ненулевым prev и пересчитанным собственным sha256 принимался: verify=(2, []), events возвращал обе записи, append продолжал журнал. Аналогично принималась несвязанная later prev и удаление середины с перенумерацией/пересчётом хешей. Причина: тест dropped-record проверял seq gap и допускал либо seq, либо prev, поэтому linkage не был изолирован. Это могло дать host_verified в accept.py на внутренне разорванной цепочке.
+
+HIGH-2 — допустимый event получал ACK, но создавал неверифицируемую запись.
+MAX_EVENT_BYTES=65536 измеряет сырой UTF-8, а canonical JSON расширяет control characters до шести байт. Строка "\x00"*65536 получала ACK seq=1, но canonical запись была 393444 байта при MAX_RECORD_BYTES=69632; verify=(0, ["запись больше разрешённого размера"]), следующие append блокировались. Bridge возвращал 200 после такого append.
+
+MEDIUM-1 — Windows descriptor leak после передачи ownership.
+msvcrt.open_osfhandle передавал native handle в CRT fd; если пост-transaction _validate_descriptor выбрасывал отказ, finally уже не закрывал native handle, а fd не закрывался в _windows_open. Повторяющиеся отказы могли исчерпать handles.
+
+MEDIUM-2 — RecursionError выходил из fail-closed API.
+Глубоко вложенный JSON в unknown field ниже record cap вызывал RecursionError из json.loads; verify/events не нормализовали его в problems/[], accept.py мог завершиться исключением вместо FAIL.
+
+LOW-1 — зарегистрированный O_APPEND отсутствовал.
+Prereg явно требует O_APPEND/write-loop. POSIX open не имел O_APPEND, Windows CRT fd не получал O_APPEND; запись полагалась на offset после чтения. Cooperative lock не заменяет append semantics при подмене lock inode/некооперирующем писателе.
+
+Дополнительные пробелы покрытия:
+- Windows journal-reparse control использовал directory junction с именем link.jsonl; он подтверждает отказ reparse base/directory, но не обязательно file-handle reparse branch.
+- fsync control проверял лишь некоторый positive-size fd, а не полную финальную запись.
+- thread-lock requirement не имел отдельного thread stress control.
+- POSIX final-component open anchored к dir_fd, но dir_fd закрывается до последующей pathname validation; враждебная замена base directory остаётся documented residual.
+- Bridge strict schema/duplicate keys/run-session authority принадлежит W07B и в R1 не объявляется закрытой.
+
+Решение: зарегистрировать отдельный HOST-JOURNAL-SAFETY-R1-REVIEW до исправлений. R1 сохраняется как REFUTED/REVIEW REQUIRED, его 34/34 не переименовываются в PASS. Исходные R1 thresholds/hashes не меняются.

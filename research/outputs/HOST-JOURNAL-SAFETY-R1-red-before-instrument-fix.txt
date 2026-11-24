@@ -1,0 +1,37 @@
+[ok] цепочка растёт и проверяется
+[ok] подмена события ломает проверку
+[ok] выкинутая запись ломает цепочку prev
+[ok] дописывание идёт за последней записью
+[ok] чужого журнала нет — проблема, а не пустой успех
+[FAIL] canonical v2 хеширует полный envelope — AssertionError: {'v': 1, 'seq': 1, 'prev': '0000000000000000000000000000000000000000000000000000000000000000', 'sha256': '0efb3c6f31f711db7ed2866a9f51dcf88b07543bcf0f155dce8fb81caa96b064', 'at': '2026-11-24T03:56:56+00:00', 'event': 'run/start'}
+[FAIL] traversal run ID отвергнут — AssertionError: опасная операция завершилась успешно
+[FAIL] absolute run ID отвергнут — AssertionError: опасная операция завершилась успешно
+[FAIL] не-opaque алфавит run ID отвергнут — AssertionError: опасная операция завершилась успешно
+[FAIL] overlong run ID отвергнут — AssertionError: опасная операция завершилась успешно
+[ok] NUL в run ID отвергнут
+[FAIL] legacy v1 отвергнут без миграции — AssertionError: (1, [])
+[FAIL] подмена seq обнаружена — AssertionError: (2, [])
+[FAIL] подмена версии обнаружена — AssertionError: (1, [])
+[FAIL] подмена timestamp полного envelope обнаружена — AssertionError: (1, [])
+[FAIL] валидная цепочка чужого run ID отвергнута — AssertionError: (1, [])
+[FAIL] неизвестное поле envelope отвергнуто — AssertionError: (1, [])
+[FAIL] неcanonical JSON строка отвергнута — AssertionError: (1, [])
+[FAIL] duplicate JSON key отвергнут — AssertionError: (1, [])
+[FAIL] malformed середина блокирует append — AssertionError: опасная операция завершилась успешно
+[ok] оборванный хвост блокирует append без обрезки
+[FAIL] пустой журнал не является валидным — AssertionError: (0, [])
+[ok] symlink/reparse журнала отвергнут
+[FAIL] hardlink журнала отвергнут — AssertionError: 
+[ok] каталог на месте журнала отвергнут
+[FAIL] symlink/reparse базовый каталог отвергнут — AssertionError: опасная операция завершилась успешно
+[FAIL] hardlinked lock отвергнут — AssertionError: опасная операция завершилась успешно
+[FAIL] 4 процесса дописывают 80 записей без гонки — AssertionError: (1, ['строка 2: prev не сходится с предыдущей записью'])
+[FAIL] fsync завершён до ACK — AssertionError: []
+[FAIL] сбой fsync не даёт ACK — AssertionError: опасная операция завершилась успешно
+[FAIL] write-loop завершает частичные записи — AttributeError: module 'bin.host_journal' has no attribute '_write_all'
+[ok] не-str event отвергнут
+[FAIL] граница event 65536 bytes исполняется — AttributeError: module 'bin.host_journal' has no attribute 'MAX_EVENT_BYTES'
+[FAIL] events не возвращает доверенный префикс повреждённой цепочки — AssertionError: 
+
+host journal safety: 10/34 ok
+провалов: 24

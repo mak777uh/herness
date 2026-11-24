@@ -1,0 +1,5 @@
+[FAIL] промежуточный anchor LF проверяется — AssertionError: (2, [])
+[FAIL] compound corruption не завышает trusted prefix — AssertionError: (2, ['строка 3: seq не непрерывен: ждали 3'])
+[N/A] POSIX первый append fsync делает новые parent entries
+
+host journal tip review: 0/3 ok; N/A 1; провалов: 2

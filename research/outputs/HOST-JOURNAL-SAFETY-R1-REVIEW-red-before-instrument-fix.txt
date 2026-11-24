@@ -1,0 +1,13 @@
+[FAIL] genesis prev с пересчётом hash отвергнут — AssertionError: (2, [])
+[FAIL] later prev с пересчётом цепочки отвергнут — AssertionError: (3, [])
+[FAIL] удаление середины с перенумерацией отвергнуто — AssertionError: (2, [])
+[FAIL] escaped events проходят append→verify round trip — AssertionError: (0, 0, ['строка 1: запись больше разрешённого размера'])
+[FAIL] RecursionError нормализован в fail-closed отказ — RecursionError: maximum recursion depth exceeded while decoding a JSON array from a unicode string
+[FAIL] Windows fd закрыт при пост-transfer отказе — AssertionError: [4]
+[FAIL] journal open использует O_APPEND — AssertionError: [32898, 32898]
+[ok] 8 threads дописывают 80 непрерывных записей
+[FAIL] fsync наблюдён после полной финальной записи — TypeError: lseek expected 3 arguments, got 2
+[ok] положительная связанная цепочка проходит
+[ok] platform dispatch явно различает Windows и POSIX
+
+host journal review: 3/11 ok; N/A 0; провалов: 8

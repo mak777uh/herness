@@ -1,0 +1,84 @@
+{
+ "schema": 2,
+ "id": "HOST-JOURNAL-SAFETY-R1",
+ "date": "2026-11-24",
+ "question": "Закрывает ли host_journal storage boundary от выхода run ID за каталог, подмены файловых объектов, гонок дописывания, повреждённой середины/хвоста, подмены полного envelope и ACK до fsync?",
+ "hypothesis": "Строгий opaque run ID, fixed-name resolved containment, descriptor-based regular/nlink/reparse checks, per-run interprocess+thread lock, непрерывный seq и версия 2, domain-separated SHA-256 полного canonical envelope и fsync до возврата сделают append/verify/events fail-closed. Текущий v1 принимает traversal/ссылки/гонки, проверяет только prev+event, игнорирует seq/v/полный envelope и не вызывает fsync.",
+ "criterion": "PASS только при 34/34 исполненных controls без провалов и без N/A: положительные canonical v2 записи; отказ traversal/absolute/NUL/overlong/не-opaque ID; legacy v1, seq/version/envelope/run/unknown-field/noncanonical/duplicate-key/malformed-middle/torn-tail/empty corruption; отказ symlink (POSIX) или reparse junction (Windows), hardlink, directory и hardlinked lock; 4 независимых процесса дописывают ровно 80 записей с seq 1..80 и единой цепочкой; fsync наблюдён до ACK, его сбой не даёт ACK; write-loop завершает частичные записи; events на повреждённой цепочке возвращает пусто, а не доверенный префикс. RED до фикса сохраняется. Любой отказ controls, N/A или ослабление порога означает отсутствие PASS. Этот срез не доказывает host-issued run/session binding и refs-only policy — они принадлежат отдельному W07B.",
+ "arms": [
+  "A (до фикса): текущий bin/host_journal.py v1; run напрямую входит в имя файла; нет lock/safe-open/nlink/reparse/fsync; hash только prev+event; verify не проверяет seq/v/schema/canonicality/run.",
+  "B (после фикса): v2; run regex ^[a-z0-9](?:[a-z0-9-]{0,126}[a-z0-9])?$; фиксированное имя <run>.jsonl и <run>.lock внутри resolved каталога; safe descriptor open, regular file, nlink=1, reparse refusal, per-run lock; canonical compact sorted UTF-8 JSONL; SHA-256('HOST-JOURNAL-RECORD-V2\\0' + canonical(envelope без sha256)); seq=1..N; O_APPEND/write-loop/fsync до ACK; полная повторная валидация перед append; events fail-closed."
+ ],
+ "sensitivity": "Каждый негативный control изменяет ровно один инвариант или файловый объект и обязан получить отказ; положительные controls обязаны пройти, чтобы 'отвергать всё' не считалось успехом. Конкурентный прогон использует общий start gate и 4 процесса x20 append: дубли/пропуски seq или разрыв цепочки различимы детерминированно. Fsync control инструментирует сам вызов до возврата append, а не наличие данных в page cache. Full-envelope mutant меняет at без пересчёта hash; старый v1 его примет, v2 обязан отвергнуть.",
+ "unit_of_analysis": "одна host-journal запись v2; один run ID; один файловый объект; один concurrent batch из 4 процессов x20 append; один инъецированный fsync failure",
+ "primary_metric": "controls_passed/34; controls_na; concurrent_records=80; unique_seq=80; seq_min=1; seq_max=80; verify_problems=0; fsync_calls_before_ack>=1; ack_on_fsync_failure=0; outside_files=0",
+ "test": "python tests/test_host_journal.py",
+ "stopping_rule": "Один prereg batch: сохранить RED до production-изменения, реализовать только W07A, затем один GREEN batch и focused regressions. Остановиться при первом необъяснённом провале; не менять 34 controls, regex, hash domain, seq/lock/fsync критерии после RED. W07B не смешивать с этим batch.",
+ "fixture": "Только tempfile-каталоги и синтетические строки; os.symlink на POSIX либо cmd mklink /J на Windows; os.link для hardlink; дочерние процессы того же Python без модели, сети, секретов и внешних аккаунтов",
+ "environment": {
+  "host": "Windows 11 build 26300; POSIX-путь должен исполняться отдельно, Windows-успех его не заменяет",
+  "network": "не используется",
+  "real_secrets": false,
+  "refs_search": "NOT PROVIDED: refs sync отсутствует; пусто не считается успешным поиском"
+ },
+ "critical_controls": [
+  {"id": "opaque-run-id", "input": "../outside, absolute, NUL, 129 chars, uppercase/underscore/dot/Unicode/edge hyphen", "expect": "0 записей вне каталога; каждый некорректный ID отвергнут"},
+  {"id": "file-object", "input": "symlink или Windows junction, hardlink, directory, hardlinked lock", "expect": "отказ до использования объекта; nlink=1 и regular/no-reparse обязательны"},
+  {"id": "chain", "input": "legacy v1, seq/version/at/run/unknown-field mutants, noncanonical JSON, duplicate key, malformed middle, torn tail, empty file", "expect": "verify/events/append fail-closed; допустимый префикс не выдаётся за целый журнал"},
+  {"id": "concurrency", "input": "4 процесса x20 append после общего start gate", "expect": "80 записей, 80 уникальных seq, непрерывные 1..80, 0 проблем verify"},
+  {"id": "durability", "input": "инструментированный os.fsync и инъецированный fsync failure", "expect": "fsync до ACK; при сбое append не возвращает запись"},
+  {"id": "write-loop", "input": "частичные os.write", "expect": "полная запись без потери байт; zero write превращается в отказ"},
+  {"id": "event-bound", "input": "не-str event; 65536 и 65537 UTF-8 bytes", "expect": "не-str и >65536 отвергнуты; ровно 65536 принято"}
+ ],
+ "threshold": {
+  "controls_total": 34,
+  "controls_passed": 34,
+  "controls_na": 0,
+  "concurrent_processes": 4,
+  "appends_per_process": 20,
+  "concurrent_records": 80,
+  "max_run_id_bytes": 128,
+  "max_event_bytes": 65536,
+  "required_nlink": 1,
+  "fsync_calls_before_ack_min": 1,
+  "ack_on_fsync_failure": 0
+ },
+ "known_limits": [
+  "Защита не доказывает стойкость против враждебного процесса, уже имеющего право менять host directory; safe-open, identity checks и lock сужают предустановленные ссылки и гонки, но не создают новой trust boundary",
+  "Advisory lock координирует только участников, использующих этот API; посторонний писатель файла не становится честным",
+  "На Windows fsync файла выполняется, fsync каталога недоступен и не выдаётся за выполненный",
+  "v1 журналы отвергаются fail-closed и не мигрируются; исторические байты не переписываются",
+  "Полная валидация перед каждым append prioritizes fail-closed над пропускной способностью; предел 64 MiB/journal и 64 KiB/event являются явными границами",
+  "Run/session authority, typed refs-only events, disclosure/retention policy, bridge strict schema и canary controls остаются W07B"
+ ],
+ "kill_criteria": [
+  "Любой некорректный run ID создаёт файл вне resolved journal directory",
+  "Symlink/reparse/hardlink объект принимается или проверяется только по пути после open",
+  "Конкурентный batch даёт дубли/пропуски seq или append продолжил поверх malformed/torn tail",
+  "Hash не покрывает v/seq/at/run/event либо verify принимает неcanonical/duplicate-key envelope",
+  "append возвращает ACK без os.fsync или после fsync failure",
+  "events возвращает доверенный префикс повреждённого журнала",
+  "Порог 34/34 снижен или неисполненный контроль назван GREEN"
+ ],
+ "owner_decision": "Утверждённый W07 и owner scope 2026-11-24: разработка и технические решения в рамках gates; storage safety и authority binding разделены на W07A/W07B",
+ "runs": [
+  "runs/exp-host-journal-safety-r1"
+ ],
+ "result": {
+  "verdict": "REFUTED",
+  "instrument_verdict": "PASS",
+  "registered_controls": "34/34 после фикса, но этого недостаточно для заявленной гипотезы",
+  "red_before": "10/34",
+  "review": "research/outputs/HOST-JOURNAL-SAFETY-R1-review.txt",
+  "substantive_findings": ["HIGH-1 prev linkage", "HIGH-2 escaped-event ACK creates unverifiable record", "MEDIUM-1 Windows fd leak", "MEDIUM-2 RecursionError", "LOW-1 O_APPEND absent"],
+  "evidence": [
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-red-before.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-red-before-instrument-fix.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-green-before-review.txt",
+   "research/outputs/HOST-JOURNAL-SAFETY-R1-review.txt"
+  ],
+  "pre_closure_sha256": "0985728325a0b7bbf15d7358db68b920179de9b19e7f7b63f721d1a35425af5e"
+ },
+ "conclusion": "R1 опровергнут независимым review: 34/34 controls прошли, но prev не был привязан к предыдущей записи, а 65536 NUL получали ACK и создавали запись выше verifier cap. Также найдены Windows descriptor leak, RecursionError вне fail-closed API и отсутствие зарегистрированного O_APPEND. R1 не является PASS; исправления регистрируются отдельным HOST-JOURNAL-SAFETY-R1-REVIEW. Исходные 34 controls и их порог не меняются.",
+ "closed": true
+}

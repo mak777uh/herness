@@ -1,0 +1,37 @@
+HOST-JOURNAL-SAFETY-R2-TIP — conclusion
+Дата: 2026-11-24
+Статус: REFUTED; независимый post-review обнаружил существенные пробелы.
+Instrument verdict: PASS. Зарегистрированные 12 controls и пороги не менялись.
+Windows result: host journal tip: 12/12 ok; N/A 0; провалов: 0
+
+Evidence:
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-red-before.txt — production RED 0/12.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-r1.txt — Windows R1 34/34.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-review.txt — Windows R1-REVIEW 11/11.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-green.txt — Windows R2-TIP 12/12.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-r1.txt — WSL POSIX R1 34/34.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-review.txt — WSL POSIX R1-REVIEW 10 passed, 1 явный Windows-only N/A.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-green.txt — WSL POSIX R2-TIP 12/12.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-red-before.txt — Windows post-review RED 0 passed, 1 POSIX-only N/A, 2 провала.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-posix-red-before.txt — POSIX post-review RED 0/3.
+
+Что подтверждено:
+- Append-only per-record anchor в существующем lock-файле обнаруживает coherent deletion/rehash, prefix truncation, unanchored suffix, missing/malformed/torn anchor и crash gap.
+- Journal fsync наблюдён до anchor fsync и ACK; инъецированный anchor fsync failure не даёт ACK.
+- 4 процесса x20 дают 80 непрерывных journal записей и 80 точных anchor lines на обеих платформах.
+
+Post-review findings:
+1. MEDIUM — промежуточный anchor LF не проверялся. Замена одного разделителя на hex сохраняла длину и parsed hashes; verify=(2, []).
+2. LOW/MEDIUM — compound corruption завышала trusted prefix. Ранний rehashed anchor mismatch плюс поздняя seq error давал verify=(2, problems), хотя доверенный префикс должен быть 0.
+3. MEDIUM — POSIX first-creation fsync охватывал только leaf directory. Новые родительские каталоги не получали directory fsync, поэтому ACK не доказывал durable creation entries.
+
+Решение:
+- R2-TIP не является PASS, несмотря на 12/12.
+- Три findings зарегистрированы отдельным HOST-JOURNAL-SAFETY-R2-TIP-REVIEW/E-0052 до исправлений.
+- R1 и R1-REVIEW остаются REFUTED; их corpus/thresholds не меняются.
+- Legacy v2 без anchor не мигрируется. W07B не затронут.
+
+Hashes:
+- pre-closure prereg SHA-256: ac6e42876df5d08244f4d441c4bcc3f428d5cd1dcb740f62dac17657f07a5491
+- production bin/host_journal.py до review fix: 903c153ca2e1e10667113bc24bb671598fff3765ab85a4c91ced29fe2c5a3f86
+- frozen tests/test_host_journal_tip.py: afdf2436373b671096c661f5f7637377d618fd1b450af6c26ba11ac2700f6e98

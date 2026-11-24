@@ -1,0 +1,5 @@
+[FAIL] промежуточный anchor LF проверяется — AssertionError: (2, [])
+[FAIL] compound corruption не завышает trusted prefix — AssertionError: (2, ['строка 3: seq не непрерывен: ждали 3'])
+[FAIL] POSIX первый append fsync делает новые parent entries — AssertionError: [PosixPath('/tmp/tmpo791a9_8/new-parent/new-child/new-journal')]
+
+host journal tip review: 0/3 ok; N/A 0; провалов: 3

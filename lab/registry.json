@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-11-23",
+ "updated_at": "2026-11-24",
  "program": {
   "name": "herness",
   "phase": "M0: прибор собран, внешних задач нет; идёт проверка предпосылки ядра",
@@ -491,6 +491,61 @@
    "conclusion": "research/outputs/BRIDGE-HTTP-SUBSET-R1-2026-11-24.txt",
    "claim": "C-0339",
    "note": "PASS: RED Python 1/3 и Rust 2 failed; GREEN Python 3/3, W17 79/79, review 8/8, полный Rust suite 185/0, focused regressions без провалов. Rust response timeout снова configurable 180 с; EOF проверяется до response; header total/count/line boundaries изолированы. W17/REVIEW критерии не менялись; это не activation/K9.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0049",
+   "title": "HOST-JOURNAL-SAFETY-R1: безопасный storage boundary хостового журнала",
+   "hypothesis": "Strict opaque run ID, safe descriptor open, regular/nlink/reparse checks, per-run lock, v2 full-envelope hash и fsync до ACK закроют traversal, подмену файловых объектов, гонки и повреждённые цепочки без ослабления fail-closed семантики.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-R1.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-R1-review.txt",
+   "claim": "C-0341",
+   "note": "REFUTED: R1 RED 10/34, после фикса 34/34, но независимый review воспроизвёл непривязанный prev, ACK для неверифицируемого escaped-event, Windows fd leak, RecursionError и отсутствие O_APPEND. R1 не PASS; отдельный review-раунд зарегистрирован E-0050.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0050",
+   "title": "HOST-JOURNAL-SAFETY-R1-REVIEW: prev linkage, escaped records, handle lifetime и append semantics",
+   "hypothesis": "Отдельные review controls и точечные исправления закроют находки R1 без изменения его 34 controls: prev обязан быть ZERO/previous sha256; canonical record cap учитывает JSON escaping и проверяется до записи; Windows fd закрывается при любой ошибке; RecursionError нормализуется в отказ; O_APPEND обязателен.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-R1-REVIEW.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-conclusion.txt",
+   "claim": "C-0342",
+   "note": "REFUTED: после пяти исправлений R1 34/34 и review 10/11; coherent deletion с перенумерацией и пересчётом хешей по-прежнему даёт verify=(2, []). Зарегистрированный arm B не содержит внешнего tip; порог не снижен, отдельный R2-TIP будет зарегистрирован до production-изменений.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0051",
+   "title": "HOST-JOURNAL-SAFETY-R2-TIP: внешний закреплённый tip для coherent deletion/truncation/rehash",
+   "hypothesis": "Append-only per-record SHA-256 lines в существующем lock-файле, проверяемые один-к-одному с journal под тем же lock и fsync после journal до ACK, обнаружат изменение только journal и дадут fail-closed отказ.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-R2-TIP.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-conclusion.txt",
+   "claim": "C-0343",
+   "note": "REFUTED: R2-TIP дал 12/12 на Windows и POSIX, но post-review воспроизвёл принятие intermediate anchor delimiter, завышение trusted prefix при compound corruption и отсутствие POSIX fsync новых родителей. Отдельный R2-TIP-REVIEW зарегистрирован E-0052; пороги не менялись.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0052",
+   "title": "HOST-JOURNAL-SAFETY-R2-TIP-REVIEW: anchor delimiters, compound prefix и parent durability",
+   "hypothesis": "Точная проверка каждого anchor LF, объединённая journal/anchor валидация и POSIX fsync новых родителей закроют три post-review пробела без изменения R2-TIP corpus.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-REVIEW-conclusion.txt",
+   "claim": "C-0344",
+   "note": "REFUTED: три зарегистрированных control прошли, но независимый review воспроизвёл отсутствие fsync существующего parent верхнего нового каталога и retry ACK без directory fsync после сбоя. Отдельный R2-DURABILITY зарегистрирован E-0053; пороги не менялись.",
+   "updated": "2026-11-24"
+  },
+  {
+   "id": "E-0053",
+   "title": "HOST-JOURNAL-SAFETY-R2-DURABILITY: полная directory ancestry и fsync-failure retry",
+   "hypothesis": "Fsync journal directory и каждого parent до filesystem root перед каждым ACK закрепит новые directory entries и не позволит retry после directory-fsync failure получить ACK без повторного durability шага.",
+   "prereg": "lab/prereg/HOST-JOURNAL-SAFETY-R2-DURABILITY.json",
+   "status": "closed",
+   "conclusion": "research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-conclusion.txt",
+   "claim": "C-0345",
+   "note": "PASS: POSIX RED 2/4, GREEN 4/4; Windows 2 passed + 2 явных POSIX-only N/A. R1 34/34, R1-REVIEW Windows 11/11/POSIX 10 + 1 N/A, R2-TIP 12/12 на обеих платформах. Независимый review не оставил findings. Граница: Windows directory fsync N/A; гарантия зависит от файловой системы; W07B не затронут.",
    "updated": "2026-11-24"
   }
  ]

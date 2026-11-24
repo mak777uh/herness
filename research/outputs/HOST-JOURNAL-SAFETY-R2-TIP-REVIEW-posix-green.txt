@@ -1,0 +1,5 @@
+[ok] промежуточный anchor LF проверяется
+[ok] compound corruption не завышает trusted prefix
+[ok] POSIX первый append fsync делает новые parent entries
+
+host journal tip review: 3/3 ok; N/A 0; провалов: 0

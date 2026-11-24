@@ -1,0 +1,39 @@
+HOST-JOURNAL-SAFETY-R2-DURABILITY — conclusion
+Дата: 2026-11-24
+Статус: PASS within registered scope.
+Instrument verdict: PASS. Независимый post-review не оставил substantive findings.
+Windows result: host journal durability: 2/4 ok; N/A 2; провалов: 0
+POSIX result: host journal durability: 4/4 ok; N/A 0; провалов: 0
+
+Evidence:
+- research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-red-before.txt — Windows 2 passed + 2 POSIX-only N/A.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-posix-red-before.txt — POSIX RED 2/4; оба durability control провалились.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-windows-green.txt — Windows 2 passed + 2 явных POSIX-only N/A.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-posix-green.txt — POSIX 4/4.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-windows-r3-green.txt — R1 Windows 34/34.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-windows-r3-green.txt — R1-REVIEW Windows 11/11.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-windows-r3-green.txt — R2-TIP Windows 12/12.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-posix-r3-green.txt — R1 POSIX 34/34.
+- research/outputs/HOST-JOURNAL-SAFETY-R1-REVIEW-posix-r3-green.txt — R1-REVIEW POSIX 10 passed, 1 явный Windows-only N/A.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-TIP-posix-r3-green.txt — R2-TIP POSIX 12/12.
+- research/outputs/HOST-JOURNAL-SAFETY-R2-DURABILITY-review.txt — независимый post-review без оставшихся findings.
+
+Что подтверждено:
+- Перед каждым ACK journal и anchor fsync-ятся, затем directory fsync выполняется для journal directory и каждого parent до filesystem root, от глубины к вершине.
+- Directory fsync не зависит от созданных текущим вызовом каталогов; retry после сбоя не может обойти durability шаг.
+- Инъецированный leaf directory fsync failure не даёт ACK; seq=1 и anchor остаются наблюдаемыми; retry даёт seq=2 и повторяет полную ancestry.
+- Anchor delimiter и compound trusted-prefix controls сохранены и проходят.
+- R1/R1-REVIEW/R2-TIP thresholds не снижались и проходят на обеих платформах.
+
+Границы:
+- Windows directory fsync не реализован; два POSIX-only controls на Windows — явный N/A, не PASS.
+- Гарантия зависит от корректной fsync семантики файловой системы и не покрывает сбой питания во время самого вызова.
+- Полная ancestry fsync выполняется перед каждым ACK; производительность не измерялась.
+- Anchor и journal в одном каталоге не защищают от враждебного процесса, способного переписать оба файла.
+- R1/R1-REVIEW/R2-TIP/R2-TIP-REVIEW остаются REFUTED; этот PASS не переписывает их историю.
+- W07B authority binding и refs-only policy не затронуты.
+
+Hashes:
+- pre-closure prereg SHA-256: a403d13c0f1bed1ae3572aab0d47701ea87468f027391bc3d20a7566f02f1b54
+- production bin/host_journal.py: 355ba910e58b8799b8d4cb347c4df8ffd253aa63303480c7d7a68d62ab3440ca
+- strengthened tests/test_host_journal_tip_review.py: 753d3b108e87b6229388e4be9a45d3ef2f6e8b3b1280282b5aa1b621e48cae09
