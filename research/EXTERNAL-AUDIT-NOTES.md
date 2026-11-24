@@ -1256,3 +1256,235 @@ Budget race остаётся в HB-EXP-01; отдельный HB-EXP для не
 
 Эти два источника предназначены для `ARCHITECTURE-BRIEF-v0.3.md`. `ARCHITECTURE-BRIEF-v0.2.md` сохраняется без изменений. Runtime-реализация и внешние действия этой заметкой не разрешаются.
 
+## Часть 11 — два аудита Decision brief v0.3: host boundary, journal и доказательные статусы, 2026-11-24
+
+### 1. Источники и граница проверки
+
+В одном сообщении получены два независимых аудита v0.3:
+
+- **Аудит E:** `e016f383-7aa6-4cc8-9279-f396f3498517.txt`, 107 строк по `splitlines`, 19 186 байт, 106 LF/106 CRLF, SHA-256 `c408458dd8fdc265aae11ec27035f30bc90136dc9f04a64fd8e849e3c8f3e941`. Вердикт `ready with changes`, уверенность 85%. Основные темы: семантическая утечка через модель, streaming, trusted time/host rollback, независимость Windows verifier, FS TOCTOU, fake R3 IPC и стоимость проверки.
+- **Аудит F:** `b3cf22bd-f7e4-4b1a-8ec6-09c8a5f104ab.txt`, 364 строки по `splitlines`, 52 527 байт, 363 LF/0 CRLF, SHA-256 `9cc1e076fa6d1e132307a579e5583b7fba80b8575b719e34ac8f754c2fff0804`. Вердикт `not ready`. Основные темы: общий guest bearer token, отсутствие host-side route/run/profile capability, raw `tool/result` в host journal, path traversal через `run`, неоднозначная signed-byte projection, несовпадение data/tool-card схем и различие `host_received`/`host_observed`.
+
+Оба источника ссылаются на публичный snapshot `7352fd74e0a13f434c92b3c1e06d5f374680e186`; аудит F прямо говорит, что локальный W10-срез и грязное дерево ему не предоставлялись. Поэтому их `[Ф]` не приписываются локальному HEAD. Локальная сверка выполнена отдельно на `bd41718fe04e25398d50e81264c96a078bd0d9e0`, где рабочее дерево перед этой заметкой было чистым. Исходный v0.3: 1284 строки, 147 057 байт, SHA-256 `bb9f7300f26675bb24a1e58a155eb0833c827edfa8332b50fd02745543024d5c`.
+
+Локальный evidence: `research/outputs/ARCH-BRIEF-V04-CODE-AUDIT-2026-11-24.txt`. Он содержит хеши источников, точные статические проверки, безопасную path-пробу во временном каталоге и результат существующих тестов журнала. Это не HB-EXP и не runtime PASS.
+
+### 2. Что подтверждено локально по коду
+
+| Находка | Статус | Локальное свидетельство и граница |
+|---|---|---|
+| Один guest bearer token обслуживает model, journal и net | **Подтверждено.** `main.rs:714–721` передаёт `/bridge-token` в `HS_BRIDGE_TOKEN`; `bridge.py:148,283–285` хранит и проверяет один `local_token`; маршруты разбираются после общей проверки | Provider API key остаётся host-only, но bridge token — делегированная R2 capability. Один токен сам по себе не доказывает route isolation |
+| Host bridge не проверяет route-specific capability, task/run/profile binding и route budget | **Подтверждено для проверенного среза.** `/v1/journal` и `/v1/net` dispatcher используют общий bearer check; отдельной host-side проверки профиля/run не найдено | Это статический факт отсутствия контроля в проверенном коде, а не выполненный live exploit |
+| `loop-bridge` отключает проверку списка tool grants | **Подтверждено.** `run_task_with_budget` вызывает `run_task_from(..., None, ...)` (`loopmod.rs:1613`); `tool_authority` проверяет список только при `Some(list)` (`1298–1304`) | Формулировка v0.3 «tool grant проверяется для всех путей» неверна именно для этого пути |
+| `net` обходит registry state | **Подтверждено.** `registry_allows_state` возвращает `name == "net" || state == "active"` (`loopmod.rs:1340`) | В сочетании с `granted=None` и общим bridge token это подтверждённое сочетание условий, а не только гипотетический риск |
+| Host journal принимает произвольные `run` и `event` от гостя | **Подтверждено.** `bridge.py:303–315` читает оба поля из JSON и передаёт их в append | Нормальный запуск может брать `run` из host-supplied `/host-run`, но компрометированный R2 с токеном не обязан следовать этому пути |
+| `run` способен выйти за каталог журналов | **Подтверждено безопасной локальной пробой.** `host_journal.py:40` строит `directory / f"{run}.jsonl"`; во временном каталоге `../escaped` создал файл снаружи journal directory | Проба не запускала HTTP bridge, не затрагивала реальные журналы и не доказывает штатную эксплуатацию обычной моделью |
+| Hash chain журнала доказывает истинность guest event | **Не подтверждено; формулировка неверна.** Цепочка проверяет целостность принятой последовательности | Гость может отправить ложное утверждение; host-time/hash получения не превращают его в независимое наблюдение |
+| Текущий journal удовлетворяет privacy-контракту | **Опровергнуто кодом.** `loopmod.rs:1793,1837` записывает полный `ok {text}`/`err {error}`; `1950–1952` отправляет события хосту | Если инструмент прочитал приватный файл, содержимое может попасть в operational journal. Нужна закрытая metadata-схема и canary-контроль |
+| Текущий journal доказывает `host_durable` | **Не подтверждено.** `host_journal.py:61` делает `flush()`, но не `fsync`; межпроцессной блокировки вокруг чтения хвоста и назначения `seq` нет | Existing 5/5 тесты проверяют последовательную цепочку, изменение, удаление, append и отсутствие чужого журнала; concurrency/crash/path/symlink/run binding не покрыты |
+| Operation envelope имеет однозначный signed-byte contract | **Не подтверждено.** v0.3 исключает `digest` из hash input, но явно не исключает `signature` из signed payload | Предложение аудита F принять как versioned проект: отдельные `payload_bytes`, digest и domain-separated signed bytes; Python/Rust vectors обязательны |
+| Новая data-axis модель совпадает с `tool-card-v1` | **Не подтверждено.** Schema использует `public/model_visible`, не содержит `sensitivity/provenance/allowed_sinks/purpose/retention` | Нельзя молча переинтерпретировать исторические v1 cards. Нужна новая версия или явный переходный контракт |
+| `tool-card-v1` описывает `execute/test/build` | **Опровергнуто схемой.** `kind` ограничен read/write/digest/bridge; `process_spawn=false`, `max_processes=1` | Execution contract должен быть отдельным и versioned |
+| Read-family — уже доступная effective runtime-вертикаль | **Не подтверждено.** `active=[]`; `read/list` quarantined, `search` rejected, `head` candidate; dispatcher не содержит `head` | `DEFAULT_SYSTEM` всё ещё перечисляет старый набор инструментов. D02 остаётся выбором будущей вертикали, а не готовым запуском |
+| `hostshare` — disposable synthetic fixture | **Не доказано.** `main.rs:725` пытается смонтировать `hostshare`; факт QEMU не доказывает состав/ownership/write-back каталога | Для WORKBENCH-R1 требуется отдельная проверка mount source, fixture ownership и запрета записи в реальный проект |
+
+### 3. Что остаётся гипотезой или требует эксперимента
+
+1. **Streaming и «атомарность» отправки.** Разрыв gateway не доказывает, что провайдер не получил или не сохранил prompt. Для синтетических данных это residual; для реальных `user_private` данных нужен конкретный provider retention/DLP-контракт либо локальная модель. HB-EXP-01 может измерить только объявленный провайдер/профиль, но не доказать универсальное отсутствие обработки.
+2. **Семантическая утечка через когнитивный выход.** Structural lineage не гарантирует обнаружение перефразированного секрета. Max-class inheritance может дать false denials, но утверждение аудита E о гарантированных «100% false denials» не измерено. Coarse taint остаётся отдельным строгим режимом, не заменой lineage.
+3. **Trusted time и host rollback.** Для локального профиля без внешних мутаций durable external replay отложен. Для будущих мутаций append-only файл на той же ФС не защищает от отката всего snapshot; нужен внешний durable anchor/trusted time либо явное исключение этой угрозы из claim. Проверка — внутри HB-EXP-04.
+4. **Независимость Windows verifier.** Отдельная OS identity не автоматически даёт T2. Утверждение, что agent runtime обязательно сможет читать память verifier стандартными API, локально не проверено. Нужны ACL/shared-resource/memory/egress probes; HB-EXP-07/16.
+5. **FS snapshot TOCTOU.** Hash меняющейся директории не является immutable snapshot. Конкретный механизм snapshot/handoff проверяется в уже существующем HB-EXP-17; новый ID не создаётся.
+6. **Fake R3 через общий IPC.** Subprocess сам по себе не доказывает adapter isolation. Первый WORKBENCH-R1 не включает R3; будущий fake R3 требует отдельного prereg и проверки IPC/network boundary в HB-EXP-16.
+7. **Overhead.** Значения `10–100x`, `>10x`, `>5 минут`, `20%`, `2–3x` и порог `>30%` — предложения/условия фальсификации аудита, а не измерения. Порог задаётся только после замера и owner ratification в HB-EXP-11/12.
+8. **Dirty tree.** Для аудитов snapshot был старым/неполным; локальный HEAD `bd41718…` чист. Новые правки v0.4 и заметки всё равно останутся `ANCHORED_WEAK` до разрешённого локального commit/source packet.
+
+### 4. Разрешение коллизий HB-EXP-18/19/20
+
+Оба аудита используют эти ID для разных экспериментов. В v0.4 закрепляется содержание аудита F, чтобы не дублировать уже существующие темы:
+
+- **HB-EXP-18 — Host bridge route isolation.** Прямые guest-запросы к `/v1/net`, `/v1/journal` и model route; host обязан отказать по capability/task/run/profile/budget до эффекта. Positive controls для разрешённых model request и journal metadata обязательны.
+- **HB-EXP-19 — Host journal path confinement и run binding.** Opaque run ID, отсутствие абсолютных путей/разделителей/`..`, symlink/race protection, запрет чужого run, marker вне каталога и positive normal run.
+- **HB-EXP-20 — Host journal privacy, durability и observability.** Closed metadata schema, canary в `tool/result`, различие `host_received`/`host_observed`, concurrency без повторного `seq`, crash без ложного `host_durable`, независимое наблюдение процесса/файлов.
+
+Темы аудита E распределяются без новых дубликатов:
+
+- streaming/context leak — уточнение **HB-EXP-01** и политики MD-1;
+- host rollback/trusted time — **HB-EXP-04**;
+- fake R3 IPC — **HB-EXP-16** и отдельный prereg fake R3;
+- FS TOCTOU — существующий **HB-EXP-17**;
+- overhead/source packet — **HB-EXP-11/12** и MD-2.
+
+### 5. Диспозиция рекомендаций и вопросы владельцу
+
+Принято для следующей ревизии как `[А]`/требование к анализу:
+
+1. Host bridge входит в TCB и обязан обеспечивать route-specific capability, task/run/profile binding и budget на host boundary, а не только в guest dispatcher.
+2. Journal path строится по проверенному opaque run ID с защитой от symlink/race; bearer token не заменяет run binding.
+3. Operational journal принимает закрытые metadata, не сырые tool results; guest self-report получает максимум `host_received`, а `host_observed` требует независимого наблюдения.
+4. `host_durable` выдаётся только после названного fsync/locking/crash protocol; текущий `flush()` недостаточен.
+5. Signature contract получает явную проекцию: `payload_bytes` содержит все authoritative fields кроме `digest` и `signature`; digest и signature считаются по отдельным domain-separated bytes. Точная схема остаётся versioned и требует identical Python/Rust vectors.
+6. `tool-card-v1` сохраняет старую семантику. Новая data model и execution contract получают отдельные версии; `model_visible` не переинтерпретируется молча.
+7. Join sensitivity/retention должен быть формальной операцией. Если значения образуют частичный порядок или политики конфликтуют, результат — `conflict/unknown` и deny, а не выдуманный «максимум».
+8. Effective tool surface и `DEFAULT_SYSTEM` приводятся к фактическому dispatcher/registry; read-family не выдаётся за готовую возможность.
+9. WORKBENCH-R1 использует только disposable synthetic fixture; `hostshare` не допускается без доказательства состава и write-back boundaries.
+
+Коллизия MD-разрешается так:
+
+- **MD-9 — место записи изменений реального проекта.** Default: disposable copy/worktree, агент выдаёт diff и проверенные артефакты; перенос в основной каталог — отдельное действие владельца. Это не MD-2: MD-2 разрешает локальный commit anchoring, но не право агента менять реальный проект.
+- **MD-10 — поведение при недоступном model provider.** Default для первого профиля: fail closed с явным `BLOCKED/unconfirmed`, без скрытого fallback и без продолжения side effects. Локальная fallback-модель или read-only режим — отдельные варианты владельца, не автоматическое разрешение.
+- Source packet остаётся механизмом **MD-2**, а не новым MD-10.
+- Overhead остаётся измерительной величиной **HB-EXP-11/12**; новый MD-11 до измерения не создаётся.
+
+Не принято автоматически:
+
+- удалить `joint` из схемы; он остаётся невыбранным концептом/enum до отдельного решения;
+- сделать strict binary taint обязательным для HB-EXP-05;
+- объявить отдельную Windows identity достаточной для T2;
+- объявить append-only на одной ФС защитой от полного host snapshot rollback;
+- принять любые числовые overhead/false-denial пороги из аудита E;
+- считать dirty-tree/source-packet вопрос решённым без фактического commit/source packet;
+- начинать runtime-реализацию, создавать owner keys, активировать инструменты, публиковать или пушить.
+
+### 6. Проверки и остаток
+
+- `python tests/test_host_journal.py`: 5/5 ok, 0 провалов. Это подтверждает текущие sequential chain-тесты, но не новые P0-контроли.
+- `python bin/hs.py refs search "host bridge route capability и host journal path confinement"`: rc=2, «справочника нет: refs sync (пусто ≠ успех)». Статус — `NOT PROVIDED`, не зелёный поиск.
+- Path traversal воспроизведён только в `TemporaryDirectory` с synthetic canary; реальные `runs/host-journal` не изменялись.
+- Runtime-код не изменялся. HB-EXP-18/19/20 не запускались. Внешние URL аудита F относятся к его source packet и не переносятся сюда как локальные доказательства.
+- Эти источники предназначены для `ARCHITECTURE-BRIEF-v0.4.md`. v0.3 сохраняется без изменений. Заметка append-only: префикс 207 013 байт до этой части должен сохранить SHA-256 `08fc54587e5c91515acab132a88b85e8e84c177cd1b1ee5a748741622ed9b151`.
+
+---
+
+## Часть 12 — два разных аудита Decision brief v0.4, 2026-11-24
+
+### 1. Источники и границы доказательств
+
+Владелец прислал два разных текста. Их нельзя объединять в один источник и нельзя приписывать одному хеш другого.
+
+**G-вставленный.** Русскоязычный отчёт «Ведущий системный архитектор и аудитор безопасности» непосредственно в сообщении. Отдельного файла и byte hash нет. Вердикт источника: `ready with changes`, уверенность 85%. Основные темы: физическая независимость Windows verifier, semantic paraphrase, транспорт handoff, состояние `refs`, QEMU user networking, полезность `fake_read`, финансовый breaker и сложность fixture.
+
+**G-приложенный.** Файл `7144b517-d0eb-4cc4-b7d5-72b41b16bc4c.txt` из каталога attachment. Локально измерено: 46 591 байт, 580 строк по `splitlines`, 579 LF, 0 CRLF; SHA-256 `c3c08bce9a87efe5530faa4f27babd24dedf4ddceca45a689b6a7393f4248cbd`. Вердикт источника: `NOT READY` для реализации WORKBENCH-R1, `READY WITH CHANGES` для следующего анализа; уверенность 0.87. Основные темы: неизвестные `/v1/...`, batch-at-end host journal, `durable=false`, отдельный admission path Workbench, локальная task capability против полного R3 envelope, canonicalization, STOP/approval и авторство criteria.
+
+Оба источника ссылаются на публичный `main`/commit `bd41718fe04e25398d50e81264c96a078bd0d9e0` и на то, что E/F проверяли предшествующий `7352fd74…`. В этой локальной сверке внешние GitHub-ссылки не использовались как новое доказательство. Локальная кодовая база v0.4 была привязана к HEAD `bd41718fe04e25398d50e81264c96a078bd0d9e0` до изменений документов; текущий worktree грязный из-за исследовательских файлов. Публичный commit не подтверждает содержимое v0.4, локальный source packet, Windows probes или результаты будущего runtime.
+
+### 2. Итоговая классификация
+
+#### 2.1. Подтверждено локальным кодом
+
+1. **Неизвестный `/v1/...` не отвергается, а пересылается провайдеру.** `bin/bridge.py`: точные special routes `/v1/journal` и `/v1/net` обрабатываются отдельно (строки 303 и 340), после чего любой оставшийся путь попадает в `bridge.forward()` (строки 400–401). Это сильнее общей формулировки «мост — credential proxy»: после bearer check и чтения тела существует незаявленный provider route. Требование HB-EXP-18 о точном host-side route capability и deny неизвестного маршрута подтверждено.
+
+2. **Обычный bridge loop не получает tool grant.** `core-rs/src/main.rs:756` вызывает `run_task_with_budget`; `core-rs/src/loopmod.rs:1607–1613` передаёт `granted=None`; `tool_authority` проверяет список только при `Some` (строки 1298–1304). `registry_allows_state` отдельно разрешает `net` через `name == "net" || state == "active"` (строки 1339–1341). Следовательно, `active=[]` и системный prompt не закрывают этот путь.
+
+3. **Host events — batch-at-end transport receipt.** В `loopmod.rs` сначала записываются события, включая `tool/result` и `run/end` (например, строки 1793, 1837, 1921), и только затем весь накопленный список отправляется хосту (строки 1949–1960). Это не authorization до dispatch и не независимое наблюдение эффекта. Hash chain подтверждает согласованность уже присланного guest self-report.
+
+4. **Обычный loop не durable.** `run_task_with_budget` передаёт `durable=false`; `run_task_durable` используется в другой ветке (`main.rs:831`). Свойства durable/resume нельзя переносить на обычный `loop-bridge`. Для Workbench нужно назвать выбранный execution path и его checkpoint/recovery semantics.
+
+5. **Legacy `host_run`/`host_match` не доказывают `host_observed`.** `bin/accept.py:235–258` проверяет хостовую hash chain и совпадение всего guest-supplied event stream. Успех означает `host_received`, а не истинность события. Docstring `host_journal.events` «то, что хост действительно видел» (`bin/host_journal.py:94–95`) следует считать устаревшей формулировкой. Эта семантика уже разведена в v0.4; новый аудит правильно требует не использовать legacy checks как самостоятельное основание product PASS.
+
+6. **Journal confinement/durability остаются P0.** `host_journal.append` по-прежнему строит `directory / f"{run}.jsonl"` без opaque run ID validation, containment/symlink/race protection; `flush()` не сопровождается межпроцессным lock и `fsync`. Ранее безопасная `TemporaryDirectory`-проба подтвердила `../` path escape. Реальные журналы не изменялись.
+
+7. **QEMU egress не закрыт.** `core-rs/accept-run.ps1:137–141` отказывает при `-NetRestrict` из-за F-0084 и иначе использует `user,id=n0`. Наличие guest policy не доказывает host-side egress deny. PID/VM-bound firewall — кандидат для проверки, а не уже существующий контроль.
+
+8. **Workbench primitives отсутствуют в текущем tool surface.** `tool-card-v1.schema.json` не описывает `execute/test/build`, имеет `process_spawn=false`; dispatcher не содержит соответствующих primitives. Одновременно `DEFAULT_SYSTEM` перечисляет tools, которые фактически quarantined/rejected/candidate. Поэтому read-family pilot нельзя незаметно считать доступным в herness runtime.
+
+9. **DNS check не закреплён за соединением.** v0.4 уже фиксирует, что `net_policy.py` резолвит адрес, а `net.py` затем позволяет opener резолвить повторно без pinning и peer-address verification; системный proxy также не исключён автоматически. Это подтверждает исключение `public_read` из первого профиля.
+
+#### 2.2. Уже учтено в v0.4
+
+- Отдельная Windows identity не доказывает T2; нужны ACL, shared resources, memory/process access, environment, egress и verdict-store probes (HB-EXP-07/16).
+- Structural lineage не гарантирует отсутствие semantic paraphrase; residual явно назван, а strict binary taint не обязателен для первого профиля (HB-EXP-01/05).
+- Immutable snapshot требует named anti-TOCTOU механизма и handoff не считается PASS (HB-EXP-17).
+- `host_received`, `host_durable` и `host_observed` разделены; operational journal не должен хранить сырые tool results (HB-EXP-20).
+- Provider streaming/retention не доказываются разрывом соединения; реальные `user_private` данные требуют отдельного контракта или локальной модели.
+- STOP, независимая re-admission и read-only frozen criteria уже являются требованиями; task validity отделена от executable acceptance.
+- Named relay и durable external replay отложены только для профиля без внешних мутаций, а не удалены из будущего R3-контракта.
+- Source packet, `ANCHORED_WEAK`, A0/A/B и запрет переносить предложенные числа в измерения уже зафиксированы.
+
+#### 2.3. Новые или недостаточно явные пробелы
+
+1. **Легитимный admission path Workbench при неизменном `active=[]`.** v0.4 требует отдельный versioned execution contract, но ещё не задаёт законченную конструкцию допуска. Нужно развести: host-issued task capability для локальной операции; envelope/registry compatibility; host enforcer до dispatch; task/run/profile/workspace/action/object/data/budget binding; запрет self-grant и прямого host-route вызова. Это технический пробел, а не основание молча активировать tool.
+
+2. **Локальная task capability против полного R3 operation envelope.** G-приложенный обоснованно предлагает не требовать распределённую identity/revocation-инфраструктуру для одноразового локального Workbench. Это не ослабление D10: локальное изменение всё равно требует конкретного action+object grant. Нужно явно описать минимальную локальную capability, её issuer/verifier, attenuation, expiry и evidence; подпись для локального пути — отдельный выбор с названной угрозой, а не автоматическое наследование R3.
+
+   G-вставленный также требует, чтобы скомпрометированный R2 не мог читать или менять envelope, предназначенный R3 gateway. Запрет изменения должен обеспечиваться end-to-end signature и проверкой gateway; запрет чтения — отдельная confidentiality/projection-требование и не следует из подписи. В следующей ревизии нужно выбрать, проходит ли R2 opaque signed envelope, projected authorization metadata либо не получает envelope вовсе, и какие probes это доказывают.
+
+3. **Физическое место первого regression pilot.** Формулировка `read→filter→count` допускает два разных прочтения: независимый A0 harness вне текущего dispatcher либо новый herness runtime path. В prereg нужно назвать arm, фактический executor и admission mechanism. Успех A0 не доказывает Workbench; успех read-only pilot не доказывает patch/test/build.
+
+4. **Транспорт immutable handoff, а не только свойство snapshot.** v0.4 задаёт anti-TOCTOU и hash binding, но не выбирает физический канал guest→host verifier. Нужны endpoint, direction, authentication, authority, write semantics, buffering/quiescing, late-write detection, failure status и доказательство отсутствия общего writable канала. `read-only virtio-fs`, VSOCK drop-box, pipe и network — только кандидаты; ни один не получает PASS по названию. Сетевой канал не запрещён аксиоматически, но требует отдельного egress/endpoint confinement.
+
+5. **Отказ journal после уже состоявшегося действия.** G-приложенный добавляет важное разделение: потеря подтверждения записи не превращает выполненный эффект в отменённый. Нужны `unconfirmed`, запрет blind retry, сохранение известных частичных эффектов и отдельная recovery/reconciliation политика. Для локального Workbench это может не требовать durable external replay, но всё равно требует определённого execution semantics.
+
+6. **Физическая карта комнат.** Полезно добавить компактную таблицу R1/R2/R3: filesystem, identity, secrets, network, persistence, trusted code, входящие/исходящие каналы и общие ресурсы. Сейчас это архитектурные роли и требования, а не доказанные физические контуры. Таблица должна показывать фактический enforcer и probe, а не только назначение комнаты.
+
+7. **Физический интерфейс owner approval/STOP.** v0.4 определяет семантику подтверждения, STOP и re-admission, но не выбирает trusted surface: консоль, отдельное host-приложение или иной канал. Это кандидат на отдельное owner decision, если владелец хочет фиксировать usability/physical control, а не только протокол.
+
+8. **Необходимость третьей комнаты остаётся гипотезой.** G-приложенный предлагает не блокировать локальный Workbench сравнением двух и трёх комнат, но сохранить falsification: если R3 не добавляет проверяемой безопасности при приемлемой стоимости, конструкция должна упрощаться. Само A0-сравнение локального harness не доказывает необходимость R3. Отдельное сравнение уместно после появления реальной потребности в R3, а не как prereg первого patch/test цикла.
+
+#### 2.4. `refs search` — узкий статус, не глобальный вывод
+
+Локальная команда `python bin/hs.py refs search ...` ранее завершилась rc=2: «справочника нет: refs sync (пусто ≠ успех)». Это `NOT PROVIDED` для precedent search и блокирует использование отсутствующего индекса как evidence. Из этого не следует, что любая синтетическая проверка новой lineage невозможна: HB-EXP-05/06 могут начинаться с изолированных synthetic fixtures и явно обозначенного источника lineage. Но результат не должен выдаваться за проверку мигрированной/синхронизированной рабочей lineage. Починка/наполнение `refs` — отдельная техническая работа, а не доказательство самой безопасности механизма.
+
+### 3. Куда помещают предложенные проверки
+
+Новые G-идентификаторы рассматриваются как локальные идентификаторы источников, а не автоматически как новые канонические HB-EXP v0.4.
+
+| Предложение G | Каноническое место | Что добавляется |
+|---|---|---|
+| G-вставленный HB-EXP-21, handoff interception | HB-EXP-17, HB-EXP-07/16 | Выбрать transport; late write/interception, binding, failure/quarantine |
+| G-вставленный HB-EXP-22, QEMU egress | HB-EXP-02/14/16 | Реальный TCP/UDP negative/positive control и проверка выбранного host enforcer |
+| G-вставленный HB-EXP-23, semantic leakage | HB-EXP-01/05 | Semantic canary как residual measurement, не binary taint guarantee |
+| G-приложенный HB-EXP-21, host evidence authenticity | HB-EXP-20 + HB-EXP-07/16 | Полностью guest-fabricated stream остаётся `host_received`; product PASS требует независимого observation |
+| G-приложенный HB-EXP-22, Workbench capability admission | HB-EXP-00/02/10 и новый admission requirement | Positive control разрешённой capability; отрицательные для quarantined/unknown/self-grant/out-of-scope/direct host route |
+| G-приложенный HB-EXP-23, STOP/approval | HB-EXP-08/16 и §5 | STOP во время subprocess, продолжение после STOP, digest substitution, re-admission |
+| Неизвестный `/v1/...` | HB-EXP-18 | Deny до чтения тела/эффекта; model-only capability не получает journal/net privileges |
+| Ошибка host journal после действия | HB-EXP-20, при внешней мутации также HB-EXP-04 | Частичная отправка, crash после эффекта, `unconfirmed`, запрет blind retry |
+| Неучтённая host-side работа | HB-EXP-11/12 | Verifier/snapshot/policy overhead и maintenance cost в total budget |
+| Финансовый breaker и сложность fixture | Prereg HB-EXP-10/11 | Параметры корпуса и host-enforced budget, не заранее выдуманные измерения |
+
+### 4. Коллизия MD-11…MD-13
+
+Оба источника используют MD-11…MD-13 для разных тем. В этой заметке канонические номера не присваиваются, чтобы не создать ложную преемственность. Темы распределяются так:
+
+- **Handoff transport** из G-вставленного MD-11 — прежде всего инженерный открытый пункт §9/HB-EXP-17. Owner decision нужен, только если выбор требует принять стоимость/слабость доступных каналов; сама формулировка «read-only канал» ещё не решает threat model.
+- **Financial circuit breaker** из G-вставленного MD-12 — параметр бюджета и HB-EXP-11/12. Нужен host-enforced pre-dispatch limit и явное различение provider usage estimate/fact billing. `$5`/день и `$20`/неделя — непроверенные предложения, не утверждённые пороги.
+- **Fixture complexity** из G-вставленного MD-13 — prereg-параметр HB-EXP-10/11. Сначала нужен seeded defect, измеримая трудность и must-allow/negative controls; «минимальный порог» нельзя выбрать без корпуса.
+- **Trusted owner approval interface** из G-приложенного MD-11 — кандидат на новое owner decision, потому что v0.4 задаёт семантику, но не физический trusted surface.
+- **STOP** из G-приложенного MD-12 — уже покрыт §5, memory/recovery и HB-EXP-08/16. Новым MD становится только выбор физического owner control/interfaces, если он нужен.
+- **Criteria authorship** из G-приложенного MD-13 — уже покрыт §9 и read-only criteria в §7: агент может предложить, owner утверждает до запуска, task validity отделена. Делегирование авторства было бы отдельным изменением политики, а не уточнением.
+
+### 5. Что не принимается автоматически
+
+- Отдельная ограниченная Windows identity не считается T2 без фактических probes.
+- `refs search = NOT PROVIDED` не считается доказательством неработоспособности всей будущей lineage и не даёт зелёного статута.
+- `fake_read` не считается валидным сигналом для задач, требующих актуального внешнего контекста; arm и ограничение интерпретации должны быть preregistered.
+- Semantic leakage не «закрывается» structural lineage; binary taint не объявляется ни обязательным, ни гарантированно дающим 100% false denials.
+- `>30%` false denials, `$5`, fixture complexity, `10–100x` и другие числа не становятся порогами без измерения и owner ratification.
+- Host firewall, привязанный к PID/VM, не считается работающим контролем до probes; блокировка всего host traffic также не доказывает VM-specific enforcement.
+- `joint` не удаляется только ради уменьшения парсера; enum без реального сценария уже отложен.
+- Named revocation relay и durable external replay не удаляются из R3; они отложены для локального профиля без внешних мутаций.
+- Provider streaming не исключается из долгосрочного data contract только потому, что текущий bridge буферизует полный ответ.
+- Универсальная алгебра классификации данных не строится заранее: для первого профиля достаточно явных joins и refusal правил; расширение требует отдельной гипотезы и измерений.
+- Пример «защищённого канала» сам по себе не доказывает immutable handoff или независимость verifier.
+
+### 6. Минимальные темы следующей ревизии
+
+Это список содержательных правок для будущего брифа, а не разрешение на реализацию:
+
+1. Задать отдельный versioned Workbench capability/admission contract при неизменном `active=[]`; host enforcer, task/run/profile/workspace/action/object/data/budget binding и negative controls.
+2. Разделить минимальную локальную task capability и полный R3 signed envelope, не ослабляя action+object grant.
+3. В prereg первого pilot явно указать A0 либо herness runtime, его executor и admission path.
+4. Выбрать/исследовать физический handoff transport с anti-TOCTOU, endpoint confinement, late-write и failure semantics.
+5. Добавить правило: journal failure после эффекта даёт `unconfirmed`, не «отменено», и не разрешает blind retry.
+6. Добавить физическую карту R1/R2/R3 и shared resources.
+7. Решить, нужен ли отдельный owner decision о trusted approval/STOP interface; семантика уже задана.
+8. Сохранить G-вставленный и G-приложенный как разные источники в traceability следующей ревизии.
+
+### 7. Проверки этого раунда
+
+- Выполнена только статическая сверка текстов, v0.4 и локального кода на baseline `bd41718fe04e25398d50e81264c96a078bd0d9e0`; runtime-код не изменялся.
+- Новые HB-EXP/HB-EXP-18–20 не запускались. Ни один кандидат transport/verifier/egress не получил runtime PASS.
+- Публичный commit и hash attachment не подтверждают локальный source packet. MD-2 остаётся неисполненным до фактического commit/source packet.
+- Перед добавлением Части 12 заметка имела 226 643 байта и SHA-256 `aaf83ec57fed8dd2b80e0534521bd1228c04d697d2ab962aa86d5b1800326fc2`; предыдущие части должны остаться побайтно неизменными.
+- v0.4 в этом раунде не переписывается. Новые пробелы предназначены для следующей ревизии после завершения внешнего анализа. Commit, push, activation, публикация и реальные внешние действия не выполняются.
+

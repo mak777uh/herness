@@ -1,0 +1,124 @@
+ARCH-BRIEF-V04-CODE-AUDIT — 2026-11-24
+Назначение: локальная статическая сверка двух внешних аудитов Decision brief v0.3.
+Это не HB-EXP, не runtime PASS и не разрешение на реализацию.
+
+BASELINE
+command: git rev-parse HEAD
+result: bd41718fe04e25398d50e81264c96a078bd0d9e0
+command: git status --short
+result: <empty>
+worktree: clean
+
+SOURCES
+research/ARCHITECTURE-BRIEF-v0.3.md
+  bytes=147057 lines=1284
+  sha256=bb9f7300f26675bb24a1e58a155eb0833c827edfa8332b50fd02745543024d5c
+research/EXTERNAL-AUDIT-NOTES.md before Part 11
+  bytes=207013 lines=1258
+  sha256=08fc54587e5c91515acab132a88b85e8e84c177cd1b1ee5a748741622ed9b151
+e016f383-7aa6-4cc8-9279-f396f3498517.txt (Audit E)
+  bytes=19186 lines=107 LF=106 CRLF=106
+  sha256=c408458dd8fdc265aae11ec27035f30bc90136dc9f04a64fd8e849e3c8f3e941
+b3cf22bd-f7e4-4b1a-8ec6-09c8a5f104ab.txt (Audit F)
+  bytes=52527 lines=364 LF=363 CRLF=0
+  sha256=9cc1e076fa6d1e132307a579e5583b7fba80b8575b719e34ac8f754c2fff0804
+
+CODE SNAPSHOT
+bin/bridge.py
+  bytes=28197 sha256=5270c89292f380803293935b139d95824495deaea7febb989b3e49f86ca0b6a0
+bin/host_journal.py
+  bytes=6020 sha256=aa30d644c0974a1d4e3d41271cb6c46cc5dd0444851abeedc1722c702aa38dbc
+bin/net.py
+  bytes=28553 sha256=e664d037e064badac9a35827f9d7ddd7023c00e18994254529ba0ce2deda54d5
+bin/net_policy.py
+  bytes=8480 sha256=a195ba976de81fdf6b3ea6b0a90f86ef18a67f99ba5651267ece8267b448c2a3
+core-rs/src/main.rs
+  bytes=59653 sha256=7c0910ff29a7209277f21cea10737b087e4f2c9c5f8860a89373502c9cb5944c
+core-rs/src/loopmod.rs
+  bytes=166961 sha256=b5bf682b0672a094915f879bd9410a5bac42dbc4185506741cb7c67c857cf3c1
+core-rs/src/model.rs
+  bytes=21883 sha256=796bd72799c968215e9bdb1975658fe215bdb11a22ab8cc61fe6d04ec645d48f
+lab/tools/tool-card-v1.schema.json
+  bytes=7931 sha256=77195fbe464257d2d029a858853b7372f6c27337739c4da0f61466d4df920d70
+lab/tools/registry.state.json
+  bytes=1898 sha256=f8f3a4adf63802c41372af77a98021ad74c4ed18b20d36a279c4ad07962f775b
+tests/test_host_journal.py
+  bytes=3675 sha256=0254fe7e1bcab53a73c179394c9eccfda1dc2a154c483b36545ca63f8bad85a6
+
+STATIC CHECKS
+method: exact-source inspection at HEAD; results below are boolean checks, not exploit execution.
+bridge_one_token=True
+  bin/bridge.py:148 stores one local_token; :283-285 authenticates before route dispatch.
+bridge_journal_run_input=True
+  bin/bridge.py:303-315 accepts run and event from guest JSON.
+bridge_journal_event_input=True
+bridge_net_route_after_common_auth=True
+  bin/bridge.py:340 dispatches /v1/net after common bearer authentication; no route/run/profile capability check found in this slice.
+journal_path_interpolation=True
+  bin/host_journal.py:36-40 builds directory / f"{run}.jsonl" without opaque-ID validation or containment.
+journal_flush_without_fsync=True
+  bin/host_journal.py:61 calls handle.flush(); no os.fsync or interprocess lock found.
+loop_bridge_granted_none=True
+  core-rs/src/loopmod.rs:1613 passes None as granted from run_task_with_budget.
+tool_authority_optional_grant=True
+  core-rs/src/loopmod.rs:1298-1304 checks a grant list only when Some(list) is present.
+registry_net_bypass=True
+  core-rs/src/loopmod.rs:1340 returns name == "net" || state == "active".
+raw_tool_result_ok=True
+  core-rs/src/loopmod.rs:1793 records format!("ok {text}").
+raw_tool_result_err=True
+  core-rs/src/loopmod.rs:1837 records format!("err {error}").
+host_posts_all_events=True
+  core-rs/src/loopmod.rs:1950-1952 posts each recorded event to host.
+bridge_token_reaches_guest=True
+  core-rs/src/main.rs:714-721 reads /bridge-token and exports HS_BRIDGE_TOKEN.
+card_old_kind_set=True
+  lab/tools/tool-card-v1.schema.json:32 limits kind to file_read/directory_read/file_write/digest/bridge_request.
+card_process_spawn_false=True
+  lab/tools/tool-card-v1.schema.json:82 fixes process_spawn=false; :155 fixes max_processes=1.
+card_old_data_classes=True
+  lab/tools/tool-card-v1.schema.json:174-181 uses public/model_visible only.
+registry_active_empty=True
+  lab/tools/registry.state.json:2 has active=[]; read/list are quarantined, search rejected, head candidate.
+
+SAFE LOCAL PATH PROBE
+command shape:
+  with tempfile.TemporaryDirectory() as tmp:
+      journal_dir = Path(tmp) / "journal"
+      host_journal.append("../escaped", "diagnostic-canary", journal_dir)
+result:
+  entry_seq=1
+  escaped_exists=True
+  escaped_inside_journal=False
+scope:
+  TemporaryDirectory only; synthetic canary; no real runs/host-journal path touched.
+  Confirms function-level path traversal, not ordinary-model exploitability or a complete HB-EXP.
+
+FOCUSED REGRESSION
+command: python tests/test_host_journal.py
+result:
+  [ok] цепочка растёт и проверяется
+  [ok] подмена события ломает проверку
+  [ok] выкинутая запись ломает цепочку prev
+  [ok] дописывание идёт за последней записью, а не поверх
+  [ok] чужого журнала нет — это проблема, а не пустой успех
+  журнал хоста: 5/5 ok
+  провалов: 0
+boundary:
+  Existing tests do not cover path confinement, symlink/race, concurrent append, fsync/crash durability, run binding or host observation.
+
+REFS SEARCH
+command: python bin/hs.py refs search "host bridge route capability и host journal path confinement"
+result:
+  справочника нет: refs sync (пусто ≠ успех)
+  refs_search_rc=2
+classification:
+  NOT PROVIDED; absence of the reference catalogue is not a successful search.
+
+NOT ESTABLISHED BY THIS AUDIT
+- No live HTTP exploit against a running bridge was executed.
+- No concurrency/crash/durability experiment was executed.
+- No provider streaming/retention behavior was measured.
+- No Windows verifier memory/ACL isolation claim was measured.
+- No FS snapshot TOCTOU or fake-R3 IPC experiment was executed.
+- No overhead threshold, owner decision, activation, commit or push was performed.
