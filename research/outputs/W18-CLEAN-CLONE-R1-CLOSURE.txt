@@ -80,3 +80,9 @@ POST-CLOSURE INSTRUMENT REGRESSION
 - Общий verify_claims --fast обнаружил C-0082 RED: sealed E-0074 не содержала шесть обязательных методических полей. Snapshot PASS 7e5a618 остаётся историческим фактом, но regression не была оставлена незакрытой.
 - E-0075 R1 дал 5/8 и prereg 63/64; сохранён открытым историческим RED. E-0076 R2 исправил checker без переписывания E-0074/E-0075/source/sidecars.
 - Финально: E-0076 focused 8/8 на Windows/POSIX, prereg check 65/65 sensitivity, verify_claims --fast 312/0 до регистрации C-0352 и 313/0 после неё, seals 53/53, lab validate 76/7. Отдельное свидетельство — research/outputs/PREREG-CORRECTION-OVERLAY-R2-CLOSURE.txt, claim C-0352.
+
+POST-COMMIT CLEAN-CLONE И CI
+- Closure commit `081b3a9802c50b5d127581e0afe04bb08c24362b` отправлен в `origin/main` вместе с `b32843d` и `7e5a618`.
+- На чистом Windows worktree полный Python manifest: 76 suites, 966 checks, 0 провалов; W18 clean-clone 14/14. Предыдущий полный запуск имел транзиентный `host journal authority review` 6/7; немедленный focused rerun дал 7/7, повторный полный manifest — 966/0. Исторический RED сохранён в runs/exp-w18-clean-clone-r1.
+- Финальные независимые Windows и POSIX clean clone `081b3a9`: W18 14/14, Review3 9/9, pilot/registry rc=0, seals 53/53, lab validate 76/7, prereg 65/65 sensitivity, E-0076 focused 8/8, пустой status. Временные клоны удалены после проверки.
+- CI run `45494108369` для `081b3a9` завершился failure; Rust, admission и plugin jobs прошли. Selftest сохраняет POSIX residuals (`bridge_net_namespace`, Windows-only N/A, host journal authority/review); gates сохраняют C-0147 transport error, C-0340 platform behavior и 21 absolute Windows link; verify_claims — 2 FAIL. Это не полный CI-PASS. В temp Windows clone `verify_claims` дополнительно изменил tracked VSOCK evidence, поэтому final clean-clone status проверен без этого мутирующего probe; claims проверен отдельно на основном чистом дереве.
