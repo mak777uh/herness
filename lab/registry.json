@@ -830,8 +830,10 @@
    "title": "CI-CLAIM-ARTIFACT-R1: platform-bound claim через сохранённый artifact",
    "hypothesis": "C-0340 можно проверять в Ubuntu через точный tracked artifact без повторного Windows/QEMU probe и без изменения исторического RED/fallback criterion.",
    "prereg": "lab/prereg/CI-CLAIM-ARTIFACT-R1.json",
-   "status": "open",
-   "note": "Зарегистрировано после CI 45506161516: Ubuntu повторно запустил vsock_probe, получил N/A rc=2 и дал ложный FAIL C-0340. Correction меняет только команду claim на check_artifacts; source prereg/sidecar/probe/artifact не переписываются.",
+   "status": "closed",
+   "claim": "C-0355",
+   "conclusion": "research/outputs/CI-CLAIM-ARTIFACT-R1-CLOSURE.txt",
+   "note": "PASS: focused и manifest selection 5/5 на Windows/POSIX; мутанты PASS/fallback=1/missing отвергаются; полный Windows selftest 88ac237 дал 79 suites rc=0 и W18 14/14; CI 45507844318 claims job success, C-0340 принят artifact-check, verify_claims --fast 315/0. Историческое VSOCK-WIN-R1 наблюдение остаётся RED; source prereg/sidecar/probe/artifact неизменны. Полный CI-PASS не заявлен: unshare positive-control, Windows-only N/A и 21 absolute link остаются отдельными residuals; независимый read-only review завершён с PASS и 0 substantive findings.",
    "updated": "2026-11-25"
   }
  ]

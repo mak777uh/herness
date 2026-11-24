@@ -1,0 +1,79 @@
+CI-CLAIM-ARTIFACT-R1 — closure E-0080
+Дата: 2026-11-25
+Baseline HEAD: 1b932c2f33a91347c7ec9f851ba90aa39c8ea051
+Implementation HEAD: 88ac237c26c8a687bcf5a0253aac2d1c6b0c6fd6
+
+Вердикт: PASS — только E-0080 / CI-CLAIM-ARTIFACT-R1.
+Историческое VSOCK-WIN-R1 наблюдение остаётся RED. Сохранённый артефакт
+по-прежнему обязан содержать VERDICT: RED и fallback_calls: 0; artifact-check
+не превращает device failure в GREEN и не разрешает fallback.
+
+Focused controls: 5/5; провалов: 0 (Windows и POSIX).
+Manifest selection test_claim_platform_artifact.py: 5/5, rc=0 (Windows и POSIX).
+Полный Windows selftest commit 88ac237: 79 Python suites, rc=0;
+W18 clean-clone controls 14/14. Лог SHA-256:
+ddaf16b947124be2fba604f0172d3a8d1d6ce0b314a9f867d9876f9945811ea3.
+
+Фактический GitHub Ubuntu CI run 45507844318:
+- job «утверждения и их ожидания» — success;
+- python bin/verify_claims.py --fast: утверждений 315; провалено 0;
+- C-0340 принят через check_artifacts, ожидание
+  (?s)VERDICT: RED.*fallback_calls: 0 найдено в сохранённом свидетельстве;
+- vsock_probe в claim-команде больше не запускается.
+Claims log SHA-256:
+47ecab024a2caa902c6e514fc6896d4e837dd717d5c00289be04f5623db0b03f.
+
+Что измерено:
+1. До коррекции focused RED был 5/1: только текущая команда C-0340 не
+   соответствовала требованию artifact-check. Исторический RED сохранён в
+   e0080-focused-red.txt, SHA-256
+   63cbb738f4bfc298195fd32768a95443176b38929333d907b538c2305efc209e.
+2. Настоящий check_artifacts.main принимает неизменный VSOCK-WIN-R1 artifact
+   и отвергает синтетические мутанты VERDICT: PASS, fallback_calls: 1 и
+   отсутствующий artifact. Контроль не подменяет evidence собственным ожиданием.
+3. В CLAIMS.md изменена только команда C-0340: с повторного
+   `python bin/vsock_probe.py --output ...` на
+   `python bin/check_artifacts.py C-0340`. Текст, тип, путь, дата и expectation
+   C-0340 не менялись.
+4. Source-bound SHA-256 остались равны значениям sealed E-0080 prereg:
+   - VSOCK-WIN-R1 prereg: 19055d28533fa7c2dc1fd651a33641968fa4c9c09bb133a9d1102dc66ede2296
+   - VSOCK-WIN-R1 sidecar: 62f4a5618a8ed28adb3be88cafd5fafd9f47ee460b292f909dfcd65c6388bcaf
+   - bin/vsock_probe.py: 883df646d57dc3f872ca4458ebb319ac5becbdc1381c11d659ae9789e304caaa
+   - research/outputs/VSOCK-WIN-R1-2026-11-24.txt: 2ade130dd36fa90c04922cbbe648f985aafdfa0e34d40175a4442923557a2c30
+5. Sealed E-0080 prereg/sidecar сохранены:
+   - prereg: 3e17bac392372c7df14fa99e2b441507ab3a9892030b4fc626bb44b65bb492ba
+   - sidecar: eacc14d2921534a72a82802d768ebd84088fdb31efe66b5c0e86ce01669b0138
+6. Production Rust, Cargo.lock, thresholds, N/A semantics, test corpus и
+   fallback policy не изменены. Новый tracked suite добавлен в manifest с
+   minimum_checks=5; всего 79 Python + 4 Rust entries.
+
+Локальные Windows gates после реализации: 31 из 33 оценено, 2 честных N/A
+(журналы, индекс прогонов), FAIL 0. Лог SHA-256:
+39d19dcc37545411acf68bb1873a0c69e63c88f0f8ebc62ab80e1d3fd61859bf.
+
+Локальные статические проверки после регистрации C-0355:
+- verify_claims --fast: 316 утверждений, провалено 0;
+- lab validate: реестр связен, экспериментов 80, следующих гипотез 7;
+- seals: 57/57, проблем 0;
+- prereg: 69/69 sensitivity;
+- coverage: 348/348 anchored, strict 197/345 = 0.57, ANCHORED_WEAK;
+- check_artifacts C-0355: rc=0.
+
+Границы:
+- Полный CI-PASS не заявлен. Run 45507844318 остаётся failure: Ubuntu
+  positive-control unshare даёт 503, Windows-only isolation даёт N/A rc=2,
+  а link gate находит 21 абсолютную Windows-ссылку. Это отдельные residuals.
+- WSL full verify_claims не засчитан: в том окружении нет команды `python`;
+  focused suite выполнялся через python3 и прошёл. POSIX 315/0 по этому логу
+  не утверждается.
+- Независимый read-only review E-0080 завершён 25.11.2026 с verdict PASS.
+  Проверены scope C-0340 и сохранение RED, source-bound hashes, настоящий
+  check_artifacts на трёх мутантах, registry/coverage/handoff и авторитетный
+  GitHub CI status. Substantive findings: 0; reviewer не менял файлы.
+- Artifact-check доказывает наличие точного исторического свидетельства,
+  а не повторяемость Windows/QEMU запуска и не истинность более широких
+  транспортных утверждений.
+- runs/ исключён из git; tracked closure и sealed prereg сохраняют команды,
+  точные counts и digests воспроизводимого вывода.
+- Production activation и внешняя публикация не выполнялись; секреты и
+  owner keys не использовались.
