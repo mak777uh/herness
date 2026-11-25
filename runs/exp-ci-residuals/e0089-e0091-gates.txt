@@ -1,0 +1,39 @@
+[ok] секреты: 0 проблем
+[ok] критерии: 0 проблем
+[ok] отказы: 0 проблем
+[ok] политика: 0 проблем
+[ok] модели: 0 проблем
+Traceback (most recent call last):
+  File "C:\Users\Admin\miniconda3\Lib\shutil.py", line 631, in _rmtree_unsafe
+    os.rmdir(path)
+    ~~~~~~~~^^^^^^
+PermissionError: [WinError 32] Процесс не может получить доступ к файлу, так как этот файл занят другим процессом: 'C:\\Users\\Admin\\AppData\\Local\\Temp\\hs-gates-copy-6v_o8vpg'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\bin\hs.py", line 2394, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ~~~~^^^^^^^^^^^^^^
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\bin\hs.py", line 2390, in main
+    return args.func(args)
+           ~~~~~~~~~^^^^^^
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\bin\hs.py", line 2006, in cmd_gates
+    problems = fn(root)
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\bin\hs.py", line 1517, in gate_claims_run
+    remove_disposable(clean)
+    ~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\bin\hs.py", line 161, in remove_disposable
+    shutil.rmtree(path, onerror=make_writable)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\miniconda3\Lib\shutil.py", line 790, in rmtree
+    return _rmtree_unsafe(path, onexc)
+  File "C:\Users\Admin\miniconda3\Lib\shutil.py", line 635, in _rmtree_unsafe
+    onexc(os.rmdir, path, err)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\miniconda3\Lib\shutil.py", line 754, in onexc
+    return onerror(func, path, exc_info)
+  File "C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\bin\hs.py", line 159, in make_writable
+    function(filename)
+    ~~~~~~~~^^^^^^^^^^
+PermissionError: [WinError 32] Процесс не может получить доступ к файлу, так как этот файл занят другим процессом: 'C:\\Users\\Admin\\AppData\\Local\\Temp\\hs-gates-copy-6v_o8vpg'

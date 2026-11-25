@@ -1,0 +1,10 @@
+[ok] review3 balanced wrong-first is rejected
+[ok] review3 wrong-first guard removal reproduces acceptance bypass
+[ok] review3 balanced duplicate-end is rejected
+[ok] review3 post-end guards removal reproduces duplicate acceptance bypass
+[ok] review3 balanced after-end event is rejected
+[ok] review3 after-end guard removal reproduces acceptance bypass
+[ok] review3 balanced missing-end remains no-done
+[ok] review3 valid lifecycle remains accepted
+[ok] review3 sealed baseline and authorized successor hashes are unchanged
+W03 review3 controls: 9/9 ok; провалов: 0

@@ -1,0 +1,15 @@
+[ok] исходный PILOT-GENERATOR-R1 и historical digests сохранены
+[ok] loopmod checkout: CRLF pin, 198631 байт, 3821 CRLF, SHA-256 9b1dc65e…
+[ok] loopmod Git blob: LF, 194810 байт, SHA-256 bd73f299…, blob≠checkout
+[ok] pilot --verify принимает текущую sealed correction
+[ok] missing correction отвергнута
+[ok] tampered correction отвергнута sidecar
+[ok] wrong source digest отвергнут
+[ok] wrong corrected new_tool/generator digests отвергнуты
+[ok] foreign path и threshold mutation отвергнуты
+[ok] registry: seq=0..8 неизменны, seq=9 canonical candidate, later events не меняют head, active=[]
+[ok] V1/V6 chain и proof exact bytes: 0 провалов (rc=0)
+[ok] V4 head/tool-card/card-atoms: 0 провалов
+[ok] W03 Review3: 9/9 (rc=0)
+[ok] development worktree ограничен W18 scope: []
+W18 controls: 14/14 ok; провалов: 0; mode=development-scope

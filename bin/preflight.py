@@ -43,6 +43,9 @@ def load() -> list[dict]:
         return rows
     for row in rows:
         record = state["tools"].get(row["id"], {"state": "unreviewed", "reason": "нет события"})
+        description = record.get("description")
+        if isinstance(description, dict):
+            row.update(description)
         row["state"] = record["state"]
         row["reason"] = record.get("reason", "")
     return rows

@@ -932,7 +932,29 @@
    "status": "open",
    "claim": null,
    "conclusion": null,
-   "note": "Baseline e233dad; refs search NOT PROVIDED (rc=2); runtime list читает до 200 до сортировки и не сообщает remainder. До implementation получен semantic RED: Windows/WSL Rust 8 tests, 3 passed/5 failed; Python 8 checks, 1 passed/7 failed. Prereg, suites, manifest 88 Python + 4 Rust и RED evidence зафиксированы отдельным baseline commit.",
+   "note": "Baseline e233dad; refs search NOT PROVIDED (rc=2); runtime list читает до 200 до сортировки и не сообщает remainder. До implementation получен semantic RED: Windows/WSL Rust 8 tests, 3 passed/5 failed; Python 8 checks, 1 passed/7 failed. Prereg, suites, manifest 88 Python + 4 Rust и RED evidence зафиксированы отдельным baseline commit. Runtime candidate 3630801: bounded deterministic list 8/8 Windows/POSIX; frozen registry correction вынесена в E-0090, closure ожидает review.",
+   "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0090",
+   "title": "REGISTRY-DESCRIPTION-APPENDONLY-R1: effective registry description без перезаписи genesis",
+   "hypothesis": "Строгий derived description overlay из нового quarantined list события даст effective v4 для preflight/tests, сохранит genesis digest и authority, а malformed/monotonicity controls закроют попытку протащить статус или чужой контракт.",
+   "prereg": "lab/prereg/REGISTRY-DESCRIPTION-APPENDONLY-R1.json",
+   "status": "open",
+   "claim": null,
+   "conclusion": null,
+   "note": "Baseline 3630801; refs search NOT PROVIDED (rc=2); baseline RED: 40 registry checks/5 failures и list contract 4/8 на Windows/POSIX. Candidate: seq=10 quarantined description v4, strict resolver/preflight, focused registry 40/40 и list contract 8/8; genesis 0afc75ec… и prefix 70a85691… сохранены, list quarantined, active=[]. Closure ожидает W18/gates/selftest/review.",
+   "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0091",
+   "title": "W03-REVIEW3-SUCCESSOR-BASELINE-R1: sealed successor для разрешённого изменения loopmod",
+   "hypothesis": "Явный sealed successor для единственного изменённого production-файла сохранит силу R09 для всех остальных artifacts и вернёт 9/9 без переписывания истории.",
+   "prereg": "lab/prereg/W03-REVIEW3-SUCCESSOR-BASELINE-R1.json",
+   "status": "open",
+   "claim": null,
+   "conclusion": null,
+   "note": "Baseline 3630801; refs search NOT PROVIDED (rc=2); W03 R09 RED 8/9 Windows/POSIX из-за pre-E-0089 loopmod hash. Candidate разрешает только sealed E-0090 successor 9b1dc65e… для loopmod.rs; W03 9/9 Windows/POSIX, W18 development 14/14. Исторические E-0070/E-0072 не переписаны; closure ожидает общий review.",
    "updated": "2026-11-25"
   }
  ]

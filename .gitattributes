@@ -22,6 +22,35 @@ research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt text eol=lf
 runs/exp-ci-residuals/e0089-list-red-python.txt text eol=lf
 runs/exp-ci-residuals/e0089-list-red-rust-windows.txt text eol=lf
 runs/exp-ci-residuals/e0089-list-red-rust-posix.txt text eol=lf
+# E-0090 baseline RED evidence: hashes зафиксированы в prereg до реализации
+runs/exp-ci-residuals/e0090-registry-description-red-windows.txt text eol=lf
+runs/exp-ci-residuals/e0090-registry-description-red-posix.txt text eol=lf
+runs/exp-ci-residuals/e0090-list-contract-red-windows.txt text eol=lf
+runs/exp-ci-residuals/e0090-list-contract-red-posix.txt text eol=lf
+runs/exp-ci-residuals/e0090-registry-description-green-windows.txt text eol=lf
+runs/exp-ci-residuals/e0090-registry-description-green-posix.txt text eol=lf
+runs/exp-ci-residuals/e0090-list-contract-green-windows.txt text eol=lf
+runs/exp-ci-residuals/e0090-list-contract-green-posix.txt text eol=lf
+runs/exp-ci-residuals/e0090-w18-development.txt text eol=lf
+runs/exp-ci-residuals/e0090-w18-development-green.txt text eol=lf
+runs/exp-ci-residuals/e0089-e0091-gates.txt text eol=lf
+runs/exp-ci-residuals/e0091-w03-successor-red-windows.txt text eol=lf
+runs/exp-ci-residuals/e0091-w03-successor-red-posix.txt text eol=lf
+runs/exp-ci-residuals/e0091-w03-successor-green-windows.txt text eol=lf
+runs/exp-ci-residuals/e0091-w03-successor-green-posix.txt text eol=lf
+# Остальные E-0089/E-0090/E-0091 evidence сохраняются как точные LF-байты.
+# Часть файлов историческая (включая устаревший contract-green и linker RED),
+# но digest не должен меняться от checkout/EOL.
+runs/exp-ci-residuals/e0089-list-red-rust.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-green-rust-windows.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-green-rust-posix.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-green-contract.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-regression-rust-windows.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-regression-rust-posix.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-baseline-regression-rust-windows.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-gates-auto.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-candidate-contract-registry-red.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-green-rust-windows-r2.txt text eol=lf
 
 # Digest конституции запечатан в provenance карточки head и 20 карточек кандидатов
 # как sha256:e9d6f904… — он был измерен на CRLF checkout. Пиннинг делает эти байты
@@ -39,8 +68,14 @@ lab/prereg/HEAD-SLICE-R1.json text eol=crlf
 # даёт LF, поэтому представление фиксируется отдельно; при смене — перепечатать.
 lab/tools/cards/head.json text eol=crlf
 
-# W03 Review3 baseline измерен на CRLF checkout (191435 байт, SHA-256 74c77403…).
-# Git blob остаётся LF; pin делает checkout digest воспроизводимым на Linux/Windows.
+# Новые sidecars E-0090/E-0091 участвуют в sealed successor checks;
+# checkout должен сохранять те же LF-байты, по которым записаны их SHA-256.
+lab/prereg/REGISTRY-DESCRIPTION-APPENDONLY-R1.json.sha256 text eol=lf
+lab/prereg/W03-REVIEW3-SUCCESSOR-BASELINE-R1.json.sha256 text eol=lf
+
+# W03 Review3 historical baseline измерен на CRLF checkout (191435 байт, SHA-256 74c77403…).
+# Текущий E-0089 successor — 198631 байт, SHA-256 9b1dc65e…; Git blob остаётся LF,
+# pin делает checkout digest воспроизводимым на Linux/Windows.
 core-rs/src/loopmod.rs text eol=crlf
 
 # V6 proof-binding фикстур привязан к exact LF bytes ChainInstances.lean

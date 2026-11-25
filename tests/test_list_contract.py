@@ -11,6 +11,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from bin import registry_state  # noqa: E402
+
 RESULTS: list[tuple[str, bool]] = []
 
 
@@ -22,8 +26,9 @@ def check(name: str, ok: bool, detail: str = "") -> None:
 
 def main() -> int:
     contracts = json.loads((ROOT / "lab" / "tools" / "contracts.json").read_text(encoding="utf-8"))
-    rows = [json.loads(line) for line in (ROOT / "lab" / "tools" / "registry.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    registry = next(row for row in rows if row.get("id") == "list")
+    # Genesis snapshot заморожен. Актуальное описание выводится из append-only события;
+    # отсутствие resolver/description — RED, а не повод переписать snapshot.
+    registry = registry_state.computed_state()["tools"]["list"].get("description", {})
     atoms = contracts["list"]["atoms"]
     by_id = {atom["id"]: atom for atom in atoms}
 

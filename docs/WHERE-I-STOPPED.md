@@ -1,4 +1,23 @@
-# ГДЕ ОСТАНОВИЛСЯ — 25.11.2026 (rolling-карта смены)
+# ГДЕ ОСТАНОВИЛСЯ — 26.11.2026 (rolling-карта смены)
+
+> **СТОП 26.11.2026 / HANDOFF.** Владелец остановил техническую работу и попросил записать
+> продолжение для следующего агента. Полная передача — [`docs/NEXT-AGENT-HANDOFF-2026-11-26.md`](NEXT-AGENT-HANDOFF-2026-11-26.md).
+> Stop-point baseline — `3630801f31e2e0d0174de07c75faf72255e7fb59`; на момент остановки он был
+> локальным, `origin/main` = `a907126`. Сопровождающий handoff commit/push сохраняет `3630801`,
+> E-0090/E-0091 candidate state и evidence; актуальный HEAD после push сверять `git rev-parse HEAD`.
+> E-0089 list runtime candidate: focused Rust 8/8 Windows/POSIX; полный WSL regression 210/0 и
+> Windows 165 passed / 3 старых platform failures выполнены **до** изменения embedded registry state.
+> E-0090 append-only description v4: registry 40/40 и list contract 8/8 Windows/POSIX; genesis snapshot
+> и prefix seq=0..9 byte-exact, `active=[]`, list остаётся quarantined. E-0091 sealed W03 successor:
+> Review3 9/9 Windows/POSIX, исторические sealed W03 файлы не переписаны. W18 development 14/14 —
+> **не clean-clone PASS**. Последний `lab validate` — 91/7. Последние полные gates не завершены:
+> `WinError 32` при очистке `C:\Users\Admin\AppData\Local\Temp\hs-gates-copy-6v_o8vpg`, rc=1,
+> evidence SHA-256 `aac926a1a137f845e5b6c17e6db7bdbabed3847221edc2b170dd14941de40255`.
+> C-0364, E-0089/E-0090/E-0091 closure, полный Rust regression после нового state, clean Windows
+> selftest, clean-clone W18, independent review, claims/coverage/conclusion и CI остаются открытыми.
+> Утверждённый план — `C:\Users\Admin\.qoder\plans\final-river-bison.md`. Продолжать техническую
+> работу только после нового разрешения владельца; DSH/`app.asar`/`~/.dsh`, sealed history, gates,
+> thresholds, corpora и production activation не трогать.
 
 > **Обновление 25.11.2026, POLICY-CANONICAL-FAILCLOSED-R1.** E-0088/C-0363 закрыт с PASS: `bin/policy.py` читает canonical `lab/tools/policy.json` только из явного root, structural Missing/Malformed/Empty/Duplicate/Unknown cases дают `PolicyDataError`, embedded 17-rule fallback и перезапись через `--build` удалены. Focused 15/15 на Windows/POSIX; baseline RED 15 checks/13 failures сохранён; manifest 87 Python + 4 Rust; parity 23 rules, policy probe 4/4, temporary-root CLI matrix 17/17; canonical policy byte-exact `2f135171…9802`. Первый чистый Windows disposable selftest RED из-за временной WinError 32 сохранён; отдельный чистый повтор r2 дал 87 suites, 84 performed + 3 Linux N/A, 0 failed, W18 14/14, `mode=clean-clone`, пустой status и неизменный source overlay. Независимый review PASS, 0 блокирующих findings. Implementation commit `1076297` и closure commit `98629da` отправлены в `origin/main`; candidate CI run `45698232164` и closure CI run `45699781649` завершены failure: E-0088 suite 15/15, W11 16/16, W18 14/14, пять jobs success; единственный failed suite — прежний Linux namespace positive B (503 вместо 200), тот же residual, что у d4a9f7f/baseline; полный CI-PASS не заявлен, доказательство — `research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-CI-REVIEW.txt` и closure-раздел `...-CLOSURE.txt`. После C-0363: check_artifacts rc=0, verify_claims --fast 324/0, coverage 356/356 anchored и strict 205/353 = 0.58 (`ANCHORED_WEAK`), lab 88/7, seals 65/65, prereg 77/77 sensitivity, gates auto 31/33 с двумя N/A, audit FAIL 0. Evidence — `research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-CLOSURE.txt` и `...-FINAL-REVIEW.txt`. Граница: N/A не PASS; полный CI-PASS, полный W12 enforcement matrix, Tool Contract ↔ Relationship Contract parity, list limit/determinism/remainder, generator/registry slices и production activation не закрыты; production Rust/bridge, canonical rules, thresholds, corpora и sealed history не менялись. Следующий срез — W12 list determinism/limit 100/exact remainder с отдельным prereg и RED.
 

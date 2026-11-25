@@ -1,0 +1,65 @@
+   Compiling hs-core v0.1.0 (/mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs)
+warning: variable `result_tag` is assigned to, but never used
+    --> src/loopmod.rs:1926:25
+     |
+1926 |                 let mut result_tag = "err";
+     |                         ^^^^^^^^^^
+     |
+     = note: consider using `_result_tag` instead
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: value assigned to `result_tag` is never read
+    --> src/loopmod.rs:1931:25
+     |
+1931 |                         result_tag = "ok";
+     |                         ^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` on by default
+
+warning: variable does not need to be mutable
+   --> src/model.rs:992:13
+    |
+992 |         let mut link = HttpBridge::new("127.0.0.1", 9, "local-tk\r\nX: y", "m");
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+    --> src/loopmod.rs:3017:8
+     |
+3017 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+     |
+     = note: `#[warn(non_snake_case)]` on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+    --> src/model.rs:1210:8
+     |
+1210 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+    --> src/model.rs:1255:8
+     |
+1255 |     fn недоступный_мост_это_Error_а_не_End() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 6 warnings (run `cargo fix --lib -p hs-core --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 20.37s
+     Running unittests src/lib.rs (target/release/deps/hs_core-b7add760f2fe9504)
+
+running 8 tests
+test loopmod::tests::w12_list_empty_has_no_marker ... ok
+test loopmod::tests::w12_list_101_reports_remainder_one ... ok
+test loopmod::tests::w12_list_99_has_no_marker ... ok
+test loopmod::tests::w12_list_100_has_no_marker ... ok
+test loopmod::tests::w12_list_selects_sorted_dirs_then_files ... ok
+test loopmod::tests::w12_list_200_reports_remainder_one_hundred ... ok
+test loopmod::tests::w12_list_201_reports_remainder_one_hundred_one ... ok
+test loopmod::tests::w12_list_is_identical_under_creation_permutation ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 193 filtered out; finished in 0.01s
+

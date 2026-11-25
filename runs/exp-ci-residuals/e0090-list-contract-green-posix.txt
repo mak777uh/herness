@@ -1,0 +1,10 @@
+[ok] contract: list limit 100
+[ok] contract: deterministic dirs-first order
+[ok] contract: exact remainder duty
+[ok] contract: escape anchors exist — []
+[ok] registry: list version 4
+[ok] registry: output limit 100
+[ok] registry: deterministic order and exact remainder
+[ok] registry: exact truncation marker
+
+list contract: 8/8 checks, failures: 0

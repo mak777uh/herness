@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 import tempfile
@@ -65,6 +66,21 @@ def appended(events: list[tuple[bytes, dict]], tool: str, body: dict) -> list[tu
         "tool_id": tool,
         "at": "2026-11-17T00:00:09Z",
         "body": body,
+    }
+    line = rs.canonical(event)
+    return events + [(line, json.loads(line.decode("utf-8")))]
+
+
+def described(events: list[tuple[bytes, dict]], description: dict) -> list[tuple[bytes, dict]]:
+    last_line = events[-1][0]
+    event = {
+        "schema": rs.EVENT_SCHEMA,
+        "seq": len(events),
+        "prev": rs.line_hash(last_line),
+        "type": "quarantined",
+        "tool_id": "list",
+        "at": description["at"],
+        "body": {"reason": "synthetic description control", "description": description},
     }
     line = rs.canonical(event)
     return events + [(line, json.loads(line.decode("utf-8")))]
@@ -206,6 +222,55 @@ def main() -> int:
             check("повтор ключа" in str(exc), f"повтор ключа отвергнут: {exc}")
         else:
             check(False, "повтор ключа в событии не отвергнут")
+
+    # E-0090: описание версии живёт в append-only событии, а genesis snapshot остаётся
+    # байт-в-байт. Восемь новых checks не ослабляют authority и отрицательные контроли.
+    prereg = json.loads((ROOT / "lab" / "prereg" / "REGISTRY-DESCRIPTION-APPENDONLY-R1.json").read_text(encoding="utf-8"))
+    description = prereg["candidate_description"]
+    effective = state["tools"].get("list", {}).get("description")
+    check(effective == description, "effective list description v4 совпадает с sealed prereg")
+
+    expected_snapshot = "sha256:" + prereg["baseline_sha256"]["lab/tools/registry.jsonl"]
+    check(
+        snapshot_digest == expected_snapshot == events[0][1]["body"]["snapshot_digest"],
+        "genesis snapshot byte-exact и совпадает с genesis digest",
+    )
+    check(
+        state["tools"].get("list", {}).get("state") == "quarantined"
+        and state["active"] == []
+        and state["tools"].get("head", {}).get("seq") == 9,
+        "description не меняет list authority и head seq=9",
+    )
+    prefix = b"".join(rs.EVENTS.read_bytes().splitlines(keepends=True)[:10])
+    check(
+        hashlib.sha256(prefix).hexdigest() == prereg["baseline_registry_prefix_sha256"],
+        "append-only prefix seq=0..9 byte-exact",
+    )
+
+    def description_rejected(mutator, expected: str) -> bool:
+        bad = copy.deepcopy(description)
+        mutator(bad)
+        try:
+            rs.derive(rows, described(events, bad), snapshot_digest, policy_digest)
+        except rs.RegistryError as exc:
+            return expected in str(exc)
+        return False
+
+    check(description_rejected(lambda item: item.update(id="read"), "id"),
+          "description с чужим id отвергнут")
+    check(description_rejected(lambda item: item.update(version=3), "version"),
+          "description с невозрастающей version отвергнут")
+    check(description_rejected(lambda item: item.update(status="active"), "status"),
+          "description с authority-полем status отвергнут")
+
+    preflight_rows = preflight.load()
+    effective_row = next((row for row in preflight_rows if row.get("id") == "list"), {})
+    check(
+        effective_row.get("version") == 4
+        and effective_row.get("state") == "quarantined"
+        and "точным остатком" in effective_row.get("returns", ""),
+        "preflight использует effective description, не переписывая snapshot",
+    )
 
     problems = rs.check_files()
     check(problems == [], f"registry.state.json и цепочка согласованы: {problems[:2]}")

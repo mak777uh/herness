@@ -1,0 +1,1066 @@
+   Compiling hs-core v0.1.0 (C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\e0089-baseline\core-rs)
+warning: variable `result_tag` is assigned to, but never used
+    --> src\loopmod.rs:1881:21
+     |
+1881 |                 let mut result_tag = "err";
+     |                     ^^^^^^^^^^^^^^
+     |
+     = note: consider using `_result_tag` instead
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `result_tag` is never read
+    --> src\loopmod.rs:1886:25
+     |
+1886 |                         result_tag = "ok";
+     |                         ^^^^^^^^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> src\model.rs:992:13
+    |
+992 |         let mut link = HttpBridge::new("127.0.0.1", 9, "local-tk\r\nX: y", "m");
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `missing_error` is never used
+   --> src\head.rs:131:4
+    |
+131 | fn missing_error(reason: impl AsRef<str>) -> String {
+    |    ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+    --> src\loopmod.rs:2972:8
+     |
+2972 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+     |
+     = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+    --> src\model.rs:1210:8
+     |
+1210 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+    --> src\model.rs:1255:8
+     |
+1255 |     fn недоступный_мост_это_Error_а_не_End() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 7 warnings (run `cargo fix --lib -p hs-core --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 8.98s
+     Running unittests src\lib.rs (C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/core-rs/target\release\deps\hs_core-259fcefa1b627e8d.exe)
+
+running 168 tests
+test admission::tests::canonical_json_matches_contract_subset ... ok
+test admission::tests::canonical_json_rejects_float ... ok
+test admission::tests::canonical_json_rejects_big_int_and_keeps_boundary ... ok
+test admission::tests::parse_document_rejects_big_int ... ok
+test admission::tests::expired_and_not_yet_valid_are_k11 ... ok
+test admission::tests::missing_anchor_or_signature_is_k11 ... ok
+test admission::tests::duplicate_keys_are_rejected_before_signature ... ok
+test admission::tests::revoked_epoch_and_min_epoch_are_k11 ... ok
+test admission::tests::accepts_signed_test_only_manifest ... ok
+test admission::tests::python_generated_vector_verifies_in_rust ... ok
+test admission::tests::one_changed_byte_in_manifest_breaks_signature ... ok
+test admission::tests::test_only_requires_explicit_permission ... ok
+test host_event::tests::w03_host_projection_rejects_nested_calls ... ok
+test host_event::tests::host_event_review_vector ... ok
+test host_event::tests::host_event_vector ... ok
+test admission::tests::wrong_anchor_wrong_prev_and_bad_signature_are_k11 ... ok
+test journal::tests::bad_magic_is_reported ... ok
+test journal::tests::hsj2_frame_cross_vector_matches_python ... ok
+test loopmod::tests::legacy_и_head_не_запускаются_без_допуска ... ok
+test loopmod::tests::net_есть_в_списке_инструментов ... ok
+test loopmod::tests::net_не_перекрыт_общим_запретом ... ok
+test loopmod::tests::head_разрешён_только_в_fixtures ... ok
+test loopmod::tests::net_разрешён_только_к_мосту ... ok
+test loopmod::tests::policy_запрещает_вне_корня_и_похожий_префикс ... ok
+test loopmod::tests::policy_не_смешивает_схемы ... ok
+test loopmod::tests::policy_понимает_дополнение ... ok
+test loopmod::tests::policy_разбирается_целиком ... ok
+test loopmod::tests::policy_с_битым_правилом_закрывает_всё ... ok
+test loopmod::tests::review1_exact_grant_refusal ... ok
+test loopmod::tests::review1_order_state_machine ... ok
+test loopmod::tests::review1_unknown_cost_parity ... ok
+test loopmod::tests::review2_order_oracles ... ok
+test loopmod::tests::run_end_не_последним_это_дефект ... ok
+test loopmod::tests::w03_grant_refusal_is_structured ... ok
+test loopmod::tests::w03_differential_corpus ... ok
+test journal::tests::append_and_recover ... ok
+test journal::tests::file_starts_with_magic ... ok
+test journal::tests::kind_flip_is_detected ... ok
+test journal::tests::commit_boundary_counts ... ok
+test loopmod::tests::w12_list_empty_has_no_marker ... ok
+test admission::tests::digest_file_detects_one_byte_change ... ok
+test journal::tests::corrupted_record_stops_reading ... ok
+test journal::tests::torn_tail_is_detected_not_repaired ... ok
+test journal::tests::append_to_existing_keeps_prefix ... ok
+test loopmod::tests::вызов_без_результата_это_дефект ... ok
+test loopmod::tests::review1_fresh_disk_proof ... ok
+test loopmod::tests::абсолютный_путь_наружу_отклонён ... ok
+test loopmod::tests::бюджет_времени_останавливает_до_первого_шага ... ok
+test loopmod::tests::выдача_различает_missing_valid_и_invalid ... ok
+test loopmod::tests::бюджет_шагов_режет_длинный_сценарий ... ok
+test journal::tests::open_quarantines_torn_tail_without_losing_prefix ... ok
+test loopmod::tests::инструменты_не_выходят_из_рабочего_каталога ... ok
+test loopmod::tests::fresh_и_resume_применяют_пустую_выдачу_одинаково ... ok
+test loopmod::tests::общее_слово_не_считается_опорой ... ok
+test loopmod::tests::денежный_бюджет_останавливает_прогон ... ok
+test loopmod::tests::опора_находит_имя_файла_без_расширения ... ok
+test loopmod::tests::закрытый_прогон_не_продолжается ... ok
+test loopmod::tests::запись_в_подкаталог_проходит ... ok
+test loopmod::tests::мусор_от_провайдера_порядок_остаётся_целым ... ok
+test loopmod::tests::запись_работает_только_внутри_корня ... ok
+test loopmod::tests::подсказка_несёт_задачу_историю_и_последний_результат ... ok
+test loopmod::tests::неизвестный_инструмент_даёт_ошибку_в_результате ... ok
+test loopmod::tests::перезапись_существующего_файла_отклонена ... FAILED
+test loopmod::tests::повторная_запись_после_создания_отклонена ... FAILED
+test loopmod::tests::обычная_запись_внутри_корня_проходит ... ok
+test loopmod::tests::печать_считается_в_процессе ... ok
+test loopmod::tests::оборванный_хвост_виден_при_чтении_файла ... ok
+test loopmod::tests::поиск_отбивает_короткую_иголку_и_не_каталог ... ok
+test loopmod::tests::поиск_находит_в_файлах_и_подкаталогах ... ok
+test loopmod::tests::поиск_без_совпадений_говорит_об_этом_числом ... ok
+test loopmod::tests::правильный_порядок_проходит ... ok
+test loopmod::tests::поиск_идёт_и_по_одному_файлу ... ok
+test loopmod::tests::поиск_называет_нечитаемые_файлы ... ok
+test loopmod::tests::поиск_не_режет_строку_по_чужой_позиции ... ok
+test loopmod::tests::поиск_показывает_само_совпадение_в_длинной_строке ... ok
+test loopmod::tests::порядок_читается_из_файла_после_прогона ... ok
+test loopmod::tests::пустая_выдача_запрещает_даже_активный_net ... ok
+test loopmod::tests::пустой_журнал_событий_это_дефект ... ok
+test loopmod::tests::поиск_показывает_совпадение_в_середине_строки ... ok
+test loopmod::tests::провайдер_без_завершения_даёт_no_done ... ok
+test loopmod::tests::разбор_шага_завершение ... ok
+test loopmod::tests::разбор_шага_инструмент ... ok
+test loopmod::tests::разбор_шага_мусор_это_ошибка_а_не_пропуск ... ok
+test loopmod::tests::разбор_шага_нужен_человек_и_делать_нечего ... ok
+test loopmod::tests::результат_без_вызова_это_дефект ... ok
+test loopmod::tests::прогон_пишет_журнал_и_соблюдает_порядок ... ok
+test loopmod::tests::событие_хосту_без_моста_это_ошибка_а_не_тишина ... ok
+test loopmod::tests::провайдер_с_нулевым_расходом_даёт_done ... ok
+test loopmod::tests::стадия_выводится_из_журнала_одним_правилом ... ok
+test loopmod::tests::провайдер_без_расхода_даёт_unknown_cost_а_не_done ... ok
+test loopmod::tests::только_active_даёт_допуск_предикату ... ok
+test loopmod::tests::утверждение_с_опорой_считается_подтверждённым ... ok
+test loopmod::tests::число_словом_находится_в_любом_регистре ... ok
+test loopmod::tests::путь_с_двумя_точками_наружу_отклонён ... ok
+test loopmod::tests::список_явно_отказывает_на_не_каталоге ... ok
+test loopmod::tests::продолжение_читает_шаги_задачу_и_расход ... ok
+test loopmod::tests::пустой_ответ_модели_это_ошибка_формата ... ok
+test loopmod::tests::продолжение_учитывает_прежние_шаги_и_не_ломает_порядок ... ok
+test loopmod::tests::шаг_без_метки_TOOL_но_с_именем_инструмента_принимается ... ok
+test loopmod::tests::список_перечисляет_имена_и_типы ... ok
+test loopmod::tests::чтение_даёт_номера_строк ... ok
+test model::tests::emit_journal_exact ... ok
+test model::tests::emit_journal_receipt_bad_hash ... ok
+test model::tests::emit_journal_receipt_duplicate_seq ... ok
+test model::tests::emit_chat_exact ... ok
+test loopmod::tests::чтение_продолжается_с_указанной_строки ... ok
+test loopmod::tests::чтение_не_переполняется_одной_строкой ... ok
+test loopmod::tests::w03_final_known_cost_overspend_is_not_done ... ok
+test model::tests::emit_rejects_empty_token ... ok
+test loopmod::tests::чтение_останавливается_до_потолка_выдачи ... ok
+test model::tests::emit_journal_receipt_exact ... ok
+test model::tests::emit_net_exact ... ok
+test loopmod::tests::чтение_называет_объектные_отказы ... ok
+test model::tests::emit_journal_receipt_missing_hash ... ok
+test model::tests::emit_journal_receipt_zero_seq ... ok
+test model::tests::emit_rejects_path_query ... ok
+test model::tests::emit_rejects_host_authority_in_path ... ok
+test model::tests::emit_rejects_port_zero ... ok
+test model::tests::emit_rejects_host_crlf ... ok
+test model::tests::emit_journal_receipt_extra_field ... ok
+test model::tests::emit_rejects_token_crlf ... ok
+test model::tests::hardening_default_response_timeout_remains_180_seconds ... ok
+test model::tests::emit_rejects_unknown_path ... ok
+test model::tests::journal_propagates_incomplete_response ... ok
+test model::tests::net_propagates_incomplete_response ... ok
+test model::tests::response_accepts_canonical_error ... ok
+test model::tests::response_rejects_3xx ... ok
+test model::tests::response_accepts_canonical_200 ... ok
+test model::tests::response_rejects_chunked_body ... ok
+test model::tests::response_accepts_canonical_empty_error ... ok
+test model::tests::response_rejects_bad_status_line ... ok
+test model::tests::response_rejects_duplicate_content_length ... ok
+test model::tests::response_rejects_lf_only ... ok
+test model::tests::response_rejects_http_10 ... ok
+test model::tests::response_rejects_leading_zero_content_length ... ok
+test model::tests::response_rejects_missing_content_length ... ok
+test model::tests::response_rejects_plus_content_length ... ok
+test model::tests::hardening_client_half_closes_before_response ... ok
+test model::tests::response_rejects_transfer_encoding ... ok
+test model::tests::response_rejects_trailing_body_byte ... ok
+test model::tests::response_rejects_short_body ... ok
+test model::tests::review_emit_rejects_empty_body ... ok
+test model::tests::review_emit_rejects_dns_hostname ... ok
+test model::tests::response_rejects_oversized_response ... ok
+test model::tests::review_response_accepts_policy_statuses ... ok
+test model::tests::review_response_rejects_non_policy_statuses ... ok
+test model::tests::review_response_requires_header_separator ... ok
+test model::tests::review_response_rejects_obs_text ... ok
+test model::tests::review_response_requires_json_content_type ... ok
+test model::tests::usage_without_allowance_remains_unknown ... ok
+test model::tests::разбор_ответа_видит_код_ошибки ... ok
+test model::tests::разбор_ответа_без_choices_это_ошибка ... ok
+test model::tests::разбор_ответа_достаёт_текст ... ok
+test model::tests::стаб_заканчивается_как_End_а_не_как_ошибка ... ok
+test model::tests::мост_получает_наш_токен_и_модель_и_возвращает_текст ... ok
+test sandbox::reach_tests::неразбираемый_адрес_даёт_ошибку_а_не_панику ... ok
+test sandbox::reach_tests::живой_адрес_доступен ... ok
+test loopmod::tests::w12_list_100_has_no_marker ... ok
+test loopmod::tests::w12_list_101_reports_remainder_one ... FAILED
+test model::tests::hardening_response_inside_custom_deadline_is_accepted ... ok
+test loopmod::tests::w12_list_99_has_no_marker ... ok
+test loopmod::tests::w12_list_selects_sorted_dirs_then_files ... FAILED
+test loopmod::tests::w12_list_201_reports_remainder_one_hundred_one ... FAILED
+test loopmod::tests::w12_list_200_reports_remainder_one_hundred ... FAILED
+test loopmod::tests::w12_list_is_identical_under_creation_permutation ... FAILED
+test model::tests::hardening_custom_response_deadline_rejects_late_response ... ok
+test sandbox::reach_tests::мёртвый_адрес_недоступен ... FAILED
+test model::tests::недоступный_мост_это_Error_а_не_End ... ok
+
+failures:
+
+---- loopmod::tests::перезапись_существующего_файла_отклонена stdout ----
+
+thread 'loopmod::tests::перезапись_существующего_файла_отклонена' (35204) panicked at src\loopmod.rs:3136:9:
+нужен S14
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- loopmod::tests::повторная_запись_после_создания_отклонена stdout ----
+
+thread 'loopmod::tests::повторная_запись_после_создания_отклонена' (5144) panicked at src\loopmod.rs:3149:9:
+assertion failed: result.unwrap_err().starts_with("S14_ALREADY_EXISTS")
+
+---- loopmod::tests::w12_list_101_reports_remainder_one stdout ----
+
+thread 'loopmod::tests::w12_list_101_reports_remainder_one' (25984) panicked at src\loopmod.rs:3486:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+  left: "f100.txt\t1"
+ right: "… (обрезано: показано 100, осталось 1)"
+
+---- loopmod::tests::w12_list_selects_sorted_dirs_then_files stdout ----
+
+thread 'loopmod::tests::w12_list_selects_sorted_dirs_then_files' (30948) panicked at src\loopmod.rs:3534:9:
+assertion `left == right` failed: d000/	каталог
+d001/	каталог
+d002/	каталог
+d003/	каталог
+d004/	каталог
+d005/	каталог
+d006/	каталог
+d007/	каталог
+d008/	каталог
+d009/	каталог
+d010/	каталог
+d011/	каталог
+d012/	каталог
+d013/	каталог
+d014/	каталог
+d015/	каталог
+d016/	каталог
+d017/	каталог
+d018/	каталог
+d019/	каталог
+d020/	каталог
+d021/	каталог
+d022/	каталог
+d023/	каталог
+d024/	каталог
+d025/	каталог
+d026/	каталог
+d027/	каталог
+d028/	каталог
+d029/	каталог
+d030/	каталог
+d031/	каталог
+d032/	каталог
+d033/	каталог
+d034/	каталог
+d035/	каталог
+d036/	каталог
+d037/	каталог
+d038/	каталог
+d039/	каталог
+d040/	каталог
+d041/	каталог
+d042/	каталог
+d043/	каталог
+d044/	каталог
+d045/	каталог
+d046/	каталог
+d047/	каталог
+d048/	каталог
+d049/	каталог
+d050/	каталог
+d051/	каталог
+d052/	каталог
+d053/	каталог
+d054/	каталог
+d055/	каталог
+d056/	каталог
+d057/	каталог
+d058/	каталог
+d059/	каталог
+f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+  left: 120
+ right: 101
+
+---- loopmod::tests::w12_list_201_reports_remainder_one_hundred_one stdout ----
+
+thread 'loopmod::tests::w12_list_201_reports_remainder_one_hundred_one' (18448) panicked at src\loopmod.rs:3505:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+f101.txt	1
+f102.txt	1
+f103.txt	1
+f104.txt	1
+f105.txt	1
+f106.txt	1
+f107.txt	1
+f108.txt	1
+f109.txt	1
+f110.txt	1
+f111.txt	1
+f112.txt	1
+f113.txt	1
+f114.txt	1
+f115.txt	1
+f116.txt	1
+f117.txt	1
+f118.txt	1
+f119.txt	1
+f120.txt	1
+f121.txt	1
+f122.txt	1
+f123.txt	1
+f124.txt	1
+f125.txt	1
+f126.txt	1
+f127.txt	1
+f128.txt	1
+f129.txt	1
+f130.txt	1
+f131.txt	1
+f132.txt	1
+f133.txt	1
+f134.txt	1
+f135.txt	1
+f136.txt	1
+f137.txt	1
+f138.txt	1
+f139.txt	1
+f140.txt	1
+f141.txt	1
+f142.txt	1
+f143.txt	1
+f144.txt	1
+f145.txt	1
+f146.txt	1
+f147.txt	1
+f148.txt	1
+f149.txt	1
+f150.txt	1
+f151.txt	1
+f152.txt	1
+f153.txt	1
+f154.txt	1
+f155.txt	1
+f156.txt	1
+f157.txt	1
+f158.txt	1
+f159.txt	1
+f160.txt	1
+f161.txt	1
+f162.txt	1
+f163.txt	1
+f164.txt	1
+f165.txt	1
+f166.txt	1
+f167.txt	1
+f168.txt	1
+f169.txt	1
+f170.txt	1
+f171.txt	1
+f172.txt	1
+f173.txt	1
+f174.txt	1
+f175.txt	1
+f176.txt	1
+f177.txt	1
+f178.txt	1
+f179.txt	1
+f180.txt	1
+f181.txt	1
+f182.txt	1
+f183.txt	1
+f184.txt	1
+f185.txt	1
+f186.txt	1
+f187.txt	1
+f188.txt	1
+f189.txt	1
+f190.txt	1
+f191.txt	1
+f192.txt	1
+f193.txt	1
+f194.txt	1
+f195.txt	1
+f196.txt	1
+f197.txt	1
+f198.txt	1
+f199.txt	1
+… (обрезано)
+  left: 201
+ right: 101
+
+---- loopmod::tests::w12_list_200_reports_remainder_one_hundred stdout ----
+
+thread 'loopmod::tests::w12_list_200_reports_remainder_one_hundred' (40052) panicked at src\loopmod.rs:3494:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+f101.txt	1
+f102.txt	1
+f103.txt	1
+f104.txt	1
+f105.txt	1
+f106.txt	1
+f107.txt	1
+f108.txt	1
+f109.txt	1
+f110.txt	1
+f111.txt	1
+f112.txt	1
+f113.txt	1
+f114.txt	1
+f115.txt	1
+f116.txt	1
+f117.txt	1
+f118.txt	1
+f119.txt	1
+f120.txt	1
+f121.txt	1
+f122.txt	1
+f123.txt	1
+f124.txt	1
+f125.txt	1
+f126.txt	1
+f127.txt	1
+f128.txt	1
+f129.txt	1
+f130.txt	1
+f131.txt	1
+f132.txt	1
+f133.txt	1
+f134.txt	1
+f135.txt	1
+f136.txt	1
+f137.txt	1
+f138.txt	1
+f139.txt	1
+f140.txt	1
+f141.txt	1
+f142.txt	1
+f143.txt	1
+f144.txt	1
+f145.txt	1
+f146.txt	1
+f147.txt	1
+f148.txt	1
+f149.txt	1
+f150.txt	1
+f151.txt	1
+f152.txt	1
+f153.txt	1
+f154.txt	1
+f155.txt	1
+f156.txt	1
+f157.txt	1
+f158.txt	1
+f159.txt	1
+f160.txt	1
+f161.txt	1
+f162.txt	1
+f163.txt	1
+f164.txt	1
+f165.txt	1
+f166.txt	1
+f167.txt	1
+f168.txt	1
+f169.txt	1
+f170.txt	1
+f171.txt	1
+f172.txt	1
+f173.txt	1
+f174.txt	1
+f175.txt	1
+f176.txt	1
+f177.txt	1
+f178.txt	1
+f179.txt	1
+f180.txt	1
+f181.txt	1
+f182.txt	1
+f183.txt	1
+f184.txt	1
+f185.txt	1
+f186.txt	1
+f187.txt	1
+f188.txt	1
+f189.txt	1
+f190.txt	1
+f191.txt	1
+f192.txt	1
+f193.txt	1
+f194.txt	1
+f195.txt	1
+f196.txt	1
+f197.txt	1
+f198.txt	1
+f199.txt	1
+… (обрезано)
+  left: 201
+ right: 101
+
+---- loopmod::tests::w12_list_is_identical_under_creation_permutation stdout ----
+
+thread 'loopmod::tests::w12_list_is_identical_under_creation_permutation' (21052) panicked at src\loopmod.rs:3519:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+f101.txt	1
+f102.txt	1
+f103.txt	1
+f104.txt	1
+f105.txt	1
+f106.txt	1
+f107.txt	1
+f108.txt	1
+f109.txt	1
+f110.txt	1
+f111.txt	1
+f112.txt	1
+f113.txt	1
+f114.txt	1
+f115.txt	1
+f116.txt	1
+f117.txt	1
+f118.txt	1
+f119.txt	1
+f120.txt	1
+f121.txt	1
+f122.txt	1
+f123.txt	1
+f124.txt	1
+f125.txt	1
+f126.txt	1
+f127.txt	1
+f128.txt	1
+f129.txt	1
+f130.txt	1
+f131.txt	1
+f132.txt	1
+f133.txt	1
+f134.txt	1
+f135.txt	1
+f136.txt	1
+f137.txt	1
+f138.txt	1
+f139.txt	1
+f140.txt	1
+f141.txt	1
+f142.txt	1
+f143.txt	1
+f144.txt	1
+f145.txt	1
+f146.txt	1
+f147.txt	1
+f148.txt	1
+f149.txt	1
+  left: 150
+ right: 101
+
+---- sandbox::reach_tests::мёртвый_адрес_недоступен stdout ----
+
+thread 'sandbox::reach_tests::мёртвый_адрес_недоступен' (12900) panicked at src\sandbox.rs:215:9:
+127.0.0.1:9: Подключение не установлено, т.к. конечный компьютер отверг запрос на подключение. (os error 10061)
+
+
+failures:
+    loopmod::tests::w12_list_101_reports_remainder_one
+    loopmod::tests::w12_list_200_reports_remainder_one_hundred
+    loopmod::tests::w12_list_201_reports_remainder_one_hundred_one
+    loopmod::tests::w12_list_is_identical_under_creation_permutation
+    loopmod::tests::w12_list_selects_sorted_dirs_then_files
+    loopmod::tests::перезапись_существующего_файла_отклонена
+    loopmod::tests::повторная_запись_после_создания_отклонена
+    sandbox::reach_tests::мёртвый_адрес_недоступен
+
+test result: FAILED. 160 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.32s
+
+error: test failed, to rerun pass `--lib`

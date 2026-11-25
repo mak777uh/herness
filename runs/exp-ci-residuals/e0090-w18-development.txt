@@ -1,0 +1,15 @@
+[ok] исходный PILOT-GENERATOR-R1 и historical digests сохранены
+[FAIL] loopmod checkout: CRLF pin, 191435 байт, 3647 CRLF, SHA-256 74c77403…
+[FAIL] loopmod Git blob: LF, 187788 байт, SHA-256 b2ffec5d…, blob≠checkout
+[ok] pilot --verify принимает текущую sealed correction
+[ok] missing correction отвергнута
+[ok] tampered correction отвергнута sidecar
+[ok] wrong source digest отвергнут
+[ok] wrong corrected new_tool/generator digests отвергнуты
+[ok] foreign path и threshold mutation отвергнуты
+[ok] registry: seq=0..8 неизменны, seq=9 canonical candidate, later events не меняют head, active=[]
+[ok] V1/V6 chain и proof exact bytes: 0 провалов (rc=0)
+[ok] V4 head/tool-card/card-atoms: 0 провалов
+[FAIL] W03 Review3: 9/9 (rc=1)
+[FAIL] development worktree ограничен W18 scope: ['tests/test_list_contract.py']
+W18 controls: 10/14 ok; провалов: 4; mode=development-scope

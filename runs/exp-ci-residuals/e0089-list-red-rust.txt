@@ -1,0 +1,477 @@
+   Compiling generic-array v0.14.7
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling libc v0.2.191
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.154
+   Compiling curve25519-dalek v4.1.3
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\zmij-2dc6ce0b1509015d\\rustczXpWna\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\zmij-2dc6ce0b1509015d\\build_script_build-2dc6ce0b1509015d.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECs4WH57m40bUN_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\quote-0c0693e1f116e37f\\rustcSBYRzy\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\quote-0c0693e1f116e37f\\build_script_build-0c0693e1f116e37f.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECsjdaUrTH3Ckt_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: could not compile `quote` (build script) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\proc-macro2-b4e7129782b95bf9\\rustcDhwZJh\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\proc-macro2-b4e7129782b95bf9\\build_script_build-b4e7129782b95bf9.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECs1K0splxf2CI_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: could not compile `zmij` (build script) due to 1 previous error
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\serde-faaa0f1d2598f63d\\rustcapV2TW\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\serde-faaa0f1d2598f63d\\build_script_build-faaa0f1d2598f63d.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECs6YTw1udS9B9_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\serde_json-dfb22720f95e8cd6\\rustcWTuPKZ\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\serde_json-dfb22720f95e8cd6\\build_script_build-dfb22720f95e8cd6.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECs6589E8lmJky_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: could not compile `proc-macro2` (build script) due to 1 previous error
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\libc-9017fd31e5fedd9e\\rustceADKTs\\symbols.o" "<4 object files omitted>" "-Wl,-Bstatic" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\libc-9017fd31e5fedd9e\\build_script_build-9017fd31e5fedd9e.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core3stre11starts_withReECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core3stre5parselECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core3stre5parsemECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core3stre5parseyECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core3stre5splitAcj1_ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core3stre5splitAcj2_ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core3stre5splitcECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core6resultINtB3_6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtNtCs9qcQDiGWtgW_3std3env8VarErrorE2orB1k_ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCsinMxvmwVKXS_5alloc5sliceSRe4joinBw_ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displayINtNtCsinMxvmwVKXS_5alloc6borrow3CoweEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displayNtCs7qsZcE2S4e1_18build_script_build3CfgEB10_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displayNtNtCsinMxvmwVKXS_5alloc6string6StringECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displayRNtCs7qsZcE2S4e1_18build_script_build3CfgEB11_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displayReECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displaybECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displaylECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument11new_displaymECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtNtCs2Ja4erDm0Jl_4core3fmt2rtNtB3_8Argument9new_debugRNtCs7qsZcE2S4e1_18build_script_build3CfgEBY_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMsi_NtCs9qcQDiGWtgW_3std7processNtB6_7Command3argNtNtNtB8_3ffi6os_str8OsStringECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMsi_NtCs9qcQDiGWtgW_3std7processNtB6_7Command3argReECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMsi_NtCs9qcQDiGWtgW_3std7processNtB6_7Command3newNtNtNtB8_3ffi6os_str8OsStringECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMsi_NtCs9qcQDiGWtgW_3std7processNtB6_7Command3newReECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core10intrinsics20select_unpredictableINtNtNtB4_3mem12maybe_uninit11MaybeUninitONtCs7qsZcE2S4e1_18build_script_build3CfgEEB1D_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core10intrinsics20select_unpredictableINtNtNtB4_3mem12maybe_uninit11MaybeUninitPNtCs7qsZcE2S4e1_18build_script_build3CfgEEB1D_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core10intrinsics20select_unpredictableOONtCs7qsZcE2S4e1_18build_script_build3CfgEBZ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core10intrinsics20select_unpredictableOPNtCs7qsZcE2S4e1_18build_script_build3CfgEBZ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core5slice20copy_from_slice_implINtNtNtB4_3mem12maybe_uninit11MaybeUninithEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core9panicking13assert_failedINtNtB4_6option6OptionReEBM_ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core9panicking13assert_failedReBM_ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtNtNtCs2Ja4erDm0Jl_4core5slice4sort8unstable7ipnsortNtCs7qsZcE2S4e1_18build_script_build3CfgNvYBT_NtNtB8_3cmp10PartialOrd2ltEBV_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtNtNtNtCs2Ja4erDm0Jl_4core5slice4sort6shared5pivot12choose_pivotNtCs7qsZcE2S4e1_18build_script_build3CfgNvYB15_NtNtBa_3cmp10PartialOrd2ltEB17_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNvMNtCs2Ja4erDm0Jl_4core5sliceSp7reverse7revswapNtCs7qsZcE2S4e1_18build_script_build3CfgEBQ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvXs2J_NtNtCs2Ja4erDm0Jl_4core5slice4iterINtB7_4IterNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtNtBb_4iter6traits8iterator8Iterator3anyNCNvXsf_NtB9_3cmpBQ_NtB2m_13SliceContains14slice_contains0EBS_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvXs2J_NtNtCs2Ja4erDm0Jl_4core5slice4iterINtB7_4ItercENtNtNtNtBb_4iter6traits8iterator8Iterator3anyNCNvXsK_NtB9_3cmpcNtB1J_13SliceContains14slice_containss_0ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvXs2J_NtNtCs2Ja4erDm0Jl_4core5slice4iterINtB7_4ItercENtNtNtNtBb_4iter6traits8iterator8Iterator4foldbNCNvXsK_NtB9_3cmpcNtB1L_13SliceContains14slice_contains0ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvYINtNtNtCs2Ja4erDm0Jl_4core5slice4iter4IterReENtNtNtNtBa_4iter6traits8iterator8Iterator8try_foldjNCINvNtNtBS_8adapters3map12map_try_foldRBJ_jjINtNtBa_6option6OptionjENCNCINvNtCsinMxvmwVKXS_5alloc3str17join_generic_copyehBJ_Es_00NvMs9_NtBa_3numj11checked_addE0B2k_ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCINvMsm_NtNtNtCsinMxvmwVKXS_5alloc11collections5btree8navigateINtNtBa_4node6HandleINtB13_7NodeRefNtNtB13_6marker5DyingNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyINtNtCs2Ja4erDm0Jl_4core6option6OptionNtNtNtB22_3ffi6os_str8OsStringENtB1B_4LeafENtB1B_4EdgeE27deallocating_next_uncheckedNtNtBe_5alloc6GlobalE0Cs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCINvNtCs9qcQDiGWtgW_3std2rt10lang_startuE0Cs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core3stre4trimCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core3stre5charsCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core5sliceSINtNtNtB4_3mem12maybe_uninit11MaybeUninithE12split_at_mutCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core5sliceSc12chunks_exactCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core5sliceSc18split_at_uncheckedCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultNtNtCs9qcQDiGWtgW_3std7process6OutputNtNtNtB4_2io5error5ErrorE2okCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultNtNtCs9qcQDiGWtgW_3std7process6OutputNtNtNtB4_2io5error5ErrorE6expectCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtBJ_13FromUtf8ErrorE2okCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtNtCs9qcQDiGWtgW_3std3env8VarErrorE17unwrap_or_defaultCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtNtCs9qcQDiGWtgW_3std3env8VarErrorE2okCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtNtCs9qcQDiGWtgW_3std3env8VarErrorE5is_okCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtNtCs9qcQDiGWtgW_3std3env8VarErrorE8as_derefCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultReNtNtNtB4_3str5error9Utf8ErrorE2okCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResulthNtNtNtB4_3num5error15TryFromIntErrorE6expectCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultmNtNtNtB4_3num5error13ParseIntErrorE2okCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6resultINtB2_6ResultyNtNtNtB4_3num5error13ParseIntErrorE2okCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCsinMxvmwVKXS_5alloc3vecINtB2_3VecNtCs7qsZcE2S4e1_18build_script_build3CfgE3newBE_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCsinMxvmwVKXS_5alloc6stringNtB2_6String6as_strCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCsinMxvmwVKXS_5alloc6stringNtB2_6String9from_utf8Cs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtNtCs2Ja4erDm0Jl_4core4char7methodsc13is_whitespaceCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtNtCs2Ja4erDm0Jl_4core4char7methodsc8to_digitCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs2_NtNtCs2Ja4erDm0Jl_4core4sync6atomicINtB5_6AtomicbE4loadCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs2_NtNtCs2Ja4erDm0Jl_4core4sync6atomicINtB5_6AtomicbE5storeCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs5_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VecNtCs7qsZcE2S4e1_18build_script_build3CfgE5dedupBH_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs5_NtCsinMxvmwVKXS_5alloc7raw_vecNtB5_11RawVecInner16with_capacity_inCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMsF_NtCs9qcQDiGWtgW_3std7processNtB5_10ExitStatus7successCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMsG_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VecNtCs7qsZcE2S4e1_18build_script_build3CfgE4pushBH_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs_NtCsinMxvmwVKXS_5alloc3vecINtB4_3VechE8as_sliceCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMsj_NtNtCs9qcQDiGWtgW_3std3ffi6os_strNtB5_5OsStr8is_emptyCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtCs2Ja4erDm0Jl_4core10intrinsics9cold_pathCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtCs2Ja4erDm0Jl_4core3ptr25swap_nonoverlapping_bytesCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtCs2Ja4erDm0Jl_4core4char7methods15encode_utf8_rawCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtCs2Ja4erDm0Jl_4core5slice6memchr6memchrCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMNtCs2Ja4erDm0Jl_4core5sliceSp14swap_unchecked18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMNtCs2Ja4erDm0Jl_4core5sliceSp22split_at_mut_unchecked18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs_NtCsinMxvmwVKXS_5alloc3vecINtB6_3VecppE7set_len18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core3ptr19copy_nonoverlapping18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core3ptr19swap_nonoverlapping18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core3ptr4copy18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtNtCs2Ja4erDm0Jl_4core5slice3raw14from_raw_parts18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtNtCs2Ja4erDm0Jl_4core5slice3raw18from_raw_parts_mut18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs0_NtNtCs2Ja4erDm0Jl_4core5slice5indexjINtB7_10SliceIndexSpE13get_unchecked18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs2_NtNtCs2Ja4erDm0Jl_4core5slice5indexINtNtNtBb_3ops5range5RangejEINtB7_10SliceIndexSpE17get_unchecked_mut18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNtCs2Ja4erDm0Jl_4core7convertReINtB2_5AsRefNtNtNtCs9qcQDiGWtgW_3std3ffi6os_str5OsStrE6as_refCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mapINtB2_8BTreeMapNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyINtNtCs2Ja4erDm0Jl_4core6option6OptionNtNtNtB1c_3ffi6os_str8OsStringEENtNtNtB20_3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNvMsT_NtNtNtCsinMxvmwVKXS_5alloc11collections5btree4nodeINtB8_6HandleINtB8_7NodeRefNtNtB8_6marker5DyingpppENtB1p_2KVE12drop_key_valINtB2_7DropperINtNtCs2Ja4erDm0Jl_4core6option6OptionNtNtNtCs9qcQDiGWtgW_3std3ffi6os_str8OsStringEENtNtNtB2s_3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNvMs_NtCsinMxvmwVKXS_5alloc3vecINtB7_3VecppE8dedup_byINtB2_13FillGapOnDropNtCs7qsZcE2S4e1_18build_script_build3CfgNtNtB9_5alloc6GlobalENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropB1g_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNvXsy_NtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mapINtB8_8IntoIterpppENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropINtB2_9DropGuardNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyINtNtB1k_6option6OptionNtNtNtB2k_3ffi6os_str8OsStringENtNtBe_5alloc6GlobalEB1e_4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs0_NtCs2Ja4erDm0Jl_4core6borrowReINtB5_6BorroweE6borrowCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtCsinMxvmwVKXS_5alloc7raw_vecINtB5_6RawVecNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropBO_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtCsinMxvmwVKXS_5alloc7raw_vecINtB5_6RawVecNtNtNtNtCs9qcQDiGWtgW_3std3sys4args7windows3ArgENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtCsinMxvmwVKXS_5alloc7raw_vecINtB5_6RawVectENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtNtNtCs2Ja4erDm0Jl_4core2io5error4reprNtB5_4ReprNtNtNtBb_3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1y_NtCsinMxvmwVKXS_5alloc6stringNtB6_6StringINtNtCs2Ja4erDm0Jl_4core3cmp9PartialEqReE2eqCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1y_NtCsinMxvmwVKXS_5alloc6stringNtB6_6StringINtNtCs2Ja4erDm0Jl_4core3cmp9PartialEqReE2neCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs2J_NtNtCs2Ja4erDm0Jl_4core5slice4iterINtB6_4IterNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtNtBa_4iter6traits8iterator8Iterator4nextBR_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs2J_NtNtCs2Ja4erDm0Jl_4core5slice4iterINtB6_4IterTReRSBQ_EENtNtNtNtBa_4iter6traits8iterator8Iterator4nextCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs2_NtNtCsinMxvmwVKXS_5alloc3vec11spec_extendINtB7_3VechEINtB5_10SpecExtendRhINtNtNtCs2Ja4erDm0Jl_4core5slice4iter4IterhEE11spec_extendCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs3_NtNtCs2Ja4erDm0Jl_4core3str4iterNtB5_11CharIndicesNtNtNtNtB9_4iter6traits8iterator8Iterator4nextCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs3_NtNtCs2Ja4erDm0Jl_4core3str7patternNvMNtNtB9_4char7methodsc13is_whitespaceNtB5_11MultiCharEq7matchesCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs3_NtNtCs9qcQDiGWtgW_3std3ffi6os_strNtB5_8OsStringNtNtNtCs2Ja4erDm0Jl_4core3ops5deref5Deref5derefCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs4_NtNtCs2Ja4erDm0Jl_4core3str4iterNtB5_11CharIndicesNtNtNtNtB9_4iter6traits12double_ended19DoubleEndedIterator9next_backCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs5_NtNtCs2Ja4erDm0Jl_4core5array4iterINtB5_8IntoIterjKj2_ENtNtNtB9_3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs8_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VecNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtCs2Ja4erDm0Jl_4core3ops5deref5Deref5derefBH_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs8_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VechENtNtNtCs2Ja4erDm0Jl_4core3ops5deref5Deref5derefCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs9_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VecNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtCs2Ja4erDm0Jl_4core3ops5deref8DerefMut9deref_mutBH_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsX_NtNtCs2Ja4erDm0Jl_4core3str4iterINtB5_5SplitAcj1_ENtNtNtNtB9_4iter6traits8iterator8Iterator4nextCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsX_NtNtCs2Ja4erDm0Jl_4core3str4iterINtB5_5SplitAcj2_ENtNtNtNtB9_4iter6traits8iterator8Iterator4nextCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsX_NtNtCs2Ja4erDm0Jl_4core3str4iterINtB5_5SplitcENtNtNtNtB9_4iter6traits8iterator8Iterator4nextCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtCs2Ja4erDm0Jl_4core3streINtNtB6_7convert5AsRefShE6as_refCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core5slice4iterRSTReRSBF_ENtNtNtNtB8_4iter6traits7collect12IntoIterator9into_iterCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsd_NtNtCs2Ja4erDm0Jl_4core3num5errorNtB5_13ParseIntErrorNtNtB9_3fmt5Debug3fmtCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsg_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VecNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtNtCs2Ja4erDm0Jl_4core4iter6traits7collect12IntoIterator9into_iterBH_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsp_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VecNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropBH_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsp_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VecNtNtNtNtCs9qcQDiGWtgW_3std3sys4args7windows3ArgENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsp_NtCsinMxvmwVKXS_5alloc3vecINtB5_3VectENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsq_NtCsinMxvmwVKXS_5alloc6stringNtB5_6StringNtNtCs2Ja4erDm0Jl_4core3fmt7Display3fmtCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsx_NtCsinMxvmwVKXS_5alloc6stringNtB5_6StringNtNtNtCs2Ja4erDm0Jl_4core3ops5deref5Deref5derefCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsy_NtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mapINtB5_8IntoIterNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyINtNtCs2Ja4erDm0Jl_4core6option6OptionNtNtNtB1f_3ffi6os_str8OsStringEENtNtNtB23_3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvYINtNtNtCs2Ja4erDm0Jl_4core3str4iter5SplitcENtNtNtNtB9_4iter6traits8iterator8Iterator3nthCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtB4_6option6OptionNtNtNtCs9qcQDiGWtgW_3std3ffi6os_str8OsStringEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtB4_6result6ResultNtNtCs9qcQDiGWtgW_3std7process6OutputNtNtNtB4_2io5error5ErrorEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtB4_6result6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtBZ_13FromUtf8ErrorEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtB4_6result6ResultNtNtCsinMxvmwVKXS_5alloc6string6StringNtNtCs9qcQDiGWtgW_3std3env8VarErrorEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtCsinMxvmwVKXS_5alloc3vec3VechEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtCsinMxvmwVKXS_5alloc7raw_vec6RawVecNtCs7qsZcE2S4e1_18build_script_build3CfgEEB1h_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtNtB4_2io5error9ErrorDataNtBE_11CustomOwnerEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNtNtNtCsinMxvmwVKXS_5alloc11collections5btree3map8IntoIterNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyINtNtB4_6option6OptionNtNtNtB1I_3ffi6os_str8OsStringEEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNvMsT_NtNtNtCsinMxvmwVKXS_5alloc11collections5btree4nodeINtBK_6HandleINtBK_7NodeRefNtNtBK_6marker5DyingpppENtB21_2KVE12drop_key_val7DropperINtNtB4_6option6OptionNtNtNtCs9qcQDiGWtgW_3std3ffi6os_str8OsStringEEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNvMs_NtCsinMxvmwVKXS_5alloc3vecINtBJ_3VecppE8dedup_by13FillGapOnDropNtCs7qsZcE2S4e1_18build_script_build3CfgNtNtBL_5alloc6GlobalEEB1M_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNvXse_NtNtCsinMxvmwVKXS_5alloc3vec9into_iterINtBK_8IntoIterppENtNtNtB4_3ops4drop4Drop4drop9DropGuardNtCs7qsZcE2S4e1_18build_script_build3CfgNtNtBO_5alloc6GlobalEEB2i_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueINtNvXsy_NtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mapINtBK_8IntoIterpppENtNtNtB4_3ops4drop4Drop4drop9DropGuardNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyINtNtB4_6option6OptionNtNtNtB2A_3ffi6os_str8OsStringENtNtBQ_5alloc6GlobalEECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueNtNtNtB4_2io5error5ErrorECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueNtNtNtCs9qcQDiGWtgW_3std3ffi6os_str8OsStringECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueNtNvNtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mem7replace10PanicGuardECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs2Ja4erDm0Jl_4core3ptr9drop_glueSNtNtNtNtCs9qcQDiGWtgW_3std3sys4args7windows3ArgECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtNtCs9qcQDiGWtgW_3std3sys9backtrace28___rust_begin_short_backtraceFEuuECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtNtNtNtCs2Ja4erDm0Jl_4core5slice4sort8unstable9quicksort9quicksortNtCs7qsZcE2S4e1_18build_script_build3CfgNvYB17_NtNtBa_3cmp10PartialOrd2ltEB19_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCs7qsZcE2S4e1_18build_script_build17emcc_version_code0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCs7qsZcE2S4e1_18build_script_build17emcc_version_codes0_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCs7qsZcE2S4e1_18build_script_build17emcc_version_codes_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCs7qsZcE2S4e1_18build_script_build19rustc_minor_nightly0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCs7qsZcE2S4e1_18build_script_build20vxworks_version_code0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCs7qsZcE2S4e1_18build_script_build20vxworks_version_codes_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNSNvYNCINvNtCs9qcQDiGWtgW_3std2rt10lang_startuE0INtNtNtCs2Ja4erDm0Jl_4core3ops8function6FnOnceuE9call_once6vtableCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvCs7qsZcE2S4e1_18build_script_build4main ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core5sliceSNtCs7qsZcE2S4e1_18build_script_build3Cfg12split_at_mutBw_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core5sliceSNtCs7qsZcE2S4e1_18build_script_build3Cfg7reverseBw_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core4hint16assert_unchecked18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core4hint21unreachable_unchecked18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXCs7qsZcE2S4e1_18build_script_buildNtB2_3CfgNtNtCs2Ja4erDm0Jl_4core3fmt7Display3fmt ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1g_NtCs2Ja4erDm0Jl_4core3fmtRNtCs7qsZcE2S4e1_18build_script_build3CfgNtB6_5Debug3fmtBy_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1g_NtCs2Ja4erDm0Jl_4core3fmtRReNtB6_5Debug3fmtCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1i_NtCs2Ja4erDm0Jl_4core3fmtRNtCs7qsZcE2S4e1_18build_script_build3CfgNtB6_7Display3fmtBy_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs4_Cs7qsZcE2S4e1_18build_script_buildNtB5_3CfgNtNtCs2Ja4erDm0Jl_4core3cmp9PartialEq2eqB5_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs7_NtNtCs2Ja4erDm0Jl_4core3cmp5implsReNtB7_9PartialEq2eqCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvYNvMNtNtCs2Ja4erDm0Jl_4core4char7methodsc13is_whitespaceINtNtNtB9_3ops8function5FnMutTcEE8call_mutCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvYNvMs9_NtCs2Ja4erDm0Jl_4core3numj11checked_addINtNtNtBa_3ops8function5FnMutTjjEE8call_mutCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core6optionINtB3_6OptionReE6map_orbNCNvCs7qsZcE2S4e1_18build_script_build19rustc_minor_nightly0EBX_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core6optionINtB3_6OptionReE8and_thenmNCNvCs7qsZcE2S4e1_18build_script_build20vxworks_version_code0EBZ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core6optionINtB3_6OptionReE8and_thenmNCNvCs7qsZcE2S4e1_18build_script_build20vxworks_version_codes_0EBZ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core6optionINtB3_6OptionReE8and_thenyNCNvCs7qsZcE2S4e1_18build_script_build17emcc_version_code0EBZ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core6optionINtB3_6OptionReE8and_thenyNCNvCs7qsZcE2S4e1_18build_script_build17emcc_version_codes0_0EBZ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvMNtCs2Ja4erDm0Jl_4core6optionINtB3_6OptionReE8and_thenyNCNvCs7qsZcE2S4e1_18build_script_build17emcc_version_codes_0EBZ_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std3env3varReECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std3env6var_osReECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RINvNtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mem7replaceINtNtB4_4node6HandleINtB10_7NodeRefNtNtB10_6marker5DyingNtNtNtNtCs9qcQDiGWtgW_3std3sys7process7windows6EnvKeyINtNtCs2Ja4erDm0Jl_4core6option6OptionNtNtNtB1Z_3ffi6os_str8OsStringENtB1y_4LeafENtB1y_4EdgeEIBY_IB1i_B1w_B1R_B2I_NtB1y_14LeafOrInternalENtB1y_2KVENCINvMsm_NtB4_8navigateBX_27deallocating_next_uncheckedNtNtB8_5alloc6GlobalE0ECs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCINvNtNtNtCs2Ja4erDm0Jl_4core4iter8adapters3map12map_try_foldRRejjINtNtBa_6option6OptionjENCNCINvNtCsinMxvmwVKXS_5alloc3str17join_generic_copyehB10_Es_00NvMs9_NtBa_3numj11checked_addE0Cs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvXsK_NtNtCs2Ja4erDm0Jl_4core5slice3cmpcNtB7_13SliceContains14slice_contains0Cs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvXsK_NtNtCs2Ja4erDm0Jl_4core5slice3cmpcNtB7_13SliceContains14slice_containss_0Cs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvXsf_NtNtCs2Ja4erDm0Jl_4core5slice3cmpNtCs7qsZcE2S4e1_18build_script_build3CfgNtB7_13SliceContains14slice_contains0BG_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6optionINtB2_6OptionNtNtNtCs9qcQDiGWtgW_3std3ffi6os_str8OsStringE6expectCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6optionINtB2_6OptionlE9unwrap_orCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6optionINtB2_6OptionmE9unwrap_orCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core6optionINtB2_6OptionyE9unwrap_orCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtNtCs2Ja4erDm0Jl_4core3ptr9const_ptrPu13is_aligned_toCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs9_NtCs2Ja4erDm0Jl_4core3numj11checked_addCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMNtNtCs2Ja4erDm0Jl_4core3ptr9const_ptrPp20offset_from_unsigned18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs3_NtCs2Ja4erDm0Jl_4core3numi13unchecked_neg18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs9_NtCs2Ja4erDm0Jl_4core3numj13unchecked_add18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs9_NtCs2Ja4erDm0Jl_4core3numj13unchecked_sub18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs5_NtNtCs2Ja4erDm0Jl_4core3str6traitsINtNtNtBb_3ops5range5RangejEINtNtNtBb_5slice5index10SliceIndexeE13get_unchecked18precondition_checkCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNvNtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mem7replaceNtB2_10PanicGuardNtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNvXse_NtNtCsinMxvmwVKXS_5alloc3vec9into_iterINtB8_8IntoIterppENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropINtB2_9DropGuardNtCs7qsZcE2S4e1_18build_script_build3CfgNtNtBc_5alloc6GlobalEB12_4dropB22_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1g_NtCs2Ja4erDm0Jl_4core3fmtRINtNtB8_6option6OptionReENtB6_5Debug3fmtCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs2_NtNtCs2Ja4erDm0Jl_4core3str7patterncNtB5_7Pattern13into_searcherCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs4_NtNtCsinMxvmwVKXS_5alloc3vec9into_iterINtB5_8IntoIterNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtNtCs2Ja4erDm0Jl_4core4iter6traits8iterator8Iterator4nextBY_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs7_NtNtCs2Ja4erDm0Jl_4core3str7patternINtB5_18MultiCharEqPatternNvMNtNtB9_4char7methodsc13is_whitespaceENtB5_7Pattern13into_searcherCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsA_NtCs2Ja4erDm0Jl_4core3nummNtNtNtB7_3str6traits7FromStr8from_strCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsC_NtCs2Ja4erDm0Jl_4core3numyNtNtNtB7_3str6traits7FromStr8from_strCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsJ_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionINtNtNtB7_3num7nonzero7NonZerojEENtNtNtB7_3ops9try_trait3Try11from_outputCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsJ_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionINtNtNtB7_3num7nonzero7NonZerojEENtNtNtB7_3ops9try_trait3Try6branchCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsJ_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionNtNtCs9qcQDiGWtgW_3std7process6OutputENtNtNtB7_3ops9try_trait3Try6branchCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsJ_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionNtNtCsinMxvmwVKXS_5alloc6string6StringENtNtNtB7_3ops9try_trait3Try6branchCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsJ_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionjENtNtNtB7_3ops9try_trait3Try11from_outputCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsJ_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionjENtNtNtB7_3ops9try_trait3Try6branchCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsK_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionINtNtNtB7_3num7nonzero7NonZerojEEINtNtNtB7_3ops9try_trait12FromResidualIBy_NtNtB7_7convert10InfallibleEE13from_residualCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsK_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionTmmEEINtNtNtB7_3ops9try_trait12FromResidualIBy_NtNtB7_7convert10InfallibleEE13from_residualCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsK_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionjEINtNtNtB7_3ops9try_trait12FromResidualIBy_NtNtB7_7convert10InfallibleEE13from_residualCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsK_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionlEINtNtNtB7_3ops9try_trait12FromResidualIBy_NtNtB7_7convert10InfallibleEE13from_residualCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsK_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionyEINtNtNtB7_3ops9try_trait12FromResidualIBy_NtNtB7_7convert10InfallibleEE13from_residualCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtCsinMxvmwVKXS_5alloc3strSReINtNtB6_5slice4JoinBv_E4joinCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str6traitseNtNtB8_3cmp9PartialEq2eqCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB4_12CharSearcherNtB4_8Searcher10next_matchCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB4_12CharSearcherNtB4_8Searcher8haystackCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsb_NtCsinMxvmwVKXS_5alloc6borrowINtB5_3CoweENtNtCs2Ja4erDm0Jl_4core3fmt7Display3fmtCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsb_NtNtCs2Ja4erDm0Jl_4core3str7patternAcj1_NtB5_7Pattern13into_searcherCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsb_NtNtCs2Ja4erDm0Jl_4core3str7patternAcj2_NtB5_7Pattern13into_searcherCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsc_NtNtCs2Ja4erDm0Jl_4core3str7patternINtB5_17CharArraySearcherKj1_ENtB5_8Searcher10next_matchCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsc_NtNtCs2Ja4erDm0Jl_4core3str7patternINtB5_17CharArraySearcherKj1_ENtB5_8Searcher8haystackCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsc_NtNtCs2Ja4erDm0Jl_4core3str7patternINtB5_17CharArraySearcherKj2_ENtB5_8Searcher10next_matchCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsc_NtNtCs2Ja4erDm0Jl_4core3str7patternINtB5_17CharArraySearcherKj2_ENtB5_8Searcher8haystackCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXse_NtNtCsinMxvmwVKXS_5alloc3vec9into_iterINtB5_8IntoIterNtCs7qsZcE2S4e1_18build_script_build3CfgENtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropBY_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsf_NtCs2Ja4erDm0Jl_4core6optionINtB5_6OptionReENtNtB7_3cmp9PartialEq2eqCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXso_NtCs2Ja4erDm0Jl_4core3numlNtNtNtB7_3str6traits7FromStr8from_strCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXso_NtNtCs2Ja4erDm0Jl_4core3str7patternINtB5_21CharPredicateSearcherNvMNtNtB9_4char7methodsc13is_whitespaceENtB5_8Searcher11next_rejectCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsp_NtNtCs2Ja4erDm0Jl_4core3str7patternINtB5_21CharPredicateSearcherNvMNtNtB9_4char7methodsc13is_whitespaceENtB5_15ReverseSearcher16next_reject_backCs7qsZcE2S4e1_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\serde_core-a51de86db5ad14da\\rustcroLe8U\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\serde_core-a51de86db5ad14da\\build_script_build-a51de86db5ad14da.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECs8OPHb1CsIi6_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: could not compile `serde` (build script) due to 1 previous error
+error: could not compile `serde_json` (build script) due to 1 previous error
+error: could not compile `serde_core` (build script) due to 1 previous error
+error: could not compile `libc` (build script) due to 1 previous error
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\generic-array-4d2de3de20f7715a\\rustcld6PM2\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\deps/libversion_check-8cbf1761a91934b2.rlib" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\generic-array-4d2de3de20f7715a\\build_script_build-4d2de3de20f7715a.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECslSoVqsqCY1T_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core3stre10trim_rightCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core3stre3lenCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core3stre4trimCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core3stre5linesCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCs2Ja4erDm0Jl_4core3stre9trim_leftCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtCsinMxvmwVKXS_5alloc6stringNtB2_6String9from_utf8CsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMsa_NtCs2Ja4erDm0Jl_4core3fmtNtB5_9Formatter9write_fmtCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtCs2Ja4erDm0Jl_4core10intrinsics9cold_pathCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtNtCs2Ja4erDm0Jl_4core7unicode12unicode_data11white_space6lookupCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs0_NtNtCs2Ja4erDm0Jl_4core5slice5indexjINtB7_10SliceIndexSpE13get_unchecked18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs0_NtNtCs2Ja4erDm0Jl_4core5slice5indexjINtB7_10SliceIndexSpE17get_unchecked_mut18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs5_NtNtCs2Ja4erDm0Jl_4core3str6traitsINtNtNtBb_3ops5range5RangejEINtNtNtBb_5slice5index10SliceIndexeE13get_unchecked18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs0_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB5_12CharSearcherNtB5_15ReverseSearcher15next_match_backCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtCsinMxvmwVKXS_5alloc5allocNtB5_6GlobalNtNtCs2Ja4erDm0Jl_4core5alloc9Allocator10deallocateCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs2_NtCsgbwzDIE7gfR_13version_check4dateNtB5_4DateNtNtCs2Ja4erDm0Jl_4core3cmp9PartialEq2eqB7_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs2_NtCsgbwzDIE7gfR_13version_check7versionNtB5_7VersionNtNtCs2Ja4erDm0Jl_4core3cmp9PartialEq2eqB7_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs5_NtCsinMxvmwVKXS_5alloc5allocNtB5_6GlobalNtNtCs2Ja4erDm0Jl_4core5clone5Clone5cloneCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs6_NtNtCs2Ja4erDm0Jl_4core3num5errorNtB5_15TryFromIntErrorNtNtB9_3fmt5Debug3fmtCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str6traitseNtNtB8_3cmp9PartialEq2eqCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB4_12CharSearcherNtB4_8Searcher10next_matchCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB4_12CharSearcherNtB4_8Searcher8haystackCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsv_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB5_11StrSearcherNtB5_8Searcher10next_matchCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsv_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB5_11StrSearcherNtB5_8Searcher8haystackCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsx_NtCsinMxvmwVKXS_5alloc6stringNtB5_6StringNtNtNtCs2Ja4erDm0Jl_4core3ops5deref5Deref5derefCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: .drectve `-exclude-symbols:_RNCNCNvCsgbwzDIE7gfR_13version_check16supports_features_00B5_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNCNvCsgbwzDIE7gfR_13version_check43version_and_date_from_rustc_verbose_version00B5_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check16supports_feature0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check16supports_features0_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check16supports_features1_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check16supports_features2_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check16supports_features_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check20get_version_and_dates0_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check20get_version_and_dates_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check20is_feature_flaggable0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check35version_and_date_from_rustc_versions0_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check35version_and_date_from_rustc_versions1_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvCsgbwzDIE7gfR_13version_check35version_and_date_from_rustc_versions_0B3_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvMNtCsgbwzDIE7gfR_13version_check7channelNtB4_7Channel4read0B6_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNCNvMNtCsgbwzDIE7gfR_13version_check7channelNtB4_7Channel4reads_0B6_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvCsgbwzDIE7gfR_13version_check20get_version_and_date ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtNtCs2Ja4erDm0Jl_4core4char7methodsc13is_whitespaceCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtCs2Ja4erDm0Jl_4core4char7methods15encode_utf8_rawCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMNtNtCs2Ja4erDm0Jl_4core3ptr9const_ptrPp20offset_from_unsigned18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs1_NtNtCs2Ja4erDm0Jl_4core3ptr8non_nullINtB7_7NonNullpE13new_unchecked18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs9_NtCs2Ja4erDm0Jl_4core3numj13unchecked_add18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs9_NtCs2Ja4erDm0Jl_4core3numj13unchecked_sub18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core4hint16assert_unchecked18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core4hint21unreachable_unchecked18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core9ub_checks23maybe_is_nonoverlapping7runtimeCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtNtCs2Ja4erDm0Jl_4core4char7convert18from_u32_unchecked18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtNtCs2Ja4erDm0Jl_4core5slice3raw14from_raw_parts18precondition_checkCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNtNtCs2Ja4erDm0Jl_4core3cmp5implsuNtB4_9PartialEq2eqCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNvNtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mem7replaceNtB2_10PanicGuardNtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs11_NtNtCs2Ja4erDm0Jl_4core3cmp5implsmNtB8_3Ord3cmpCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs13_NtNtCs2Ja4erDm0Jl_4core3cmp5implsyNtB8_3Ord3cmpCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs3_NtNtCs2Ja4erDm0Jl_4core3str4iterNtB5_11CharIndicesNtNtNtNtB9_4iter6traits8iterator8Iterator4nextCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs4_NtNtCs2Ja4erDm0Jl_4core3str4iterNtB5_11CharIndicesNtNtNtNtB9_4iter6traits12double_ended19DoubleEndedIterator9next_backCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsU_NtNtCs9qcQDiGWtgW_3std3ffi6os_streINtNtCs2Ja4erDm0Jl_4core7convert5AsRefNtB5_5OsStrE6as_refCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsk_NtNtCs2Ja4erDm0Jl_4core3cmp5implshNtB7_9PartialEq2eqCsgbwzDIE7gfR_13version_check ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: linking with `x86_64-w64-mingw32-gcc` failed: exit code: 1
+  |
+  = note: "x86_64-w64-mingw32-gcc" "-fno-use-linker-plugin" "-Wl,--dynamicbase" "-Wl,--disable-auto-image-base" "-m64" "-Wl,--high-entropy-va" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\curve25519-dalek-8ebfcf542718c38b\\rustcKnNknN\\symbols.o" "<2 object files omitted>" "-Wl,-Bstatic" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\deps/{librustc_version-a2739f253a4cbb2f,libsemver-d68eeae7ea7a5bc8}.rlib" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-gnu\\lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lkernel32" "-lkernel32" "-lkernel32" "-lntdll" "-luserenv" "-lws2_32" "-ldbghelp" "-lgcc_eh" "-l:libpthread.a" "-lmsvcrt" "-lmingwex" "-lmingw32" "-lgcc" "-lmsvcrt" "-lmingwex" "-luser32" "-lkernel32" "-Wl,--nxcompat" "-o" "C:\\Users\\Admin\\Documents\\Qoder\\2026-11-23\\59e41fc7\\herness\\core-rs\\target\\debug\\build\\curve25519-dalek-8ebfcf542718c38b\\build_script_build-8ebfcf542718c38b.exe" "-Wl,--gc-sections" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: Warning: .drectve `-exclude-symbols:_RINvNtCs9qcQDiGWtgW_3std2rt10lang_startuECsg7XdGEGZn1e_18build_script_build ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: .drectve `-exclude-symbols:_RNCNvXs_Cs1Yq0lCQMwXd_13rustc_versionNtB6_11LlvmVersionNtNtNtCs2Ja4erDm0Jl_4core3str6traits7FromStr8from_str0B6_ ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNSNvYNCINvMs6_NtCsgVBoBFRJVQp_9hashbrown3rawINtBd_8RawTableTReBX_EE14reserve_rehashNCINvNtBf_3map11make_hasherBX_BX_NtNtNtCs9qcQDiGWtgW_3std4hash6random11RandomStateE0E0INtNtNtCs2Ja4erDm0Jl_4core3ops8function6FnOnceTQNtBd_13RawTableInnerjEE9call_once6vtableCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNSNvYNCINvMs6_NtCsgVBoBFRJVQp_9hashbrown3rawINtBd_8RawTableTReBX_EE25find_or_find_insert_indexNCINvNtBf_3map14equivalent_keyBX_BX_BX_E0NCINvB1A_11make_hasherBX_BX_NtNtNtCs9qcQDiGWtgW_3std4hash6random11RandomStateE0E0INtNtNtCs2Ja4erDm0Jl_4core3ops8function6FnOnceTjEE9call_once6vtableCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNSNvYNCINvMs6_NtCsgVBoBFRJVQp_9hashbrown3rawINtBd_8RawTableTReBX_EE4findNCINvNtBf_3map14equivalent_keyeBX_BX_E0E0INtNtNtCs2Ja4erDm0Jl_4core3ops8function6FnOnceTjEE9call_once6vtableCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMNtNtNtCsgVBoBFRJVQp_9hashbrown7control5group4sse2NtB2_5Group44convert_special_to_empty_and_full_to_deletedCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs1P_NtNtCs2Ja4erDm0Jl_4core9core_arch3x86INtNtB8_4simd4SimdaKj10_E8as_m128iCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs1_NtNtCs2Ja4erDm0Jl_4core2io5errorNtB5_5Error14is_interruptedCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMsf_NtNtCs2Ja4erDm0Jl_4core2io5errorNtB5_9ErrorKind9from_primCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs1_NtNtCs2Ja4erDm0Jl_4core3ptr8non_nullINtB7_7NonNullpE13new_unchecked18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMs9_NtCs2Ja4erDm0Jl_4core3numj13unchecked_add18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core4hint16assert_unchecked18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core4hint21unreachable_unchecked18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core9ub_checks23maybe_is_nonoverlapping7runtimeCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtNtCs2Ja4erDm0Jl_4core5slice3raw14from_raw_parts18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs0_NtNtCs2Ja4erDm0Jl_4core5slice5indexjINtB7_10SliceIndexSpE13get_unchecked18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs0_NtNtCs2Ja4erDm0Jl_4core5slice5indexjINtB7_10SliceIndexSpE17get_unchecked_mut18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvXs5_NtNtCs2Ja4erDm0Jl_4core3str6traitsINtNtNtBb_3ops5range5RangejEINtNtNtBb_5slice5index10SliceIndexeE13get_unchecked18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtCsinMxvmwVKXS_5alloc5allocNtB5_6GlobalNtNtCs2Ja4erDm0Jl_4core5alloc9Allocator10deallocateCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtCsinMxvmwVKXS_5alloc5allocNtB5_6GlobalNtNtCs2Ja4erDm0Jl_4core5alloc9Allocator8allocateCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs4_NtCs2Ja4erDm0Jl_4core3strNtB5_8LinesMapINtNtNtB7_3ops8function5FnMutTReEE8call_mutCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs5_NtCsinMxvmwVKXS_5alloc5allocNtB5_6GlobalNtNtCs2Ja4erDm0Jl_4core5clone5Clone5cloneCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs6_NtNtNtNtCs2Ja4erDm0Jl_4core4iter8adapters7step_by12step_by_specINtNtNtBd_3ops5range5RangejEINtB7_14SpecRangeSetupB16_E5setupCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str6traitseNtNtB8_3cmp9PartialEq2eqCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB4_12CharSearcherNtB4_8Searcher10next_matchCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB4_12CharSearcherNtB4_8Searcher8haystackCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsv_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB5_11StrSearcherNtB5_8Searcher10next_matchCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsv_NtNtCs2Ja4erDm0Jl_4core3str7patternNtB5_11StrSearcherNtB5_8Searcher8haystackCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: .drectve `-exclude-symbols:_RNvMs4_NtCs2Ja4erDm0Jl_4core3fmtNtB5_9Arguments23as_statically_known_strCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMs4_NtCs2Ja4erDm0Jl_4core3fmtNtB5_9Arguments8from_strCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvMsa_NtCs2Ja4erDm0Jl_4core3fmtNtB5_9Formatter9write_fmtCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtCs2Ja4erDm0Jl_4core10intrinsics9cold_pathCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtCs2Ja4erDm0Jl_4core5slice6memchr6memchrCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtNtCs2Ja4erDm0Jl_4core9core_arch3x864sse212__mm_or_si128Cs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtNtCs2Ja4erDm0Jl_4core9core_arch3x864sse213__mm_set1_epi8Cs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtNtCs2Ja4erDm0Jl_4core9core_arch3x864sse214__mm_cmpgt_epi8Cs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNtNtNtCs2Ja4erDm0Jl_4core9core_arch3x864sse217__mm_setzero_si128Cs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvMNtNtCs2Ja4erDm0Jl_4core3mem9alignmentNtB4_9Alignment13new_unchecked18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvNvNtCs2Ja4erDm0Jl_4core3ptr19copy_nonoverlapping18precondition_checkCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXNvNtNtNtCsinMxvmwVKXS_5alloc11collections5btree3mem7replaceNtB2_10PanicGuardNtNtNtCs2Ja4erDm0Jl_4core3ops4drop4Drop4dropCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXs1_NtNtNtCs2Ja4erDm0Jl_4core2io5error4reprNtB5_4ReprNtNtNtBb_3ops4drop4Drop4dropCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsK_NtCsinMxvmwVKXS_5alloc6stringNtB5_6StringINtNtCs2Ja4erDm0Jl_4core7convert4FromReE4fromCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: .drectve `-exclude-symbols:_RNvXsZ_NtNtCs2Ja4erDm0Jl_4core3fmt3numjNtB7_5Debug3fmtCs1Yq0lCQMwXd_13rustc_version ' unrecognized
+          Warning: corrupt .drectve at end of def file
+          Warning: corrupt .drectve at end of def file
+          C:\Users\Admin\.rustup\toolchains\stable-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\lib\libstd-f903e3d16df36da5.rlib(std-f903e3d16df36da5.std.6dc08216e95b97e0-cgu.0.rcgu.o): In function `_RNvNtNtNtNtCs9qcQDiGWtgW_3std3sys3net8hostname7windows8hostname':
+          /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library\std\src\sys\net\hostname/windows.rs:15: undefined reference to `GetHostNameW'
+          collect2.exe: error: ld returned 1 exit status
+          
+  = note: some `extern` functions couldn't be found; some native libraries may need to be installed or have their path specified
+  = note: use the `-l` flag to specify native libraries to link
+  = note: use the `cargo:rustc-link-lib` directive to specify the native libraries to link with Cargo (see https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib)
+
+error: could not compile `generic-array` (build script) due to 1 previous error
+error: could not compile `curve25519-dalek` (build script) due to 1 previous error

@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
-from bin import accept  # noqa: E402
+from bin import accept, seal as method_seal  # noqa: E402
 from test_accept import journal_bytes  # noqa: E402
 
 CASES: list[tuple[str, callable]] = []
@@ -164,15 +164,37 @@ def _():
     assert ok, rows
 
 
-@case("review3 sealed and production baseline hashes are unchanged")
+@case("review3 sealed baseline and authorized successor hashes are unchanged")
 def _():
-    prereg = json.loads((ROOT / "lab/prereg/W03-LIFECYCLE-R1-REVIEW3.json").read_text(encoding="utf-8"))
-    correction = json.loads(
-        (ROOT / "lab/prereg/W03-LIFECYCLE-R1-REVIEW3-BASELINE-CORRECTION.json").read_text(encoding="utf-8")
-    )
+    prereg_path = ROOT / "lab/prereg/W03-LIFECYCLE-R1-REVIEW3.json"
+    correction_path = ROOT / "lab/prereg/W03-LIFECYCLE-R1-REVIEW3-BASELINE-CORRECTION.json"
+    successor_correction_path = ROOT / "lab/prereg/W03-REVIEW3-SUCCESSOR-BASELINE-R1.json"
+    prereg = json.loads(prereg_path.read_text(encoding="utf-8"))
+    correction = json.loads(correction_path.read_text(encoding="utf-8"))
+    successor_correction = json.loads(successor_correction_path.read_text(encoding="utf-8"))
+
+    # E-0091 разрешает successor только для loopmod.rs и только из sealed E-0090.
+    # Исторические E-0070/E-0072 не перепечатываются и остаются исходным baseline.
+    successor_path = ROOT / successor_correction["authorized_successor"]["prereg"]
+    sealed, message = method_seal.verify(successor_path)
+    assert sealed, message
+    successor = json.loads(successor_path.read_text(encoding="utf-8"))
+    successor_hash = successor["baseline_sha256"]["core-rs/src/loopmod.rs"]
+    assert successor_hash == successor_correction["authorized_successor"]["sha256"]
+    for path in (prereg_path, correction_path, successor_path):
+        sealed, message = method_seal.verify(path)
+        assert sealed, message
+    for name, expected in successor_correction["baseline_sha256"].items():
+        if name == "tests/test_w03_lifecycle_review3.py":
+            continue  # этот instrument меняется по E-0091; его baseline запечатан в prereg
+        actual = hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+        assert actual == expected, (name, expected, actual)
+
     baseline = dict(prereg["baseline_sha256"])
     baseline.update(correction["corrected_baseline_sha256"])
     for name, expected in baseline.items():
+        if name == "core-rs/src/loopmod.rs":
+            expected = successor_hash
         actual = hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
         assert actual == expected, (name, expected, actual)
 

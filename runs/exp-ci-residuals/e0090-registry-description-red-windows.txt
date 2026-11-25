@@ -1,0 +1,42 @@
+[ok] search: rejected, ждали rejected
+[ok] list: quarantined, ждали quarantined
+[ok] read: quarantined, ждали quarantined
+[ok] write: quarantined, ждали quarantined
+[ok] seal: quarantined, ждали quarantined
+[ok] netprobe: quarantined, ждали quarantined
+[ok] head остаётся candidate, а не active
+[ok] active пуст: []
+[ok] без quarantine-события list снова unreviewed (state меняется)
+[ok] подложенный status=active не делает list активным
+[ok] подложенный status=active не попадает в active
+[ok] build_registry отвергает хранение status в снимке
+[ok] admitted без owner-подписи не становится active
+[ok] admitted без evidence не попадает в active
+[ok] полное admitted-событие с test_only=false даёт active только через вывод
+[ok] active содержит head только в синтетике
+[ok] test-only admitted не становится active даже с owner_signed
+[ok] test-only admitted не попадает в active
+[ok] authorize_state(test-only head) — S13 admitted_inactive
+[ok] admitted без test_only не становится active
+[ok] admitted без test_only не попадает в active
+[ok] правка события ломает цепочку: ['событие 4: prev не совпадает с хешем предыдущей строки']
+[ok] preflight по умолчанию не находит search
+[ok] search не находится в диагностике quarantined: он rejected
+[ok] quarantined list виден только в диагностическом режиме
+[ok] authorize(search) — S13
+[ok] authorize(head) — candidate
+[ok] net — отдельный bridge path, не блокируется реестром
+[ok] legacy search не допускается: S13_TOOL_INACTIVE: search — legacy вне v0 (состояние active)
+[ok] head в том же состоянии остаётся допустимым
+[ok] big int отвергнут: целое 9007199254740992 вне безопасного диапазона JCS (±9007199254740991)
+[ok] повтор ключа отвергнут: registry.events.jsonl:1: повтор ключа 'schema' в JSON запрещён
+[FAIL] effective list description v4 совпадает с sealed prereg
+[ok] genesis snapshot byte-exact и совпадает с genesis digest
+[ok] description не меняет list authority и head seq=9
+[ok] append-only prefix seq=0..9 byte-exact
+[FAIL] description с чужим id отвергнут
+[FAIL] description с невозрастающей version отвергнут
+[FAIL] description с authority-полем status отвергнут
+[FAIL] preflight использует effective description, не переписывая snapshot
+[ok] registry.state.json и цепочка согласованы: []
+провалов: 5

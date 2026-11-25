@@ -1,0 +1,172 @@
+{
+  "id": "E-0090",
+  "title": "REGISTRY-DESCRIPTION-APPENDONLY-R1: effective registry description без перезаписи genesis",
+  "date": "2026-11-25",
+  "baseline_commit": "3630801f31e2e0d0174de07c75faf72255e7fb59",
+  "baseline_head": "3630801f31e2e0d0174de07c75faf72255e7fb59",
+  "status": "open",
+  "schema": 2,
+  "criterion": "PASS только если frozen registry.jsonl и append-only prefix seq=0..9 остаются байт-в-байт, новое quarantined list событие несёт проверенную effective description v4, resolver/preflight используют её fail-closed, authority list остаётся quarantined и active пуст, а E-0089 list/contract semantic criteria проходят 8/8. Любая перезапись snapshot/genesis, dangling или malformed description, повышение authority либо расхождение effective description/Rust означает RED.",
+  "arms": [
+    "baseline 3630801: runtime list уже исправлен, но effective registry description отсутствует; новые E-0090 checks обязаны быть RED",
+    "candidate: строго валидируемый description overlay из append-only события, без изменения genesis snapshot и authority",
+    "real integration: focused Windows/POSIX, registry/W18 controls, Rust regressions, ordinary gates и чистый disposable selftest"
+  ],
+  "sensitivity": "test_registry_state.py получает ровно 8 новых E-0090 checks: effective v4, byte-exact snapshot, неизменная authority, byte-exact prefix, чужой id, невозрастающая version, authority-поле status и preflight overlay. Baseline ожидает не менее 5 failures; PASS требует все 8. test_list_contract.py остаётся ровно 8 checks и обязан пройти 8/8.",
+  "unit_of_analysis": "одна append-only revision описания list и её fail-closed чтение через registry_state/preflight",
+  "primary_metric": "число E-0090 checks без failures при неизменном genesis digest, prefix hash и authority state",
+  "test": "python tests/test_registry_state.py и python tests/test_list_contract.py на Windows и POSIX; python tests/test_w18_clean_clone.py; затем Rust regressions, ordinary gates и чистый disposable selftest",
+  "stopping_rule": "Не переписывать registry.jsonl, genesis или прежние события; не ослаблять E-0089 semantic criteria; при любом authority change, невалидном description, расхождении effective registry/Rust или провале gates/selftest остановить closure как RED и сохранить evidence.",
+  "question": "Можно ли обновить описание legacy list до v4 через append-only событие и строгий derived overlay, сохранив frozen genesis snapshot и не выдавая description за admission?",
+  "predecessor": "E-0089 runtime candidate 3630801: list 8/8 Windows/POSIX, но прямой update registry.jsonl сломал genesis digest; independent review NEEDS_CHANGES. E-0089 остаётся open до совместного closure.",
+  "refs_search": {
+    "command": "python bin/hs.py refs search \"append-only registry description overlay\"",
+    "result": "NOT PROVIDED",
+    "exit_code": 2,
+    "detail": "справочника нет: refs sync (пусто ≠ успех)"
+  },
+  "baseline_sha256": {
+    "core-rs/src/loopmod.rs": "9b1dc65e39c0b85eecba1d3ff61967d3b135327e500a843bcbb063a0ee9caf38",
+    "bin/registry_state.py": "2e136bc44b16cf57880ae5393fe5ea422645d7b26f51a2ed70bc88571fa8321f",
+    "bin/preflight.py": "354dc5eb3d1cb5d648b90737983429f3f98a0aaf64969347acebeb5a996e2e57",
+    "lab/tools/registry.jsonl": "0afc75ec3bf277ba4d48336c75368d2f7382d0963aa0b42c929472715de9b008",
+    "lab/tools/registry.events.jsonl": "70a85691fbe8290f642c96d56c0efa043056750492b765202a1321ad5bfacb7f",
+    "lab/tools/registry.state.json": "64b28e582a8a34387dd400c27752b7ec6b466224419c3e451eb752b1c8d7699e",
+    "lab/tools/contracts.json": "c2d289a21b9fc28478a8f24ae59e5117713e6da823c74968f5525954a745d3a4",
+    "tests/test-manifest.json": "30b63565fa01d32610f45ac126f3b60cfabe3104056d6849a5d6834f187966ff",
+    "lab/registry.json": "c42b9950151620bb4dd14c7b6dc682c0028228f8631294420486dcda0b7c2122"
+  },
+  "baseline_test_tree_sha256": {
+    "tests/test_list_contract.py": "043246e9f67c1c990a4a0b03045488e30955dff01269a53154ff7fd1692002c6",
+    "tests/test_registry_state.py": "8c216d425455a12bbde28ec9f14395dc8e4a863fcfc9d6edd00a04b6be184eb3",
+    "tests/test_w18_clean_clone.py": "a219bc37ac6b0d45895ef071114c378f357519a1a004e7f3fc947aed17cc100f"
+  },
+  "baseline_registry_prefix_sha256": "70a85691fbe8290f642c96d56c0efa043056750492b765202a1321ad5bfacb7f",
+  "candidate_description": {
+    "id": "list",
+    "version": 4,
+    "contract": "перечисляет содержимое каталога",
+    "input": {"path": "каталог внутри комнаты"},
+    "returns": "до 100 записей: каталоги первыми с косой чертой, затем файлы с размерами; при превышении — marker с точным остатком",
+    "output": {
+      "entries": "список: имя каталога с «/» или имя файла с размером в байтах",
+      "limit": 100,
+      "truncated": "… (обрезано: показано {limit}, осталось {remainder})"
+    },
+    "semantics": "один уровень вглубь, без рекурсии; все записи считаются, subset выбирается после детерминированной сортировки по имени: сначала каталоги, затем файлы; показано не более 100, точный остаток = total - shown",
+    "closure": {
+      "fs": {"read": ["/mnt/**"], "write": []},
+      "net": [],
+      "time_ms": 200,
+      "memory_mb": 8,
+      "output_bytes": 8000
+    },
+    "examples": ["TOOL list /mnt", "TOOL list /mnt/runs/dump"],
+    "environment": "4ab53d8f13ba1286",
+    "provenance": "встроен в цикл, core-rs/src/loopmod.rs",
+    "previous": 3,
+    "at": "2026-11-25T21:30:00Z"
+  },
+  "baseline_red": {
+    "date": "2026-11-25",
+    "status": "RED",
+    "implementation_started": false,
+    "windows": {
+      "registry_state": {
+        "command": "python -B tests/test_registry_state.py",
+        "exit_code": 1,
+        "checks": 40,
+        "passed": 35,
+        "failed": 5,
+        "e0090_failed": [
+          "effective list description v4 совпадает с sealed prereg",
+          "description с чужим id отвергнут",
+          "description с невозрастающей version отвергнут",
+          "description с authority-полем status отвергнут",
+          "preflight использует effective description, не переписывая snapshot"
+        ],
+        "artifact": "runs/exp-ci-residuals/e0090-registry-description-red-windows.txt",
+        "sha256": "8effd7f5438803b35a5f27ed4c2f9dee0ed4335361030ffd27c0c0f923a390b4"
+      },
+      "list_contract": {
+        "command": "python -B tests/test_list_contract.py",
+        "exit_code": 1,
+        "checks": 8,
+        "passed": 4,
+        "failed": 4,
+        "artifact": "runs/exp-ci-residuals/e0090-list-contract-red-windows.txt",
+        "sha256": "d24bad298ad0b8f566d945a340ba071b5df7f00f29307c99fd9c0159dbd79b8b"
+      }
+    },
+    "posix": {
+      "registry_state": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 python3 -B tests/test_registry_state.py",
+        "exit_code": 1,
+        "checks": 40,
+        "passed": 35,
+        "failed": 5,
+        "artifact": "runs/exp-ci-residuals/e0090-registry-description-red-posix.txt",
+        "sha256": "e706ef16f71ed7a366982ad343f3d84afc37df48965d926d774f92dc7fa4ef3b"
+      },
+      "list_contract": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 python3 -B tests/test_list_contract.py",
+        "exit_code": 1,
+        "checks": 8,
+        "passed": 4,
+        "failed": 4,
+        "artifact": "runs/exp-ci-residuals/e0090-list-contract-red-posix.txt",
+        "sha256": "b7d898c21fe0495c1f1d23741d279fcecdbfdd48b23cc940fc4a70f469e37326"
+      }
+    }
+  },
+  "known_baseline_failures": [
+    "registry.jsonl заморожен genesis digest, поэтому прямое обновление строки list v4 запрещено",
+    "registry_state/preflight не умеют читать описание из append-only события",
+    "test_list_contract.py после runtime candidate даёт 4/8: contract v2 зелёный, registry v4 отсутствует",
+    "W18 oracle предполагал seq=9 последним событием и требует forward-compatible уточнения без ослабления prefix/head controls"
+  ],
+  "hypothesis": "Строгий derived description overlay из нового quarantined list события даст effective v4 для preflight/tests, сохранит genesis digest и authority, а malformed/monotonicity controls закроют попытку протащить статус или чужой контракт.",
+  "implementation_scope": [
+    "bin/registry_state.py: fail-closed validation, monotonic version и derived description/digest/seq",
+    "bin/preflight.py: overlay effective description только при успешном computed_state",
+    "tests/test_list_contract.py: те же 8 checks читают effective description, не frozen snapshot",
+    "tests/test_registry_state.py: ровно 8 новых E-0090 checks",
+    "tests/test_w18_clean_clone.py: seq=9 перестаёт быть последним, но prefix/head/no-later-head controls сохраняются",
+    "lab/tools/registry.events.jsonl: одно новое quarantined list событие seq=10 с candidate_description",
+    "lab/tools/registry.state.json: производный state пересобирается штатной командой",
+    "не менять runtime list, contracts, policy, thresholds, corpora, genesis snapshot и production activation"
+  ],
+  "success_criteria": {
+    "focused_registry": "8 новых E-0090 checks проходят, весь test_registry_state.py без failures на Windows/POSIX",
+    "focused_list_contract": "test_list_contract.py 8/8 на Windows/POSIX",
+    "append_only": "registry.jsonl SHA-256 0afc75ec…b008; prefix seq=0..9 SHA-256 70a85691…acb7f; ровно одно новое событие seq=10",
+    "authority": "list остаётся quarantined, active=[], head seq=9/candidate; description не является admission",
+    "negative_controls": "чужой id, version<=current и status отвергнуты RegistryError",
+    "w18": "test_w18_clean_clone.py 14/14 без ослабления prefix/head controls",
+    "regressions": "полный Rust suite без новых failures; прежние Windows platform failures сравнимы с baseline",
+    "ordinary_gates": "gates --profile auto: 31/33 evaluated, 2 N/A, rc=0",
+    "clean_selftest": "чистый Windows disposable selftest: 88 Python suites, 85 performed + 3 Linux N/A, 0 failed, W18 14/14",
+    "review": "независимый review PASS до совместного closure E-0089/E-0090",
+    "claims": "C-0364 проверена check_artifacts/verify_claims/coverage; lab validate; seal verify-all"
+  },
+  "negative_controls": [
+    "изменение registry.jsonl ломает genesis digest и не допускается",
+    "description с id другого инструмента отвергается",
+    "description с version 3 после version 3 отвергается",
+    "description с status=active отвергается и не меняет authority",
+    "отсутствие или повреждение derived state заставляет preflight fail-closed"
+  ],
+  "stopping_rules": [
+    "Не переписывать sealed E-0089/E-0090 prereg, genesis snapshot или append-only prefix.",
+    "Не считать описание admission-ом и не выдавать quarantined list за active.",
+    "Не ослаблять E-0089 limit/order/remainder criteria, gates, thresholds или corpora.",
+    "N/A/unknown/unsupported не считаются PASS; CI-PASS не подменяется локальным PASS."
+  ],
+  "not_claimed": [
+    "полный W12 enforcement matrix/data vocabulary",
+    "Tool Contract ↔ Relationship Contract parity",
+    "generator exact-six/dry-run",
+    "production runtime policy activation",
+    "полный CI-PASS"
+  ]
+}

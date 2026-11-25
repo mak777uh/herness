@@ -238,6 +238,85 @@ def _activation_problem(event: dict[str, Any]) -> str | None:
     return None
 
 
+DESCRIPTION_REQUIRED = (
+    "id", "version", "contract", "input", "returns", "output", "semantics",
+    "closure", "examples", "environment", "provenance", "previous", "at",
+)
+DESCRIPTION_KEYS = frozenset(DESCRIPTION_REQUIRED)
+DESCRIPTION_AUTHORITY_FIELDS = frozenset({
+    "status", "state", "active", "history", "seq", "card", "admission",
+    "admission_digest", "evidence_digest", "owner_signed", "test_only",
+})
+CLOSURE_KEYS = ("fs", "net", "time_ms", "memory_mb", "output_bytes")
+
+
+def _positive_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+def _description_problem(event: dict[str, Any], current_version: Any) -> str | None:
+    """Проверить description-only revision, не смешивая контракт и полномочия."""
+    description = event.get("body", {}).get("description")
+    if not isinstance(description, dict):
+        return "description: не объект"
+    if "status" in description:
+        return "description: authority-поле status запрещено"
+    authority = sorted(set(description) & DESCRIPTION_AUTHORITY_FIELDS - {"status"})
+    if authority:
+        return f"description: authority-поля запрещены: {', '.join(authority)}"
+    missing = [field for field in DESCRIPTION_REQUIRED if field not in description]
+    if missing:
+        return f"description: нет полей: {', '.join(missing)}"
+    extra = sorted(set(description) - DESCRIPTION_KEYS)
+    if extra:
+        return f"description: неизвестные поля: {', '.join(extra)}"
+    if description["id"] != event.get("tool_id"):
+        return "description: id не совпадает с tool_id события"
+    if not _positive_int(description["version"]) or not _positive_int(description["previous"]):
+        return "description: version/previous должны быть положительными целыми"
+    for field in ("contract", "returns", "semantics", "environment", "provenance"):
+        if not isinstance(description[field], str) or not description[field].strip():
+            return f"description: {field} должен быть непустой строкой"
+    for field in ("input", "output", "closure"):
+        if not isinstance(description[field], dict) or not description[field]:
+            return f"description: {field} должен быть непустым объектом"
+    closure = description["closure"]
+    if set(closure) != set(CLOSURE_KEYS):
+        return "description: closure имеет неизвестный или отсутствующий ключ"
+    fs = closure.get("fs")
+    if not isinstance(fs, dict) or set(fs) != {"read", "write"}:
+        return "description: closure.fs должен содержать только read/write"
+    for field in ("read", "write"):
+        value = fs.get(field)
+        if not isinstance(value, list) or any(
+            not isinstance(item, str) or not item for item in value
+        ):
+            return f"description: closure.fs.{field} должен быть списком путей"
+    net = closure.get("net")
+    if not isinstance(net, list) or any(not isinstance(item, str) or not item for item in net):
+        return "description: closure.net должен быть списком адресов"
+    for field in ("time_ms", "memory_mb", "output_bytes"):
+        if not _positive_int(closure.get(field)):
+            return f"description: closure.{field} должен быть положительным целым"
+    examples = description.get("examples")
+    if not isinstance(examples, list) or not 1 <= len(examples) <= 5 or any(
+        not isinstance(item, str) or not item.strip() for item in examples
+    ):
+        return "description: examples должен содержать 1–5 непустых строк"
+    at = description.get("at")
+    if not isinstance(at, str) or not at.endswith("Z") or at != event.get("at"):
+        return "description: at должен совпадать с UTC-временем события"
+    if not _positive_int(current_version):
+        return "description: текущая version снимка не положительное целое"
+    if description["previous"] != current_version or description["version"] != current_version + 1:
+        return (
+            "description: version должна возрастать ровно на один: "
+            f"current={current_version}, previous={description['previous']}, "
+            f"version={description['version']}"
+        )
+    return None
+
+
 def derive(
     snapshot_rows: list[dict[str, Any]],
     events: list[tuple[bytes, dict[str, Any]]],
@@ -249,6 +328,7 @@ def derive(
         raise RegistryError("; ".join(problems))
 
     tools: dict[str, dict[str, Any]] = {}
+    versions: dict[str, Any] = {}
     for row in snapshot_rows:
         tools[row["id"]] = {
             "state": "unreviewed",
@@ -256,6 +336,7 @@ def derive(
             "reason": "нет события после genesis",
             "history": ["unreviewed"],
         }
+        versions[row["id"]] = row.get("version")
 
     for index, (_, event) in enumerate(events):
         if index == 0:
@@ -280,10 +361,25 @@ def derive(
             tool_id,
             {"state": "unreviewed", "seq": 0, "reason": "нет события после genesis", "history": ["unreviewed"]},
         )
+        body = event.get("body") or {}
         record["state"] = state
         record["seq"] = index
-        record["reason"] = str((event.get("body") or {}).get("reason") or "")
+        record["reason"] = str(body.get("reason") or "")
         record["history"] = list(record.get("history") or []) + [state]
+        if "description" in body:
+            if tool_id not in versions:
+                raise RegistryError(f"событие {index}: description для инструмента вне снимка")
+            if set(body) - {"reason", "description"}:
+                raise RegistryError(f"событие {index}: description event содержит посторонние поля")
+            problem = _description_problem(event, versions[tool_id])
+            if problem:
+                raise RegistryError(f"событие {index}: {problem}")
+            description_bytes = canonical(body["description"])
+            description = json.loads(description_bytes.decode("utf-8"))
+            record["description"] = description
+            record["description_digest"] = digest_bytes(description_bytes)
+            record["description_seq"] = index
+            versions[tool_id] = description["version"]
         if kind == "candidate":
             record["card"] = (event.get("body") or {}).get("card")
         if kind == "admitted":

@@ -27,21 +27,30 @@ RESULTS: list[tuple[bool, str]] = []
 SOURCE_SHA256 = "42fb4a435df7798a0505e459bf315b5582c04bfd20ce76b7fcf8789d7b9c2af5"
 OLD_NEW_TOOL = "sha256:cadd56ad6569165704205e5a336fe9412be61d329363810e8da4d4e2d9c5e816"
 OLD_GENERATOR = "sha256:93c44b990f96705402c6a13c24f713a4f4e5a9101761d9bc72b3f32677501c5b"
-CHECKOUT_SHA256 = "74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583"
-BLOB_SHA256 = "b2ffec5ddba1575eaedb6cb2310a4308ba83e46a64ae914a2b5dcc7a2f2802fe"
+CHECKOUT_SHA256 = "9b1dc65e39c0b85eecba1d3ff61967d3b135327e500a843bcbb063a0ee9caf38"
+BLOB_SHA256 = "bd73f29954140ff6cc6092c8dac297d259d7726be537e5be80115fc747508979"
 REGISTRY_PREFIX_SHA256 = "6fbde54f5538ff69025ee613794825b43e45f496afdb03f0a5bd71b06261f2b8"
 CRLF = bytes((13, 10))
 DEV_FILES = {
     ".gitattributes",
     "bin/pilot_generator.py",
+    "bin/preflight.py",
+    "bin/registry_state.py",
     "lab/prereg/PILOT-GENERATOR-R1-BASELINE-CORRECTION.json",
     "lab/prereg/PILOT-GENERATOR-R1-BASELINE-CORRECTION.json.sha256",
+    "lab/prereg/REGISTRY-DESCRIPTION-APPENDONLY-R1.json",
+    "lab/prereg/REGISTRY-DESCRIPTION-APPENDONLY-R1.json.sha256",
     "lab/prereg/W18-CLEAN-CLONE-R1.json",
+    "lab/prereg/W03-REVIEW3-SUCCESSOR-BASELINE-R1.json",
+    "lab/prereg/W03-REVIEW3-SUCCESSOR-BASELINE-R1.json.sha256",
     "lab/prereg/W18-CLEAN-CLONE-R1.json.sha256",
     "lab/registry.json",
     "lab/tools/registry.events.jsonl",
     "lab/tools/registry.state.json",
     "runs/exp-w18-clean-clone-r1/baseline-red.txt",
+    "tests/test_list_contract.py",
+    "tests/test_registry_state.py",
+    "tests/test_w03_lifecycle_review3.py",
     "tests/test_w18_clean_clone.py",
     "tests/test-manifest.json",
 }
@@ -86,10 +95,10 @@ def main() -> int:
     checkout = (ROOT / "core-rs/src/loopmod.rs").read_bytes()
     check(
         "core-rs/src/loopmod.rs text eol=crlf" in attributes
-        and len(checkout) == 191435
-        and checkout.count(CRLF) == 3647
+        and len(checkout) == 198631
+        and checkout.count(CRLF) == 3821
         and hashlib.sha256(checkout).hexdigest() == CHECKOUT_SHA256,
-        "loopmod checkout: CRLF pin, 191435 байт, 3647 CRLF, SHA-256 74c77403…",
+        "loopmod checkout: CRLF pin, 198631 байт, 3821 CRLF, SHA-256 9b1dc65e…",
     )
 
     # 3. Git blob измеряется отдельно и намеренно отличается от checkout.
@@ -99,10 +108,10 @@ def main() -> int:
     )
     blob = blob_proc.stdout
     check(
-        len(blob) == 187788 and blob.count(CRLF) == 0
+        len(blob) == 194810 and blob.count(CRLF) == 0
         and hashlib.sha256(blob).hexdigest() == BLOB_SHA256
         and blob != checkout,
-        "loopmod Git blob: LF, 187788 байт, SHA-256 b2ffec5d…, blob≠checkout",
+        "loopmod Git blob: LF, 194810 байт, SHA-256 bd73f299…, blob≠checkout",
     )
 
     # 4. Положительный контроль correction.
@@ -160,16 +169,17 @@ def main() -> int:
     prefix = b"".join(event_bytes.splitlines(keepends=True)[:9])
     events = rs.read_events()
     state = rs.computed_state()
-    last = events[-1][1]
     check(
         hashlib.sha256(prefix).hexdigest() == REGISTRY_PREFIX_SHA256
-        and len(events) == 10 and last["seq"] == 9 and last["type"] == "candidate"
-        and last["body"].get("admission") is None
-        and last["body"].get("card") == "lab/tools/cards/head.json"
+        and len(events) >= 10 and events[9][1]["seq"] == 9
+        and events[9][1]["type"] == "candidate"
+        and events[9][1]["body"].get("admission") is None
+        and events[9][1]["body"].get("card") == "lab/tools/cards/head.json"
+        and all(event[1].get("tool_id") != "head" for event in events[10:])
         and state["active"] == [] and state["tools"]["head"]["seq"] == 9
         and state["tools"]["head"]["card"] == "lab/tools/cards/head.json"
         and rs.check_files() == [],
-        "registry: seq=8 неизменён, seq=9 canonical candidate, active=[]",
+        "registry: seq=0..8 неизменны, seq=9 canonical candidate, later events не меняют head, active=[]",
     )
 
     # 11. V1/V6 proof-binding corpus и exact LF bytes proof artifact.

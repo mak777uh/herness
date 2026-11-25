@@ -1,0 +1,106 @@
+{
+  "id": "E-0091",
+  "title": "W03-REVIEW3-SUCCESSOR-BASELINE-R1: sealed successor для разрешённого изменения loopmod",
+  "date": "2026-11-25",
+  "baseline_commit": "3630801f31e2e0d0174de07c75faf72255e7fb59",
+  "baseline_head": "3630801f31e2e0d0174de07c75faf72255e7fb59",
+  "status": "open",
+  "schema": 2,
+  "criterion": "PASS только если W03 Review3 остаётся 9/9 на Windows и POSIX; R09 проверяет все прежние protected artifacts по исходному baseline, а для единственного разрешённого successor core-rs/src/loopmod.rs требует байт-в-байт hash из sealed E-0090 baseline. Исходные E-0070/E-0072, их sidecar, corpus, thresholds и production Python не меняются. Любая подмена successor hash, повреждение seal, изменение другого protected file или снижение числа controls означает RED.",
+  "arms": [
+    "baseline 3630801 с уже утверждённым E-0089 runtime candidate: W03 R09 даёт 8/9, потому что исторический loopmod hash 74c77403… отличается от sealed successor 9b1dc65e…",
+    "candidate: R09 читает sealed E-0090 successor только для loopmod.rs; остальные protected hashes остаются исходными",
+    "real integration: W03 9/9 Windows/POSIX, W18 14/14, ordinary gates и чистый disposable selftest"
+  ],
+  "sensitivity": "Ровно 9 controls сохраняются. R09 обязан проверить seal и hash E-0090, исходные hash E-0070/E-0072 и все protected files; единственный разрешённый successor — loopmod.rs. Балансированные lifecycle fixtures и три acceptance-bypass metakontrol не меняются.",
+  "unit_of_analysis": "один W03 Review3 hash-integrity control R09 после разрешённого successor runtime commit",
+  "primary_metric": "W03 Review3 controls=9, failures=0, platform_na=0, source_prereg_changed=0, source_correction_changed=0, production_python_changed=0",
+  "test": "python tests/test_w03_lifecycle_review3.py на Windows и POSIX; python tests/test_w18_clean_clone.py; python bin/seal.py verify-all; ordinary gates и чистый disposable selftest",
+  "stopping_rule": "Не переписывать sealed E-0070/E-0072/E-0090; не расширять successor allowlist; при любом расхождении hash, seal, 9/9, W18 14/14 или gates/selftest остановить closure как RED.",
+  "question": "Как сохранить исторический W03 R09 и допустить только уже запечатанный successor hash loopmod из E-0090, не объявляя прежний baseline неизменным и не ослабляя остальные controls?",
+  "predecessor": "E-0089 изменил list runtime в 3630801; E-0090 запечатал текущий checkout hash loopmod 9b1dc65e… до registry correction. W03 R09 и W18 ещё ссылались на pre-E-0089 hash 74c77403….",
+  "refs_search": {
+    "command": "python bin/hs.py refs search \"W03 successor baseline hash authorized runtime change\"",
+    "result": "NOT PROVIDED",
+    "exit_code": 2,
+    "detail": "справочника нет: refs sync (пусто ≠ успех)"
+  },
+  "baseline_sha256": {
+    "tests/test_w03_lifecycle_review3.py": "73f5784eeb18c96d8f2f94104cf00109d20bb1a30825f7d1d25ab6bf00cfb15b",
+    "core-rs/src/loopmod.rs": "9b1dc65e39c0b85eecba1d3ff61967d3b135327e500a843bcbb063a0ee9caf38",
+    "lab/prereg/REGISTRY-DESCRIPTION-APPENDONLY-R1.json": "d5b6a8cd13f307a462760ebed1681985cdae4c4fcc8cad20a54aee62c35f2a22",
+    "lab/prereg/REGISTRY-DESCRIPTION-APPENDONLY-R1.json.sha256": "2a2dc8f04603b030e32dcf60a67f25e54b12ce3b35e90033354481b4e3cf235b",
+    "lab/prereg/W03-LIFECYCLE-R1-REVIEW3.json": "1de08b9f4cfd13bbb792bd65a4ca873c66733b11d6dcd8e990a820d680e8e92b",
+    "lab/prereg/W03-LIFECYCLE-R1-REVIEW3.json.sha256": "c0bca1b0606771adf83084e35bb66adc1289ad5840b3b7bd3e3bc1bd0a9de841",
+    "lab/prereg/W03-LIFECYCLE-R1-REVIEW3-BASELINE-CORRECTION.json": "150011aed988abd33a0432324da9066b7862f8f9fd1d5def6fd67942c8b83e66",
+    "lab/prereg/W03-LIFECYCLE-R1-REVIEW3-BASELINE-CORRECTION.json.sha256": "7f32dd855dc309667303fcbea6f1f494977eda05b6b793260e1f49ef83c7598c"
+  },
+  "baseline_red": {
+    "date": "2026-11-25",
+    "status": "RED",
+    "implementation_started": false,
+    "windows": {
+      "command": "python -B tests/test_w03_lifecycle_review3.py",
+      "exit_code": 1,
+      "controls": 9,
+      "passed": 8,
+      "failed": 1,
+      "failed_control": "review3 sealed and production baseline hashes are unchanged",
+      "artifact": "runs/exp-ci-residuals/e0091-w03-successor-red-windows.txt",
+      "sha256": "5cd0908df19793caefab03ae0eb4a287fd73a0bc956c25e0472f40d180b1b0ed"
+    },
+    "posix": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -B tests/test_w03_lifecycle_review3.py",
+      "exit_code": 1,
+      "controls": 9,
+      "passed": 8,
+      "failed": 1,
+      "failed_control": "review3 sealed and production baseline hashes are unchanged",
+      "artifact": "runs/exp-ci-residuals/e0091-w03-successor-red-posix.txt",
+      "sha256": "93e8df74a6a99dc56c7d0c9446baa019195e47ef192e5560d5b3b5ba42894455"
+    }
+  },
+  "authorized_successor": {
+    "prereg": "lab/prereg/REGISTRY-DESCRIPTION-APPENDONLY-R1.json",
+    "baseline_commit": "3630801f31e2e0d0174de07c75faf72255e7fb59",
+    "path": "core-rs/src/loopmod.rs",
+    "sha256": "9b1dc65e39c0b85eecba1d3ff61967d3b135327e500a843bcbb063a0ee9caf38",
+    "representation": "CRLF checkout согласно .gitattributes; Git blob LF имеет отдельный hash"
+  },
+  "known_baseline_failures": [
+    "W03 R09 требует pre-E-0089 loopmod hash 74c77403… от текущего production-файла",
+    "W18 HEAD-bound checkout/blob constants также требуют обновления на текущий утверждённый HEAD",
+    "Исторические sealed E-0070/E-0072 нельзя перепечатывать или задним числом объявлять неизменными"
+  ],
+  "hypothesis": "Явный sealed successor для единственного изменённого production-файла сохранит силу R09 для всех остальных artifacts и вернёт 9/9 без переписывания истории.",
+  "implementation_scope": [
+    "tests/test_w03_lifecycle_review3.py: R09 проверяет sealed E-0090 successor только для loopmod.rs",
+    "tests/test_w03_lifecycle_review3.py: исходные E-0070/E-0072 и E-0090 остаются байт-в-байт и seal-verified",
+    "не менять lifecycle fixtures, metakontrol, production Python/Rust, thresholds, corpus, sealed prereg и allowlist"
+  ],
+  "success_criteria": {
+    "focused_windows": "W03 Review3 9/9, rc=0",
+    "focused_posix": "W03 Review3 9/9, rc=0",
+    "integrity": "E-0070/E-0072/E-0090 hashes и seals совпадают; остальные protected files равны исходному baseline",
+    "successor_scope": "только core-rs/src/loopmod.rs использует authorized successor hash",
+    "w18": "W18 14/14 на текущем HEAD-bound checkout/blob",
+    "regressions": "ordinary gates и чистый disposable selftest без новых failures",
+    "review": "независимый review PASS до общего closure E-0089/E-0090/E-0091"
+  },
+  "negative_controls": [
+    "изменение hash loopmod в sealed E-0090 без нового seal приводит R09 в RED",
+    "изменение любого другого protected file приводит R09 в RED",
+    "переписывание исходного E-0070/E-0072 или их sidecar запрещено",
+    "снижение 9 controls или metakontrol не допускается"
+  ],
+  "stopping_rules": [
+    "Не добавлять новые successor paths без отдельного sealed experiment.",
+    "Не переписывать E-0070/E-0072/E-0090 и не менять production.",
+    "N/A/unknown/unsupported не считаются PASS."
+  ],
+  "not_claimed": [
+    "изменение W03 production или thresholds",
+    "полный CI-PASS",
+    "production runtime policy activation"
+  ]
+}

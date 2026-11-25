@@ -1,8 +1,8 @@
 {
  "active": [],
  "epoch": 1,
- "events_digest": "sha256:f0e70609b5fd93fa384d97b5368541a0da828e6d507801fe160322417aa9e919",
- "head_seq": 9,
+ "events_digest": "sha256:313bd83335dd765bf050d348a8858e486b0204d946c86efb229240a2a01a7533",
+ "head_seq": 10,
  "schema": "herness-registry-state-v1",
  "snapshot_digest": "sha256:0afc75ec3bf277ba4d48336c75368d2f7382d0963aa0b42c929472715de9b008",
  "tools": {
@@ -18,12 +18,50 @@
    "state": "candidate"
   },
   "list": {
+   "description": {
+    "at": "2026-11-25T21:30:00Z",
+    "closure": {
+     "fs": {
+      "read": [
+       "/mnt/**"
+      ],
+      "write": []
+     },
+     "memory_mb": 8,
+     "net": [],
+     "output_bytes": 8000,
+     "time_ms": 200
+    },
+    "contract": "перечисляет содержимое каталога",
+    "environment": "4ab53d8f13ba1286",
+    "examples": [
+     "TOOL list /mnt",
+     "TOOL list /mnt/runs/dump"
+    ],
+    "id": "list",
+    "input": {
+     "path": "каталог внутри комнаты"
+    },
+    "output": {
+     "entries": "список: имя каталога с «/» или имя файла с размером в байтах",
+     "limit": 100,
+     "truncated": "… (обрезано: показано {limit}, осталось {remainder})"
+    },
+    "previous": 3,
+    "provenance": "встроен в цикл, core-rs/src/loopmod.rs",
+    "returns": "до 100 записей: каталоги первыми с косой чертой, затем файлы с размерами; при превышении — marker с точным остатком",
+    "semantics": "один уровень вглубь, без рекурсии; все записи считаются, subset выбирается после детерминированной сортировки по имени: сначала каталоги, затем файлы; показано не более 100, точный остаток = total - shown",
+    "version": 4
+   },
+   "description_digest": "sha256:8998a580b6d48b289e7012258d9b5a9b7bac761599ebd9d5c04bdf0cc51d4aaa",
+   "description_seq": 10,
    "history": [
     "unreviewed",
+    "quarantined",
     "quarantined"
    ],
-   "reason": "R8/Q18: legacy native; admission не подписан, допуск не выдан",
-   "seq": 2,
+   "reason": "E-0090: description-only revision v4; genesis сохранён, admission не выдан",
+   "seq": 10,
    "state": "quarantined"
   },
   "netprobe": {

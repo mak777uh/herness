@@ -1,0 +1,10 @@
+[ok] review3 balanced wrong-first is rejected
+[ok] review3 wrong-first guard removal reproduces acceptance bypass
+[ok] review3 balanced duplicate-end is rejected
+[ok] review3 post-end guards removal reproduces duplicate acceptance bypass
+[ok] review3 balanced after-end event is rejected
+[ok] review3 after-end guard removal reproduces acceptance bypass
+[ok] review3 balanced missing-end remains no-done
+[ok] review3 valid lifecycle remains accepted
+[FAIL] review3 sealed and production baseline hashes are unchanged: AssertionError: ('core-rs/src/loopmod.rs', '74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583', '9b1dc65e39c0b85eecba1d3ff61967d3b135327e500a843bcbb063a0ee9caf38')
+W03 review3 controls: 8/9 ok; провалов: 1
