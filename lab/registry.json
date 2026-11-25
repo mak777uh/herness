@@ -857,6 +857,15 @@
    "conclusion": "research/outputs/MANIFEST-PLATFORM-NA-R1-CLOSURE.txt",
    "note": "Focused 18/18 на Windows/POSIX, baseline RED сохранён; Windows selftest 81 suites rc=0, реальный Windows probe 28 checks. CI 45530925896: Windows-only suite N/A, общий failure только unshare positive-control; namespace идёт отдельным E-0083.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0083",
+   "title": "LINUX-NETNS-CI-R1: точная диагностика unshare без ложного PASS",
+   "hypothesis": "Отдельный probe до Selftest сохранит uid, unshare version, AppArmor state, userns sysctl и точные rc/stdout/stderr, чтобы выбрать capability по данным, не меняя production bridge и fail-closed.",
+   "prereg": "lab/prereg/LINUX-NETNS-CI-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано после CI 45530925896: positive B получает 503, C/D проходят, syscall/policy причина ещё не сохранена. Требуется focused RED 10 controls; privileged fork PR запрещён.",
+   "updated": "2026-11-25"
   }
  ]
 }

@@ -1,0 +1,56 @@
+{
+  "schema": 2,
+  "id": "LINUX-NETNS-CI-R1",
+  "date": "2026-11-25",
+  "question": "Какая точная capability/sysctl причина блокирует user/PID namespace positive control в GitHub Ubuntu, и может ли отдельный диагностический прибор сохранить её без секретов и без превращения недоступного namespace в PASS?",
+  "hypothesis": "Структурированный probe до Selftest сохранит uid, unshare version/path, AppArmor state, два userns sysctl и точные rc/stdout/stderr команды Bridge.unshare_works. Это позволит отличить отсутствие инструмента, policy denial и другой сбой; сам прибор не меняет runtime isolation и не делает B зелёным.",
+  "criterion": "PASS прибора только если baseline HEAD 561820e68ce05e75265acec6d8ee813f33a806ba; focused 10/10 на Windows и POSIX; collected JSON содержит platform, uid/euid, unshare path/version, securityfs/apparmor enabled и оба sysctl; probe фиксирует exact command, rc, stdout, stderr и exception без ключей; missing, broken и working unshare различаются; output пишется только в явно заданный путь; --require-works даёт 3 при неработающем probe и 0 при рабочем; workflow печатает диагностику до Selftest; production bridge.py и tests/test_bridge_net_namespace.py byte-exact неизменны; ни один namespace capability experiment не запускается на недоверенном fork PR.",
+  "arms": [
+    "A (historical CI RED): CI 45530925896 positive B получает 503, net.py не исполняется; C/D проходят, точная syscall/policy причина не сохранена.",
+    "B (instrument): отдельный netns_diagnostics собирает capability и запускает ровно ту же unshare command, что Bridge.unshare_works, с net_child_env и timeout 15.",
+    "C (negative controls): missing, exit 1 с диагностическим stderr, timeout, exception, secret canary, working stub и require-works status."
+  ],
+  "sensitivity": "Focused suite содержит 10 controls и возвращает ненулевой rc при любом расхождении. Working/missing/broken/timeout не смешиваются. Canary не попадает в JSON/output. Require-works не превращает diagnostic collection success в runtime PASS. Порог 10/10 не снижается.",
+  "unit_of_analysis": "новый bin/netns_diagnostics.py, tests/test_linux_netns_diagnostics.py, один Linux-only manifest entry и один diagnostic step .github/workflows/gates.yml",
+  "primary_metric": "focused_controls=10/10; focused_failed=0; windows_focused_rc=0; posix_focused_rc=0; canary_leaks=0; require_works_rc_missing=3; require_works_rc_working=0; production_bridge_unchanged=1; namespace_test_unchanged=1",
+  "test": "python tests/test_linux_netns_diagnostics.py; python bin/test_manifest.py --check; python bin/netns_diagnostics.py --output runs/exp-ci-residuals/e0083-local-netns.json; python bin/hs.py gates; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate; python bin/prereg.py check",
+  "stopping_rule": "Сначала запечатать prereg и сохранить baseline RED. Затем добавить только диагностический прибор, focused suite, Linux-only manifest entry и diagnostic workflow step. Остановиться при любом focused FAIL, утечке канарейки, ложном working/unavailable смешении, изменении production bridge/namespace corpus, ослаблении rc/N/A или попыттки privileged execution на fork PR. Capability-пробу выбирать только после фактического CI JSON.",
+  "fixture": "Временные исполняемые unshare stubs, синтетическая канарейка и контролируемый PATH; сеть и настоящие ключи не используются",
+  "environment": {
+    "host": "Windows 11 build 26300 + WSL Ubuntu; GitHub Ubuntu clean checkout",
+    "network": "нет для focused; CI checkout штатный",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search \"linux user namespace unshare apparmor CI positive control\" вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)»",
+    "baseline_head": "561820e68ce05e75265acec6d8ee813f33a806ba",
+    "baseline_workflow_sha256": "d020e074cbd4c2027168a78830c47764f10d8e8c7eb638688e471064b20a9d58",
+    "baseline_bridge_sha256": "e3762b0f989d902a211079012d02c4b9085a829b322f044e5db1dea6aed1865e",
+    "baseline_namespace_test_sha256": "c8efc7e10d5587a8e9402c076014464818aab5596664cbc53b6329f6b5caa958",
+    "baseline_manifest_sha256": "a3d42fdf53d20ca612ed952eceba65121618578e38eba5016ce4e67f9e46b6f7",
+    "ci_run": "45530925896",
+    "ci_log_sha256": "51c018d4f75106aa0735b06480c2645b5e6df61cbc987473bfbff05d5b76d382",
+    "wsl_observation": "uid=0(root); unshare -U -p -f --mount-proc python3 -c pass rc=0; это не доказательство обычного uid на GitHub Ubuntu"
+  },
+  "critical_controls": [
+    {"id": "missing-distinct", "input": "unshare отсутствует", "expect": "state=missing; probe не запускается"},
+    {"id": "broken-distinct", "input": "stub exit 1 + EPERM", "expect": "state=broken; rc=1; stderr сохранён"},
+    {"id": "working-distinct", "input": "stub exit 0", "expect": "state=working; unshare_ok=true"},
+    {"id": "timeout-distinct", "input": "probe timeout", "expect": "state=broken; exception=TimeoutExpired; unshare_ok=false"},
+    {"id": "no-secret-output", "input": "канарейка в окружении и stderr", "expect": "канарейки нет в JSON/stdout/output"}
+  ],
+  "kill_criteria": [
+    "diagnostic report скрывает rc/stderr/exception или смешивает missing и broken",
+    "unshare_ok=true при rc!=0 или отсутствующем executable",
+    "секрет/канарейка попадает в JSON, stdout или output",
+    "production bridge или namespace corpus изменяются",
+    "прибор объявляет namespace runtime PASS",
+    "privileged job запускается на fork PR без явного trust gate"
+  ],
+  "known_limits": [
+    "Диагностический PASS не исправляет positive B и не доказывает изоляцию",
+    "WSL root observation не переносится на GitHub ordinary uid",
+    "Capability-политика требует отдельного решения после фактических CI данных",
+    "Это не production activation и не полный CI-PASS"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation, privileged fork PR и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-residuals"]
+}
