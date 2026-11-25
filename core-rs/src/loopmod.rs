@@ -13,6 +13,7 @@
 //! коммита. Результат без предшествующего вызова — дефект, а не мелочь: именно так в журналах
 //! появляются события, которых не было.
 
+use std::collections::BinaryHeap;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
@@ -955,7 +956,31 @@ fn tool_search_in(arg: &str, workspace: &Path) -> Result<String, String> {
     Ok(out)
 }
 
-/// `list <каталог>`: имена и размеры, без рекурсии.
+const LIST_LIMIT: usize = 100;
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
+struct ListEntry {
+    name: String,
+    rendered: String,
+}
+
+/// Оставляет только `LIST_LIMIT` самых маленьких по имени кандидатов.
+///
+/// Максимум `BinaryHeap` находится в `peek`: новый кандидат заменяет его только когда
+/// сортировка всего каталога оставила бы кандидата внутри видимого подмножества.
+fn keep_list_entry(heap: &mut BinaryHeap<ListEntry>, candidate: ListEntry) {
+    if heap.len() < LIST_LIMIT {
+        heap.push(candidate);
+    } else if heap
+        .peek()
+        .is_some_and(|largest| candidate.name < largest.name)
+    {
+        heap.pop();
+        heap.push(candidate);
+    }
+}
+
+/// `list <каталог>`: имена и размеры, без рекурсии, до 100 детерминированных записей.
 fn tool_list(arg: &str) -> Result<String, String> {
     tool_list_in(arg, &workspace_root())
 }
@@ -970,36 +995,56 @@ fn tool_list_in(arg: &str, workspace: &Path) -> Result<String, String> {
     }
     let entries = std::fs::read_dir(&root)
         .map_err(|error| format!("не прочитать {}: {error}", root.display()))?;
-    // Каталоги идут первыми и с косой чертой: раньше список сортировался по алфавиту вместе с
-    // размерами, и при длинном перечне подкаталог «runs» оказался за пределами видимого куска
-    // (задача о подсчёте инструментов: модель его не нашла).
-    let mut dirs: Vec<String> = Vec::new();
-    let mut files: Vec<String> = Vec::new();
+    // Читаем весь поток, но храним не более 100 кандидатов каждого вида. Точный remainder
+    // требует полного total count; выбор subset при этом не зависит от порядка read_dir.
+    let mut dirs: BinaryHeap<ListEntry> = BinaryHeap::new();
+    let mut files: BinaryHeap<ListEntry> = BinaryHeap::new();
+    let mut total_dirs = 0usize;
+    let mut total_files = 0usize;
     for entry in entries {
-        let entry = entry
-            .map_err(|error| format!("не прочитать запись {}: {error}", root.display()))?;
+        let entry =
+            entry.map_err(|error| format!("не прочитать запись {}: {error}", root.display()))?;
         let name = entry.file_name().to_string_lossy().to_string();
         let kind = entry
             .file_type()
             .map_err(|error| format!("нет типа записи {name}: {error}"))?;
         if kind.is_dir() {
-            dirs.push(format!("{name}/\tкаталог"));
+            total_dirs += 1;
+            let rendered = format!("{name}/\tкаталог");
+            keep_list_entry(&mut dirs, ListEntry { name, rendered });
         } else {
+            total_files += 1;
             // Битая запись — отказ, а не «файл размера 0»: молчаливый ноль выглядит как факт.
             let meta = entry
                 .metadata()
                 .map_err(|error| format!("нет метаданных {name}: {error}"))?;
-            files.push(format!("{name}\t{}", meta.len()));
-        }
-        if dirs.len() + files.len() >= 200 {
-            files.push("… (обрезано)".to_string());
-            break;
+            let rendered = format!("{name}\t{}", meta.len());
+            keep_list_entry(&mut files, ListEntry { name, rendered });
         }
     }
-    dirs.sort();
-    files.sort();
-    dirs.extend(files);
-    Ok(dirs.join("\n"))
+
+    // Каталоги идут первыми и с косой чертой: раньше список сортировался по алфавиту вместе с
+    // размерами, и при длинном перечне подкаталог «runs» оказался за пределами видимого куска
+    // (задача о подсчёте инструментов: модель его не нашла).
+    let dirs = dirs.into_sorted_vec();
+    let files = files.into_sorted_vec();
+    let shown_dirs = dirs.len().min(LIST_LIMIT);
+    let shown_files = files.len().min(LIST_LIMIT - shown_dirs);
+    let mut lines: Vec<String> = dirs
+        .into_iter()
+        .take(shown_dirs)
+        .chain(files.into_iter().take(shown_files))
+        .map(|entry| entry.rendered)
+        .collect();
+    let total = total_dirs + total_files;
+    let shown = lines.len();
+    if total > shown {
+        lines.push(format!(
+            "… (обрезано: показано {shown}, осталось {})",
+            total - shown
+        ));
+    }
+    Ok(lines.join("\n"))
 }
 
 /// `read <файл> [с_строки]`: текст до 8 КиБ, с номерами строк — чтобы модель могла ссылаться на место.

@@ -191,7 +191,7 @@
  },
  "list": {
   "work_id": "tool:list",
-  "version": 1,
+  "version": 2,
   "purpose": "дать агенту увидеть, что есть в каталоге, не утопив его в перечне",
   "atoms": [
    {
@@ -233,15 +233,47 @@
     },
     "negated": true,
     "why": "просмотр каталога ничего не меняет"
-   }
-  ],
-  "escapes": [
+   },
    {
-    "atom": "a4",
-    "reason": "single_level_only",
-    "detail": "рекурсии нет; дерево не показывается — это уход"
+    "id": "a4",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "order",
+     "object": "entries",
+     "value": "directories_first_then_files_by_name"
+    },
+    "negated": false,
+    "why": "порядок не должен зависеть от порядка записей в файловой системе"
+   },
+   {
+    "id": "a5",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "report",
+     "object": "remainder",
+     "quantity": "total_minus_shown"
+    },
+    "negated": false,
+    "why": "общий marker скрывает, сколько записей осталось"
+   },
+   {
+    "id": "a6",
+    "relation": "duty",
+    "bearer": "harness",
+    "counterparty": "agent",
+    "action": {
+     "verb": "recurse",
+     "object": "directory"
+    },
+    "negated": true,
+    "why": "list показывает один уровень; рекурсия и дерево не выполняются"
    }
   ],
+  "escapes": [],
   "verdicts": [
    "FULFILLED",
    "REFUSED",
@@ -258,7 +290,9 @@
    "time_ms": 200,
    "memory_mb": 8,
    "output_bytes": 8000
-  }
+  },
+  "amended_at": "2026-11-26T00:16:40+03:00",
+  "amend_reason": "E-0089: отделить версию list до добавления deterministic order, exact remainder и явного non-recursion duty"
  },
  "write": {
   "work_id": "tool:write",
