@@ -907,10 +907,10 @@
    "title": "GATES-READONLY-ROOTSAFE-R1: полный root-correct/read-only W11",
    "hypothesis": "Явная передача root, bytecode-free subprocess env, внешние tempfiles, disposable copy для fast claims и disposable-only/lock/fail-closed probes устранят мутации и cross-root подмену без изменения verdict semantics и без ослабления существующих probes.",
    "prereg": "lab/prereg/GATES-READONLY-ROOTSAFE-R1.json",
-   "status": "open",
-   "claim": null,
-   "conclusion": null,
-   "note": "Baseline 423df52. refs search NOT PROVIDED (rc=2). Focused baseline RED зафиксирован до кода: 16 checks, 15 failures, rc=1; evidence research/outputs/GATES-READONLY-ROOTSAFE-R1-BASELINE.txt. Production Rust, bridge, sealed history и activation не меняются.",
+   "status": "closed",
+   "claim": "C-0362",
+   "conclusion": "research/outputs/GATES-READONLY-ROOTSAFE-R1-CLOSURE.txt",
+   "note": "Baseline 423df52; refs search NOT PROVIDED (rc=2); baseline RED 16 checks/15 failures сохранён. Implementation d4a9f7f прошёл независимый review R2 PASS: focused 16/16 Windows/POSIX, full probes 32/32 + 2 N/A, FAST 17/17, clean Windows selftest 83 + 3 Linux N/A, ordinary gates 4729/4729 без byte/mtime/status drift. Production Rust, bridge, sealed history и activation не менялись; N/A не PASS.",
    "updated": "2026-11-25"
   }
  ]

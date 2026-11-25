@@ -1,0 +1,107 @@
+E-0087 / W11 — closure
+Дата: 25.11.2026
+Claim: C-0362
+Экспериментальный baseline: 423df52
+Review baseline: 17f529ae160a1a66b4ec42559c263f9e42a7f1fd
+Implementation commit: d4a9f7f513f33142c37499d6b4a5cf2dfd2268ce
+Sealed prereg: lab/prereg/GATES-READONLY-ROOTSAFE-R1.json
+
+Вердикт: PASS
+Focused controls: 16/16; провалов: 0 (Windows и WSL/POSIX).
+Independent review: PASS — research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW-R2.txt, блокирующих findings 0.
+
+======================================================================
+ЧТО ЗАКРЫТО
+======================================================================
+1. Обычный gates не вызывает mutation probes и не мутирует source worktree.
+2. Root явно передаётся в импортированные validators и subprocesses.
+3. Root-aware loaders исполняют только прочитанные source bytes; stale timestamp-valid .pyc не даёт false green.
+4. FAST claims и mutation probes работают в disposable copies; tracked-ignored/secret zones исключаются fail-closed.
+5. Probe runner использует disposable-only sandbox, nonblocking lock, unknown-before-write и all-N/A RED.
+6. Cleanup failure сохраняет первичную ошибку; persistent lock остаётся ошибкой.
+7. Частичная Rust-сборка даёт штатный rust FAIL/summary без traceback.
+8. auto=FAST, full=все пробы; N/A явно не считается PASS.
+
+Исторические F1/F2 и новые F3/F4 подтверждены независимым review R2.
+Исторические NEEDS_CHANGES artifacts сохранены без перезаписи.
+
+======================================================================
+КРИТЕРИИ И РЕЗУЛЬТАТЫ
+======================================================================
+Focused baseline RED до кода: 16 checks, 15 failures, rc=1.
+Focused Windows: 16 checks, 0 failures.
+Focused WSL/POSIX: 16 checks, 0 failures.
+Manifest: 86 Python + 4 Rust; explicit selection test_gates_w11.py — 16/16 на Windows/POSIX.
+Readonly regression: 9/9.
+Binary version: 4/4.
+Capabilities: 4/4.
+Full probes: 34 total; 32/32 оценённых caught; 2 N/A; rc=0.
+FAST probes: 17/17; rc=0.
+Clean disposable Windows selftest: 83 выполненных suites + 3 Linux N/A; 0 failed; W18 14/14; rc=0.
+Real ordinary gates snapshot: 4729/4729 nonignored files; 0 byte/mtime changes; 0 added/removed; __pycache__ 0/0; git status неизменён; gates rc=0; 31/33 evaluated + 2 N/A.
+Temp leftovers после финальных прогонов: gate-probe-*=0, hs-gates-copy-*=0, hs-coverage-*=0, review clone=0.
+
+======================================================================
+ФИНАЛЬНЫЕ RAW SHA-256
+======================================================================
+bin/hs.py
+  df1bf491ddceadaef130cc3f6f49536836428c1d45da5d8dabe94c364004e84c
+bin/gate_probe.py
+  92f318e33b52813b36663e10fcf753518bab995ed32afaeccdd0f4d3ae1df9cf
+bin/gen_capabilities.py
+  3756a7a8b1f4b705a8d130f211c15ab5cfeb4a2160945d4c33b0eb3484cf99de
+bin/binary_version.py
+  3cd099a332ec02ed4341b9a33ea7959cdd39ffe2cae6611427ce6a6fa4ff4249
+tests/test_gates_w11.py
+  83eec8c394657992b430503a8f62344e2d408cf2dc0161f9a99a1b5abd40b328
+tests/test_gates_readonly.py
+  ee99fb14b0b7eb11efde955817a6ecb830543a2390662b6cf6e649ba5c74dd4d
+
+======================================================================
+EVIDENCE
+======================================================================
+research/outputs/GATES-READONLY-ROOTSAFE-R1-BASELINE.txt
+research/outputs/GATES-READONLY-ROOTSAFE-R1-INTEGRATION.txt
+research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-REVIEW.txt
+research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW.txt
+research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW-R2.txt
+research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-INTEGRATION.txt
+research/outputs/gate-probes.txt
+research/outputs/gate-probes-fast.txt
+runs/exp-ci-residuals/e0087-review3-*.txt
+runs/exp-ci-residuals/e0087-review2-readonly-snapshot.txt
+
+======================================================================
+CLOSURE CHECKS
+======================================================================
+check_artifacts.py C-0362: ожидание найдено, rc=0.
+verify_claims.py --fast: 323 утверждения, 0 провалов.
+coverage.py: 355/355 closed, anchored 1.00; strict 204/352 = 0.58; ANCHORED_WEAK.
+lab.py validate: реестр связен, 87 экспериментов, следующих гипотез 7.
+seal.py verify-all: 64/64, проблем 0.
+prereg.py check: 76/76 sensitivity.
+test_manifest.py --check: 86 Python + 4 Rust.
+
+======================================================================
+ФАКТИЧЕСКИЙ CI
+======================================================================
+Implementation commit d4a9f7f: run 45683121454 завершён с conclusion=failure.
+Пять jobs success: gates auto, plugin HSJ2, Rust core, admission/test-only, claims.
+Единственный failed job — «негативные тесты инструмента», единственный failed step — Selftest.
+W11 suite в CI: 16/16, rc=0. Единственный failed suite — test_bridge_net_namespace.py:
+positive B получил 503 вместо 200; net.py не исполнился; PID-namespace positive control отсутствует.
+Baseline run 45640185351 на 17f529a имеет тот же failed job/step, suite и четыре B residuals.
+Следовательно, это прежний Linux namespace positive-control долг, не регрессия W11.
+Полный CI-PASS не заявлен. Подробное сравнение и команды:
+research/outputs/GATES-READONLY-ROOTSAFE-R1-CI-REVIEW.txt
+
+======================================================================
+ГРАНИЦЫ
+======================================================================
+N/A не PASS: два probe N/A и три Linux suite N/A остаются явно неоценёнными.
+Cleanup после SIGKILL/power loss не заявляется и исключён sealed prereg.
+Hostile ambient GIT_DIR/GIT_WORK_TREE/TMPDIR и symlink swap race не моделировались.
+Полный POSIX selftest этим closure не заявляется.
+Production Rust, bridge/net, thresholds, sealed history и activation не менялись.
+Содержимое реальных ignored/secret файлов не читалось.
+CI run 45683121454 завершён failure из-за прежнего Linux namespace positive-control residual, совпадающего с baseline 45640185351; W11 suite в CI 16/16; полный CI-PASS не заявлен.

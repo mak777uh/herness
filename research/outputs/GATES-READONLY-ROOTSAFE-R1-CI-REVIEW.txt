@@ -1,0 +1,57 @@
+E-0087 / W11 — фактический CI residual review
+Дата: 25.11.2026
+Implementation commit: d4a9f7f513f33142c37499d6b4a5cf2dfd2268ce
+CI run: 45683121454
+URL: https://github.com/mak777uh/herness/actions/runs/45683121454
+Baseline commit: 17f529ae160a1a66b4ec42559c263f9e42a7f1fd
+Baseline CI run: 45640185351
+Baseline URL: https://github.com/mak777uh/herness/actions/runs/45640185351
+
+ИТОГ
+Общий CI verdict: failure. Полный CI-PASS не заявлен.
+W11 regression по CI: не обнаружено; test_gates_w11.py прошёл 16/16 на Linux.
+Единственный failed job — «негативные тесты инструмента», единственный failed step — Selftest.
+Пять остальных jobs завершились success.
+
+RUN 45683121454 / d4a9f7f
+success: гейты (профиль auto)
+success: плагин (кадры HSJ2)
+success: Rust-тесты ядра
+success: допуск и test-only репетиция
+success: утверждения и их ожидания
+failure: негативные тесты инструмента / Selftest
+
+Точный failed suite:
+  [FAIL] test_bridge_net_namespace.py: 12/1 checks, rc=1:
+  ВЕРДИКТ: FAIL — /v1/net не изолирован или fail-closed не сработал
+
+Четыре failed controls положительного плеча B:
+  B: ответ /v1/net 200 (получено 503)
+  B: подставной net.py выполнился (положительный контроль)
+  B: ребёнок не видит HS_BRIDGE_KEY в /proc (PID-namespace)
+  B: маркер исполнения net.py создан
+
+Остальные плечи C/D fail-closed прошли. Канарейка не попала в ответ, bridge.log
+и stdout/stderr моста. W11 focused suite прошёл:
+  [ok] test_gates_w11.py: 16/16 checks, rc=0: 16 checks, 0 failures
+
+СРАВНЕНИЕ С BASELINE
+Run 45640185351 на 17f529a имеет тот же единственный failed job/step и тот же
+failed suite/positive-B residual: /v1/net 503 вместо 200, net.py не исполнился,
+PID-namespace positive control не получен. Canary digest различается, как и
+положено для свежей синтетической канарейки; семантика residuals совпадает.
+Следовательно, CI failure не вызван изменениями W11. Это прежний долг Linux
+namespace positive control на hosted runner, отдельный от sealed E-0087 criteria.
+
+ВОСПРОИЗВОДИМЫЕ КОМАНДЫ
+gh run view 45683121454 --repo mak777uh/herness --json databaseId,headSha,event,status,conclusion,url,jobs
+gh run view 45683121454 --repo mak777uh/herness --log-failed
+gh run view 45640185351 --repo mak777uh/herness --json databaseId,headSha,event,status,conclusion,url,jobs
+gh run view 45640185351 --repo mak777uh/herness --log-failed
+
+ГРАНИЦА
+Это сравнение двух реальных GitHub Actions runs; повторный запуск CI не выполнялся.
+Positive Linux namespace runtime PASS не заявлен. Production bridge/net и namespace
+semantics не менялись. Закрытие E-0087 опирается на sealed criteria, независимый
+review PASS, focused Windows/POSIX controls и чистый Windows selftest, а не на
+CI-PASS. Долг positive Linux namespace CI остаётся открытым.
