@@ -68,6 +68,12 @@ jobs:
       - name: Зависимости Rust для offline controls
         working-directory: core-rs
         run: cargo fetch --locked
+      - name: Linux namespace capability diagnostic
+        # Наблюдаемый probe без privilege; capability experiment не запускается из fork PR.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          mkdir -p runs/exp-ci-residuals
+          python bin/netns_diagnostics.py --output runs/exp-ci-residuals/netns-diagnostics.json
       - name: Selftest
         run: python bin/hs.py selftest
 
