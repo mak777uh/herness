@@ -1,16 +1,16 @@
 # Аудит (вычислен, не написан)
 
-утверждений: 355 (дублей 0) · ядро: 17
-покрытие: 1.0 (якорено) · строгое: 0.58 · вердикт: ANCHORED_WEAK
+утверждений: 356 (дублей 0) · ядро: 17
+покрытие: 1.0 (якорено) · строгое: 0.581 · вердикт: ANCHORED_WEAK
 отказов: 87 · гейтов: 33 · проб: 32 · гейтов с контролем: 30
-артефактов: 531 · без ссылок: 339
+артефактов: 533 · без ссылок: 340
 решений в складе: 45
 
 ## FAIL (инварианты)
 - нет
 
 ## WARN (долги, вычисляются каждый запуск)
-- артефактов без ссылок в утверждениях: 339 (ADMISSION-R8-2026-11-17.txt, ARCH-BRIEF-V04-CODE-AUDIT-2026-11-24.txt, BRIDGE-HTTP-HARDENING-R2-bridge-regression.txt, BRIDGE-HTTP-HARDENING-R2-gates.txt, BRIDGE-HTTP-HARDENING-R2-key-isolation-regression.txt)
+- артефактов без ссылок в утверждениях: 340 (ADMISSION-R8-2026-11-17.txt, ARCH-BRIEF-V04-CODE-AUDIT-2026-11-24.txt, BRIDGE-HTTP-HARDENING-R2-bridge-regression.txt, BRIDGE-HTTP-HARDENING-R2-gates.txt, BRIDGE-HTTP-HARDENING-R2-key-isolation-regression.txt)
 - гейтов с пробой: 30 из 33; без пробы: журналы, индекс прогонов, политика
 - строгое покрытие < anchored: слабых ожиданий 125, артефактов-описаний 32 (anchored 1.00 ≠ проверяемо; ADR-0058)
 - нет runs/index.json: метрики определяют задачу по имени журнала (план P0.2)

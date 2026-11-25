@@ -1,0 +1,123 @@
+E-0088 / W12 — POLICY-CANONICAL-FAILCLOSED-R1 closure
+Дата: 25.11.2026
+Claim: C-0363
+Экспериментальный baseline: 0002780abf8197e5619432f63e39b167f1177896
+Sealed prereg: lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json
+
+Вердикт: PASS
+Focused controls: 15/15; провалов: 0 (Windows и WSL/POSIX).
+Independent review: PASS — research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-FINAL-REVIEW.txt, блокирующих findings 0.
+
+======================================================================
+ЧТО ЗАКРЫТО
+======================================================================
+1. bin/policy.py читает только canonical lab/tools/policy.json явно переданного root.
+2. Missing/unreadable/malformed/empty/structural/duplicate/unknown policy даёт единый PolicyDataError и fail-closed CLI.
+3. Embedded 17-rule POLICY_DATA и молчаливый fallback удалены.
+4. --build больше не существует и не может перезаписать canonical source of truth.
+5. load/check/show используют один read-path; два synthetic roots не смешиваются.
+6. Сохранены 23 canonical rules, policy semantics, parity и policy probe.
+7. Новый suite из 15 checks включён в test manifest.
+
+Это closure только canonical policy loading/CLI boundary. Tool Contract и Relationship Contract остаются разными слоями; полный W12 enforcement matrix этим экспериментом не закрыт.
+
+======================================================================
+КРИТЕРИИ И РЕЗУЛЬТАТЫ
+======================================================================
+Refs search: NOT PROVIDED, rc=2; отсутствие справочника записано как отсутствие данных, не как успешный поиск.
+Baseline RED до кода: 15 checks, 13 failures, rc=1.
+Focused Windows: 15 checks, 0 failures, rc=0.
+Focused WSL/POSIX: 15 checks, 0 failures, rc=0.
+Manifest: 87 Python + 4 Rust; explicit selection test_policy_canonical.py — 15/15.
+Canonical parity: check_policy_parity.py rc=0; 23 rules.
+Policy probe: 4/4 negative controls, rc=0.
+CLI temporary-root matrix: 17/17; missing/malformed/empty без Traceback; --build rc=2 и canonical sentinel неизменён.
+Dual-root: разные principle/tool возвращаются без cached cross-root подмены.
+Ordinary gates: 31/33 evaluated, 2 N/A, rc=0.
+Первый чистый Windows disposable selftest: RED, единственный failed suite test_gates_w11.py из-за временной WinError 32 на temp-файле; RED сохранён без изменения кода/критерия.
+Чистый Windows disposable selftest r2: 87 suites, 84 performed + 3 Linux N/A, 0 failed, rc=0; W18 14/14; mode=clean-clone; status_before/status_after пусты; source_overlay_unchanged=True.
+Disposable HEAD r2: 453049eacc47cce834d977e9e00a35b97ccdd3d8; это temporary commit только в clone, не commit source repository.
+Canonical policy byte-exact: 2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802.
+Review: независимый read-only review PASS, 0 блокирующих findings.
+
+======================================================================
+ФИНАЛЬНЫЕ RAW SHA-256
+======================================================================
+bin/policy.py
+  69cc226cf7860c8b8722fb02dd16099e0d87ad99244c5b6d51d7fe3881022bcd
+tests/test_policy_canonical.py
+  776a0114929dc3384530bfd5b0131fb0916ae0709d6cdac478512cdd0a990519
+tests/test-manifest.json
+  2a12c8c2ba0c2fa7c52645005e8bc534710a696ac27dcaaf59328b77da8c49b4
+lab/tools/policy.json
+  2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802
+lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json
+  be3c47cc3f4b8b0344cdd70575417a302371dffcf79196c5e1ecc37a57d248eb
+research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-FINAL-REVIEW.txt
+  547da7070ae574007390facc2f2068bf17495e3ba560fc99e31aaa972179198c
+runs/exp-ci-residuals/e0088-policy-red.txt
+  7f996225859058189c7cb044b089d41974b7ca9086bab9d80852d9efbef0f58b
+runs/exp-ci-residuals/e0088-policy-green.txt
+  65a190e2b5b2edf0ad2bbb135446ee89d697a21f88a45ad78d4123882e1a5206
+runs/exp-ci-residuals/e0088-policy-posix.txt
+  2565659545642bab1b63b37957e727f9ab6d1cee1013eb488cec7b155fc6b7f3
+runs/exp-ci-residuals/e0088-policy-regressions.txt
+  43d476b460096ad0da456ff9cef7a1c874568ebb7bbba3708970cbd91015ac45
+runs/exp-ci-residuals/e0088-clean-selftest.txt
+  f951aae715f2a53c6602adf7134f176c5da7054d443d29c50f9cf6fa4635ac54
+runs/exp-ci-residuals/e0088-clean-selftest-r2.txt
+  cb41a506309db5637eafdd66e61518fb2eeecfeb8858fe89196cf6ace5b19149
+runs/exp-ci-residuals/e0088-candidate-1076297-ci-failed.log
+  c67682cf261ce4c5cc6d373cce1189438ab592fcba13fb82cc5e226ce6ba9ee0
+
+======================================================================
+EVIDENCE
+======================================================================
+research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-FINAL-REVIEW.txt
+research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-CI-REVIEW.txt
+lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json
+lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json.sha256
+runs/exp-ci-residuals/e0088-policy-red.txt
+runs/exp-ci-residuals/e0088-policy-green.txt
+runs/exp-ci-residuals/e0088-policy-posix.txt
+runs/exp-ci-residuals/e0088-policy-regressions.txt
+runs/exp-ci-residuals/e0088-clean-selftest.py
+runs/exp-ci-residuals/e0088-clean-selftest.txt
+runs/exp-ci-residuals/e0088-clean-selftest-r2.txt
+
+======================================================================
+ФАКТИЧЕСКИЙ CI CANDIDATE
+======================================================================
+Implementation commit 1076297e8f28a011d313abf4e355eef0778cde0e; run 45698232164 завершён completed/failure.
+Пять jobs success: утверждения, gates auto, plugin HSJ2, admission/test-only, Rust core.
+Единственный failed job — «негативные тесты инструмента», единственный failed step — Selftest.
+E-0088 suite в CI: test_policy_canonical.py 15/15, rc=0; W11 suite 16/16; W18 14/14 mode=development-scope.
+Единственный failed suite — test_bridge_net_namespace.py: positive B получил 503 вместо 200, net.py не исполнился, PID-namespace positive control и execution marker отсутствуют; C/D fail-closed прошли.
+Это совпадает с ранее зарегистрированным residual implementation d4a9f7f/baseline 45640185351; production bridge/namespace test в E-0088 не менялись.
+Полный CI-PASS не заявлен. Подробности и raw log hash — research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-CI-REVIEW.txt.
+
+======================================================================
+CLOSURE CHECKS
+======================================================================
+check_artifacts.py C-0363: ожидание найдено, rc=0.
+verify_claims.py --fast: 324 утверждения, 0 провалов.
+coverage.py: 356/356 closed, anchored 1.00; strict 205/353 = 0.58; ANCHORED_WEAK.
+lab.py validate: реестр связен, 88 экспериментов, следующих гипотез 7.
+seal.py verify-all: 65/65, проблем 0.
+prereg.py check: чувствительность есть у 77 из 77; исторические открытые prereg перечислены отдельно и не превращены в PASS.
+test_manifest.py --check: 87 Python + 4 Rust.
+hs.py gates --profile auto: 31/33 evaluated, 2 N/A (журналы, индекс прогонов), rc=0.
+audit.py: FAIL (инварианты) — нет; 356 утверждений; ANCHORED_WEAK; warnings сохранены.
+readme_numbers.py --fix: числа пересобраны из артефактов.
+
+======================================================================
+ГРАНИЦЫ
+======================================================================
+N/A не PASS: два ordinary-gate N/A и три Linux suite N/A остаются явно неоценёнными.
+Первый clean selftest RED не переписан и не превращён в PASS; принят только отдельный чистый повтор r2.
+Полный POSIX selftest этим closure не заявляется.
+Полный W12 enforcement matrix/data vocabulary и Tool Contract ↔ Relationship Contract parity не закрыты.
+List limit/determinism/remainder, generator exact-six/dry-run, registry card resolution/tombstone и owner-gated runtime parity остаются отдельными slices.
+Production Rust, bridge/net, activation, authority model, thresholds, corpora и sealed history не менялись.
+Новые canonical rules или policy semantics не добавлялись.
+Candidate CI 45698232164 проверен: E-0088 suite 15/15, но полный run failure из-за прежнего Linux namespace positive B; полный CI-PASS не заявлен. Closure-commit CI проверяется отдельно после push.

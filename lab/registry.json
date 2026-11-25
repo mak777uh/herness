@@ -918,10 +918,10 @@
    "title": "POLICY-CANONICAL-FAILCLOSED-R1: единый canonical policy без fallback/overwrite",
    "hypothesis": "Явный root-canonical loader со структурной валидацией и без embedded fallback/build-overwrite даст единый fail-closed Missing/Malformed/Empty/Unknown путь, сохранит 23 canonical rules и parity и не позволит CLI записать source of truth.",
    "prereg": "lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json",
-   "status": "open",
-   "claim": null,
-   "conclusion": null,
-   "note": "Baseline 0002780; refs search NOT PROVIDED (rc=2); baseline RED 15 checks/13 failures сохранён. Candidate focused 15/15 Windows/POSIX, manifest 87 Python + 4 Rust, parity 23 rules, policy probe 4/4; canonical policy byte-exact. Первый clean selftest RED из-за Windows WinError 32 сохранён; чистый повтор PASS: 87 suites, 84 performed + 3 Linux N/A, 0 failed, W18 14/14 clean-clone. Независимый review PASS, 0 блокирующих findings. Closure C-0363 и фактический CI ожидают.",
+   "status": "closed",
+   "claim": "C-0363",
+   "conclusion": "research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-CLOSURE.txt",
+   "note": "Baseline 0002780; refs search NOT PROVIDED (rc=2); baseline RED 15 checks/13 failures сохранён. Candidate focused 15/15 Windows/POSIX, manifest 87 Python + 4 Rust, parity 23 rules, policy probe 4/4; canonical policy byte-exact. Первый clean selftest RED из-за Windows WinError 32 сохранён; чистый повтор PASS: 87 suites, 84 performed + 3 Linux N/A, 0 failed, W18 14/14 clean-clone. Независимый review PASS, 0 блокирующих findings. Implementation commit 1076297 отправлен; candidate CI 45698232164: E-0088 suite 15/15, пять jobs success, общий failure только прежний Linux namespace positive B. Closure C-0363 зарегистрирован. Полный CI-PASS и остальные W12 slices не заявлены.",
    "updated": "2026-11-25"
   }
  ]

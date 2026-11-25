@@ -1,0 +1,64 @@
+E-0088 — фактический CI candidate review
+Дата: 25.11.2026
+Implementation commit: 1076297e8f28a011d313abf4e355eef0778cde0e
+Run: 45698232164
+URL: https://github.com/mak777uh/herness/actions/runs/45698232164
+
+Вердикт: E-0088 focused suite в CI PASS; полный run остаётся failure из-за ранее зарегистрированного Linux namespace positive-control residual. Полный CI-PASS не заявлен.
+
+======================================================================
+КОМАНДЫ
+======================================================================
+gh run list --repo mak777uh/herness --commit 1076297e8f28a011d313abf4e355eef0778cde0e --limit 5 --json databaseId,headSha,status,conclusion,url,createdAt
+gh run view 45698232164 --repo mak777uh/herness --json status,conclusion,jobs
+gh run view 45698232164 --repo mak777uh/herness --log-failed
+
+======================================================================
+ФАКТИЧЕСКИЙ RUN
+======================================================================
+status=completed; conclusion=failure.
+Пять jobs success:
+- утверждения и их ожидания
+- гейты (профиль auto)
+- плагин (кадры HSJ2)
+- допуск и test-only репетиция
+- Rust-тесты ядра
+
+Единственный failed job: «негативные тесты инструмента».
+Единственный failed step: Selftest.
+
+======================================================================
+E-0088 В CI
+======================================================================
+test_policy_canonical.py: 15/15 checks, rc=0; провалов 0.
+test_gates_w11.py: 16/16 checks, rc=0.
+Linux namespace focused suites: diagnostics 10/10, map-root 9/9, propagation 9/9.
+W18 controls: 14/14; mode=development-scope (CI worktree, не clean-clone).
+
+======================================================================
+ЕДИНСТВЕННЫЙ FAILED SUITE
+======================================================================
+test_bridge_net_namespace.py: 12/1 checks, rc=1; четыре failures:
+- B: ответ /v1/net 503 вместо 200;
+- B: подставной net.py не выполнился (positive control);
+- B: ребёнок не видит HS_BRIDGE_KEY в /proc (PID-namespace);
+- B: маркер исполнения net.py не создан.
+C/D fail-closed controls прошли; канарейка не попала в проверенные каналы.
+
+Это тот же residual, который ранее зафиксирован для implementation d4a9f7f (run 45683121454) и baseline 45640185351 в research/outputs/GATES-READONLY-ROOTSAFE-R1-CI-REVIEW.txt. Production bridge и namespace test в E-0088 не менялись.
+
+======================================================================
+RAW SHA-256
+======================================================================
+runs/exp-ci-residuals/e0088-candidate-1076297-ci-failed.log
+  c67682cf261ce4c5cc6d373cce1189438ab592fcba13fb82cc5e226ce6ba9ee0
+research/outputs/GATES-READONLY-ROOTSAFE-R1-CI-REVIEW.txt
+  25fe0eb7cf80994a340eddf62a6246dedbf5bb7dab4bde8569be1b651cc6139b
+
+======================================================================
+ГРАНИЦЫ
+======================================================================
+CI focused PASS не заменяет локальный clean-clone PASS и не закрывает Linux namespace runtime.
+Windows-only suite остаётся явным N/A на Ubuntu; N/A не PASS.
+Production correction -r не начата: E-0085 RED и sealed stopping rule остаются в силе.
+Этот review не объявляет полный CI-PASS, activation или внешнюю верификацию.
