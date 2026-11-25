@@ -879,6 +879,15 @@
    "conclusion": "research/outputs/LINUX-NETNS-PROPAGATION-R1-CLOSURE.txt",
    "note": "RED кандидата в trusted CI 45556839178: uid=1001, rc=1 cannot change /proc filesystem propagation: Permission denied; оба namespace marker отсутствуют. Focused 9/9 и review PASS не превращают runtime RED в PASS. Production bridge/namespace test byte-exact; новый command semantic требует отдельного prereg.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0085",
+   "title": "LINUX-NETNS-MAP-ROOT-R1: одна semantic -r без ослабления namespace",
+   "hypothesis": "--map-root-user даст capabilities в новом user namespace для private remount /proc на GitHub uid=1001; candidate -U -r -p -f --mount-proc должен сохранить uid=0 и pid=1. Production bridge меняется только после trusted CI candidate PASS.",
+   "prereg": "lab/prereg/LINUX-NETNS-MAP-ROOT-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано после E-0084 RED: --mount-proc явно private независимо от общей propagation. Сначала focused RED 9 controls и candidate-only trusted CI; production bridge до наблюдения неизменен.",
+   "updated": "2026-11-25"
   }
  ]
 }
