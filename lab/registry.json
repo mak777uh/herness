@@ -868,6 +868,15 @@
    "conclusion": "research/outputs/LINUX-NETNS-CI-R1-CLOSURE.txt",
    "note": "Прибор 10/10 на Windows/POSIX, review PASS. CI 45544356192: uid=1001, AppArmor Y, userns restriction=1, rc=1 root filesystem propagation Permission denied. Positive B остаётся RED; capability correction — отдельный эксперимент.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0084",
+   "title": "LINUX-NETNS-PROPAGATION-R1: candidate без ослабления namespace",
+   "hypothesis": "--propagation unchanged уберёт propagation remount denial на GitHub uid=1001, сохранив user namespace uid=0 и PID namespace pid=1; production bridge меняется только после trusted CI candidate PASS.",
+   "prereg": "lab/prereg/LINUX-NETNS-PROPAGATION-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано после E-0083: точный отказ — root filesystem propagation Permission denied. Сначала focused RED 9 controls и candidate-only trusted CI; production bridge до наблюдения неизменен.",
+   "updated": "2026-11-25"
   }
  ]
 }

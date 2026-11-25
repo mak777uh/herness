@@ -1,0 +1,54 @@
+{
+  "schema": 2,
+  "id": "LINUX-NETNS-PROPAGATION-R1",
+  "date": "2026-11-25",
+  "question": "Убирает ли unshare --propagation unchanged отказ root filesystem propagation на GitHub Ubuntu, сохраняя user namespace (child uid=0) и PID namespace (child pid=1)?",
+  "hypothesis": "Текущий --mount-proc пытается изменить propagation и получает Permission denied у uid=1001. Явный --propagation unchanged должен избежать этого remount, но оставить -U/-p/-f/--mount-proc и fail-closed. Candidate probe на trusted CI проверит rc=0, child uid=0 и pid=1 до любого изменения production bridge.",
+  "criterion": "PASS только если baseline HEAD db4d0e9385b1fbbdc8efb40c77fde76a9549fb25; focused 9/9 на Windows/POSIX; candidate command содержит -U -p -f --propagation unchanged --mount-proc; working требует rc=0, USER_NS_UID=0 и PID_NS_PID=1; rc!=0, missing marker, missing/broken executable и timeout дают broken и unshare_ok=false; секреты редактируются; workflow candidate шаг имеет тот же fork-PR trust gate; production bridge.py и tests/test_bridge_net_namespace.py до CI наблюдения byte-exact; trusted CI candidate действительно исполняется и сохраняет JSON. Если candidate PASS, отдельная correction-попытка меняет ровно одну command semantic в bridge, требует namespace positive B и regression без ослабления порогов; если candidate RED, production не меняется.",
+  "arms": [
+    "A (observed baseline): CI 45544356192 uid=1001, AppArmor Y, userns restriction=1; unshare rc=1 cannot change root filesystem propagation: Permission denied.",
+    "B (candidate): unshare -U -p -f --propagation unchanged --mount-proc python -c assert uid==0 and pid==1; net_child_env, timeout 15, без privilege.",
+    "C (negative controls): rc=0 без markers, rc=1, missing, OSError, timeout, secret canary, workflow trust gate и frozen production hashes."
+  ],
+  "sensitivity": "Focused suite 9/9; candidate working требует все три признака одновременно. Один marker без rc=0 или один rc=0 без markers не PASS. Canary не попадает в report. Require-works=3 при broken/missing. Production до фактического CI candidate не меняется.",
+  "unit_of_analysis": "новый bin/netns_candidate_probe.py, tests/test_linux_netns_propagation.py, Linux-only manifest entry и candidate step .github/workflows/gates.yml; после CI PASS возможна одна command correction bin/bridge.py",
+  "primary_metric": "focused_controls=9/9; focused_failed=0; windows_focused_rc=0; posix_focused_rc=0; canary_leaks=0; candidate_ci_rc=0; candidate_user_ns=1; candidate_pid_ns=1; production_unchanged_before_ci=1",
+  "test": "python tests/test_linux_netns_propagation.py; python bin/netns_candidate_probe.py --output runs/exp-ci-residuals/e0084-candidate-local.json; python bin/test_manifest.py --check; python tests/test_bridge_net_namespace.py; python bin/hs.py gates; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate; python bin/prereg.py check",
+  "stopping_rule": "Сначала запечатать prereg и сохранить focused RED. Затем добавить только candidate probe, focused suite, manifest entry и gated workflow step. Остановиться при любом focused FAIL, canary leak, ложном working, ослаблении user/PID checks, изменении production bridge до CI candidate или privileged fork PR. После CI: candidate RED оставляет production неизменным; candidate PASS разрешает одну command correction и полный regression.",
+  "fixture": "Замоканрованные CompletedProcess/TimeoutExpired/OSError, синтетическая канарейка; реальный candidate запускается только в trusted CI/WSL",
+  "environment": {
+    "host": "Windows 11 build 26300 + WSL Ubuntu; GitHub Ubuntu 26.04.1 uid=1001",
+    "network": "нет для focused; CI checkout штатный",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search \"unshare mount propagation unchanged PID namespace CI\" вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)»",
+    "baseline_head": "db4d0e9385b1fbbdc8efb40c77fde76a9549fb25",
+    "baseline_bridge_sha256": "e3762b0f989d902a211079012d02c4b9085a829b322f044e5db1dea6aed1865e",
+    "baseline_namespace_test_sha256": "c8efc7e10d5587a8e9402c076014464818aab5596664cbc53b6329f6b5caa958",
+    "baseline_workflow_sha256": "bae2c8635faf668ec71712e0a520e68d4b6e2e7e1bc602ad6ee3006574dfbcf3",
+    "baseline_manifest_sha256": "d3cc00211f37c74b8cd21ab64138055b0a19cf8906e28ca4c5f0644cd25c321d",
+    "observed_ci_run": "45544356192",
+    "observed_ci_log_sha256": "6204fc3c5b1b5dce0c740c198bc69bdd49296e3984cff3c0d53b1442f8e80b60"
+  },
+  "critical_controls": [
+    {"id": "exact-candidate", "input": "working runner", "expect": "command содержит --propagation unchanged и --mount-proc; rc=0; uid/pid markers"},
+    {"id": "markers-required", "input": "rc=0 без одного/обоих markers", "expect": "state=broken; unshare_ok=false"},
+    {"id": "failure-required", "input": "rc=1 даже с markers", "expect": "state=broken; unshare_ok=false"},
+    {"id": "fork-trust-gate", "input": "workflow candidate step", "expect": "same-repo PR/push/dispatch only"}
+  ],
+  "kill_criteria": [
+    "candidate working без rc=0 и обоих namespace markers",
+    "production bridge изменён до фактического trusted CI candidate",
+    "кандидат убирает -U/-p/-f/--mount-proc или secret env allowlist",
+    "canary попадает в report/output",
+    "privileged job запускается на fork PR",
+    "candidate RED превращается в PASS или ослабляется threshold"
+  ],
+  "known_limits": [
+    "Candidate probe не доказывает полный /v1/net secret isolation; нужен positive B после correction",
+    "AppArmor restriction остаётся включённой; candidate не отключает LSM/sysctl",
+    "WSL root observation не заменяет GitHub uid=1001",
+    "Это не production activation или внешняя публикация"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation, privileged fork PR и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-residuals"]
+}
