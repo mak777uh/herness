@@ -1,0 +1,86 @@
+{
+  "id": "E-0088",
+  "title": "POLICY-CANONICAL-FAILCLOSED-R1: единый canonical policy без fallback/overwrite",
+  "date": "2026-11-25",
+  "baseline_commit": "0002780abf8197e5619432f63e39b167f1177896",
+  "baseline_head": "0002780abf8197e5619432f63e39b167f1177896",
+  "status": "open",
+  "schema": 2,
+  "criterion": "PASS только при выполнении всех success_criteria; любой silent fallback, запись canonical через --build, cross-root подмена, malformed/empty policy с rc=0 или ослабление parity означает RED.",
+  "arms": [
+    "baseline 0002780 без изменений кода: focused suite обязан быть RED",
+    "candidate: явный root-canonical loader, структурная валидация и удалённый build/fallback; focused Windows и POSIX обязаны быть PASS",
+    "real integration: canonical parity/probe, ordinary gates и чистый disposable selftest без изменения policy semantics"
+  ],
+  "sensitivity": "15 focused checks покрывают canonical positive, missing/malformed/empty/structural/duplicate/unknown failures, dual-root, реальный CLI, запрет --build и отсутствие embedded fallback. Baseline ожидает не менее 10 failures; PASS требует 15/15, поэтому no-op или частичный loader не принят.",
+  "unit_of_analysis": "одна policy load/check/show CLI операция на явно переданном root",
+  "primary_metric": "число выполненных focused checks без failures при byte-exact canonical policy и сохранении 23 rules",
+  "test": "python bin/test_manifest.py --run --only test_policy_canonical.py на Windows и POSIX; затем parity/probe, ordinary gates и чистый disposable selftest",
+  "stopping_rule": "Не ослаблять критерии после RED; при любой записи canonical через --build, fallback на embedded rules, cross-root подмене или неверном rc остановить closure как RED и сохранить evidence.",
+  "question": "Можно ли сделать bin/policy.py единственным читателем canonical lab/tools/policy.json с явным root и fail-closed структурой, удалив молчаливый 17-rule fallback и перезапись через --build без изменения 23 canonical rules?",
+  "predecessor": "E-0087/C-0362 закрыл W11; W12 discovery подтвердил stale 17-rule POLICY_DATA и опасный --build, но implementation/prereg/RED отсутствовали",
+  "refs_search": {
+    "command": "python bin/hs.py refs search \"canonical policy fallback overwrite fail-closed\"",
+    "result": "NOT PROVIDED",
+    "exit_code": 2,
+    "detail": "справочника нет: refs sync (пусто ≠ успех)"
+  },
+  "baseline_sha256": {
+    "bin/policy.py": "37ffef4a769ce6f886ab7f6faa606685a026df3296be8f3959cfa9f7167c19a1",
+    "bin/policy_probe.py": "463f6452414cc5d668a50c422d312cd55492eb1f2292c34dd00ff12f38c5eacc",
+    "bin/check_policy_parity.py": "a560fa764e98d720b28599f337b73fb6a0030f7f698495d7fe5bdbbb485c72aa",
+    "lab/tools/policy.json": "2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802",
+    "tests/test-manifest.json": "2b0dc0e31d8a916ac5f5ca8dd80da00b17ea64c8ee1a5669818a09d2a2eb6bf9"
+  },
+  "known_baseline_failures": [
+    "load() молча возвращает embedded POLICY_DATA с 17 rules, если canonical отсутствует",
+    "missing/malformed/empty canonical не имеют единого fail-closed PolicyDataError",
+    "--build перезаписывает canonical POLICY_DATA и может удалить head/net rules",
+    "load/show/check не принимают явный root и используют module-global POLICY",
+    "docstring обещает четыре проверки, check() выполняет пять"
+  ],
+  "hypothesis": "Явный root-canonical loader со структурной валидацией и без embedded fallback/build-overwrite даст единый fail-closed Missing/Malformed/Empty/Unknown путь, сохранит 23 canonical rules и parity и не позволит CLI записать source of truth.",
+  "implementation_scope": [
+    "только bin/policy.py: PolicyDataError, load(root), структурная валидация, явный --root, единый read-path для check/show",
+    "удалить POLICY_DATA и build/overwrite путь; --build отвергается argparse без записи",
+    "tests/test_policy_canonical.py ровно 15 checks и регистрация в tests/test-manifest.json",
+    "не менять lab/tools/policy.json, Rust, bridge, authority model, thresholds и sealed history"
+  ],
+  "success_criteria": {
+    "focused_red_before_code": "tests/test_policy_canonical.py: 15 checks и не менее 10 failures на baseline, rc=1",
+    "focused_windows": "15/15 checks, 0 failures, rc=0",
+    "focused_posix": "15/15 checks, 0 failures, rc=0",
+    "manifest": "87 Python + 4 Rust; новый suite проходит явный selection",
+    "canonical_parity": "check_policy_parity.py rc=0; policy_probe.py 4/4; lab/tools/policy.json byte-exact, 23 rules",
+    "cli_fail_closed": "missing/malformed/empty дают ненулевой rc без Traceback; --build rc=2 и не меняет canonical bytes",
+    "dual_root": "два synthetic roots возвращают свои policy; повторный load не использует cached чужой root",
+    "ordinary_gates": "gates --profile auto: 31/33 evaluated, 2 N/A, rc=0",
+    "clean_selftest": "чистый Windows disposable selftest: 87 Python suites, 84 performed + 3 Linux N/A, 0 failed, W18 14/14",
+    "review": "независимый review PASS до closure",
+    "claims": "C-0363 проверена check_artifacts/verify_claims/coverage; lab validate; seal verify-all"
+  },
+  "negative_controls": [
+    "отсутствующий canonical, malformed JSON, пустой rules и malformed rule",
+    "duplicate rule id, unknown effect и unknown level",
+    "два synthetic roots с разными principle/tool и повторный возврат к первому",
+    "реальный CLI --check/--show/--build на temporary root",
+    "отсутствие POLICY_DATA и byte-exact canonical после всех прогонов"
+  ],
+  "stopping_rules": [
+    "Не ослаблять gates, frozen thresholds, corpus и sealed E-0087 PASS.",
+    "Не переписывать sealed prereg/history; ошибки исправлять новым experiment/correction.",
+    "Не менять production Rust, Linux bridge, activation и внешние системы.",
+    "Не начинать production -r namespace correction: E-0085 RED и sealed stopping rule.",
+    "Не менять 23 canonical rules или policy semantics без отдельного решения владельца.",
+    "N/A/unknown/unsupported не считаются PASS; CI-PASS не подменяется локальным PASS."
+  ],
+  "not_claimed": [
+    "полный W12 enforcement matrix/data vocabulary",
+    "Tool Contract ↔ Relationship Contract parity",
+    "list limit/determinism/remainder",
+    "generator exact-six/dry-run",
+    "registry card resolution/tombstone",
+    "production runtime policy activation",
+    "полный CI-PASS"
+  ]
+}

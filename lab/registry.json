@@ -912,6 +912,17 @@
    "conclusion": "research/outputs/GATES-READONLY-ROOTSAFE-R1-CLOSURE.txt",
    "note": "Baseline 423df52; refs search NOT PROVIDED (rc=2); baseline RED 16 checks/15 failures сохранён. Implementation d4a9f7f прошёл независимый review R2 PASS: focused 16/16 Windows/POSIX, full probes 32/32 + 2 N/A, FAST 17/17, clean Windows selftest 83 + 3 Linux N/A, ordinary gates 4729/4729 без byte/mtime/status drift. Production Rust, bridge, sealed history и activation не менялись; N/A не PASS.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0088",
+   "title": "POLICY-CANONICAL-FAILCLOSED-R1: единый canonical policy без fallback/overwrite",
+   "hypothesis": "Явный root-canonical loader со структурной валидацией и без embedded fallback/build-overwrite даст единый fail-closed Missing/Malformed/Empty/Unknown путь, сохранит 23 canonical rules и parity и не позволит CLI записать source of truth.",
+   "prereg": "lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json",
+   "status": "open",
+   "claim": null,
+   "conclusion": null,
+   "note": "Baseline 0002780; refs search NOT PROVIDED (rc=2); baseline RED 15 checks/13 failures сохранён. Candidate focused 15/15 Windows/POSIX, manifest 87 Python + 4 Rust, parity 23 rules, policy probe 4/4; canonical policy byte-exact. Первый clean selftest RED из-за Windows WinError 32 сохранён; чистый повтор PASS: 87 suites, 84 performed + 3 Linux N/A, 0 failed, W18 14/14 clean-clone. Независимый review PASS, 0 блокирующих findings. Closure C-0363 и фактический CI ожидают.",
+   "updated": "2026-11-25"
   }
  ]
 }

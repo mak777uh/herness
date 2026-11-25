@@ -1,0 +1,52 @@
+E-0088 — независимый read-only review
+Дата: 25.11.2026
+Baseline: 0002780abf8197e5619432f63e39b167f1177896
+Sealed prereg: lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json
+
+Вердикт: PASS
+Блокирующих находок: 0.
+
+ПРОВЕРЕНО
+1. bin/policy.py:31-115 — единый PolicyDataError для missing/unreadable/malformed/empty/structural/duplicate/unknown effect/unknown level; embedded fallback отсутствует.
+2. bin/policy.py:35-38,97-115 — явный root без cache/global substitution. Независимая последовательность LEFT → RIGHT → LEFT → default прошла.
+3. bin/policy.py:201-225 — --build отвергается argparse с rc=2; canonical bytes не меняются.
+4. tests/test_policy_canonical.py:221-249 — ровно 15 проверок; baseline воспроизводимо даёт 13 failures, поэтому oracle не no-op.
+5. Callsites: bin/security_audit.py:45 запускает bin/policy.py --check; контракт совместим, direct CLI дал rc=0 и «23 правил». API load/check потребляют только bin/policy_probe.py:25-26 и новый тест. Вызовов policy.py --build и активных POLICY_DATA нет.
+6. Canonical policy содержит 23 rules и сохранён byte-exact. Production Rust/bridge, core/, history/ и исходный policy-check.txt не изменены.
+
+НЕБЛОКИРУЮЩЕЕ ЗАМЕЧАНИЕ
+bin/policy.py:1 говорит «единственный читатель», тогда как parity/digest-инструменты, например bin/check_policy_parity.py:43-44, читают тот же canonical JSON напрямую. Source-of-truth остаётся один; формулировка не меняет enforcement и не блокирует E-0088.
+
+ВОСПРОИЗВОДИМЫЕ ПРОВЕРКИ
+Рабочий каталог: C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness.
+
+- PYTHONDONTWRITEBYTECODE=1 python tests/test_policy_canonical.py
+  Windows: 15/15, rc=0.
+- MSYS_NO_PATHCONV=1 wsl.exe -d Ubuntu --exec env PYTHONDONTWRITEBYTECODE=1 python3 /mnt/c/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/tests/test_policy_canonical.py
+  POSIX: 15/15, rc=0.
+- PYTHONDONTWRITEBYTECODE=1 python bin/test_manifest.py --check
+  87 Python + 4 Rust.
+- PYTHONDONTWRITEBYTECODE=1 python bin/test_manifest.py --run --only test_policy_canonical.py
+  15/15.
+- PYTHONDONTWRITEBYTECODE=1 python bin/check_policy_parity.py --check
+  23 rules, rc=0.
+- Отдельная temporary-root CLI-матрица: 7 негативных случаев × --check/--show, --build, valid check/show — 17/17; все негативные rc=1 без Traceback; build rc=2 без записи.
+- Baseline clone 0002780…: 15 checks, 13 failures, rc=1.
+- Candidate disposable clone: policy_probe.py 4/4, rc=0.
+- Оба disposable clones удалены; исходный report не изменён.
+
+RAW SHA-256
+bin/policy.py
+  69cc226cf7860c8b8722fb02dd16099e0d87ad99244c5b6d51d7fe3881022bcd
+tests/test_policy_canonical.py
+  776a0114929dc3384530bfd5b0131fb0916ae0709d6cdac478512cdd0a990519
+tests/test-manifest.json
+  2a12c8c2ba0c2fa7c52645005e8bc534710a696ac27dcaaf59328b77da8c49b4
+lab/tools/policy.json
+  2f135171a355fbd7cffdafbf179013556682e5756c4bde3dc3d1a64ce0539802
+lab/prereg/POLICY-CANONICAL-FAILCLOSED-R1.json
+  be3c47cc3f4b8b0344cdd70575417a302371dffcf79196c5e1ecc37a57d248eb
+Sidecar prereg совпал.
+
+ГРАНИЦЫ REVIEW
+На момент review ordinary gates 31/33 + 2 N/A, полный clean selftest/W18, claims C-0363, lab validate, seal verify-all, полный Rust/bridge runtime и CI ещё проверяются отдельно. security_audit.py не запускался из-за записи report и сканирования секретов. Сеть, DSH, app.asar, ~/.dsh и секреты не использовались. N/A не PASS.

@@ -1,17 +1,20 @@
-"""policy — политика в проверяемой форме (уровень A из flowguard-spec).
+"""policy — единственный читатель canonical lab/tools/policy.json.
 
 Политика отвечает на вопрос: кто, какое действие, над каким ресурсом, при каком условии.
 И отвечает так, чтобы это можно было ПРОВЕРИТЬ, а не прочитать.
 
-Четыре проверки:
+Пять проверок:
   1. противоречия — один атом разрешает, другой запрещает то же самое;
   2. неявные разрешения — «разрешено всё, кроме…» запрещено;
   3. циклы делегирования — A разрешает B, B разрешает A;
-  4. запрет сильнее разрешения — при конфликте побеждает deny.
+  4. запрет сильнее разрешения — при конфликте побеждает deny;
+  5. уровень каждого правила обязан быть A/B/C.
 
-    python bin/policy.py --build      # собрать политику из договоров
-    python bin/policy.py --check      # проверить
-    python bin/policy.py --show read  # показать правила инструмента
+Canonical missing/malformed/empty/invalid — PolicyDataError. Embedded fallback и
+build/overwrite пути отсутствуют: source of truth только lab/tools/policy.json.
+
+    python bin/policy.py --root <checkout> --check
+    python bin/policy.py --root <checkout> --show read
 """
 
 from __future__ import annotations
@@ -24,78 +27,92 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "lab" / "tools" / "policy.json"
 
-# Политика: субъект, действие, ресурс, эффект, уровень.
-# Уровень A — доказуемо (политика), B — доказуемо для кода, C — только измеримо.
-POLICY_DATA = {
-    "version": 1,
-    "principle": "запрет сильнее разрешения; неявных разрешений нет; кто не назван — тот не может",
-    "rules": [
-        # read
-        {"id": "read-allow", "tool": "read", "subject": "agent", "action": "read",
-         "resource": "file:/mnt/**", "effect": "allow", "level": "A",
-         "why": "без чтения инструмент бесполезен"},
-        {"id": "read-deny-write", "tool": "read", "subject": "agent", "action": "write",
-         "resource": "file:/mnt/**", "effect": "deny", "level": "A",
-         "why": "чтение не должно менять то, что читает"},
-        {"id": "read-deny-outside", "implied": True, "tool": "read", "subject": "agent", "action": "read",
-         "resource": "file:!/mnt/**", "effect": "deny", "level": "A",
-         "why": "замыкание объявлено — за его пределами отказ"},
-        {"id": "read-deny-net", "tool": "read", "subject": "agent", "action": "net",
-         "resource": "net:**", "effect": "deny", "level": "A",
-         "why": "чтение файла не требует сети"},
-        # search
-        {"id": "search-allow", "tool": "search", "subject": "agent", "action": "read",
-         "resource": "file:/mnt/**", "effect": "allow", "level": "A",
-         "why": "поиск — основной способ найти ответ"},
-        {"id": "search-deny-write", "tool": "search", "subject": "agent", "action": "write",
-         "resource": "file:/mnt/**", "effect": "deny", "level": "A",
-         "why": "поиск ничего не меняет"},
-        {"id": "search-deny-net", "tool": "search", "subject": "agent", "action": "net",
-         "resource": "net:**", "effect": "deny", "level": "A",
-         "why": "поиск не требует сети"},
-        # list
-        {"id": "list-allow", "tool": "list", "subject": "agent", "action": "list",
-         "resource": "dir:/mnt/**", "effect": "allow", "level": "A",
-         "why": "без этого агент не знает, что есть"},
-        {"id": "list-deny-write", "tool": "list", "subject": "agent", "action": "write",
-         "resource": "file:/mnt/**", "effect": "deny", "level": "A",
-         "why": "просмотр каталога ничего не меняет"},
-        # write
-        {"id": "write-allow", "tool": "write", "subject": "agent", "action": "write",
-         "resource": "file:/mnt/work/**", "effect": "allow", "level": "A",
-         "why": "без этого агент не может оставить результат"},
-        {"id": "write-deny-outside", "implied": True, "tool": "write", "subject": "agent", "action": "write",
-         "resource": "file:!/mnt/work/**", "effect": "deny", "level": "A",
-         "why": "запись вне рабочего каталога — отказ"},
-        {"id": "write-deny-net", "tool": "write", "subject": "agent", "action": "net",
-         "resource": "net:**", "effect": "deny", "level": "A",
-         "why": "запись файла не требует сети"},
-        # seal
-        {"id": "seal-allow", "tool": "seal", "subject": "agent", "action": "seal",
-         "resource": "file:/mnt/work/**", "effect": "allow", "level": "A",
-         "why": "отпечаток — способ зафиксировать"},
-        {"id": "seal-deny-outside", "implied": True, "tool": "seal", "subject": "agent", "action": "seal",
-         "resource": "file:!/mnt/work/**", "effect": "deny", "level": "A",
-         "why": "запечатывать можно только своё"},
-        # netprobe
-        {"id": "netprobe-allow", "tool": "netprobe", "subject": "agent", "action": "net",
-         "resource": "net:10.0.2.2:8790", "effect": "allow", "level": "A",
-         "why": "единственный разрешённый адрес — мост"},
-        {"id": "netprobe-deny-other", "implied": True, "tool": "netprobe", "subject": "agent", "action": "net",
-         "resource": "net:!10.0.2.2:8790", "effect": "deny", "level": "A",
-         "why": "сеть за мостом — отказ"},
-        {"id": "netprobe-deny-fs", "implied": True, "tool": "netprobe", "subject": "agent", "action": "read",
-         "resource": "file:/mnt/**", "effect": "deny", "level": "A",
-         "why": "проверка сети не читает файлы"},
-    ],
-    "delegation": [],
-}
+
+class PolicyDataError(Exception):
+    """Canonical policy отсутствует, не читается или имеет неверную структуру."""
 
 
-def load() -> dict:
-    if POLICY.exists():
-        return json.loads(POLICY.read_text(encoding="utf-8"))
-    return POLICY_DATA
+def _policy_path(root: Path | None) -> Path:
+    if root is None:
+        return POLICY
+    return Path(root).resolve() / "lab" / "tools" / "policy.json"
+
+
+def _invalid(detail: str) -> None:
+    raise PolicyDataError(f"invalid canonical policy: {detail}")
+
+
+def _validate_structure(data: object) -> dict:
+    if not isinstance(data, dict):
+        _invalid("top-level must be an object")
+
+    version = data.get("version")
+    if isinstance(version, bool) or not isinstance(version, int) or version != 1:
+        _invalid(f"unsupported version {version!r}")
+
+    principle = data.get("principle")
+    if not isinstance(principle, str) or not principle.strip():
+        _invalid("principle must be a non-empty string")
+
+    rules = data.get("rules")
+    if not isinstance(rules, list):
+        _invalid("rules must be a list")
+    if not rules:
+        raise PolicyDataError("empty canonical policy: rules must not be empty")
+
+    required = ("id", "tool", "subject", "action", "resource", "effect", "level", "why")
+    seen_ids: set[str] = set()
+    for index, rule in enumerate(rules):
+        if not isinstance(rule, dict):
+            _invalid(f"rule {index} must be an object")
+        for field in required:
+            value = rule.get(field)
+            if not isinstance(value, str) or not value.strip():
+                _invalid(f"rule {index} field {field!r} must be a non-empty string")
+        rule_id = rule["id"]
+        if rule_id in seen_ids:
+            _invalid(f"duplicate rule id {rule_id!r}")
+        seen_ids.add(rule_id)
+        if rule["effect"] not in ("allow", "deny"):
+            _invalid(f"rule {rule_id!r} has unknown effect {rule['effect']!r}")
+        if rule["level"] not in ("A", "B", "C"):
+            _invalid(f"rule {rule_id!r} has unknown level {rule['level']!r}")
+        if "implied" in rule and not isinstance(rule["implied"], bool):
+            _invalid(f"rule {rule_id!r} field 'implied' must be boolean")
+
+    delegation = data.get("delegation")
+    if not isinstance(delegation, list):
+        _invalid("delegation must be a list")
+    for index, edge in enumerate(delegation):
+        if not isinstance(edge, dict):
+            _invalid(f"delegation {index} must be an object")
+        for field in ("from", "to"):
+            value = edge.get(field)
+            if not isinstance(value, str) or not value.strip():
+                _invalid(f"delegation {index} field {field!r} must be a non-empty string")
+
+    return data
+
+
+def load(root: Path | None = None) -> dict:
+    """Прочитать и структурно проверить canonical policy явно переданного root.
+
+    Никакого embedded fallback: отсутствие файла, ошибка чтения/JSON или неверная
+    структура дают PolicyDataError. Возвращённый dict далее проходит semantic check().
+    """
+    path = _policy_path(root)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise PolicyDataError(f"missing canonical policy: {path}") from exc
+    except (OSError, UnicodeError) as exc:
+        raise PolicyDataError(f"unreadable canonical policy: {path}: {exc}") from exc
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise PolicyDataError(f"malformed canonical policy: {path}: {exc.msg}") from exc
+    return _validate_structure(data)
 
 
 def key(rule: dict) -> tuple[str, str, str, str]:
@@ -104,7 +121,7 @@ def key(rule: dict) -> tuple[str, str, str, str]:
 
 
 def check(policy: dict) -> list[str]:
-    """Четыре проверки политики."""
+    """Пять проверок политики; структурная валидация выполняется в load()."""
     problems: list[str] = []
     rules = policy.get("rules") or []
 
@@ -162,8 +179,12 @@ def check(policy: dict) -> list[str]:
     return problems
 
 
-def show(tool: str) -> int:
-    policy = load()
+def show(tool: str, root: Path | None = None) -> int:
+    try:
+        policy = load(root)
+    except PolicyDataError as exc:
+        print(f"[FAIL] политика: {exc}", file=sys.stderr)
+        return 1
     rules = [rule for rule in policy["rules"] if rule["tool"] == tool]
     if not rules:
         print(f"нет правил для {tool}", file=sys.stderr)
@@ -177,29 +198,30 @@ def show(tool: str) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, root: Path | None = None) -> int:
     parser = argparse.ArgumentParser(description="политика инструментов")
-    parser.add_argument("--build", action="store_true")
+    parser.add_argument("--root", type=Path, default=root,
+                        help="checkout с lab/tools/policy.json (по умолчанию этот репозиторий)")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--show", metavar="ИНСТРУМЕНТ")
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
-    if args.build:
-        POLICY.parent.mkdir(parents=True, exist_ok=True)
-        POLICY.write_text(json.dumps(POLICY_DATA, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        print(f"записано: {POLICY.relative_to(ROOT)}; правил {len(POLICY_DATA['rules'])}")
-        return 0
     if args.show:
-        return show(args.show)
+        return show(args.show, args.root)
     if args.check:
-        found = check(load())
+        try:
+            policy = load(args.root)
+        except PolicyDataError as exc:
+            print(f"[FAIL] политика: {exc}", file=sys.stderr)
+            return 1
+        found = check(policy)
         if found:
             print("ПРОБЛЕМЫ:")
             for item in found:
                 print("  -", item)
             return 1
-        print(f"[ok] политика согласована: {len(load()['rules'])} правил")
+        print(f"[ok] политика согласована: {len(policy['rules'])} правил")
         return 0
-    print("укажи --build, --check или --show <инструмент>", file=sys.stderr)
+    print("укажи --check или --show <инструмент>", file=sys.stderr)
     return 2
 
 
