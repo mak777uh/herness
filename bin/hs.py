@@ -1893,7 +1893,7 @@ def selftest_suite_message(result) -> str:
     сохранённого output. Успешный suite не печатает payload, verdict и rc не меняются.
     """
     message = result.summary()
-    if result.ok:
+    if result.na or result.ok:
         return message
     details: list[str] = []
     if result.note:
@@ -1905,7 +1905,7 @@ def selftest_suite_message(result) -> str:
 
 def cmd_selftest(args) -> int:
     """Negative tests: a gate that cannot fail proves nothing."""
-    results: list[tuple[bool, str]] = []
+    results: list[tuple[bool | None, str]] = []
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
 
@@ -1958,7 +1958,7 @@ def cmd_selftest(args) -> int:
 
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from bin.test_manifest import load_manifest, run_manifest, validate_manifest
+    from bin.test_manifest import load_manifest, result_counts, run_manifest, validate_manifest
 
     manifest = load_manifest(ROOT / "tests" / "test-manifest.json")
     manifest_problems = validate_manifest(ROOT, manifest)
@@ -1968,8 +1968,13 @@ def cmd_selftest(args) -> int:
         suite_results, problems = run_manifest(ROOT, manifest, python=True, rust=False)
         if problems:
             results.append((False, "test manifest: " + "; ".join(problems)))
-        for result in suite_results:
-            results.append((result.ok, f"{result.id}: {selftest_suite_message(result)}"))
+        else:
+            executed, _failed, _na = result_counts(suite_results)
+            if executed == 0:
+                results.append((False, "test manifest: ни один suite не выполнен (N/A не PASS)"))
+            for result in suite_results:
+                verdict = None if result.na else result.ok
+                results.append((verdict, f"{result.id}: {selftest_suite_message(result)}"))
 
     with tempfile.TemporaryDirectory() as tmp3:
         docs = Path(tmp3) / "docs"
@@ -1979,8 +1984,9 @@ def cmd_selftest(args) -> int:
         results.append((len(issues) >= 1, f"реестр критериев отбивает строку без способа установления ({len(issues)} замечаний)"))
 
     for ok, msg in results:
-        print(f"[{'ok' if ok else 'FAIL'}] {msg}")
-    return 0 if all(ok for ok, _ in results) else 1
+        label = "N/A" if ok is None else ("ok" if ok else "FAIL")
+        print(f"[{label}] {msg}")
+    return 0 if all(ok is not False for ok, _ in results) else 1
 
 
 # ---------------------------------------------------------------- main

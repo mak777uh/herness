@@ -1,10 +1,12 @@
 """Единый manifest тестов: ни один suite не исчезает и не становится zero-test green.
 
 Python-наборы явно разделены на ``custom-main``, ``pytest`` и ``unittest``.
+Необязательное ``platforms`` позволяет orchestrator пропустить несовместимый
+suite до subprocess и явно напечатать N/A; child сам объявить N/A не может.
 Rust-наборы запускаются через ``cargo-test``; каждый бинарь получает отдельный
 ``cargo-smoke``. Проверка считается исполненной только когда runner напечатал
 ненулевой счётчик. Missing/duplicate/unregistered suite и неизвестный runner —
-FAIL до запуска.
+FAIL до запуска. N/A не считается PASS, а all-N/A агрегат остаётся красным.
 
     python bin/test_manifest.py --check
     python bin/test_manifest.py --run --python-only
@@ -35,7 +37,11 @@ DEFAULT_MANIFEST = ROOT / "tests" / "test-manifest.json"
 SCHEMA_VERSION = "test-manifest-v1"
 PYTHON_RUNNERS = {"custom-main", "pytest", "unittest"}
 RUST_RUNNERS = {"cargo-test", "cargo-smoke"}
+KNOWN_PLATFORMS = {"win32", "linux", "darwin"}
 MARKER = re.compile(r"(?m)^\s*\[ok\]\s*")
+# Suite-level отказ: «N/A...» либо точная строка «[N/A]». Строки вида
+# «[N/A] <case>» — частичные case-level skips legacy suites, не отказ suite.
+CHILD_NA = re.compile(r"(?m)^[ \t]*(?:N/A(?::|[ \t]|$).*|\[N/A\])[ \t]*$")
 PYTEST_PASSED = re.compile(r"(?m)^(?:=+)?\s*(\d+) passed(?:\s|$)")
 UNITTEST_RAN = re.compile(r"(?m)^Ran (\d+) tests?(?:\s|$)")
 CARGO_RESULT = re.compile(r"test result: ok\. (\d+) passed;")
@@ -50,8 +56,11 @@ class SuiteResult:
     returncode: int
     output: str
     note: str = ""
+    na: bool = False
 
     def summary(self) -> str:
+        if self.na:
+            return f"N/A: suite не выполнялся ({self.note or 'platform'})"
         tail = (self.output.strip().splitlines() or ["нет вывода"])[-1]
         return f"{self.checks}/{self.minimum} checks, rc={self.returncode}: {tail[:180]}"
 
@@ -131,6 +140,16 @@ def validate_manifest(root: Path, manifest: Any) -> list[str]:
         if not isinstance(entry, dict):
             problems.append(f"{label}: ожидался объект")
             continue
+        if "platforms" in entry:
+            platforms = entry["platforms"]
+            if not _string_list(platforms) or not platforms:
+                problems.append(f"{label}.platforms: нужен непустой массив строк")
+            elif len(set(platforms)) != len(platforms):
+                problems.append(f"{label}.platforms: дубликаты недопустимы")
+            else:
+                unknown = sorted(set(platforms) - KNOWN_PLATFORMS)
+                if unknown:
+                    problems.append(f"{label}.platforms: неизвестные {unknown}")
         suite_id = entry.get("id")
         if not isinstance(suite_id, str) or not suite_id:
             problems.append(f"{label}.id: нужна непустая строка")
@@ -304,7 +323,12 @@ def run_python_suite(root: Path, entry: dict, timeout: int) -> SuiteResult:
         minimum = entry["minimum_executed"]
         note = "unittest не напечатал Ran N tests" if not matches else ""
         ok = returncode == 0 and checks >= minimum
-    if returncode == 0 and checks < minimum:
+    if CHILD_NA.search(output):
+        # N/A принадлежит orchestrator и только manifest declaration. Применимый
+        # child не может превратить свой rc/stdout в orchestration skip.
+        ok = False
+        note = "suite объявил N/A на применимой платформе"
+    elif returncode == 0 and checks < minimum:
         note = note or "zero/insufficient executed checks"
     return SuiteResult(entry["id"], ok, checks, minimum, returncode, output, note)
 
@@ -346,8 +370,32 @@ def _selected(entries: list[dict], only: list[str] | None) -> tuple[list[dict], 
     return [entry for entry in entries if entry["id"] in set(only)], []
 
 
+def _minimum(entry: dict) -> int:
+    if entry["runner"] == "custom-main":
+        return entry["minimum_checks"]
+    if entry["runner"] in {"pytest", "unittest"}:
+        return entry["minimum_executed"]
+    if entry["runner"] == "cargo-test":
+        return entry["minimum_tests"]
+    return entry["minimum_checks"]
+
+
+def _platform_applies(entry: dict, platform: str) -> bool:
+    declared = entry.get("platforms")
+    return declared is None or platform in declared
+
+
+def result_counts(results: list[SuiteResult]) -> tuple[int, int, int]:
+    """Вернуть (выполнено, провалов, N/A); N/A не входит ни в PASS, ни в FAIL."""
+    executed = sum(1 for result in results if not result.na)
+    failed = sum(1 for result in results if not result.na and not result.ok)
+    na = sum(1 for result in results if result.na)
+    return executed, failed, na
+
+
 def run_manifest(root: Path, manifest: dict, *, python: bool = True, rust: bool = True,
-                 only: list[str] | None = None, timeout: int = 900) -> tuple[list[SuiteResult], list[str]]:
+                 only: list[str] | None = None, timeout: int = 900,
+                 platform: str | None = None) -> tuple[list[SuiteResult], list[str]]:
     problems = validate_manifest(root, manifest)
     if problems:
         return [], problems
@@ -355,9 +403,15 @@ def run_manifest(root: Path, manifest: dict, *, python: bool = True, rust: bool 
     selected, problems = _selected(entries, only)
     if problems:
         return [], problems
+    current_platform = sys.platform if platform is None else platform
     results: list[SuiteResult] = []
     for entry in selected:
-        if entry["runner"] in PYTHON_RUNNERS:
+        if entry["runner"] in PYTHON_RUNNERS and not _platform_applies(entry, current_platform):
+            results.append(SuiteResult(
+                entry["id"], False, 0, _minimum(entry), -1, "",
+                f"platforms={entry.get('platforms')}, host={current_platform}", na=True,
+            ))
+        elif entry["runner"] in PYTHON_RUNNERS:
             results.append(run_python_suite(root, entry, timeout))
         else:
             results.append(run_rust_suite(root, entry, timeout))
@@ -413,17 +467,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[FAIL] {problem}")
         return 2
     for result in results:
-        print(f"[{'ok' if result.ok else 'FAIL'}] {result.id}: {result.summary()}")
+        label = "N/A" if result.na else ("ok" if result.ok else "FAIL")
+        print(f"[{label}] {result.id}: {result.summary()}")
+        if result.na:
+            continue
         if not result.ok:
             if result.note:
                 print(f"   - {result.note}")
             tail = result.output.strip().splitlines()[-30:]
             for line in tail:
                 print(f"   | {line}")
-    failed = sum(1 for result in results if not result.ok)
+    executed, failed, na = result_counts(results)
     checks = sum(result.checks for result in results)
-    print(f" suites: {len(results)}; checks: {checks}; провалов: {failed}")
-    return 0 if failed == 0 else 1
+    print(f" suites: {len(results)}; выполнено: {executed}; N/A: {na}; "
+          f"checks: {checks}; провалов: {failed}")
+    return 0 if executed > 0 and failed == 0 else 1
 
 
 if __name__ == "__main__":
