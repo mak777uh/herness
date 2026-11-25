@@ -846,6 +846,15 @@
    "conclusion": "research/outputs/PORTABLE-BRIEF-LINKS-R1-CLOSURE.txt",
    "note": "PASS: 21 абсолютная ссылка заменена на repo-relative; focused 8/8 на Windows/POSIX; source plan/answers сохранены byte-exact .txt с text=unset; revision metadata 3/3; тела briefs после первого ## неизменны. Commit 2a70536 прошёл полный Windows selftest 80 suites rc=0 и W18 14/14. CI 45514659872 gates job success, links 0, portable 8/8, W18 14/14; общий run остаётся failure из-за unshare positive-control и Windows-only N/A. Независимый review PASS, 0 substantive findings.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0082",
+   "title": "MANIFEST-PLATFORM-NA-R1: явный platform N/A без ложного PASS",
+   "hypothesis": "Точное поле platforms и pre-launch orchestration skip отделят Windows-only suite от Ubuntu selftest, сохранят N/A видимым не-PASS и запретят child объявлять N/A самостоятельно.",
+   "prereg": "lab/prereg/MANIFEST-PLATFORM-NA-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано после CI 45514659872: Windows-only suite печатает N/A rc=2, а manifest считает его FAIL. До реализации требуется focused RED 18 controls; unshare residual остаётся отдельным экспериментом.",
+   "updated": "2026-11-25"
   }
  ]
 }

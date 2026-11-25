@@ -1,0 +1,56 @@
+{
+  "schema": 2,
+  "id": "MANIFEST-PLATFORM-NA-R1",
+  "date": "2026-11-25",
+  "question": "Может ли test manifest явно исключать platform-specific suite до запуска и отдельно считать N/A, не превращая его в PASS и не позволяя ребёнку самому объявить N/A?",
+  "hypothesis": "Если добавить необязательное точное поле platforms в manifest, пропускать несовместимый suite до subprocess с na=true/ok=false и явно считать выполненные/N/A/failed отдельно, то Ubuntu selftest перестанет считать Windows-only probe провалом, но N/A останется видимым не-PASS, а применимый сломанный suite по-прежнему даст FAIL.",
+  "criterion": "PASS только если baseline HEAD 68f3b5d4024f0120b05a8adb8a905a6bb77cc435; focused 18/18 на Windows и POSIX; корректные platforms принимаются, пустой/дубликат/неизвестный/не-список/не-строковый declaration отвергаются; несовместимый suite не запускается (sentinel отсутствует) и имеет na=true, ok=false, checks=0, rc=-1; совместимый suite реально исполняется; применимый child с rc=1, rc=2 и N/A-текстом, а также rc=0 с N/A-текстом и [ok], остаётся FAIL и na=false; mixed aggregate возвращает 0 только при наличии выполненного suite и нуле failures, печатая отдельный N/A; all-N/A возвращает 1; hs selftest печатает [N/A], не [ok], mixed rc=0 и all-N/A rc=1; полный Windows selftest 81 Python suite rc=0, W18 14/14 и gates auto без FAIL; CI Ubuntu больше не показывает FAIL для test_bridge_win_isolation.py, но общий CI-PASS не требуется, пока независимый unshare residual открыт; production bridge/Rust, пороги, corpus и sealed history не изменены.",
+  "arms": [
+    "A (historical CI RED): Ubuntu запускает test_bridge_win_isolation.py, получает явные N/A rc=2 без [ok] и ошибочно классифицирует suite как FAIL.",
+    "B (explicit orchestration): manifest platforms=[win32] позволяет пропустить suite до запуска на Linux и отдельно напечатать N/A; на Windows suite остаётся применимым и исполняется.",
+    "C (negative controls): malformed declarations, child rc=1/rc=2, self-declared N/A, zero checks, mixed и all-N/A aggregation, hs integration."
+  ],
+  "sensitivity": "Focused suite проверяет ровно 18 controls и возвращает ненулевой rc при любом расхождении. Sentinel доказывает отсутствие subprocess. N/A никогда не получает ok=true или [ok]; child не может объявить N/A через stdout/rc. All-N/A не возвращает 0. Порог 18/18 не снижается; N/A не становится PASS.",
+  "unit_of_analysis": "bin/test_manifest.py, bin/hs.py cmd_selftest, tests/test-manifest.json и новый tests/test_manifest_platform_na.py",
+  "primary_metric": "focused_controls=18/18; focused_failed=0; windows_rc=0; posix_rc=0; incompatible_subprocess_calls=0; na_as_pass=0; child_na_accepted=0; mixed_rc=0; all_na_rc=1; full_windows_selftest_rc=0; w18_controls=14/14",
+  "test": "python tests/test_manifest_platform_na.py; python bin/test_manifest.py --check; python bin/test_manifest.py --run --python-only --only test_bridge_win_isolation.py; python bin/hs.py selftest; python tests/test_w18_clean_clone.py; python bin/hs.py gates --profile auto; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate; python bin/prereg.py check",
+  "stopping_rule": "Сначала запечатать prereg и сохранить focused RED. Затем изменить только manifest runner, hs selftest aggregation, один manifest entry и добавить один focused suite. Остановиться при любом focused FAIL, исполнении несовместимого suite, принятии child N/A, all-N/A rc=0, исчезновении suite из manifest, ослаблении minimum/rc/N/A или изменении production bridge/Rust и sealed history.",
+  "fixture": "Временные custom-main suites с sentinel-файлом и синтетическим выводом; настоящие ключи, сеть и owner keys не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX/WSL выполняется отдельно; GitHub Ubuntu CI проверяет clean checkout",
+    "network": "нет",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search \"linux network namespace positive control unshare ci\" вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)»",
+    "baseline_head": "68f3b5d4024f0120b05a8adb8a905a6bb77cc435",
+    "baseline_test_manifest_sha256": "4a2137ac0a5b3205259f66e4ae419e9b5c4fbbd851570f29f602c4e7c5f8bc24",
+    "baseline_hs_sha256": "d372df73eabb9acbf7ea2232db8534b03b54af4684a7e36e3fcda12c25b4e3d4",
+    "baseline_manifest_sha256": "df01526532bf19031c4e01616cccb30b4525236ad6a6574b7a8c4984e688a53a",
+    "baseline_manifest_counts": "80 Python + 4 Rust entries",
+    "baseline_ci_log_sha256": "3819ee9d6c05bf8414f1f8d713c429b8e6bdd03577475a6701b630d75f1cbcd3",
+    "ci_run": "45514659872",
+    "wsl_observation": "uid=0(root); unshare -U -p -f --mount-proc python3 -c pass rc=0; это не доказательство обычного uid на GitHub Ubuntu"
+  },
+  "critical_controls": [
+    {"id": "incompatible-not-executed", "input": "platforms=[win32], host=linux", "expect": "sentinel отсутствует; na=true; ok=false"},
+    {"id": "applicable-executed", "input": "platforms=[win32], host=win32", "expect": "suite реально запущен и положительный marker принят"},
+    {"id": "child-cannot-declare-na", "input": "применимый child печатает N/A и возвращает 0/2", "expect": "FAIL; na=false"},
+    {"id": "mixed-visible-na", "input": "один PASS и один orchestration N/A", "expect": "rc=0; отдельный [N/A]; N/A не [ok]"},
+    {"id": "all-na-fails", "input": "все выбранные suites несовместимы", "expect": "rc=1; N/A не PASS"}
+  ],
+  "kill_criteria": [
+    "несовместимый suite запускает subprocess",
+    "N/A получает ok=true или печатается как [ok]",
+    "child stdout/rc способен объявить orchestration N/A",
+    "all-N/A aggregate возвращает 0",
+    "применимый suite с rc!=0 или zero checks принимается",
+    "порог/corpus/sealed history ослабляются"
+  ],
+  "known_limits": [
+    "Ubuntu N/A означает только невыполнение Windows-пробы; Windows coverage требует отдельного Windows run",
+    "Platform declaration не доказывает работоспособность suite на заявленной платформе",
+    "unshare positive-control residual остаётся отдельным экспериментом",
+    "Это не runtime PASS, не полный CI-PASS и не activation"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-residuals"]
+}
