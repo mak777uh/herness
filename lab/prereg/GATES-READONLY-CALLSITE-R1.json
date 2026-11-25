@@ -1,0 +1,51 @@
+{
+  "schema": 2,
+  "id": "GATES-READONLY-CALLSITE-R1",
+  "date": "2026-11-25",
+  "question": "Может ли обычный hs.py gates проверять те же гейты без неявного запуска mutation probes и записи probe-report?",
+  "hypothesis": "cmd_gates по умолчанию вызывает gate_probe.run(FAST), который мутирует настоящий worktree в IN_PLACE и пишет research/outputs/gate-probes-fast.txt. Разделение обычного read-only gate-run и явного mutation self-test уберёт этот побочный эффект без удаления отрицательных контролей и без изменения verdict любого гейта.",
+  "criterion": "PASS только если baseline HEAD 94e99add613523d2f6b51c4c36159e29e3a4d548; focused 9/9 на Windows и POSIX, rc=0; обычный cmd_gates без --no-probes не вызывает gate_probe.run, не пишет probe-report и не меняет bytes/mtime disposable worktree; legacy --no-probes остаётся принимаемым; gate FAIL и auto/full N/A семантика не меняются; явный gate_probe.run по-прежнему ловит seeded defect и возвращает rc=1, когда gate его не замечает; bin/gate_probe.py byte-exact; manifest 85 Python + 4 Rust; полный Windows selftest rc=0; независимый review PASS. Любой вызов probe-runner из обычного gates, потеря явного negative control или ослабление gate verdict — RED.",
+  "arms": [
+    "A (baseline): cmd_gates автоматически вызывает FAST probes; IN_PLACE затрагивает lab/prereg, lab/registry.json, core-rs/src/loopmod.rs и docs/CONTINUE.md, а run пишет gate-probes-fast.txt.",
+    "B (candidate): удалить только автоматический probe-блок из cmd_gates; оставить все gate functions, профили, rc и явный bin/gate_probe.py без изменений.",
+    "C (negative controls): sentinel на probe-runner, отсутствие report, byte-hash и mtime disposable fixtures, gate FAIL, auto/full MissingData, явный positive/negative probe-runner."
+  ],
+  "sensitivity": "Focused suite ровно 9 controls. Baseline обязан показать RED на автоматическом вызове/записи/bytes/mtime и сохранить PASS на legacy flag и явном runner. Candidate обязан дать 9/9. Ни один gate function, threshold, circuit, N/A или profile не ослабляется.",
+  "unit_of_analysis": "Только вызов обычного gates: bin/hs.py cmd_gates и help --no-probes; новый tests/test_gates_readonly.py и его manifest entry; README/closure/handoff как документация границы. bin/gate_probe.py и существующие gates не меняются.",
+  "primary_metric": "focused_controls=9/9; focused_failed=0; windows_focused_rc=0; posix_focused_rc=0; implicit_probe_calls=0; probe_report_writes=0; fixture_byte_changes=0; fixture_mtime_changes=0; explicit_probe_positive=1; explicit_probe_negative=1; gate_verdict_regressions=0",
+  "test": "python tests/test_gates_readonly.py; python bin/test_manifest.py --check; python bin/hs.py gates; python bin/gate_probe.py --only секреты; python bin/verify_claims.py --fast; python bin/lab.py validate; python bin/seal.py verify-all; python bin/prereg.py check; python bin/coverage.py",
+  "stopping_rule": "Сначала запечатать prereg и сохранить focused RED. Затем изменить только автоматический вызов probes, добавить focused suite/manifest и документацию. Остановиться при любом focused FAIL, вызове явного runner из обычного gates, изменении bin/gate_probe.py, ослаблении gate verdict или потере explicit negative control. Этот срез не закрывает весь W11: root propagation, lock, crash-safe rollback, unknown selection и all-N/A semantics остаются отдельными работами.",
+  "fixture": "Замоканные gate functions и probe-runner в TemporaryDirectory; синтетические lab/prereg, registry, Rust source и docs файлы; фиксированные bytes и mtime; реальный явный runner проверяется на disposable state file без секретов и сети.",
+  "environment": {
+    "host": "Windows 11 build 26300 + WSL Ubuntu; без сети и реальных секретов",
+    "network": "нет для focused",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search \"gates mutates real worktree during negative controls\" вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)»",
+    "baseline_head": "94e99add613523d2f6b51c4c36159e29e3a4d548",
+    "baseline_hs_sha256": "4d5c21ef437bfe689255dab091c0e7357e6dc19c0cfe1269d20c8cc97287954a",
+    "baseline_gate_probe_sha256": "630c960fd6a9b152ee6a6ec07ef32eacb3b7f105b7004126a44a838d2aad5c6d",
+    "baseline_manifest_sha256": "25093af951d07e2493fc050b8d88baa7dba2dd166e5086ac20c2857463a1cdd9"
+  },
+  "critical_controls": [
+    {"id": "no-implicit-call", "input": "cmd_gates с default no_probes=False и sentinel runner", "expect": "runner не вызван; rc=0; probe summary отсутствует"},
+    {"id": "no-report-or-mutation", "input": "fake runner пишет report и меняет bytes/mtime", "expect": "report отсутствует; fixture bytes/mtime неизменны"},
+    {"id": "verdict-preserved", "input": "gate FAIL и MissingData в auto/full", "expect": "FAIL rc=1; auto N/A rc=0; full N/A FAIL rc=1"},
+    {"id": "explicit-runner-preserved", "input": "явный seeded defect и слабый gate", "expect": "positive caught rc=0; negative missed rc=1"}
+  ],
+  "kill_criteria": [
+    "обычный gates всё ещё вызывает gate_probe.run без явного флага",
+    "обычный gates пишет gate-probes-fast.txt или меняет fixture bytes/mtime через probes",
+    "явный gate_probe.run удалён, ослаблен или изменён",
+    "gate FAIL, N/A, circuit или auto/full semantics изменены",
+    "фокусный срез выдаётся за полное закрытие W11"
+  ],
+  "known_limits": [
+    "Root-correctness импортированных модулей и subprocess не исправляется в этом срезе",
+    "Lock, конкурентные запуски, SIGKILL/power-loss rollback и атомарный restore остаются открытыми",
+    "Unknown --only selection и all-N/A rc остаются открытыми",
+    "Отсутствие неявных probes не доказывает read-only всех остальных gate implementations; отдельный byte-hash integration run проверит наблюдаемый worktree",
+    "Это не production activation и не внешняя публикация"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-residuals"]
+}

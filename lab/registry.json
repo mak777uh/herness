@@ -890,6 +890,15 @@
    "conclusion": "research/outputs/LINUX-NETNS-MAP-ROOT-R1-CLOSURE.txt",
    "note": "RED кандидата в trusted CI 45568086310: uid=1001, rc=1 write failed /proc/self/uid_map: Operation not permitted; оба namespace marker отсутствуют. Focused 9/9 и review PASS не превращают runtime RED в PASS. Production bridge/namespace test byte-exact; WSL root working — другая surface; production correction не начата.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0086",
+   "title": "GATES-READONLY-CALLSITE-R1: обычный gates без неявных mutation probes",
+   "hypothesis": "Разделение обычного gate-run и явного mutation self-test уберёт in-place мутации и запись probe-report из cmd_gates без изменения verdict gates и без удаления отрицательных контролей.",
+   "prereg": "lab/prereg/GATES-READONLY-CALLSITE-R1.json",
+   "status": "open",
+   "note": "Зарегистрировано после статического W11 review: cmd_gates по умолчанию вызывает FAST, включая IN_PLACE. Сначала focused RED 9 controls; production gate functions и bin/gate_probe.py не менять. Полный W11 не закрывается этим срезом.",
+   "updated": "2026-11-25"
   }
  ]
 }
