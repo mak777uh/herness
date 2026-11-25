@@ -1,0 +1,89 @@
+# GATES-READONLY-CALLSITE-R1 — closure E-0086
+
+Дата: 25.11.2026
+Baseline HEAD: 94e99add613523d2f6b51c4c36159e29e3a4d548
+Implementation HEAD: 0bbdf480d863187e6f444e0f985157ba36daef3a
+Prereg: lab/prereg/GATES-READONLY-CALLSITE-R1.json
+
+## Вердикт: RED
+
+Узкий call-site дефект исправлен: обычный `cmd_gates` больше не вызывает `gate_probe.run`
+и не перезаписывает `gate-probes-fast.txt`; явный runner и verdict gates сохранены.
+Однако sealed criterion E-0086 требует неизменности bytes/mtime всего disposable worktree.
+Реальный integration-run обнаружил изменение mtime шести отслеживаемых файлов другими гейтами.
+Поэтому E-0086 не является PASS и не закрывает W11.
+
+## Baseline RED
+
+Focused suite `tests/test_gates_readonly.py` до изменения: 9 checks, 6 failures, rc=1
+на Windows и POSIX. Провалы были именно на неявном вызове runner, записи report,
+bytes/mtime fixture и смешении probe verdict с gate verdict. Legacy flag и явный
+positive/negative runner уже проходили.
+
+## Candidate GREEN в узком объёме
+
+- Windows focused: 9/9, failures 0, rc=0.
+- POSIX focused: 9/9, failures 0, rc=0.
+- Manifest selection Windows/POSIX: 1 suite, 9 checks, failures 0, rc=0.
+- `bin/gate_probe.py` byte-exact к baseline:
+  SHA-256 `630c960fd6a9b152ee6a6ec07ef32eacb3b7f105b7004126a44a838d2aad5c6d`.
+- Явный `python bin/gate_probe.py --only секреты` в disposable worktree: rc=0,
+  report `gate-probes.txt`, `секреты ... да`, `поймали: 1 из 1`.
+- Чистый Windows worktree implementation HEAD: 82 выполненных Python suites,
+  3 явных Linux N/A, 0 failed, rc=0; W18 14/14; `git status --porcelain` до и после пуст.
+- Manifest: 85 Python + 4 Rust entries.
+- `git diff --check`: rc=0.
+
+## Integration RED: полный read-only не достигнут
+
+Команда: `python bin/hs.py gates --profile auto` в disposable worktree с candidate overlay.
+Gates rc=0; tracked bytes изменений 0; git status до/после совпал; probe-report существовал
+до и после и не был перезаписан. Но `tracked_mtime_changes` содержит 6 файлов:
+
+1. `docs/CONTINUE.md`
+2. `lab/h2/scores.json`
+3. `lab/reviews/index.json`
+4. `research/review-debt.json`
+5. `tests/vectors/journal.json`
+6. `tests/vectors/seal.json`
+
+Следовательно, наблюдение «обычный gates не мутирует worktree» ложно. Удаление неявных
+probes закрыло только их contribution. README и комментарий кода исправлены, чтобы не
+выдавать узкий fix за полный read-only.
+
+## Что это не доказывает
+
+- Независимый review E-0086 не завершён: два запуска review-агента закончились ошибками
+  инфраструктуры (`Model queue recovery attempts exceeded`, `IP candidates exhausted`).
+  Это не PASS review и не используется как evidence.
+- Root propagation в импортированных модулях и subprocess не исправлен.
+- `IN_PLACE` probes, lock, crash/exception-safe rollback и атомарный restore остаются.
+- Unknown `--only` selection и all-N/A semantics остаются открытыми.
+- Нет production activation, внешней публикации, owner ceremony или реальных секретов.
+- N/A не считается PASS. Локальный PASS не равен полному CI-PASS.
+
+## Evidence hashes (raw checkout files)
+
+- `runs/exp-ci-residuals/e0086-focused-red-windows.txt`:
+  `6fd3a6d0d58921fcb2fccf789ad5dcd1948cac281bf5053e73be3cb9c5d98d2d`
+- `runs/exp-ci-residuals/e0086-focused-red-posix.txt`:
+  `fcf41b88e5f9f3ca090e98473b87ce30d1c93da066df0ec9adf27d427d01845d`
+- `runs/exp-ci-residuals/e0086-focused-attempt1-windows.txt`:
+  `07c9e3bf500fd14cbafd3022f6850563bd2d48a90e16de0d4ae765e274987b93`
+- `runs/exp-ci-residuals/e0086-focused-attempt1-posix.txt`:
+  `2fd140ad72612eac825dbd746a110e7d7693890d445163383c9454a95088fb1e`
+- `runs/exp-ci-residuals/e0086-readonly-integration-windows.txt`:
+  `1c0014cc800bb3431bab355aa1a0f6f69fbdfb963977a614e0c14b94bfdfe91c`
+- `runs/exp-ci-residuals/e0086-explicit-probe-windows.txt`:
+  `1e0940b4cda134cd5a6290f8f0710c32153dc5c905a69c001cec2efea7ca3f29`
+- `runs/exp-ci-residuals/e0086-selftest-clean-windows.txt`:
+  `7a9854ada7d4b430a280ea3fc4771f285ecf9308f72c98f082cec9f4d86937d8`
+- `bin/hs.py`: `92dbe2a670816bbf950d11c34f49f978f220311eb59639589c660eb2f0df108e`
+- `tests/test_gates_readonly.py`:
+  `a5a9f2b5cdeb84a569daf20db167594a3833ff5de05c343ee3965a1be59096e3`
+- `tests/test-manifest.json`:
+  `bc8b1865ab4709d3e12e15e9805afec98a0d6a1f069b80e70cd4c352d13d8401`
+
+Следующий отдельный эксперимент должен зарегистрировать полный W11 correction: read-only
+generators, root-correct imported gates, disposable-only probes, lock/cleanup, fail-closed
+selection и определённую auto/full семантику. Исторический RED E-0086 не переписывается.

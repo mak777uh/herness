@@ -896,8 +896,10 @@
    "title": "GATES-READONLY-CALLSITE-R1: обычный gates без неявных mutation probes",
    "hypothesis": "Разделение обычного gate-run и явного mutation self-test уберёт in-place мутации и запись probe-report из cmd_gates без изменения verdict gates и без удаления отрицательных контролей.",
    "prereg": "lab/prereg/GATES-READONLY-CALLSITE-R1.json",
-   "status": "open",
-   "note": "Зарегистрировано после статического W11 review: cmd_gates по умолчанию вызывает FAST, включая IN_PLACE. Сначала focused RED 9 controls; production gate functions и bin/gate_probe.py не менять. Полный W11 не закрывается этим срезом.",
+   "status": "closed",
+   "claim": "C-0361",
+   "conclusion": "research/outputs/GATES-READONLY-CALLSITE-R1-CLOSURE.txt",
+   "note": "Узкий call-site исправлен: focused 9/9 Windows/POSIX, явный runner сохранён, чистый selftest 82 performed + 3 Linux N/A rc=0. Sealed полный read-only criterion RED: реальный gates изменил mtime шести tracked files без byte changes. Independent review не состоялся из-за ошибок агента; полный W11 остаётся открытым.",
    "updated": "2026-11-25"
   }
  ]
