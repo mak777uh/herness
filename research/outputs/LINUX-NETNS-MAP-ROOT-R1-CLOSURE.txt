@@ -1,0 +1,176 @@
+LINUX-NETNS-MAP-ROOT-R1 / E-0085 — closure отрицательного candidate
+
+Вердикт: RED
+Focused controls: 9/9; провалов: 0
+Candidate runtime: RED (rc=1, state=broken, user/PID markers отсутствуют)
+Production bridge: не изменён
+
+1. Запечатанный критерий и baseline
+
+Prereg: lab/prereg/LINUX-NETNS-MAP-ROOT-R1.json
+Baseline HEAD: 83b223bd842d4216d3f9c7ea9d706d4bc5cfc812
+Prereg commit: 668d917c45581202ee92d6b986ed35e677ee8ea9
+Implementation commit: 8627989abf455e53087864f5c71d28d40405efac
+
+Гипотеза: одна semantic --map-root-user (-r) даст capabilities внутри нового
+user namespace для private remount /proc на GitHub uid=1001. Exact candidate:
+unshare -U -r -p -f --mount-proc <python> -c ...
+Default propagation оставался private; -U/-p/-f/--mount-proc не убирались.
+
+PASS кандидата требовал одновременно rc=0, USER_NS_UID=0 и PID_NS_PID=1.
+Missing/broken executable, OSError, timeout, nonzero rc и отсутствие любого marker
+должны были давать unshare_ok=false. Production bridge разрешалось менять только
+после фактического trusted CI candidate PASS отдельной correction-попыткой.
+
+Refs search перед экспериментом: NOT PROVIDED — python bin/hs.py refs search
+вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)». Пустой индекс не
+трактовался как успешный поиск. Сохранено:
+runs/exp-ci-residuals/e0085-refs-search.txt
+
+Baseline focused RED сохранён до реализации: suite отсутствовала, rc=2 на Windows
+и POSIX:
+runs/exp-ci-residuals/e0085-focused-red-windows.txt
+runs/exp-ci-residuals/e0085-focused-red-posix.txt
+
+2. Focused controls и независимый review
+
+Финальные focused controls: Windows 9/9 rc=0; POSIX/WSL 9/9 rc=0.
+Linux manifest selection: 1 suite, 9 checks, rc=0.
+Контроли проверяют exact argv с ровно одной новой -r и filtered env; rc=0 без
+обоих markers; rc=1 даже с markers; missing без запуска child; OSError; timeout;
+recursive canary redaction; CLI output/require-works; non-Linux missing; manifest,
+fork-PR trust gate и frozen production/E-0084 hashes.
+
+Реальный Windows CLI без unshare: state=missing, --require-works rc=3.
+Реальный WSL CLI: uid=euid=0, rc=0, USER_NS_UID=0, PID_NS_PID=1, state=working.
+WSL root — отдельная evidence surface и не заменяет GitHub uid=1001.
+
+Независимый read-only review финального diff: PASS, 0 substantive findings.
+Review подтвердил одну новую semantic, оба namespace marker вместе с rc=0,
+fail-closed отрицательные контроли, redaction, trust gate и byte-exact production.
+
+3. Фактический trusted CI candidate
+
+CI run: 45568086310
+HEAD: 8627989abf455e53087864f5c71d28d40405efac
+Selftest job: 139047711293
+Candidate step: success как наблюдательный шаг; это не PASS кандидата.
+Host: GitHub Ubuntu, uid=euid=1001.
+Exact command сохранён в CI JSON.
+
+Наблюдение:
+  returncode: 1
+  state: broken
+  stderr: unshare: write failed /proc/self/uid_map: Operation not permitted
+  stdout: пусто
+  USER_NS_UID: отсутствует
+  PID_NS_PID: отсутствует
+  user_namespace_ok: false
+  pid_namespace_ok: false
+  unshare_ok: false
+
+Следовательно, -r не устранил ограничение trusted runner: отказ произошёл при
+записи uid_map до запуска child и до проверки namespace markers. Это не доказывает
+ни наличие, ни отсутствие user/PID namespace в runtime и не доказывает полную
+/v1/net secret isolation. WSL working не обобщается на GitHub uid=1001.
+
+Полный CI log:
+runs/exp-ci-residuals/e0085-ci-selftest-full.log
+526482 bytes
+SHA-256 c185952e7a564eeaf021d231e5162642fb8741bb3d78c6b0c123fcd52bae10b9
+
+Извлечённый и провалидированный JSON ровно из этого лога:
+runs/exp-ci-residuals/e0085-ci-candidate.json
+848 bytes
+SHA-256 802ae1c942521ec30fdaa8b8ae2f6fdd6ac0389b2d4adc3080670e1a7747bcec
+
+WSL JSON:
+runs/exp-ci-residuals/e0085-candidate-local-wsl.json
+765 bytes
+SHA-256 dca165d7e80f86232df62f5518caa9988fc92f11451d98f9cc87010301dd7341
+
+4. Production и regression
+
+До и после CI production файлы byte-exact:
+bin/bridge.py
+SHA-256 e3762b0f989d902a211079012d02c4b9085a829b322f044e5db1dea6aed1865e
+
+tests/test_bridge_net_namespace.py
+SHA-256 c8efc7e10d5587a8e9402c076014464818aab5596664cbc53b6329f6b5caa958
+
+E-0084 candidate/test также byte-exact:
+bin/netns_candidate_probe.py
+SHA-256 2cbeda0514f8f1b439196056d75bdeed9270e93989ad2a273ed05a65525a54a4
+
+tests/test_linux_netns_propagation.py
+SHA-256 3f8a16a5942a07eb00d349849c504838ce8919908b03fcfd57e83b935dd347fc
+
+git diff baseline..implementation по production bridge и namespace test: пусто.
+Candidate не менял command production bridge, пороги, corpus и secret allowlist.
+Fork-PR candidate step не запускается; privileged-команд нет.
+
+Windows production namespace regression: 16 checks, rc=0.
+Полный чистый Windows selftest: 81 выполненных suites rc=0, 3 явных Linux N/A
+(diagnostics, mapping, propagation), failed suites 0, W18 14/14. Linux N/A не PASS.
+Лог: runs/exp-ci-residuals/e0085-full-selftest-windows-clean.txt
+8683 bytes
+SHA-256 9ac31aba4be2d79a322851c9c313b389966c47cce7f90e55ca1e32f388e74ceb
+
+В CI focused mapping 9/9, diagnostics 10/10 и propagation 9/9 прошли. Selftest job
+остаётся failure только из-за production positive B test_bridge_net_namespace.py:
+B получил 503, net.py не исполнился, marker отсутствует; C/D fail-closed прошли.
+Остальные jobs gates/claims/admission/Rust/plugin успешны. Полный CI-PASS не заявлен.
+
+5. Финальные артефакты и проверки до C-0360
+
+bin/netns_mapping_candidate_probe.py
+SHA-256 6a85f1f7ecd4e7a509f5174934a34fdd7a04f3769029c8b3dd4243355aff0975
+
+tests/test_linux_netns_mapping.py
+SHA-256 d50d881ae7413a0873957e85907c1585306976a9953bc3482b0d6338f3211e95
+
+.github/workflows/gates.yml
+SHA-256 14f7d924293adbc5555a4f0b2248c81e9a5e0e2f4d1f10c0fc6cb63e801f63b0
+
+tests/test-manifest.json
+SHA-256 25093af951d07e2493fc050b8d88baa7dba2dd166e5086ac20c2857463a1cdd9
+
+Focused Windows log: 474 bytes
+SHA-256 877d94c0f473277012e7ddc3179ee55bc2950f268a49a0fd487ddbcdd83ef5f5
+Focused POSIX log: 458 bytes
+SHA-256 b1c19f13aee6bf80762ebf21f878c0de3ae30843824d86f4953f1df339de7a5e
+Production namespace Windows log: 1504 bytes
+SHA-256 d7863e83ec87471c0190947d78b39d7b565e00846de8032a0f1a9ab8c4d9abbf
+
+Проверки до closure:
+- python bin/test_manifest.py --check: 84 Python + 4 Rust entries, rc=0;
+- python bin/hs.py gates: 31/33 assessed, N/A 2, FAIL 0, rc=0;
+- python bin/verify_claims.py --fast: 320 claims, 0 failures, rc=0;
+- python bin/lab.py validate: 85 experiments, 7 next hypotheses, rc=0;
+- python bin/seal.py verify-all: 62 seals, 0 problems, rc=0;
+- python bin/prereg.py check: sensitivity 74/74, rc=0;
+- python bin/coverage.py: 352/352 anchored, strict 201/349=0.58, ANCHORED_WEAK.
+N/A и ANCHORED_WEAK не объявляются зелёными.
+
+После регистрации C-0360 и закрытия registry:
+- python bin/check_artifacts.py C-0360: rc=0, точный RED evidence найден;
+- python bin/verify_claims.py --fast: 321 claims, 0 failures, rc=0;
+- python bin/lab.py validate: 85 experiments, 7 next hypotheses, rc=0;
+- python bin/seal.py verify-all: 62 seals, 0 problems, rc=0;
+- python bin/prereg.py check: sensitivity 74/74, rc=0;
+- python bin/coverage.py: 353/353 anchored, strict 202/350=0.58, ANCHORED_WEAK.
+N/A и ANCHORED_WEAK по-прежнему не объявляются зелёными.
+
+6. Границы и решение
+
+E-0085 закрыт с отрицательным runtime verdict. PASS focused прибора и независимый
+review не превращают candidate RED в product PASS. Production bridge остаётся
+fail-closed и неизменным. Positive B в GitHub CI остаётся RED.
+
+Correction-попытка production -r не начинается: sealed stopping rule разрешает её
+только после candidate PASS. Следующая user/mount гипотеза требует отдельного
+prereg и отдельного trusted CI наблюдения. Этот closure не выбирает новый command
+semantic заранее, не разрешает privileged fallback, не является production
+activation и не является внешней публикацией. Windows directory durability,
+Lean↔Rust equivalence, полный pilot corpus и строгая claims coverage остаются
+отдельными незакрытыми вопросами.
