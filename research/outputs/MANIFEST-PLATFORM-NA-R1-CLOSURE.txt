@@ -1,0 +1,109 @@
+MANIFEST-PLATFORM-NA-R1 — E-0082 CLOSURE
+Дата: 25.11.2026
+Вердикт: PASS
+Focused controls: 18/18; провалов: 0
+
+НАБЛЮДЕНИЕ И ГИПОТЕЗА
+CI 45514659872: Windows-only test_bridge_win_isolation.py объявлял N/A с rc=2,
+а manifest превращал это в FAIL. Требовалось отделить решение orchestrator о
+неприменимости suite от отказа применимого suite, не скрывая N/A как PASS.
+
+Prereg: lab/prereg/MANIFEST-PLATFORM-NA-R1.json
+Seal digest: 750475afdfabc5d5…
+Baseline HEAD: 68f3b5d4024f0120b05a8adb8a905a6bb77cc435
+Baseline files SHA-256:
+  bin/test_manifest.py  4a2137ac0a5b3205259f66e4ae419e9b5c4fbbd851570f29f602c4e7c5f8bc24
+  bin/hs.py             d372df73eabb9acbf7ea2232db8534b03b54af4684a7e36e3fcda12c25b4e3d4
+  tests/test-manifest.json df01526532bf19031c4e01616cccb30b4525236ad6a6574b7a8c4984e688a53a
+Baseline manifest: 80 Python + 4 Rust entries.
+
+BASELINE RED
+Windows: 18 controls, провалов 16.
+POSIX:   18 controls, провалов 16.
+Оба baseline сохранены до implementation. Первый post-implementation Windows
+attempt 17/18 из-за отсутствующего Path import во временном fixture сохранён;
+после исправления только fixture оба host дают 18/18.
+
+ПРОТОКОЛ
+Необязательное поле platforms допускает только точные win32/linux/darwin,
+непустой список без дубликатов и не-строковых элементов. Отсутствие поля
+остаётся обратно совместимым и означает все платформы.
+Несовместимый Python suite пропускается до subprocess: na=true, ok=false,
+checks=0, returncode=-1, sentinel отсутствует. Это N/A, не PASS и не child FAIL.
+All-N/A aggregate возвращает rc=1. Mixed aggregate возвращает rc=0 только при
+хотя бы одном реально выполненном suite и нулевом числе failures; N/A напечатан
+отдельно и не как [ok].
+Применимый child не может объявить orchestration N/A. Suite-level отказ — N/A…
+или точная строка [N/A] — остаётся FAIL. Строка [N/A] <case> допускается как
+legacy case-level skip при достаточных [ok] и rc=0.
+
+ПРОВЕРКИ
+Focused tests/test_manifest_platform_na.py: Windows 18/18; POSIX 18/18.
+Реальный Windows probe test_bridge_win_isolation.py: Windows 28 checks, rc=0,
+N/A=0. Тот же probe на POSIX: [N/A], выполнено 0, rc=1.
+Legacy partial N/A test_host_journal_tip_review.py: 2/2 checks, rc=0,
+case-level N/A=2; suite не объявлен N/A.
+Полный чистый Windows selftest: 81 Python suites, rc=0; W18 14/14,
+mode=development-scope.
+Manifest: 81 Python + 4 Rust entries.
+
+REVIEW HISTORY
+Независимый review 1: NEEDS_CHANGES — child [N/A] <text> + [ok] + rc=0 мог
+пройти как ok=true, na=false. Исправлено reject любой [N/A].
+Независимый review 2: NEEDS_CHANGES — reject любой [N/A] сломал legacy suite
+с case-level N/A, полный Windows selftest стал rc=1. Исправлено разделением
+suite-level refusal и case-level skip; exploit с точной [N/A] теперь FAIL,
+legacy 2/2 снова проходит.
+Независимый review 3: PASS; substantive findings 0.
+
+CI 45530925896
+Rust, plugin HSJ2, admission rehearsal, gates auto и claims — success.
+Selftest: test_bridge_win_isolation.py теперь [N/A], не FAIL;
+test_manifest_platform_na.py 18/18 rc=0.
+Единственный failing suite — test_bridge_net_namespace.py. Positive B получил
+503, net.py не исполнился: 4 failures. Negative C/D прошли. Это не полный CI-PASS.
+
+ФИНАЛЬНЫЕ ЛОКАЛЬНЫЕ CONTROLS
+verify_claims --fast: 318 claims, 0 failures.
+lab validate: 82 experiments, 7 next hypotheses.
+seals verify-all: 59/59, 0 problems.
+prereg check: 71/71 sensitivity.
+coverage: 350/350 anchored; strict 199/347 = 0.57; ANCHORED_WEAK.
+gates auto: 31/33 assessed, N/A 2, FAIL 0; links 0.
+
+IMPLEMENTATION
+Prereg/registry commit: 695a463e8001cf173721967281ef83ba1f213e2f
+Implementation commit: 21c41f6e1dc80f3ebe7dc987410c4428a0bb1846
+Implementation SHA-256:
+  bin/test_manifest.py 5774df2c8c61c34e855770d554850555a378a9cae4d92db5d890359ef96bd903
+  bin/hs.py 4d5c21ef437bfe689255dab091c0e7357e6dc19c0cfe1269d20c8cc97287954a
+  tests/test-manifest.json a3d42fdf53d20ca612ed952eceba65121618578e38eba5016ce4e67f9e46b6f7
+  tests/test_manifest_platform_na.py e55cf3e36221ca81a3b2a01aeebb3e1e6badc8b621d1ee862f8ec81d8662d031
+
+ЛОКАЛЬНЫЕ EVIDENCE LOGS
+runs/ исключён из git; логи не force-add и не выдаются за опубликованные.
+  e0082-focused-red-windows.txt
+    da5588a399fe987d3610937faa8f0fcbce50db66068bc1f0f72bf0e53e8d50df
+  e0082-focused-red-posix.txt
+    52496cb61e5a8b260f1366643163b283a65455c791fb3d6206d58851dc803fbe
+  e0082-focused-green-windows.txt
+    a681f9155bef813f1c891fd1994fc388181b61d16e28e17753ae46b27419e47f
+  e0082-focused-green-posix.txt
+    b5d44ce70079375dfe8b3f0441a6a707b2ebfc9bed7129af68bc8bafe8200cc1
+  e0082-full-selftest-windows-clean.txt
+    60bf9e34329c0535959c397a79f7fe0565b0b90969dff23ec1969295a6d71453
+  e0082-windows-isolation-windows.txt
+    2760ffb8c4e760a7c29d99d296a4f30ac4642a3340688c3a137932eb7d87ac25
+  e0082-windows-isolation-posix.txt
+    dc8ca31360895c900304f7f3bddb42c5572ed204d5e18c051ed229bb3c853d88
+  e0082-partial-na-windows.txt
+    e613a3f81f2a17e41cfb108b94c015d43d557bdbbd79e6a92bbada88295ac6fa
+  ci-45530925896-failed.log
+    51c018d4f75106aa0735b06480c2645b5e6df61cbc987473bfbff05d5b76d382
+
+ГРАНИЦЫ
+PASS относится только к manifest platform-N/A orchestration. Ubuntu N/A не
+доказывает выполнение Windows probe. Полный CI-PASS не заявлен; unshare residual
+идёт отдельным E-0083. Production bridge/Rust, frozen thresholds, corpus и sealed
+history не изменены. Windows directory durability, strict coverage и Lean↔Rust
+equivalence не закрыты. Production activation и внешняя публикация не выполнялись.

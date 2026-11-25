@@ -852,8 +852,10 @@
    "title": "MANIFEST-PLATFORM-NA-R1: явный platform N/A без ложного PASS",
    "hypothesis": "Точное поле platforms и pre-launch orchestration skip отделят Windows-only suite от Ubuntu selftest, сохранят N/A видимым не-PASS и запретят child объявлять N/A самостоятельно.",
    "prereg": "lab/prereg/MANIFEST-PLATFORM-NA-R1.json",
-   "status": "open",
-   "note": "Зарегистрировано после CI 45514659872: Windows-only suite печатает N/A rc=2, а manifest считает его FAIL. До реализации требуется focused RED 18 controls; unshare residual остаётся отдельным экспериментом.",
+   "status": "closed",
+   "claim": "C-0357",
+   "conclusion": "research/outputs/MANIFEST-PLATFORM-NA-R1-CLOSURE.txt",
+   "note": "Focused 18/18 на Windows/POSIX, baseline RED сохранён; Windows selftest 81 suites rc=0, реальный Windows probe 28 checks. CI 45530925896: Windows-only suite N/A, общий failure только unshare positive-control; namespace идёт отдельным E-0083.",
    "updated": "2026-11-25"
   }
  ]
