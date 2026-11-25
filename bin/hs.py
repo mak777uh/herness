@@ -1824,37 +1824,9 @@ def cmd_gates(args) -> int:
         print(f"[{'ok' if not problems else 'FAIL'}] {name}: {len(problems)} проблем")
         for p in problems[:20]:
             print(f"   - {p}")
-    # Пробы: гейт, который не падает на подложенном дефекте, ничего не проверяет. Гоняем быстрый
-    # набор — без внешних процессов и обхода сотен каталогов. Отключается флагом --no-probes.
-    if not getattr(args, "no_probes", False):
-        try:
-            sys.path.insert(0, str(ROOT))
-            from bin.gate_probe import FAST, run as run_probes
-            import io
-            from contextlib import redirect_stdout
-
-            buffer = io.StringIO()
-            with redirect_stdout(buffer):
-                code = run_probes(FAST, profile=profile)
-            missed = [line.split()[0] for line in buffer.getvalue().splitlines()
-                      if line.strip().endswith("НЕТ")]
-            na_probes = [line.strip() for line in buffer.getvalue().splitlines()
-                         if line.strip().startswith("не оценено:")]
-            if code != 0:
-                total += len(missed) or 1
-                print(f"[FAIL] пробы: {len(missed)} гейтов не поймали подложенный дефект")
-                for name in missed:
-                    print(f"   - {name}")
-            else:
-                caught_line = [line.strip() for line in buffer.getvalue().splitlines()
-                               if line.strip().startswith("поймали:")]
-                tail = caught_line[0] if caught_line else f"{len(FAST)} гейтов"
-                print(f"[ok] пробы: {tail}")
-            if na_probes and profile != "full":
-                print(f"   N/A: {na_probes[0].removeprefix('не оценено: ')}")
-        except Exception as exc:  # noqa: BLE001
-            total += 1
-            print(f"[FAIL] пробы: не запустились ({type(exc).__name__}: {exc})")
+    # Mutation probes — отдельный явный self-test: bin/gate_probe.py. Обычный gates
+    # не мутирует worktree через probes и не перезаписывает их report. --no-probes
+    # сохранён как legacy flag; полный read-only контур W11 ещё не закрыт.
     evaluated = len(checks) - len(skipped)
     tail = f"; N/A {len(skipped)} ({', '.join(name for name, _ in skipped)})" if skipped else ""
     print(f"\nпрофиль {profile}: оценено {evaluated} из {len(checks)} гейтов{tail}")
@@ -2183,7 +2155,7 @@ def main(argv: list[str]) -> int:
     p = sub.add_parser("gates", help="секреты, утверждения, ссылки")
     p.add_argument("--root", default=str(ROOT))
     p.add_argument("--no-probes", action="store_true",
-                   help="не прогонять пробы гейтов (быстрый режим)")
+                   help="legacy-совместимость: пробы гейтов всегда запускаются отдельно")
     p.add_argument("--circuit", choices=["a", "b", "all"], default="all",
                    help="a — механизм, b — целостность репозитория, all — оба")
     p.add_argument("--profile", choices=["auto", "full"], default="auto",

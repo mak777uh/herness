@@ -183,7 +183,7 @@ CLAIMS.md         реестр утверждений: тип свидетель
 ## Быстрый старт
 
 ```
-python bin/hs.py gates --profile auto  # 32 гейта (два контура) + пробы; профиль по умолчанию
+python bin/hs.py gates --profile auto  # 32 гейта (два контура); профиль по умолчанию
 python bin/audit.py               # повторяемый аудит: числа, долги, инварианты
 python bin/policy.py --check      # политика: четыре проверки
 python bin/policy_sync.py         # политика в коде против файла
@@ -197,6 +197,12 @@ python bin/bridge_lean.py --check # формальная проверка мос
 python bin/policy_diff.py         # сверка Rust и Lean
 python bin/refusal_codes.py --list # коды отказа
 ```
+
+Обычный `gates` не запускает mutation probes и не перезаписывает `gate-probes-fast.txt`.
+Отрицательные контроли запускаются явно через `python bin/gate_probe.py`; флаг
+`--no-probes` сохранён только для совместимости старых команд. Это не полный read-only
+контур: реальный disposable-прогон обнаружил изменение mtime шести derived-файлов другими
+гейтами (`E-0086`); root-correctness, lock и crash-safe probes остаются открытыми (`W11`).
 
 Профиль `auto` (по умолчанию) — для чистого клона и CI: гейты, которым нужны `runs/` или
 `core-rs/target/` (этих каталогов нет в git), печатаются как **N/A с причиной** и считаются
