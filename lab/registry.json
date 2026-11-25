@@ -863,8 +863,10 @@
    "title": "LINUX-NETNS-CI-R1: точная диагностика unshare без ложного PASS",
    "hypothesis": "Отдельный probe до Selftest сохранит uid, unshare version, AppArmor state, userns sysctl и точные rc/stdout/stderr, чтобы выбрать capability по данным, не меняя production bridge и fail-closed.",
    "prereg": "lab/prereg/LINUX-NETNS-CI-R1.json",
-   "status": "open",
-   "note": "Зарегистрировано после CI 45530925896: positive B получает 503, C/D проходят, syscall/policy причина ещё не сохранена. Требуется focused RED 10 controls; privileged fork PR запрещён.",
+   "status": "closed",
+   "claim": "C-0358",
+   "conclusion": "research/outputs/LINUX-NETNS-CI-R1-CLOSURE.txt",
+   "note": "Прибор 10/10 на Windows/POSIX, review PASS. CI 45544356192: uid=1001, AppArmor Y, userns restriction=1, rc=1 root filesystem propagation Permission denied. Positive B остаётся RED; capability correction — отдельный эксперимент.",
    "updated": "2026-11-25"
   }
  ]

@@ -1,0 +1,113 @@
+LINUX-NETNS-CI-R1 — E-0083 CLOSURE
+Дата: 25.11.2026
+Вердикт: PASS
+Focused controls: 10/10; провалов: 0
+
+НАБЛЮДЕНИЕ И ГРАНИЦА PASS
+CI 45530925896: /v1/net positive B получал 503, net.py не исполнялся;
+negative C/D проходили. Точная capability-причина не сохранялась.
+E-0083 добавляет только диагностический прибор. Его PASS означает точный сбор
+capability/отказа, но не исправление namespace и не runtime isolation PASS.
+
+Prereg: lab/prereg/LINUX-NETNS-CI-R1.json
+Seal digest: 19c67e89659c4635…
+Baseline HEAD: 561820e68ce05e75265acec6d8ee813f33a806ba
+Prereg commit: c9942c320f70b3d0bd1a42c2cbb831829a729555
+Implementation commit: 38c54059fc86e77ba9eb21a79699c0f28f2f1711
+Baseline RED: focused suite отсутствовал на Windows и POSIX, rc=2;
+оба лога сохранены до implementation.
+
+ПРИБОР
+bin/netns_diagnostics.py повторяет argv Bridge.unshare_works:
+  unshare -U -p -f --mount-proc <python> -c pass
+с тем же net_child_env, timeout 15 и capture_output. Он сохраняет platform,
+uid/euid, unshare path/version, apparmor.enabled/securityfs/profiles, два sysctl,
+exact command, state, rc, stdout, stderr и exception.
+Missing/broken/timeout/working различаются. --require-works возвращает 3 при
+нерабочем probe. Diagnostic collection success не устанавливает unshare_ok.
+Итоговая рекурсивная redaction покрывает path, command, version и stdout/stderr.
+Workflow выполняется только вне pull_request либо для PR из того же репозитория;
+fork PR не запускает capability experiment. Privileged job не добавлялся.
+
+ПРОВЕРКИ
+Focused Windows: 10/10, rc=0.
+Focused WSL Ubuntu: 10/10, rc=0.
+Повтор после review corrections: Windows 10/10; WSL 10/10.
+Manifest check: 82 Python + 4 Rust entries; Linux-only focused suite на Windows
+корректно N/A, all-N/A selection rc=1.
+Production namespace regression Windows: 16 checks, rc=0.
+Полный чистый Windows selftest: 82 suites, rc=0; W18 14/14.
+Dirty attempt до commit сохранил W18 13/14 development-scope RED; guard не менялся.
+
+REVIEW HISTORY
+Независимый review 1: NEEDS_CHANGES, три finding:
+  HIGH — diagnostic step не имел fork-PR trust gate;
+  MEDIUM — canary мог попасть в unshare.path/probe.command;
+  MEDIUM — не было явного apparmor.enabled.
+Исправлено без изменения production bridge/namespace corpus и без снижения 10/10.
+Повторный независимый review: PASS, substantive findings 0.
+
+ФАКТИЧЕСКАЯ CI-ДИАГНОСТИКА
+Run 45544356192, HEAD 38c54059fc86e77ba9eb21a79699c0f28f2f1711.
+Ubuntu 26.04.1, image ubuntu-26.04, uid/euid=1001.
+AppArmor enabled=Y; securityfs_mounted=true.
+kernel.apparmor_restrict_unprivileged_userns=1.
+kernel.apparmor_restrict_unconfined=null (не читается).
+unshare=/usr/bin/unshare, util-linux 2.41.3.
+Probe rc=1, state=broken, exception=null:
+  stderr: unshare: cannot change root filesystem propagation: Permission denied
+  stdout: пусто.
+WSL observation: uid/euid=0, AppArmor enabled=N, probe rc=0, state=working.
+Различие WSL root и GitHub uid=1001 не обобщается.
+CI focused diagnostic 10/10 rc=0. Остальные jobs success; selftest failure
+по-прежнему только namespace positive B: 503, net.py не исполнился, 4 failures.
+Полный CI-PASS не заявлен.
+
+ВЫВОД ДЛЯ СЛЕДУЮЩЕГО ЭКСПЕРИМЕНТА
+Наблюдаемый отказ связан с root filesystem propagation при --mount-proc,
+а не с отсутствием unshare. Следующий отдельный prereg должен проверить
+--propagation unchanged на trusted CI без ослабления PID-namespace, secret
+isolation и fail-closed. PASS E-0083 не предрешает результат этой capability-пробу.
+
+FINAL FILE SHA-256
+  bin/netns_diagnostics.py a80797adf8b62d1972b62d74781bb56d9d906080ed5a0edda314a178e0e965a0
+  tests/test_linux_netns_diagnostics.py 1f2f0671b71b9e169c23bb498dc6c1c817cd42921c79f3e3d3aed6364966363a
+  .github/workflows/gates.yml bae2c8635faf668ec71712e0a520e68d4b6e2e7e1bc602ad6ee3006574dfbcf3
+  tests/test-manifest.json d3cc00211f37c74b8cd21ab64138055b0a19cf8906e28ca4c5f0644cd25c321d
+Неизменные production hashes:
+  bin/bridge.py e3762b0f989d902a211079012d02c4b9085a829b322f044e5db1dea6aed1865e
+  tests/test_bridge_net_namespace.py c8efc7e10d5587a8e9402c076014464818aab5596664cbc53b6329f6b5caa958
+
+ЛОКАЛЬНЫЕ EVIDENCE
+runs/ исключён из git; логи не force-add.
+  e0083-focused-red-windows.txt (202 B)
+    3b3879f6a5d6a361cd5325e40657f7095e685ef69f47b017322eebd454bb02f4
+  e0083-focused-red-posix.txt (167 B)
+    17264b0fda3f7f7ca7f7a43cc48e84718a35c91b19d23c3e4762cdc21e836a27
+  e0083-focused-green-review1-windows.txt (455 B)
+    ab8f3be97ea6d3fad9485ec3cc5225d2e0a31fff8cef19dd61d1845f906d0613
+  e0083-focused-green-review1-posix.txt (443 B)
+    69b7115ee870d013a41c979c08f9a3911bf50eebaeb943ec48d9f497befbbc95
+  e0083-full-selftest-windows-clean.txt (8467 B)
+    d23bee976da8769b0d366554f9bfbe9a2315bf31c707b1ab6d2e611a07cbb0a6
+  e0083-namespace-regression-windows.txt (1506 B)
+    75cc7eebd2cddcbcd7cd69b64503ec07bd451de408a832d7e2c62c68c980bbe9
+  e0083-local-netns-wsl-review1.json (814 B)
+    ff92f85f94de8c3b12aaf7f727a50ba63d3bb9936704f95fe8c438d591120d59
+  ci-45544356192-failed.log (22042 B)
+    0eb52d285bac94a1d21263ad6d43ca5c8c8d4bdd4bf470a76d64e84e01262f0e
+  ci-45544356192-selftest-full.log (117528 B)
+    6204fc3c5b1b5dce0c740c198bc69bdd49296e3984cff3c0d53b1442f8e80b60
+
+ФИНАЛЬНЫЕ CONTROLS
+verify_claims --fast: 319 claims, 0 failures.
+lab validate: 83 experiments, 7 next hypotheses.
+seals verify-all: 60/60, 0 problems.
+prereg check: 72/72 sensitivity.
+coverage: 351/351 anchored; strict 200/348 = 0.57; ANCHORED_WEAK.
+gates auto: 31/33 assessed, N/A 2, FAIL 0; links 0.
+
+ГРАНИЦЫ
+Production bridge/Rust, frozen thresholds, corpus и sealed history не изменены.
+N/A не PASS. Windows directory durability, strict coverage и Lean↔Rust equivalence
+не закрыты. Production activation, privileged fork PR и публикация не выполнялись.
