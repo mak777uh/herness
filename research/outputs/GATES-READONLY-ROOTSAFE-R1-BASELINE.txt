@@ -1,0 +1,32 @@
+E-0087 / GATES-READONLY-ROOTSAFE-R1 — BASELINE RED
+Дата: 25.11.2026
+Baseline HEAD: 423df52
+Prereg: lab/prereg/GATES-READONLY-ROOTSAFE-R1.json
+Prereg seal: edeacdca55639c84…
+refs search: NOT PROVIDED, rc=2 (справочника нет: refs sync)
+
+Команда:
+PYTHONIOENCODING=utf-8 python bin/test_manifest.py --run --only test_gates_w11.py
+
+Результат: rc=1; 1 suite выполнена; 16 checks; 15 failures; 0 N/A.
+Manifest: 86 Python + 4 Rust entries.
+
+Подтверждённые baseline failures:
+- docs/lab/prereg/reviews/rust: dual-root fixture не различается, проверяется module-global checkout;
+- capabilities: cached core.tools/генератор дают чужие ожидания;
+- compile: появляется __pycache__;
+- coverage: claims-coverage.tmp.json создаётся внутри проверяемого root;
+- claims: mutator создаёт derived.txt в source root;
+- gate-loop subprocess: helper импорт создаёт __pycache__;
+- unknown probe selection: rc=0 и report записан;
+- auto selection: выполнены все 3 пробы вместо одной FAST;
+- all-N/A: rc=0;
+- in-place probe: source mtime изменён, sandbox не вызван;
+- lock API отсутствует.
+
+Сохранённые положительные controls:
+- exception cleanup disposable sandbox;
+- weak gate, не увидевший injected defect, даёт rc=1.
+
+Вывод: focused RED воспроизведён до изменений реализации. Это не PASS W11.
+Production Rust, bridge, activation, sealed history и thresholds не менялись.

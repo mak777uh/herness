@@ -1,0 +1,89 @@
+{
+  "id": "E-0087",
+  "title": "GATES-READONLY-ROOTSAFE-R1: полный root-correct/read-only W11",
+  "date": "2026-11-25",
+  "baseline_commit": "423df52",
+  "baseline_head": "423df52",
+  "status": "open",
+  "schema": 2,
+  "criterion": "PASS только при выполнении всех success_criteria; любой source byte/mtime drift, cross-root false verdict, unknown selection, all-N/A green или concurrent probe без lock означает RED.",
+  "arms": [
+    "baseline 423df52 без изменений кода: focused suite обязан быть RED",
+    "candidate: root-aware/read-only/disposable/lock implementation: focused Windows и POSIX обязаны быть PASS",
+    "real integration: ordinary gates на disposable worktree, byte/mtime snapshot и explicit probe controls"
+  ],
+  "sensitivity": "16 focused checks покрывают шесть cross-root gates, bytecode, tempfile, claims sandbox, unknown/all-N/A, auto/full, in-place, lock, exception cleanup и weak gate. Baseline ожидает не меньше 8 failures; PASS требует 16/16, поэтому слабый no-op candidate не принят.",
+  "unit_of_analysis": "один gate invocation на явно переданном root либо один probe invocation на disposable root",
+  "primary_metric": "число выполненных focused checks без failures при нулевом source byte/mtime drift",
+  "test": "python bin/test_manifest.py --run --only test_gates_w11.py на Windows и POSIX; затем чистый disposable selftest",
+  "stopping_rule": "Не ослаблять критерии после RED; при любом drift или cross-root подмене остановить closure как RED и сохранить evidence.",
+  "question": "Можно ли сделать обычный gates действительно read-only и root-correct на двух checkout одновременно, а mutation probes — только disposable, атомарными, lock-protected и fail-closed?",
+  "predecessor": "E-0086/C-0361: неявный вызов probes удалён, но шесть tracked mtime изменились; полный W11 остаётся RED",
+  "refs_search": {
+    "command": "python bin/hs.py refs search \"read-only gates root correctness disposable probes lock\"",
+    "result": "NOT PROVIDED",
+    "exit_code": 2,
+    "detail": "справочника нет: refs sync (пусто ≠ успех)"
+  },
+  "baseline_sha256": {
+    "bin/hs.py": "92dbe2a670816bbf950d11c34f49f978f220311eb59639589c660eb2f0df108e",
+    "bin/gate_probe.py": "630c960fd6a9b152ee6a6ec07ef32eacb3b7f105b7004126a44a838d2aad5c6d",
+    "bin/gate_docs.py": "072ebccdff88a2616b7dcf0d56b3cfeaecdf45b84076a22a6051a8c1bd4a8d5d",
+    "bin/gate_rust.py": "444f911dbeaf1b572c6d3fc6e1172ab3b6275f04e24034d7ae8fff0e261ae5d2",
+    "bin/build_reviews_index.py": "95543f2db176e90d5d0e943c4873db3d07c35a99f3d938c4b580863bfd96d559",
+    "bin/prereg.py": "9d69f153a06785dfe91a59922c75ededfbbb8760abb377e184f1e3884cbcbcd0",
+    "bin/lab.py": "8d5983e9797a932d0627683b2304405af1de75a6c4d1ad60b3f40e08670a3796",
+    "bin/gen_capabilities.py": "3f614268bcdc482629545a9e0cc043d51767cfa13ffe660aaef34e04c4f453f3",
+    "tests/test-manifest.json": "bc8b1865ab4709d3e12e15e9805afec98a0d6a1f069b80e70cd4c352d13d8401"
+  },
+  "known_baseline_failures": [
+    "gate_docs/gate_rust/gate_reviews/gate_prereg/gate_lab/gate_capabilities используют module-global ROOT или cached imports",
+    "gate_compile создаёт __pycache__, gate_coverage создаёт временный файл внутри root",
+    "fast claim commands перезаписывают tracked derived files в настоящем checkout",
+    "gate_probe имеет in-place mutations, не использует profile, молча принимает unknown selection и зелёный на all-N/A",
+    "gate_probe не имеет lock и не гарантирует atomically written report"
+  ],
+  "hypothesis": "Явная передача root, bytecode-free subprocess env, внешние tempfiles, disposable copy для fast claims и disposable-only/lock/fail-closed probes устранят мутации и cross-root подмену без изменения verdict semantics и без ослабления существующих probes.",
+  "implementation_scope": [
+    "root-aware gate_docs/gate_rust/build_reviews_index/prereg/lab/gen_capabilities и их вызовы из hs.py",
+    "compile() без py_compile, coverage output вне root, PYTHONDONTWRITEBYTECODE на gate-loop",
+    "disposable copy только для gate_claims_run; gate_autonomy --staged продолжает читать настоящий git checkout",
+    "disposable sandbox gate_probe с core-rs/src и нужными artifact files",
+    "auto=FAST, full=all, explicit=exact; unknown rc=2 до sandbox/report; all-N/A rc=1",
+    "nonblocking cross-process lock, atomic report, exception cleanup; SIGKILL cleanup не заявляется"
+  ],
+  "success_criteria": {
+    "focused_red_before_code": "tests/test_gates_w11.py: 16 checks и не меньше 8 failures на baseline, rc=1",
+    "focused_windows": "16/16 checks, 0 failures, rc=0",
+    "focused_posix": "16/16 checks, 0 failures, rc=0",
+    "manifest": "86 Python + 4 Rust; новый suite проходит явный selection",
+    "real_readonly": "обычный disposable gates сохраняет bytes, mtime и список tracked/untracked source files до/после; __pycache__ не появляется",
+    "dual_root": "два synthetic roots дают разные ожидаемые verdicts; cached modules не подменяют root",
+    "probe_controls": "explicit probes ловят все внедрённые дефекты и отвергают weak gate; unknown до записи, all-N/A RED, lock блокирует второго runner",
+    "clean_selftest": "чистый Windows disposable selftest: 86 Python suites, 83 performed + 3 Linux N/A, 0 failed, rc=0; W18 14/14",
+    "review": "независимый review PASS до closure",
+    "claims": "C-0362 проверена check_artifacts/verify_claims/coverage; lab validate; seal verify-all"
+  },
+  "negative_controls": [
+    "разные CONTINUE/registry/prereg/reviews/capabilities/rust fixtures в двух roots",
+    "broken py_compile fixture без появления __pycache__",
+    "claim-команда mutator обязана изменить только disposable derived file",
+    "unknown probe selection, all-N/A probe и concurrent lock holder",
+    "weak gate, который не замечает injected defect, остаётся RED"
+  ],
+  "stopping_rules": [
+    "Не ослаблять gates, frozen thresholds, corpus и sealed E-0086 RED.",
+    "Не переписывать sealed prereg/history; ошибки исправлять новым experiment/correction.",
+    "Не менять production Rust, Linux bridge, activation и внешние системы.",
+    "Не начинать production -r namespace correction: E-0085 RED и sealed stopping rule.",
+    "Если source root изменился хоть одним byte/mtime либо cross-root проверка неверна — W11 RED, а не PASS.",
+    "N/A/unknown/unsupported не считаются PASS; SIGKILL temp cleanup не заявляется."
+  ],
+  "not_claimed": [
+    "Windows directory durability",
+    "production namespace PASS",
+    "external publication/activation",
+    "полное устранение любого теоретического побочного эффекта ОС",
+    "автоматический cleanup после SIGKILL/power loss"
+  ]
+}

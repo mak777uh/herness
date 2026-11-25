@@ -901,6 +901,17 @@
    "conclusion": "research/outputs/GATES-READONLY-CALLSITE-R1-CLOSURE.txt",
    "note": "Узкий call-site исправлен: focused 9/9 Windows/POSIX, явный runner сохранён, чистый selftest 82 performed + 3 Linux N/A rc=0. Sealed полный read-only criterion RED: реальный gates изменил mtime шести tracked files без byte changes. Independent review не состоялся из-за ошибок агента; полный W11 остаётся открытым.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0087",
+   "title": "GATES-READONLY-ROOTSAFE-R1: полный root-correct/read-only W11",
+   "hypothesis": "Явная передача root, bytecode-free subprocess env, внешние tempfiles, disposable copy для fast claims и disposable-only/lock/fail-closed probes устранят мутации и cross-root подмену без изменения verdict semantics и без ослабления существующих probes.",
+   "prereg": "lab/prereg/GATES-READONLY-ROOTSAFE-R1.json",
+   "status": "open",
+   "claim": null,
+   "conclusion": null,
+   "note": "Baseline 423df52. refs search NOT PROVIDED (rc=2). Focused baseline RED зафиксирован до кода: 16 checks, 15 failures, rc=1; evidence research/outputs/GATES-READONLY-ROOTSAFE-R1-BASELINE.txt. Production Rust, bridge, sealed history и activation не меняются.",
+   "updated": "2026-11-25"
   }
  ]
 }
