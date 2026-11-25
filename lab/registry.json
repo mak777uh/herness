@@ -874,8 +874,10 @@
    "title": "LINUX-NETNS-PROPAGATION-R1: candidate без ослабления namespace",
    "hypothesis": "--propagation unchanged уберёт propagation remount denial на GitHub uid=1001, сохранив user namespace uid=0 и PID namespace pid=1; production bridge меняется только после trusted CI candidate PASS.",
    "prereg": "lab/prereg/LINUX-NETNS-PROPAGATION-R1.json",
-   "status": "open",
-   "note": "Зарегистрировано после E-0083: точный отказ — root filesystem propagation Permission denied. Сначала focused RED 9 controls и candidate-only trusted CI; production bridge до наблюдения неизменен.",
+   "status": "closed",
+   "claim": "C-0359",
+   "conclusion": "research/outputs/LINUX-NETNS-PROPAGATION-R1-CLOSURE.txt",
+   "note": "RED кандидата в trusted CI 45556839178: uid=1001, rc=1 cannot change /proc filesystem propagation: Permission denied; оба namespace marker отсутствуют. Focused 9/9 и review PASS не превращают runtime RED в PASS. Production bridge/namespace test byte-exact; новый command semantic требует отдельного prereg.",
    "updated": "2026-11-25"
   }
  ]

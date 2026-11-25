@@ -1,0 +1,160 @@
+LINUX-NETNS-PROPAGATION-R1 / E-0084 — closure отрицательного candidate
+
+Вердикт: RED
+Focused controls: 9/9; провалов: 0
+Candidate runtime: RED (rc=1, state=broken, user/PID markers отсутствуют)
+Production bridge: не изменён
+
+1. Запечатанный критерий
+
+Prereg: lab/prereg/LINUX-NETNS-PROPAGATION-R1.json
+Baseline HEAD: db4d0e9385b1fbbdc8efb40c77fde76a9549fb25
+Prereg commit: a668cd5
+Implementation commit: ab56e98f111ee65067250a130daf812da89e9716
+
+PASS кандидата требовал одновременно rc=0, USER_NS_UID=0 и PID_NS_PID=1 при
+argv unshare -U -p -f --propagation unchanged --mount-proc <python> -c ...
+Missing/broken executable, timeout, OSError, nonzero rc и отсутствие любого marker
+должны были давать unshare_ok=false. Ослаблять эти условия запрещено.
+
+Refs search перед экспериментом: NOT PROVIDED — python bin/hs.py refs search
+вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)». Пустой индекс не
+трактовался как успешный поиск.
+
+2. Baseline RED и development history
+
+До реализации focused suite отсутствовала. Сохранены оба baseline RED:
+runs/exp-ci-residuals/e0084-focused-red-windows.txt
+runs/exp-ci-residuals/e0084-focused-red-posix.txt
+
+Первый development attempt: Windows 3/9, POSIX 7/9. Причины: platform simulation
+на Windows не включала Linux, manifest ожидал неверный корень, filtered-env oracle
+ожидал HOME вместо TMP. Сохранены e0084-focused-green-attempt1-*.
+
+Второй attempt: 8/9 на обеих поверхностях. Контроль обнаружил реальный дефект:
+probe содержал верные markers, но верхнеуровневые user_namespace_ok,
+pid_namespace_ok и unshare_ok оставались false. Поля синхронизированы с probe.
+Сохранены e0084-focused-green-attempt2-*; попытка не переписана в PASS.
+
+Финальные focused controls: Windows 9/9 rc=0; POSIX 9/9 rc=0.
+Контроли проверяют exact argv и allowlist env, оба marker вместе с rc=0,
+nonzero rc даже с markers, missing, OSError, timeout, recursive canary redaction,
+CLI output/require-works и workflow trust gate с frozen production hashes.
+
+Независимый read-only review финального diff: PASS, 0 substantive findings.
+Review подтвердил точный argv, fail-closed semantics, redaction, fork-PR gate,
+9 meaningful controls и byte-exact production bridge/namespace test.
+
+3. Фактический trusted CI candidate
+
+CI run: 45556839178
+HEAD: ab56e98f111ee65067250a130daf812da89e9716
+Selftest job: 139010821872
+Candidate step: success как наблюдательный шаг; это не PASS кандидата.
+Host: GitHub Ubuntu, uid=euid=1001.
+Exact command сохранён в CI JSON.
+
+Наблюдение:
+  returncode: 1
+  state: broken
+  stderr: unshare: cannot change /proc filesystem propagation: Permission denied
+  stdout: пусто
+  USER_NS_UID: отсутствует
+  PID_NS_PID: отсутствует
+  user_namespace_ok: false
+  pid_namespace_ok: false
+  unshare_ok: false
+
+Следовательно, --propagation unchanged не убрал отказ remount. Baseline diagnostic
+в том же run по-прежнему показывает отказ root filesystem propagation. Candidate
+не дошёл до проверки user/PID markers, поэтому не доказывает ни их наличие, ни их
+отсутствие в runtime. Он также не доказывает полную /v1/net secret isolation.
+
+Полный CI log:
+runs/exp-ci-residuals/ci-45556839178-selftest-full.log
+125185 bytes
+SHA-256 fa731a11316b2b5553032e2ca5a0e9da0c21d4f61bacda5a57902893b42a56e8
+
+Извлечённый JSON ровно из этого лога:
+runs/exp-ci-residuals/e0084-ci-candidate.json
+886 bytes
+SHA-256 ae37e185badf6187736809ba0b5fc7863b6d82761744ae17f90346e6a4175740
+
+WSL — отдельная evidence surface: uid=euid=0, candidate rc=1 после assert;
+stdout USER_NS_UID=65534, PID_NS_PID=1. Это не GitHub uid=1001 и не замена CI.
+JSON: runs/exp-ci-residuals/e0084-local-candidate-wsl.json
+SHA-256 f493f868a92244585e34e409ac2eabc89332564bcc10c090404f6f2ce49d828d
+
+4. Production и regression
+
+До и после CI production файлы byte-exact:
+bin/bridge.py
+SHA-256 e3762b0f989d902a211079012d02c4b9085a829b322f044e5db1dea6aed1865e
+
+tests/test_bridge_net_namespace.py
+SHA-256 c8efc7e10d5587a8e9402c076014464818aab5596664cbc53b6329f6b5caa958
+
+git diff baseline..implementation по этим двум путям: пусто.
+Candidate не менял command production bridge, пороги, corpus и secret allowlist.
+Форк-PR candidate step не запускается; privileged-команд нет.
+
+Windows production namespace regression: rc=0.
+Полный чистый Windows selftest: 81 выполненных suites rc=0, 2 явных N/A
+(Linux diagnostics и Linux propagation), W18 14/14. Linux N/A не считается PASS.
+Лог: runs/exp-ci-residuals/e0084-full-selftest-windows-clean.txt
+8576 bytes
+SHA-256 c95a2b51fc06119255fac4fbc111095e3a4b127778aaf6b5e7c4ad934c52f6f7
+
+В CI focused propagation 9/9 и diagnostics 10/10 прошли. Selftest job остаётся
+failure только из-за production positive B test_bridge_net_namespace.py: B получил
+503, net.py не исполнился, marker отсутствует; C/D fail-closed прошли. Остальные
+jobs gates/claims/admission/Rust/plugin успешны. Полный CI-PASS не заявлен.
+
+5. Финальные артефакты и проверки
+
+bin/netns_candidate_probe.py
+SHA-256 2cbeda0514f8f1b439196056d75bdeed9270e93989ad2a273ed05a65525a54a4
+
+tests/test_linux_netns_propagation.py
+SHA-256 3f8a16a5942a07eb00d349849c504838ce8919908b03fcfd57e83b935dd347fc
+
+.github/workflows/gates.yml
+SHA-256 9800468c2ef64ad6294a21f557002e41a1d5630fceac4f99b2ea102acc8d2936
+
+tests/test-manifest.json
+SHA-256 1db3586d7f5f54f78b304345362c9617d2ee9506c89b63ede343a7b6889ab70f
+
+Focused Windows log: 477 bytes
+SHA-256 e100e4d95bb5fe668d92965892c69062fb9c2eadb05b0c8e7b60143a005adcf6
+Focused POSIX log: 461 bytes
+SHA-256 47a5b1939a174d202ab37dc8ceaf1775ea4816bbcb56e7a776a135a1ef1d7964
+
+Проверки до closure:
+- python bin/test_manifest.py --check: 83 Python + 4 Rust entries, rc=0;
+- python bin/hs.py gates: 31/33 assessed, N/A 2, FAIL 0, rc=0;
+- python bin/verify_claims.py --fast: 319 claims, 0 failures, rc=0;
+- python bin/lab.py validate: 84 experiments, 7 next hypotheses, rc=0;
+- python bin/seal.py verify-all: 61 seals, 0 problems, rc=0;
+- python bin/prereg.py check: sensitivity 73/73, rc=0;
+- python bin/coverage.py: 351/351 anchored, strict 200/348=0.57, ANCHORED_WEAK.
+N/A и ANCHORED_WEAK не объявляются зелёными.
+
+После регистрации C-0359 и закрытия registry:
+- python bin/check_artifacts.py C-0359: rc=0, точный RED evidence найден;
+- python bin/verify_claims.py --fast: 320 claims, 0 failures, rc=0;
+- python bin/lab.py validate: 84 experiments, 7 next hypotheses, rc=0;
+- python bin/seal.py verify-all: 61 seals, 0 problems, rc=0;
+- python bin/prereg.py check: sensitivity 73/73, rc=0;
+- python bin/coverage.py: 352/352 anchored, strict 201/349=0.58, ANCHORED_WEAK.
+
+6. Границы и решение
+
+E-0084 закрыт с отрицательным runtime verdict. PASS инструмента и focused
+контролей не превращает candidate RED в product PASS. Production bridge остаётся
+fail-closed и неизменным. Positive B в GitHub CI остаётся RED.
+
+Любая следующая mount/user-mapping гипотеза требует отдельного prereg и отдельного
+trusted CI наблюдения. Этот closure не выбирает новый command semantic заранее,
+не разрешает privileged fallback, не является production activation и не является
+внешней публикацией. Windows directory durability, Lean↔Rust equivalence, полный
+pilot corpus и строгая claims coverage остаются отдельными незакрытыми вопросами.
