@@ -54,6 +54,7 @@
     {"id": "test_m1_journal.py", "path": "tests/test_m1_journal.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_net_fs_write_barrier.py", "path": "tests/test_net_fs_write_barrier.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_linux_netns_diagnostics.py", "path": "tests/test_linux_netns_diagnostics.py", "runner": "custom-main", "minimum_checks": 10, "platforms": ["linux"]},
+    {"id": "test_linux_netns_propagation.py", "path": "tests/test_linux_netns_propagation.py", "runner": "custom-main", "minimum_checks": 9, "platforms": ["linux"]},
     {"id": "test_net_policy.py", "path": "tests/test_net_policy.py", "runner": "pytest", "minimum_collected": 25, "minimum_executed": 25},
     {"id": "test_new_criterion.py", "path": "tests/test_new_criterion.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_new_tool.py", "path": "tests/test_new_tool.py", "runner": "custom-main", "minimum_checks": 1},

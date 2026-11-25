@@ -74,6 +74,12 @@ jobs:
         run: |
           mkdir -p runs/exp-ci-residuals
           python bin/netns_diagnostics.py --output runs/exp-ci-residuals/netns-diagnostics.json
+      - name: Linux namespace propagation candidate
+        # Тот же trust gate: candidate без privilege и только в доверенном PR/main.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          mkdir -p runs/exp-ci-residuals
+          python bin/netns_candidate_probe.py --output runs/exp-ci-residuals/netns-propagation-candidate.json
       - name: Selftest
         run: python bin/hs.py selftest
 
