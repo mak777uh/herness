@@ -4,7 +4,8 @@
 подкладывается **похожий на настоящее** дефект во временную копию репозитория, и требуется, чтобы
 гейт его заметил. Пустой файл дефектом не считается: он ловится любым условием.
 
-    python bin/gate_probe.py              # все пробы
+    python bin/gate_probe.py --profile full   # все пробы
+    python bin/gate_probe.py --profile auto   # только FAST
     python bin/gate_probe.py --only секреты ссылки
     python bin/gate_probe.py --list
 """
@@ -12,16 +13,28 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import errno
+import hashlib
 import json
+import os
 import shutil
+import stat
+import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-import bin.hs as hs  # noqa: E402
+_previous_bytecode = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+try:
+    import bin.hs as hs  # noqa: E402
+finally:
+    sys.dont_write_bytecode = _previous_bytecode
 
 # Что копируется в песочницу: ровно то, что читают пробы. Копия полного репозитория слишком дорога.
 COPY = [
@@ -36,6 +49,7 @@ COPY = [
     "accept",
     "src",
     "core",
+    "core-rs/src",
     "bin",
     "procedures.json",
     "capabilities.json",
@@ -48,18 +62,110 @@ COPY = [
 ]
 
 
-def sandbox() -> Path:
+def remove_disposable(path: Path) -> None:
+    """Удалить temp-копию; read-only и краткие Windows locks не оставляют мусор.
+
+    После завершения git/python subprocess Windows иногда ещё ненадолго держит
+    каталог (WinError 32). Повтор ограничен по времени: устойчивый lock остаётся
+    ошибкой, а не маскируется успешным завершением.
+    """
+    def make_writable(function, filename, _exc_info):
+        os.chmod(filename, stat.S_IWRITE | stat.S_IREAD)
+        function(filename)
+
+    deadline = time.monotonic() + 3.0
+    delay = 0.02
+    while True:
+        try:
+            shutil.rmtree(path, onerror=make_writable)
+            return
+        except FileNotFoundError:
+            return
+        except OSError as exc:
+            winerror = getattr(exc, "winerror", None)
+            transient = winerror in {5, 32, 33, 145} or exc.errno in {
+                errno.EACCES, errno.EPERM, errno.EBUSY,
+            }
+            if not transient or time.monotonic() >= deadline:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 2, 0.2)
+
+
+def _selected(relative: Path) -> bool:
+    return any(relative == Path(name) or Path(name) in relative.parents for name in COPY)
+
+
+def _safe_artifact(root: Path, source: Path) -> bool:
+    """Rust artifact — явный allowlist, но без symlink и выхода за root."""
+    try:
+        relative = source.relative_to(root)
+        source.resolve(strict=True).relative_to(root)
+    except (OSError, RuntimeError, ValueError):
+        return False
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if hs._path_is_link(current):
+            return False
+    return source.is_file()
+
+
+def sandbox(root: Path | None = None) -> Path:
+    """Disposable copy только safe tracked/nonignored файлов из COPY-префиксов.
+
+    Внутри создаётся чистый git worktree без staging: вложенный claims-gate может
+    сделать ещё одну disposable copy, а autonomy/bigfiles сохраняют свою семантику.
+    Любая ошибка подготовки удаляет частичный temp-каталог.
+    """
+    root = Path(ROOT if root is None else root).resolve()
     target = Path(tempfile.mkdtemp(prefix="gate-probe-"))
-    for name in COPY:
-        source = ROOT / name
-        if not source.exists():
-            continue
-        destination = target / name
-        if source.is_dir():
-            shutil.copytree(source, destination, ignore=shutil.ignore_patterns("*.bin", "__pycache__"))
-        else:
-            shutil.copy2(source, destination)
-    return target
+    try:
+        target.resolve().relative_to(root)
+    except ValueError:
+        pass
+    else:
+        primary = RuntimeError("probe sandbox оказался внутри source root")
+        hs.cleanup_disposable(target, primary, remove_disposable)
+        raise primary
+    try:
+        for relative, source in hs.disposable_files(root):
+            if not _selected(relative):
+                continue
+            if hs._path_is_link(source):
+                raise RuntimeError(f"probe sandbox: источник стал symlink: {relative.as_posix()}")
+            destination = target / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination, follow_symlinks=False)
+        # Rust-пробе нужен не весь target, а только артефакты, которые читает gate_rust.
+        patterns = (
+            "core-rs/target/release/libhs_core*.rlib",
+            "core-rs/target/release/deps/hs_core-*",
+            "core-rs/target/release/hs-core",
+            "core-rs/target/release/hs-core.exe",
+            "core-rs/target/x86_64-unknown-linux-musl/release/libhs_core*.rlib",
+            "core-rs/target/x86_64-unknown-linux-musl/release/deps/hs_core-*",
+            "core-rs/target/x86_64-unknown-linux-musl/release/hs-core",
+            "core-rs/target/x86_64-unknown-linux-musl/release/hs-core.exe",
+        )
+        for pattern in patterns:
+            for source in root.glob(pattern):
+                if not _safe_artifact(root, source):
+                    continue
+                destination = target / source.relative_to(root)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination, follow_symlinks=False)
+        env = hs.gate_env()
+        env["GIT_CONFIG_NOSYSTEM"] = "1"
+        env["GIT_CONFIG_GLOBAL"] = os.devnull
+        subprocess.run(["git", "init", "-q"], cwd=str(target), env=env,
+                       capture_output=True, check=True)
+        subprocess.run(["git", "config", "core.excludesFile", ".git/info/exclude"],
+                       cwd=str(target), env=env, capture_output=True, check=True)
+        return target
+    except BaseException as exc:
+        hs.cleanup_disposable(target, exc, remove_disposable)
+        raise
 
 
 def backup_exact(source: Path) -> dict[str, bytes] | bytes:
@@ -445,7 +551,7 @@ def probe_requirements(root: Path) -> None:
 
 def probe_docs(root: Path) -> None:
     # Число, возвращённое в документ и не совпадающее с файлом (F-DOC-1, gate_docs).
-    # gate_docs читает ROOT модуля, поэтому проба — IN_PLACE на настоящем docs/CONTINUE.md.
+    # Дефект вносится только в disposable docs/CONTINUE.md.
     path = root / "docs" / "CONTINUE.md"
     text = path.read_text(encoding="utf-8")
     path.write_text(
@@ -492,18 +598,9 @@ PROBES = {
 }
 
 
-# Гейты, читающие файл по пути модуля, а не по переданному root: проба для них делается на
-# настоящем файле и сразу откатывается.
-IN_PLACE = {
-    "лаборатория": "lab/registry.json",
-    "пре-регистрация": "lab/prereg",
-    # rust читает настоящий target/: в песочнице артефактов нет, и проба
-    # подложила бы «нет артефактов» вместо нужного дефекта. Откат — по mtime.
-    "rust": "core-rs/src/loopmod.rs",
-    # gate_docs импортирует bin.gate_docs.main, чей ROOT — путь модуля (настоящий репо),
-    # не переданный root: проба подкладывает дефект в настоящий docs/CONTINUE.md и откатывает.
-    "документы": "docs/CONTINUE.md",
-}
+# Совместимость с историческими импортами. In-place mutation запрещён: даже если
+# это значение подменено, run() использует только disposable sandbox.
+IN_PLACE = {}
 
 
 # Быстрые пробы: без внешних процессов и без обхода сотен каталогов. Их можно гонять при каждом
@@ -529,31 +626,63 @@ FAST = [
 ]
 
 
-def run(names: list[str], profile: str = "full") -> int:
+class ProbeBusy(RuntimeError):
+    """Другой runner уже держит lock; параллельные mutation probes запрещены."""
+
+
+@contextlib.contextmanager
+def locked(root: Path = ROOT):
+    """Nonblocking OS lock вне source root. SIGKILL освобождает lock автоматически."""
+    root = Path(root).resolve()
+    directory = Path(tempfile.gettempdir()) / "herness-gate-probe-locks"
+    directory.mkdir(parents=True, exist_ok=True)
+    token = hashlib.sha256(str(root).encode("utf-8")).hexdigest()
+    path = directory / (token + ".lock")
+    fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            if os.fstat(fd).st_size == 0:
+                os.write(fd, b"\0")
+            os.lseek(fd, 0, os.SEEK_SET)
+            try:
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            except OSError as exc:
+                raise ProbeBusy(f"probe runner уже работает: {root}") from exc
+        else:
+            import fcntl
+
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                raise ProbeBusy(f"probe runner уже работает: {root}") from exc
+        try:
+            yield
+        finally:
+            if os.name == "nt":
+                import msvcrt
+
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(fd, fcntl.LOCK_UN)
+    finally:
+        os.close(fd)
+
+
+def _run_selected(selected: list[str]) -> int:
     rows = []
     na_rows: list[tuple[str, str]] = []
     broken = 0
-    selected = [n for n in PROBES if not names or n in names]
-    for name, (gate, inject) in PROBES.items():
-        if names and name not in names:
-            continue
-        # Гейты, читающие ROOT модуля (лаборатория), в песочнице не проверяются: подкладываем
-        # дефект в настоящий файл и возвращаем его на место сразу после проверки.
-        in_place = name in IN_PLACE
-        clean = ROOT if in_place else sandbox()
-        backup = None
-        mtime_backup = None
+    for name in selected:
+        gate, inject = PROBES[name]
+        clean = None
+        primary = None
         try:
-            if in_place:
-                # Резервная копия — каталог целиком (пре-регистрации), один файл
-                # (реестр) или только время изменения (rust: содержимое не
-                # меняется, меняется mtime). Байты, не текст: read_text/write_text
-                # нормализует CRLF в LF и меняет digest замороженных файлов.
-                source = clean / IN_PLACE[name]
-                if name == "rust":
-                    mtime_backup = source.stat().st_mtime
-                else:
-                    backup = backup_exact(source)
+            clean = sandbox(ROOT)
             baseline = gate(clean)
             inject(clean)
             after = gate(clean)
@@ -563,19 +692,18 @@ def run(names: list[str], profile: str = "full") -> int:
             if not caught:
                 broken += 1
         except hs.MissingData as exc:
-            # Гейта нечем оценить в этом окружении (нет runs/ или target/).
-            # Это не «поймал» и не «не поймал»: проба не состоялась, и это печатается.
+            # Это не «поймал» и не «не поймал»: проба не состоялась.
+            primary = exc
             na_rows.append((name, exc.reason))
+        except BaseException as exc:
+            primary = exc
+            raise
         finally:
-            if in_place and mtime_backup is not None:
-                # Откат по времени: содержимое исходника не менялось.
-                import os
-                source = clean / IN_PLACE[name]
-                os.utime(source, (mtime_backup, mtime_backup))
-            elif in_place and backup is not None:
-                restore_exact(clean / IN_PLACE[name], backup)
-            if not in_place:
-                shutil.rmtree(clean, ignore_errors=True)
+            if clean is not None:
+                if primary is None:
+                    remove_disposable(clean)
+                else:
+                    hs.cleanup_disposable(clean, primary, remove_disposable)
 
     lines = ["# Пробы гейтов: падает ли гейт на реалистичном дефекте", ""]
     lines.append(f"набор: {len(selected)} проб")
@@ -588,10 +716,36 @@ def run(names: list[str], profile: str = "full") -> int:
         lines.append(f"не оценено: {len(na_rows)} ({details})")
     text = "\n".join(lines) + "\n"
     # Быстрый набор не должен затирать отчёт о полном: у них разные файлы.
-    name = "gate-probes-fast.txt" if set(names) == set(FAST) else "gate-probes.txt"
-    (ROOT / "research" / "outputs" / name).write_text(text, encoding="utf-8")
+    report_name = "gate-probes-fast.txt" if set(selected) == set(FAST) else "gate-probes.txt"
+    target = ROOT / "research" / "outputs" / report_name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    write_text = hs.load_gate_module(ROOT, "bin/store.py").write_text
+    write_text(target, text)
     print(text)
-    return 0 if broken == 0 else 1
+    # Пустой/all-N/A набор не является успешной проверкой.
+    return 0 if rows and broken == 0 else 1
+
+
+def run(names: list[str], profile: str = "full") -> int:
+    if profile not in ("auto", "full"):
+        print(f"[FAIL] неизвестный профиль probes: {profile!r}")
+        return 2
+    unknown = sorted(set(names) - set(PROBES))
+    if unknown:
+        print(f"[FAIL] неизвестные пробы: {', '.join(unknown)}")
+        return 2
+    if names:
+        selected = [name for name in PROBES if name in set(names)]
+    elif profile == "auto":
+        selected = [name for name in PROBES if name in set(FAST)]
+    else:
+        selected = list(PROBES)
+    try:
+        with locked(ROOT):
+            return _run_selected(selected)
+    except ProbeBusy as exc:
+        print(f"[FAIL] {exc}")
+        return 1
 
 
 def main(argv: list[str] | None = None) -> int:

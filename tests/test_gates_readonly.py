@@ -44,7 +44,7 @@ def patched(obj, **values):
 def quiet_gates(overrides=None):
     """Не исполнять настоящие gates: проверяется только их orchestration."""
     names = [name for name, value in vars(hs).items()
-             if name.startswith("gate_") and callable(value)]
+             if name.startswith("gate_") and name != "gate_env" and callable(value)]
     saved = {name: getattr(hs, name) for name in names}
     try:
         for name in names:
@@ -184,9 +184,12 @@ def test_explicit_runner_still_catches_defect() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         (root / "research" / "outputs").mkdir(parents=True)
+        store = root / "bin" / "store.py"
+        store.parent.mkdir(parents=True, exist_ok=True)
+        store.write_bytes((ROOT / "bin" / "store.py").read_bytes())
         counter = itertools.count()
 
-        def sandbox():
+        def sandbox(_root):
             path = root / f"copy-{next(counter)}"
             path.mkdir()
             return path
@@ -211,9 +214,12 @@ def test_explicit_runner_still_rejects_weak_gate() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         (root / "research" / "outputs").mkdir(parents=True)
+        store = root / "bin" / "store.py"
+        store.parent.mkdir(parents=True, exist_ok=True)
+        store.write_bytes((ROOT / "bin" / "store.py").read_bytes())
         counter = itertools.count()
 
-        def sandbox():
+        def sandbox(_root):
             path = root / f"copy-{next(counter)}"
             path.mkdir()
             return path

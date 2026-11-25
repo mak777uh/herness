@@ -1,0 +1,236 @@
+E-0087 / W11 — независимое финальное read-only ревью
+Дата: 25.11.2026
+Review baseline: 17f529ae160a1a66b4ec42559c263f9e42a7f1fd
+Experimental baseline из sealed prereg: 423df52 (не перепутан с review baseline)
+Candidate: uncommitted working tree; HEAD совпадает с review baseline
+Sealed prereg: lab/prereg/GATES-READONLY-ROOTSAFE-R1.json
+
+ВЕРДИКТ: NEEDS_CHANGES
+
+Причина: исторические F1/F2 исправлены, финальные SHA-256 совпадают, focused и regression suites зелёные. Однако обнаружены две новые HIGH / BLOCKER находки: root-aware loader может исполнить устаревший timestamp-valid .pyc и дать ложный зелёный; обычный CLI gates при частичной Rust-сборке падает с непойманным bin.hs.MissingData вместо штатного gate verdict. PASS не выдаётся.
+
+======================================================================
+БЛОКИРУЮЩИЕ НАХОДКИ
+======================================================================
+
+[F3] HIGH / BLOCKER — root-aware loaders исполняют stale .pyc и допускают false green
+Файлы:
+- bin/hs.py:133-145, особенно 134-145;
+- bin/gen_capabilities.py:48-59 (та же схема для core/tools.py).
+
+Суть:
+load_gate_module() читает source bytes и включает их digest в имя модуля, но затем вызывает spec.loader.exec_module(). sys.dont_write_bytecode=True запрещает запись .pyc, но не чтение уже существующего .pyc. SourceFileLoader может исполнить старый bytecode, если timestamp и size исходника совпадают с метаданными .pyc. Уникальное имя модуля этого не предотвращает: cache path зависит от source path, а не от имени модуля. Аналогичная проблема есть в gen_capabilities.build().
+
+Нарушение критерия:
+Sealed dual_root/stopping_rule запрещает cached-code подмену и любой cross-root false verdict. Докстринг bin/hs.py:121-125 прямо обещает, что повторный вызов после правки не получает cached старый код. Это обещание текущим кодом не выполняется. Baseline gate_compile создавал .pyc, поэтому сценарий реалистичен при обновлении checkout, а не только теоретический.
+
+Воспроизведение (выполнено в temp, без правки репозитория):
+1. Создать temp root с bin/gate_docs.py:
+       def main(root):
+           return 0
+2. Установить фиксированный mtime 1700000000 и явно создать py_compile-кэш.
+3. Заменить source на same-size вариант:
+       def main(root):
+           return 1
+4. Восстановить тот же mtime.
+5. Вызвать hs.load_gate_module(root, "bin/gate_docs.py") и hs.gate_docs(root).
+
+Фактический вывод:
+    STALE_GATE_PYC_CONTROL {"source_main_rc": 1, "executed_main_rc": 0,
+                            "gate_problems": [], "false_green": true}
+
+Дополнительный минимальный контроль с VALUE=1 -> VALUE=2 дал executed_value=1 при source_value=2.
+
+Почему focused/evidence зелёные:
+- В текущем дереве __pycache__ и .pyc отсутствуют.
+- Прогоны выполняются с -B/PYTHONDONTWRITEBYTECODE=1.
+- Hostile-cache control проверяет sys.modules, но не timestamp-valid .pyc.
+- Clean selftest копирует hs-core и не моделирует stale bytecode.
+
+Минимальный fix:
+- В обоих loader-путях исполнять compile(data, str(path), "exec") в уже созданном module object, а не SourceFileLoader.get_code(); либо использовать loader, который всегда компилирует прочитанные source bytes и никогда не читает .pyc.
+- Добавить focused negative control: same-size source edit + сохранённый mtime + timestamp-valid .pyc; gate обязан увидеть новую версию и вернуть RED.
+
+[F4] HIGH / BLOCKER — обычный CLI gates падает на отсутствующем hs-core из-за разных MissingData
+Файлы:
+- bin/hs.py:34 (MissingData вызывающего модуля);
+- bin/hs.py:1649-1655, особенно 1651-1655;
+- bin/binary_version.py:57-61;
+- cmd_gates catch: bin/hs.py:2002-2013.
+
+Суть:
+При запуске `python bin/hs.py` класс MissingData определяется в __main__. root-aware binary_version.problems() при отсутствии hs-core импортирует `from bin.hs import MissingData` и бросает отдельный bin.hs.MissingData. except MissingData в gate_rust() ловит только __main__.MissingData, поэтому исключение пролетает мимо и обрывает весь gate-loop. В свежем script context без ранее импортированного package bin тот же deferred import может дать ModuleNotFoundError: No module named 'bin'.
+
+Нарушение критерия:
+Обычные gates должны завершаться штатным verdict/ summary; N/A/unknown не должны превращаться в PASS, но и явно предусмотренная ветка «сборка неполная» не должна обрывать CLI traceback. Это также остаток root/dependency-cache проблемы: уникальное имя главного validator-модуля не делает транзитивный import bin.hs тем же модулем/тем же классом исключения.
+
+Воспроизведение (выполнено на disposable copy candidate):
+1. Создать hs.disposable_copy(ROOT).
+2. Скопировать только свежие core-rs/target/release/deps/hs_core-* артефакты; hs-core/hs-core.exe не копировать.
+3. Инициализировать git worktree.
+4. Выполнить:
+       python <copy>/bin/hs.py gates --root <copy> --circuit a --profile full
+
+Фактический вывод:
+- CLI_GATE_RC=1.
+- Последние штатные строки заканчиваются на `[ok] требования: 0 проблем`.
+- stderr содержит traceback:
+       bin/hs.py:1652 in gate_rust
+       bin/binary_version.py:61 in problems
+       bin.hs.MissingData: нет собранного hs-core: версию формата в бинарнике проверить нечем
+- Итогового `[FAIL] rust ...` и общего summary нет.
+
+Ожидалось по коду hs.py:1653-1655: проблема отсутствующего hs-core добавляется к problems и возвращается как обычный gate FAIL (либо корректно классифицируется как N/A), без traceback.
+
+Почему focused/evidence зелёные:
+- tests/test_gates_w11.py импортирует `from bin import hs`, поэтому вызывающий и binary_version используют один cached bin.hs.MissingData.
+- tests/test_binary_version.py:51-58 проверяет только type(exc).__name__ == "MissingData", но не identity класса и не CLI entrypoint.
+- Clean disposable selftest копирует hs-core, поэтому missing-binary ветка не исполняется.
+- Real-readonly integration также использует дерево с hs-core.
+
+Минимальный fix:
+- Передать класс/factory MissingData из hs.gate_rust() в binary_version.problems(root, missing_data=MissingData), либо вынести общий исключение в отдельный root-independent модуль; не импортировать bin.hs из validator.
+- Добавить subprocess negative control именно для `python bin/hs.py ...`: rlib/deps-артефакт свежий, hs-core отсутствует; assert отсутствия traceback и наличия штатного rust verdict/summary.
+
+======================================================================
+ПРОВЕРЕННЫЕ ТРЕБОВАНИЯ И РЕЗУЛЬТАТЫ
+======================================================================
+
+1. Финальные raw SHA-256 — PASS
+Повторно проверены непосредственно перед записью artifact:
+- bin/hs.py
+  f70a3a11f3fda56a0b088899363f4399135773796310eb1a72fbb5a47cec6c39
+- bin/gate_probe.py
+  92f318e33b52813b36663e10fcf753518bab995ed32afaeccdd0f4d3ae1df9cf
+- tests/test_gates_w11.py
+  97b7f604c0ac6a56af90d492c5e899d530ac969659a282f7183497661e3fe8b7
+- tests/test_gates_readonly.py
+  ee99fb14b0b7eb11efde955817a6ecb830543a2390662b6cf6e649ba5c74dd4d
+Все четыре совпадают с переданными финальными значениями.
+
+2. Diff / protected boundary — PASS
+- HEAD: 17f529ae160a1a66b4ec42559c263f9e42a7f1fd.
+- `git diff --check 17f529ae...` — чисто.
+- Diff относительно baseline содержит ровно 12 tracked файлов:
+  bin/build_reviews_index.py, bin/gate_docs.py, bin/gate_probe.py,
+  bin/gate_rust.py, bin/gen_capabilities.py, bin/hs.py, bin/lab.py,
+  bin/prereg.py, research/outputs/gate-probes-fast.txt,
+  research/outputs/gate-probes.txt, tests/test_gates_readonly.py,
+  tests/test_gates_w11.py.
+- `git diff --exit-code ... -- core-rs/src bin/bridge.py bin/net.py app.asar lab/prereg lab/registry.json lab/history history tests/test-manifest.json tests/test_bridge_win_isolation.py` — rc=0.
+- `git status --short` по тем же protected paths — пусто.
+- Sealed prereg, registry, history и test manifest не изменены.
+
+3. Историческая F1 (tracked-ignored force-added) — исправлена
+- bin/hs.py:232-239 выполняет отдельный fail-closed `git ls-files -c -i --exclude-standard -z` и вычитает ignored set из allowed set.
+- Ошибки OSError/timeout/nonzero преобразуются в MissingData (bin/hs.py:218-230).
+- Denylist, symlink/junction component checks и containment сохранены (bin/hs.py:178-207).
+- Focused negative control подтвердил:
+  forbidden=[], probe_forbidden=[], link_rejected=True,
+  ignored_fail_closed=True.
+- Независимый read-only recount текущего repo:
+      tracked_ignored=814
+      disposable_files=3914
+      admitted_ignored=0
+      admitted_symlinks_or_junctions=0
+      outside_root_sources=0
+
+4. Историческая F2 (cleanup маскирует primary) — исправлена
+- bin/hs.py:161-175 сохраняет primary, добавляет cleanup note/cause и повторно выбрасывает primary.
+- Применено в disposable_copy, gate_claims_run, gate_probe.sandbox и _run_selected.
+- Focused combined controls:
+  primary_sandbox=True, primary_copy=True, primary_selected=True,
+  primary_claims=True; transient_retry=True; persistent_lock_red=True;
+  creation_failed=True; partial_clean=True.
+- Windows retry ограничен 3 секундами (bin/gate_probe.py:65-92); устойчивый lock остаётся ошибкой.
+
+5. Exact-byte/mtime disposable copy — PASS независимым контролем
+Synthetic Git repo, файл с байтами 00 ff CRLF и фиксированным mtime:
+    outside_root=True
+    bytes_exact=True
+    mtime_ns_exact=True
+    source_unchanged=True
+    source_mtime_ns=copy_mtime_ns=1700000123456789000
+    payload_sha256=a9284893bbe9bf0c8a6e154a54b45521b61236d3583a88d37fb09b0fb8213a22
+
+6. Bytecode-free subprocess / coverage tempfile — PASS в проверенном окружении
+- gate_env(): bin/hs.py:97-102; no_bytecode():105-118.
+- env=gate_env() присутствует у claims/core claims/adoptions/autonomy/policy parity/requirements/coverage/runs index и Rust runner.
+- cmd_gates оборачивает gate-loop в no_bytecode() (bin/hs.py:2000).
+- gate_compile использует compile(bytes, ...), не py_compile (bin/hs.py:1823-1840).
+- Focused recording control: env=6/6, bytecode=[].
+- Coverage output независимо получен вне root:
+  Windows: %TEMP%\hs-coverage-...; WSL: /tmp/hs-coverage-...; outside=True.
+- После reviewer runs в репозитории __pycache__=0 и .pyc/.pyo=0.
+
+7. Root-aware validators — PASS по focused dual-root controls, кроме F3/F4
+- Независимый Windows и WSL focused run: docs/root validators 7/7, origin A/B различается; lab/prereg/reviews/capabilities/rust dual-root controls зелёные.
+- Явный root принимают gate_docs, gate_rust, build_reviews_index, prereg, lab, gen_capabilities.
+- gen_capabilities создаёт отдельный module object для root/core/tools.py.
+- Transitive imports просмотрены; блокирующего sys.modules cross-root остатка, кроме F4, не найдено.
+- F3 показывает, что sys.modules-изоляция сама по себе недостаточна из-за .pyc.
+
+8. Probe semantics / lock / ordinary gates — PASS
+- Unknown selection проверяется до lock/sandbox/report (bin/gate_probe.py:729-745): unknown rc=2, sandbox_called=False, report=False.
+- Empty/all-N/A возвращает rc=1 (bin/gate_probe.py:725-726).
+- Nonblocking cross-process lock: msvcrt/flock, fd закрывается; focused second runner blocked=True, child_rc=3.
+- IN_PLACE={} и run() использует только sandbox; focused source_changed=False, sandboxes=1.
+- Sandbox использует hs.disposable_files(), fresh Git repo и nested claims disposable copy.
+- Обычный cmd_gates не вызывает probe-runner; regression 9/9, включая byte/mtime сохранность, auto/full N/A semantics и отсутствие probe report.
+
+9. Focused suites / manifest — PASS независимо
+Windows:
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 GIT_OPTIONAL_LOCKS=0 python -B tests/test_gates_w11.py`
+  -> 16 checks, 0 failures.
+- Аналогично tests/test_gates_readonly.py -> 9 checks, 0 failures.
+- `python -B bin/test_manifest.py --root <repo> --check`
+  -> 86 Python + 4 Rust entries.
+- `python -B bin/test_manifest.py --root <repo> --run --only test_gates_w11.py`
+  -> 16/16, suites=1, N/A=0, checks=16, failures=0, rc=0.
+- tests/test_binary_version.py -> 4/4; tests/test_capabilities.py -> 4/4.
+
+WSL/POSIX:
+- tests/test_gates_w11.py -> 16 checks, 0 failures.
+- tests/test_gates_readonly.py -> 9 checks, 0 failures.
+- manifest --check -> 86 Python + 4 Rust.
+- manifest --run --only test_gates_w11.py -> 16/16, rc=0.
+
+Ровно 16 focused checks сохранено; main() требует failed==0 и len(RESULTS)==16.
+
+10. Внешние evidence — прочитаны, самостоятельно не перезапускались
+- e0087-review2-focused-green3.txt / -posix.txt: 16/16, temp_leak_free=True; Windows leftover_claims_copies=0.
+- e0087-review2-probes-full.txt: 34 probes, 32/32 caught, 2 N/A (runs absent), exit_code=0, leftover_before/after=0.
+- e0087-review2-probes-fast-final.txt: 17/17 caught.
+- e0087-review2-manifest-selection-green3*.txt: explicit W11 selection 16/16.
+- e0087-review2-readonly-green3.txt: 9/9.
+- e0087-review2-clean-selftest2.txt: SELFTEST_VERDICT PASS, exit_code=0, source_overlay_unchanged=True, 83 performed + 3 Linux N/A, W18 14/14.
+  Первый e0087-review2-clean-selftest.txt также дошёл до PASS, но затем его внешний clone-cleanup получил WinError 5; второй clean run завершён без этого traceback. Это cleanup внешнего review harness, не production cleanup.
+- GATES-READONLY-ROOTSAFE-R1-CORRECTION-INTEGRATION.txt: ordinary gates rc=0, 4726/4726 файлов без byte/mtime drift, __pycache__ без изменений, READONLY_SNAPSHOT PASS.
+
+11. Текущие temp leftovers после reviewer controls
+После удаления единственной reviewer-созданной hs-gates-copy-* копии:
+    gate-probe-*=0
+    hs-coverage-*=0
+    hs-gates-copy-*=0
+
+======================================================================
+ГРАНИЦЫ И НЕПРОВЕРЕННОЕ
+======================================================================
+
+- Полный bin/gate_probe.py независимо не запускался: прямой запрет пользователя соблюдён. Использованы только focused controls и чтение внешнего full-probe evidence.
+- selftest независимо не запускался: прямой запрет пользователя соблюдён. Результат взят из внешнего clean-selftest2.txt.
+- Все 86 Python + 4 Rust suites самостоятельно не прогонялись; manifest проверен, focused/regression и два смежных suite запущены отдельно.
+- Финальный real-readonly snapshot на момент revью не подтверждён: e0087-review2-readonly-source.txt всё ещё содержит старый FAIL из-за одновременной правки tests/test_gates_w11.py (changed=1), а не production mutation. Более новый correction integration PASS есть, но отдельный повторный source snapshot остаётся внешним/pending. Это не влияет на NEEDS_CHANGES, вызванный F3/F4.
+- Ambient GIT_DIR/GIT_WORK_TREE и hostile TMPDIR/TEMP внутри source root не моделировались. Внешность tempfile проверена в штатном окружении.
+- Race-аудит symlink swap между проверкой и copy не проводился.
+- Cleanup после SIGKILL/power loss не проверялся и не требуется: это явно исключено sealed prereg.
+- Содержимое реальных ignored/secret файлов не читалось; использовались Git path metadata и synthetic markers.
+- Код, тесты, отчёты, sealed prereg, registry, history и production boundary не изменялись; commit/push не выполнялись. Исторический CORRECTION-REVIEW.txt не перезаписывался. В репозитории создан только этот разрешённый final-review artifact.
+
+======================================================================
+ИТОГ
+======================================================================
+
+Финальные hash совпадают, исторические F1/F2 закрыты, focused Windows/POSIX и manifest зелёные. Тем не менее F3 допускает исполнение stale bytecode и ложный зелёный, а F4 обрывает обычный CLI gates на частичной Rust-сборке. Оба дефекта требуют исправления и регрессионных контролей до повторного review.
+
+ВЕРДИКТ: NEEDS_CHANGES

@@ -1,0 +1,137 @@
+E-0087 / W11 — correction integration после независимого review R2
+Дата: 25.11.2026
+Review baseline: 17f529ae160a1a66b4ec42559c263f9e42a7f1fd
+Экспериментальный baseline из sealed prereg: 423df52
+Sealed prereg: lab/prereg/GATES-READONLY-ROOTSAFE-R1.json
+
+ВЕРДИКТ ИНТЕГРАЦИИ: PASS
+Независимый review: PASS
+Блокирующих findings: 0
+Review artifact: research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW-R2.txt
+Исторический review с NEEDS_CHANGES сохранён: research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW.txt
+
+======================================================================
+ФИНАЛЬНЫЕ RAW SHA-256
+======================================================================
+bin/hs.py
+  df1bf491ddceadaef130cc3f6f49536836428c1d45da5d8dabe94c364004e84c
+bin/gate_probe.py
+  92f318e33b52813b36663e10fcf753518bab995ed32afaeccdd0f4d3ae1df9cf
+bin/gen_capabilities.py
+  3756a7a8b1f4b705a8d130f211c15ab5cfeb4a2160945d4c33b0eb3484cf99de
+bin/binary_version.py
+  3cd099a332ec02ed4341b9a33ea7959cdd39ffe2cae6611427ce6a6fa4ff4249
+tests/test_gates_w11.py
+  83eec8c394657992b430503a8f62344e2d408cf2dc0161f9a99a1b5abd40b328
+tests/test_gates_readonly.py
+  ee99fb14b0b7eb11efde955817a6ecb830543a2390662b6cf6e649ba5c74dd4d
+
+======================================================================
+REVIEW FINDINGS И КОНТРОЛИ
+======================================================================
+F1 — tracked-ignored force-added файлы исключаются отдельным fail-closed git-запросом.
+  Контроль: forbidden=[], probe_forbidden=[], ignored_fail_closed=True.
+  Независимый recount review R2: tracked_ignored=814, disposable_files=3915,
+  admitted_ignored=0, admitted_symlinks_or_junctions=0, outside_root_sources=0.
+
+F2 — cleanup failure не заменяет первичную ошибку.
+  Контроль: primary_sandbox=True, primary_copy=True, primary_selected=True,
+  primary_claims=True, transient_retry=True, persistent_lock_red=True,
+  creation_failed=True, partial_clean=True, temp_leak_free=True.
+
+F3 — timestamp-valid stale .pyc не подменяет source bytes.
+  Оба root-aware loader исполняют compile(data, ...) + exec(...).
+  Focused Windows/POSIX: stale_pyc_fresh=True для gate и capabilities loader.
+  Доказательство RED до исправления: runs/exp-ci-residuals/e0087-review3-focused-red.txt.
+
+F4 — script-mode MissingData не уходит в traceback.
+  binary_version.problems получает класс MissingData от hs.gate_rust.
+  Реальный subprocess со свежим synthetic rlib и отсутствующим hs-core:
+  partial_rust_cli=True, cli_stderr_tail=[]; есть штатные [FAIL] rust и summary.
+
+Ровно 16 focused checks сохранено.
+
+======================================================================
+FOCUSED И MANIFEST
+======================================================================
+Windows:
+  tests/test_gates_w11.py: 16 checks, 0 failures.
+  tests/test_gates_readonly.py: 9 checks, 0 failures.
+  tests/test_binary_version.py: 4 checks, 0 failures.
+  tests/test_capabilities.py: 4 checks, 0 failures.
+  test_manifest.py --check: 86 Python + 4 Rust entries.
+  test_manifest.py --run --only test_gates_w11.py: 16/16, rc=0.
+
+WSL/POSIX:
+  tests/test_gates_w11.py: 16 checks, 0 failures.
+  tests/test_gates_readonly.py: 9 checks, 0 failures.
+  test_manifest.py --check: 86 Python + 4 Rust entries.
+  test_manifest.py --run --only test_gates_w11.py: 16/16, rc=0.
+
+Evidence:
+  runs/exp-ci-residuals/e0087-review3-focused-green2.txt
+  runs/exp-ci-residuals/e0087-review3-focused-posix.txt
+  runs/exp-ci-residuals/e0087-review3-readonly.txt
+  runs/exp-ci-residuals/e0087-review3-binary-version.txt
+  runs/exp-ci-residuals/e0087-review3-capabilities.txt
+  runs/exp-ci-residuals/e0087-review3-manifest-check.txt
+  runs/exp-ci-residuals/e0087-review3-manifest-selection.txt
+  runs/exp-ci-residuals/e0087-review3-manifest-selection-posix.txt
+
+======================================================================
+PROBES
+======================================================================
+Full: 34 пробы; 32/32 оценённых поймали дефект; 2 N/A; rc=0.
+  N/A: journals — нет runs/; runs index — нет runs/accept/*.bin.
+FAST: 17/17 поймали дефект; rc=0.
+Reports: research/outputs/gate-probes.txt и research/outputs/gate-probes-fast.txt.
+Evidence:
+  runs/exp-ci-residuals/e0087-review3-probes-full.txt
+  runs/exp-ci-residuals/e0087-review3-probes-fast.txt
+
+======================================================================
+CLEAN DISPOSABLE WINDOWS SELFTEST
+======================================================================
+83 выполненных suites + 3 Linux N/A; 0 failed; rc=0.
+W18 controls: 14/14.
+status_after=''
+source_overlay_unchanged=True
+SELFTEST_VERDICT: PASS
+Evidence: runs/exp-ci-residuals/e0087-review3-clean-selftest.txt
+
+======================================================================
+REAL ORDINARY GATES BYTE/MTIME SNAPSHOT
+======================================================================
+Команда: python bin/hs.py gates --profile auto (без внешнего PYTHONDONTWRITEBYTECODE).
+nonignored files before/after: 4729/4729.
+changed bytes or mtime: 0.
+added: 0; removed: 0.
+__pycache__ before/after: 0/0.
+git status before/after: неизменён.
+gate rc: 0.
+профиль auto: оценено 31 из 33 гейтов; N/A 2 (журналы, индекс прогонов).
+READONLY_SNAPSHOT: PASS.
+Evidence: runs/exp-ci-residuals/e0087-review2-readonly-snapshot.txt.
+
+======================================================================
+РЕЕСТР, ПЕЧАТИ И PROTECTED BOUNDARY
+======================================================================
+prereg.py check: 76/76 sensitivity.
+seal.py verify-all: 64/64, проблем 0.
+lab.py validate: реестр связен, 87 экспериментов, следующих гипотез 7.
+verify_claims.py --fast: 322 утверждения, 0 провалов (до регистрации C-0362).
+test_manifest.py --check: 86 Python + 4 Rust.
+Protected diff против 17f529a: core-rs/src, bin/bridge.py, bin/net.py,
+  lab/prereg, lab/registry.json, lab/history, history, tests/test-manifest.json,
+  tests/test_bridge_win_isolation.py — без изменений.
+Production Rust, bridge, thresholds, sealed history и activation не менялись.
+
+======================================================================
+ГРАНИЦЫ
+======================================================================
+N/A не PASS: два probe N/A и три Linux suite N/A остаются явно неоценёнными.
+Cleanup после SIGKILL/power loss не заявляется и исключён sealed prereg.
+Hostile ambient GIT_DIR/GIT_WORK_TREE/TMPDIR и symlink swap race не моделировались.
+Полный POSIX selftest и полный CI-PASS этим локальным интеграционным отчётом не заявляются.
+Содержимое реальных ignored/secret файлов не читалось.
+Временные gate-probe-*, hs-gates-copy-*, hs-coverage-* и review clone остатки: 0.

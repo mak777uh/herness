@@ -26,11 +26,12 @@ Cargo на `/mnt/c` (DrvFs) не замечает изменение mtime и н
 from __future__ import annotations
 
 import argparse
-import pathlib
+import os
 import subprocess
 import sys
+from pathlib import Path
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "core-rs" / "src"
 # Артефакты, которые Cargo переиспользует, не замечая правок. Проверяем ОБА
 # места: target/release (тесты) и target/x86_64-unknown-linux-musl/release
@@ -43,10 +44,14 @@ TARGETS = [
 ]
 
 
-def newest_artifact() -> tuple[float, str]:
+def newest_artifact(root: Path = ROOT) -> tuple[float, str]:
     """Самый свежий артефакт ядра: rlib, тестовый бинарник или musl-бинарник."""
     latest, name = 0.0, ""
-    for target in TARGETS:
+    targets = (
+        root / "core-rs" / "target" / "release",
+        root / "core-rs" / "target" / "x86_64-unknown-linux-musl" / "release",
+    )
+    for target in targets:
         candidates = (list(target.glob("libhs_core*.rlib"))
                       + list(target.glob("deps/hs_core-*"))
                       + list(target.glob("hs-core")))
@@ -59,23 +64,23 @@ def newest_artifact() -> tuple[float, str]:
     return latest, name
 
 
-def newest_source() -> tuple[float, str]:
+def newest_source(root: Path = ROOT) -> tuple[float, str]:
     latest, name = 0.0, ""
-    for path in SRC.glob("*.rs"):
+    for path in (root / "core-rs" / "src").glob("*.rs"):
         mtime = path.stat().st_mtime
         if mtime > latest:
             latest, name = mtime, path.name
     return latest, name
 
 
-def check_fresh() -> list[str]:
+def check_fresh(root: Path = ROOT) -> list[str]:
     """Артефакт тестов должен быть свежее самого нового исходника."""
     problems: list[str] = []
-    source_mtime, source_name = newest_source()
+    source_mtime, source_name = newest_source(root)
     if not source_name:
         return ["в core-rs/src нет исходников — проверять нечего"]
 
-    artifact_mtime, artifact_name = newest_artifact()
+    artifact_mtime, artifact_name = newest_artifact(root)
     if not artifact_name:
         # Артефакта нет: тесты не собирались вовсе. Это не провал механизма,
         # а отсутствие прогона — но гейт обязан это назвать, а не промолчать.
@@ -91,11 +96,14 @@ def check_fresh() -> list[str]:
     return problems
 
 
-def run_full() -> list[str]:
+def run_full(root: Path = ROOT) -> list[str]:
     """Полный прогон: bin/rust_tests.py чистит артефакты и гоняет тесты в WSL."""
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     result = subprocess.run(
-        [sys.executable, str(ROOT / "bin" / "rust_tests.py")],
-        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=900,
+        [sys.executable, str(root / "bin" / "rust_tests.py")],
+        cwd=root, env=env, capture_output=True, text=True, encoding="utf-8",
+        errors="replace", timeout=900,
     )
     if result.returncode == 0:
         return []

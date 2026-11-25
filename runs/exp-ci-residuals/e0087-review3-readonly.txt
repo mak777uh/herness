@@ -1,0 +1,10 @@
+[ok] обычный gates не вызывает sentinel probe-runner и не печатает probe summary
+[ok] legacy --no-probes принимается и также не вызывает probe-runner
+[ok] обычный gates не пишет gate-probes-fast.txt через probe-runner
+[ok] обычный gates сохраняет exact bytes lab/prereg, registry, Rust source и docs
+[ok] обычный gates сохраняет mtime всех IN_PLACE fixture файлов
+[ok] настоящий gate FAIL остаётся rc=1 без добавления probe verdict
+[ok] auto N/A остаётся rc=0, full N/A становится FAIL rc=1 без probes
+[ok] явный probe-runner по-прежнему ловит seeded defect и пишет отдельный отчёт
+[ok] явный probe-runner возвращает rc=1, когда gate не замечает дефект
+проверок: 9; провалов: 0

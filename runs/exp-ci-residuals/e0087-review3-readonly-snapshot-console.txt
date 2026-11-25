@@ -1,0 +1,54 @@
+E-0087 review2 — REAL ORDINARY GATES BYTE/MTIME SNAPSHOT
+Команда: python bin/hs.py gates --profile auto (без внешнего PYTHONDONTWRITEBYTECODE)
+nonignored files before/after: 4729/4729
+changed bytes or mtime: 0 []
+added: 0 []
+removed: 0 []
+__pycache__ before/after: 0/0
+cache_changed=[]
+cache_added=[]
+cache_removed=[]
+status_before=' M bin/binary_version.py\n M bin/build_reviews_index.py\n M bin/gate_docs.py\n M bin/gate_probe.py\n M bin/gate_rust.py\n M bin/gen_capabilities.py\n M bin/hs.py\n M bin/lab.py\n M bin/prereg.py\n M research/outputs/gate-probes-fast.txt\n M research/outputs/gate-probes.txt\n M tests/test_gates_readonly.py\n M tests/test_gates_w11.py\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-INTEGRATION.txt\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-REVIEW.txt\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW.txt\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-INTEGRATION.txt\n'
+status_after=' M bin/binary_version.py\n M bin/build_reviews_index.py\n M bin/gate_docs.py\n M bin/gate_probe.py\n M bin/gate_rust.py\n M bin/gen_capabilities.py\n M bin/hs.py\n M bin/lab.py\n M bin/prereg.py\n M research/outputs/gate-probes-fast.txt\n M research/outputs/gate-probes.txt\n M tests/test_gates_readonly.py\n M tests/test_gates_w11.py\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-INTEGRATION.txt\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-REVIEW.txt\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW.txt\n?? research/outputs/GATES-READONLY-ROOTSAFE-R1-INTEGRATION.txt\n'
+gate rc: 0
+--- gates stdout ---
+[ok] секреты: 0 проблем
+[ok] критерии: 0 проблем
+[ok] отказы: 0 проблем
+[ok] политика: 0 проблем
+[ok] модели: 0 проблем
+[ok] утверждения-проверка: 0 проблем
+[ok] самоссылка: 0 проблем
+[N/A] журналы: журналы есть, но ни одного с цепочкой событий: проверять нечего
+[ok] автономия: 0 проблем
+[ok] способности: 0 проблем
+[ok] компиляция: 0 проблем
+[ok] векторы: 0 проблем
+[ok] требования: 0 проблем
+[ok] rust: 0 проблем
+[ok] утверждения: 0 проблем
+[ok] ссылки: 0 проблем
+[ok] аудит: 0 проблем
+[ok] процедуры: 0 проблем
+[ok] формулировки: 0 проблем
+[ok] README: 0 проблем
+[ok] харнессы: 0 проблем
+[ok] глубины: 0 проблем
+[ok] решения: 0 проблем
+[ok] ядро утверждений: 0 проблем
+[ok] рецензии: 0 проблем
+[ok] пре-регистрация: 0 проблем
+[ok] лаборатория: 0 проблем
+[ok] печати: 0 проблем
+[ok] отсутствие: 0 проблем
+[ok] покрытие: 0 проблем
+[ok] большие файлы: 0 проблем
+[N/A] индекс прогонов: нет runs/accept/*.bin: журналов для индекса в клоне нет
+[ok] документы: 0 проблем
+
+профиль auto: оценено 31 из 33 гейтов; N/A 2 (журналы, индекс прогонов)
+N/A — не «зелёный»: проверка не состоялась. Полный профиль: --profile full
+
+--- gates stderr ---
+
+READONLY_SNAPSHOT: PASS

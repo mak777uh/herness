@@ -27,9 +27,10 @@ def parse_file(path: Path) -> dict:
     return data
 
 
-def collect() -> tuple[list[dict], list[str]]:
+def collect(root: Path = ROOT) -> tuple[list[dict], list[str]]:
     entries, problems = [], []
-    for path in sorted(REVIEWS.glob("*.md")):
+    reviews = root / "lab" / "reviews"
+    for path in sorted(reviews.glob("*.md")):
         if path.name == "README.md":
             continue
         item = parse_file(path)
@@ -47,8 +48,8 @@ def collect() -> tuple[list[dict], list[str]]:
     return entries, problems
 
 
-def write_index(entries: list[dict]) -> Path:
-    target = REVIEWS / "index.json"
+def write_index(entries: list[dict], root: Path = ROOT) -> Path:
+    target = root / "lab" / "reviews" / "index.json"
     payload = {"count": len(entries),
                "by_verdict": {verdict: sum(1 for item in entries if item.get("verdict") == verdict)
                               for verdict in sorted(VERDICTS)},
@@ -60,9 +61,9 @@ def write_index(entries: list[dict]) -> Path:
     return target
 
 
-def main() -> int:
-    entries, problems = collect()
-    target = write_index(entries)
+def main(root: Path = ROOT) -> int:
+    entries, problems = collect(root)
+    target = write_index(entries, root)
     counts = {verdict: sum(1 for item in entries if item.get("verdict") == verdict)
               for verdict in sorted(VERDICTS)}
     print(f"рецензий: {len(entries)} | upheld {counts['upheld']}, killed {counts['killed']}, "

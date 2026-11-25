@@ -107,29 +107,29 @@ def entries(prereg_dir: Path = PREREG, root: Path = ROOT) -> tuple[list[dict], l
     return items, problems
 
 
-def experiment_dirs() -> list[Path]:
-    runs = ROOT / "runs"
+def experiment_dirs(root: Path = ROOT) -> list[Path]:
+    runs = root / "runs"
     if not runs.exists():
         return []
     return sorted(path for path in runs.iterdir() if path.is_dir() and path.name.startswith(("exp", "batch")))
 
 
-def debt(items: list[dict]) -> list[str]:
+def debt(items: list[dict], root: Path = ROOT) -> list[str]:
     registered = {run for item in items for run in item.get("runs", [])}
     result = []
-    for directory in experiment_dirs():
+    for directory in experiment_dirs(root):
         relative = f"runs/{directory.name}"
         if relative not in registered:
             result.append(relative)
     return result
 
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str], root: Path = ROOT) -> int:
     command = argv[0] if argv else "check"
-    items, problems = entries()
+    items, problems = entries(root / "lab" / "prereg", root)
 
     if command == "debt":
-        missing = debt(items)
+        missing = debt(items, root)
         print(f"пре-регистраций: {len(items)} | экспериментов без регистрации: {len(missing)}")
         for path in missing[:20]:
             print(" ", path)

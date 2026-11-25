@@ -8,13 +8,16 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import ctypes
 import hashlib
+import importlib.util
 import json
 import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -75,6 +78,203 @@ def first_line(text: str) -> str:
         if line:
             return line
     return ""
+
+
+# ---------------------------------------------------------------- read-only helpers
+
+COPY_IGNORED_DIRS = {
+    ".git", "__pycache__", ".venv", "venv", "node_modules", "target",
+    ".pytest_cache", ".mypy_cache", ".ruff_cache", ".secrets", ".ssh",
+    "home", "runs", "refs-cache",
+}
+DISPOSABLE_DENY_SUFFIXES = {".pem", ".key", ".pfx", ".p12", ".kdbx", ".pyc", ".pyo"}
+DISPOSABLE_DENY_NAMES = {
+    ".env", ".gh-token", ".npmrc", ".pypirc", ".netrc", "credentials.yaml",
+    ".credentials.yaml", "credentials.json", "id_rsa", "id_ed25519",
+}
+
+
+def gate_env() -> dict[str, str]:
+    """Окружение subprocess: UTF-8 и никаких bytecode-артефактов в проверяемом root."""
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
+
+
+@contextlib.contextmanager
+def no_bytecode():
+    previous_flag = sys.dont_write_bytecode
+    previous_env = os.environ.get("PYTHONDONTWRITEBYTECODE")
+    sys.dont_write_bytecode = True
+    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+    try:
+        yield
+    finally:
+        sys.dont_write_bytecode = previous_flag
+        if previous_env is None:
+            os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
+        else:
+            os.environ["PYTHONDONTWRITEBYTECODE"] = previous_env
+
+
+def load_gate_module(root: Path, relative: str):
+    """Загрузить validator именно из root, не из sys.modules другого checkout.
+
+    Имя модуля включает digest байтов: повторный вызов после правки не получает
+    cached старый код. Регистрация в sys.modules нужна dataclasses и импортам.
+    Исполняются только прочитанные source bytes: timestamp-valid `.pyc` не имеет
+    права подменить их и дать ложный зелёный (E-0087 review F3).
+    """
+    root = Path(root).resolve()
+    path = (root / relative).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"gate module вне root: {relative}") from exc
+    data = path.read_bytes()
+    token = hashlib.sha256(str(path).encode("utf-8") + b"\0" + data).hexdigest()[:20]
+    name = "_herness_gate_" + token
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"не удалось загрузить {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    previous = sys.dont_write_bytecode
+    previous_path = sys.path[:]
+    sys.dont_write_bytecode = True
+    try:
+        code = compile(data, str(path), "exec", dont_inherit=True)
+        exec(code, module.__dict__)
+    finally:
+        sys.dont_write_bytecode = previous
+        sys.path[:] = previous_path
+    return module
+
+
+def remove_disposable(path: Path) -> None:
+    """Удалить только нашу temp-копию, включая read-only файлы Windows checkout."""
+    def make_writable(function, filename, _exc_info):
+        os.chmod(filename, stat.S_IWRITE | stat.S_IREAD)
+        function(filename)
+
+    shutil.rmtree(path, onerror=make_writable)
+
+
+def cleanup_disposable(path: Path, primary: BaseException, remover=None) -> None:
+    """Cleanup после ошибки не подменяет её ошибкой удаления.
+
+    При успешном cleanup исходное исключение продолжает unwind. При неуспешном
+    оно повторно выбрасывается с cleanup-заметкой и явным cause; ни первичная
+    причина, ни факт неудачного cleanup не теряются.
+    """
+    try:
+        (remove_disposable if remover is None else remover)(path)
+    except BaseException as cleanup:
+        detail = f"disposable cleanup failed: {type(cleanup).__name__}: {cleanup}"
+        add_note = getattr(primary, "add_note", None)
+        if add_note is not None:
+            add_note(detail)
+        raise primary from cleanup
+
+
+def _path_is_link(path: Path) -> bool:
+    """Symlink или Windows junction/reparse point: оба не копируются."""
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    return bool(is_junction and is_junction())
+
+
+def _disposable_denied(relative: Path) -> bool:
+    parts = {part.lower() for part in relative.parts}
+    return bool(parts & COPY_IGNORED_DIRS) or relative.name.lower() in DISPOSABLE_DENY_NAMES \
+        or relative.suffix.lower() in DISPOSABLE_DENY_SUFFIXES
+
+
+def _disposable_source(root: Path, relative: Path) -> Path | None:
+    """Вернуть только существующий обычный файл внутри root без symlink-компонентов."""
+    relative = Path(relative)
+    if relative.is_absolute() or ".." in relative.parts or _disposable_denied(relative):
+        return None
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if _path_is_link(current):
+            return None
+    source = root / relative
+    try:
+        source.resolve(strict=True).relative_to(root)
+    except (OSError, RuntimeError, ValueError):
+        return None
+    return source if source.is_file() else None
+
+
+def disposable_files(root: Path) -> list[tuple[Path, Path]]:
+    """Tracked + nonignored untracked файлы root; fail-closed вне git worktree.
+
+    Игнорируемые и секретные зоны не попадают в disposable copy даже если они
+    случайно force-added. Symlink-файлы и symlink-компоненты пути не копируются.
+    """
+    root = Path(root).resolve()
+
+    def git_names(arguments: list[str], label: str) -> set[str]:
+        try:
+            listed = subprocess.run(
+                ["git", "ls-files", *arguments, "-z"],
+                cwd=str(root), capture_output=True, timeout=60, env=gate_env(),
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise MissingData(f"disposable copy: git ls-files {label} недоступен: {type(exc).__name__}") from exc
+        if listed.returncode != 0:
+            detail = listed.stderr.decode("utf-8", "replace").strip().splitlines()
+            raise MissingData(
+                f"disposable copy: git ls-files {label} отказал ({detail[0] if detail else 'git error'})")
+        return {name for name in listed.stdout.decode("utf-8", "surrogateescape").split("\0") if name}
+
+    # --exclude-standard не убирает cached-файл, который ранее был force-added
+    # в ignored-зону. Поэтому ignored-tracked вычитается отдельным fail-closed
+    # запросом, а не только фиксированным denylist имён/каталогов.
+    names = git_names(["-c", "-o", "--exclude-standard"], "allowed")
+    ignored = git_names(["-c", "-i", "--exclude-standard"], "ignored")
+    files: list[tuple[Path, Path]] = []
+    for name in sorted(names - ignored):
+        relative = Path(name)
+        source = _disposable_source(root, relative)
+        if source is not None:
+            files.append((relative, source))
+    return sorted(files, key=lambda item: item[0].as_posix())
+
+
+def disposable_copy(root: Path) -> Path:
+    """Exact-byte/mtime копия safe worktree вне root для mutating claim commands.
+
+    Берутся только tracked и nonignored untracked файлы. Ignored/cache/build,
+    home/runs, секретные имена и любые symlink исключаются. Source root только
+    читается; ошибка подготовки удаляет частичный temp-каталог.
+    """
+    root = Path(root).resolve()
+    files = disposable_files(root)
+    target = Path(tempfile.mkdtemp(prefix="hs-gates-copy-"))
+    try:
+        target.resolve().relative_to(root)
+    except ValueError:
+        pass
+    else:
+        primary = RuntimeError("disposable copy оказался внутри source root")
+        cleanup_disposable(target, primary)
+        raise primary
+    try:
+        for relative, source in files:
+            if _path_is_link(source):
+                raise RuntimeError(f"disposable copy: источник стал symlink: {relative.as_posix()}")
+            destination = target / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination, follow_symlinks=False)
+        return target
+    except BaseException as exc:
+        cleanup_disposable(target, exc)
+        raise
 
 
 def cli_path() -> Path | None:
@@ -455,9 +655,7 @@ def gate_links(root: Path) -> list[str]:
 
 
 def gate_criteria(root: Path) -> list[str]:
-    sys.path.insert(0, str(ROOT))
-    from core import criteria
-    return criteria.problems(root)
+    return load_gate_module(root, "core/criteria.py").problems(root)
 
 
 def cmd_refs(args) -> int:
@@ -566,9 +764,7 @@ def cmd_criteria(args) -> int:
 
 
 def gate_audit(root: Path) -> list[str]:
-    sys.path.insert(0, str(ROOT))
-    from core import audit
-    return audit.problems(root)
+    return load_gate_module(root, "core/audit.py").problems(root)
 
 
 def cmd_audit(args) -> int:
@@ -669,9 +865,7 @@ def cmd_ping(args) -> int:
 
 
 def gate_failures(root: Path) -> list[str]:
-    sys.path.insert(0, str(ROOT))
-    from core import failures
-    return failures.problems(root)
+    return load_gate_module(root, "core/failures.py").problems(root)
 
 
 def cmd_failures(args) -> int:
@@ -722,9 +916,8 @@ def cmd_execute(args) -> int:
 
 def gate_journals(root: Path) -> list[str]:
     """Цепочка журналов не должна быть нарушена: иначе свидетельствам нельзя верить."""
-    sys.path.insert(0, str(root))
     try:
-        from bin.verify_journal import verify_run
+        verify_run = load_gate_module(root, "bin/verify_journal.py").verify_run
     except Exception as exc:  # noqa: BLE001
         return [f"проверка журналов недоступна: {type(exc).__name__}"]
     problems = []
@@ -1300,19 +1493,30 @@ def gate_models(root: Path) -> list[str]:
 
 
 def gate_claims_run(root: Path) -> list[str]:
-    """Быстрая проверка утверждений внутри гейтов.
+    """Быстрая проверка утверждений внутри гейтов, только на disposable копии.
 
     Аудит 29.10: «0 провалов держится на том, что запускать некому». Гейт запускает проверку сам;
     сетевые и тяжёлые команды в быстром режиме пропускаются, полный прогон остаётся в CI.
+    Некоторые fast commands пересобирают производные файлы, поэтому source root не исполняет их.
     """
-    import subprocess
-
     script = root / "bin" / "verify_claims.py"
     if not script.exists():
         return ["нет bin/verify_claims.py"]
-    proc = subprocess.run([__import__("sys").executable, str(script), "--fast"],
-                          cwd=str(root), capture_output=True, text=True, timeout=900,
-                          encoding="utf-8", errors="replace")
+    clean = disposable_copy(root)
+    primary = None
+    try:
+        copied_script = clean / "bin" / "verify_claims.py"
+        proc = subprocess.run([sys.executable, str(copied_script), "--fast"],
+                              cwd=str(clean), capture_output=True, text=True, timeout=900,
+                              encoding="utf-8", errors="replace", env=gate_env())
+    except BaseException as exc:
+        primary = exc
+        raise
+    finally:
+        if primary is None:
+            remove_disposable(clean)
+        else:
+            cleanup_disposable(clean, primary)
     if proc.returncode == 0:
         return []
     # Число без имени — не результат: гейт обязан назвать упавшее утверждение,
@@ -1358,6 +1562,7 @@ def gate_core_claims(root: Path) -> list[str]:
         return ["нет bin/core_claims.py"]
     result = subprocess.run(
         [sys.executable, str(script)], capture_output=True, text=True, encoding="utf-8", cwd=root,
+        env=gate_env(),
     )
     if result.returncode == 0:
         return []
@@ -1376,6 +1581,7 @@ def gate_adoptions(root: Path) -> list[str]:
         result = subprocess.run(
             [sys.executable, str(script), *extra],
             capture_output=True, text=True, encoding="utf-8", cwd=root,
+            env=gate_env(),
         )
         if result.returncode != 0:
             label = "self-test" if extra else "склад решений"
@@ -1394,6 +1600,7 @@ def gate_autonomy(root: Path) -> list[str]:
     result = subprocess.run(
         [sys.executable, str(script), "--staged"],
         capture_output=True, text=True, encoding="utf-8", cwd=root,
+        env=gate_env(),
     )
     if result.returncode == 0:
         return []
@@ -1408,14 +1615,16 @@ def gate_docs(root: Path) -> list[str]:
     «45 решений» при 53 ADR. Гейт README сверяет число с CLAIMS.md, но не с
     файлом; здесь сверка идёт с самими реестрами.
     """
-    from bin.gate_docs import main as docs_main
-
     import io
-    import contextlib
+
+    try:
+        docs_main = load_gate_module(root, "bin/gate_docs.py").main
+    except Exception as exc:  # noqa: BLE001
+        return [f"проверка документов недоступна: {type(exc).__name__}: {exc}"]
 
     buffer = io.StringIO()
     with contextlib.redirect_stdout(buffer):
-        code = docs_main()
+        code = docs_main(root)
     if code == 0:
         return []
     lines = [line.strip().lstrip("- ").strip() for line in buffer.getvalue().splitlines()
@@ -1431,20 +1640,19 @@ def gate_rust(root: Path) -> list[str]:
     Полный прогон в WSL — отдельно: python bin/gate_rust.py --rust (около 70 с,
     поэтому не в каждом прогоне гейтов).
     """
-    from bin.gate_rust import check_fresh
-
-    problems = check_fresh()
+    try:
+        problems = load_gate_module(root, "bin/gate_rust.py").check_fresh(root)
+    except Exception as exc:  # noqa: BLE001
+        return [f"проверка Rust недоступна: {type(exc).__name__}: {exc}"]
     # Артефакта нет вовсе — это не дрейф, а «в этом окружении не собирали».
     # Дрейф (артефакт есть, но старше исходника) остаётся провалом в любом профиле.
     if problems and all("нет артефактов ядра" in p for p in problems):
         raise MissingData("нет core-rs/target/release: Rust-тесты в этом окружении не собирались")
 
     # F-0087: свежести мало. Бинарник мог быть собран из кода, где формат журнала ещё старый.
-    sys.path.insert(0, str(ROOT))
-    from bin.binary_version import problems as binary_problems
-
     try:
-        problems += binary_problems(ROOT)
+        binary_problems = load_gate_module(root, "bin/binary_version.py").problems
+        problems += binary_problems(root, missing_data=MissingData)
     except MissingData as exc:
         # Артефакты ядра есть, а писателя журнала нет: сборка неполная.
         problems.append(str(exc))
@@ -1460,7 +1668,7 @@ def gate_policy_parity(root: Path) -> list[str]:
     result = subprocess.run(
         [sys.executable, str(root / "bin" / "check_policy_parity.py"), "--check"],
         cwd=str(root), capture_output=True, text=True, encoding="utf-8",
-        errors="replace", timeout=120,
+        errors="replace", timeout=120, env=gate_env(),
     )
     if result.returncode == 0:
         return []
@@ -1477,7 +1685,7 @@ def gate_requirements(root: Path) -> list[str]:
     if not script.exists():
         return ["нет bin/gate_requirements.py"]
     result = subprocess.run([sys.executable, str(script)], capture_output=True, text=True,
-                            encoding="utf-8", cwd=root)
+                            encoding="utf-8", cwd=root, env=gate_env())
     if result.returncode == 0:
         return []
     return [line.strip(" -") for line in (result.stdout or "").splitlines()
@@ -1503,34 +1711,27 @@ def gate_capabilities(root: Path) -> list[str]:
     path = root / "capabilities.json"
     if not path.exists():
         return ["нет capabilities.json"]
-    sys.path.insert(0, str(root))
     try:
-        from bin.gen_capabilities import build
+        generator = load_gate_module(root, "bin/gen_capabilities.py")
+        expected = generator.build(root)
     except Exception as exc:  # noqa: BLE001
-        return [f"генератор способностей недоступен: {type(exc).__name__}"]
-    expected = build()
+        return [f"генератор способностей недоступен: {type(exc).__name__}: {exc}"]
     actual = json.loads(path.read_text(encoding="utf-8"))
     problems = []
     if expected["tools"] != actual.get("tools"):
         problems.append("список инструментов в capabilities.json расходится с кодом")
     if expected["workflow"] != actual.get("workflow"):
         problems.append("список шагов воркфлоу расходится с кодом")
-    # у каждого инструмента роутера должна быть памятка о возможностях
-    from core.tools import GrepTool, ListTool, ReadTool, ShellTool
-    for cls in (ShellTool, ReadTool, GrepTool, ListTool):
-        if not getattr(cls, "meta", None):
-            problems.append(f"у {cls.__name__} нет meta: инструмент не описывает себя")
     return problems
 
 
 def gate_reviews(root: Path) -> list[str]:
     """Рецензии: поля на месте, вердикт из словаря, индекс не разошёлся с файлами."""
-    sys.path.insert(0, str(root))
     try:
-        from bin.build_reviews_index import collect
+        collect = load_gate_module(root, "bin/build_reviews_index.py").collect
+        entries, problems = collect(root)
     except Exception as exc:  # noqa: BLE001
-        return [f"сборщик рецензий недоступен: {type(exc).__name__}"]
-    entries, problems = collect()
+        return [f"сборщик рецензий недоступен: {type(exc).__name__}: {exc}"]
     index_path = root / "lab" / "reviews" / "index.json"
     if not index_path.exists():
         problems.append("нет lab/reviews/index.json: пересобрать build_reviews_index.py")
@@ -1545,25 +1746,23 @@ def gate_reviews(root: Path) -> list[str]:
 
 def gate_prereg(root: Path) -> list[str]:
     """Пре-регистрация: обязательные поля на месте, закрытие — только с выводом."""
-    sys.path.insert(0, str(root))
     try:
-        from bin.prereg import entries
+        entries = load_gate_module(root, "bin/prereg.py").entries
+        _items, problems = entries(root / "lab" / "prereg", root)
     except Exception as exc:  # noqa: BLE001
-        return [f"проверка пре-регистраций недоступна: {type(exc).__name__}"]
-    _items, problems = entries()
+        return [f"проверка пре-регистраций недоступна: {type(exc).__name__}: {exc}"]
     return problems
 
 
 def gate_lab(root: Path) -> list[str]:
     """Реестр программы: фаза, следующие гипотезы, связь экспериментов с отчётами и утверждениями."""
-    sys.path.insert(0, str(root))
-    try:
-        from bin.lab import load, validate
-    except Exception as exc:  # noqa: BLE001
-        return [f"валидатор лаборатории недоступен: {type(exc).__name__}"]
     if not (root / "lab" / "registry.json").exists():
         return ["нет lab/registry.json"]
-    return validate(load())
+    try:
+        laboratory = load_gate_module(root, "bin/lab.py")
+        return laboratory.validate(laboratory.load(root), root)
+    except Exception as exc:  # noqa: BLE001
+        return [f"валидатор лаборатории недоступен: {type(exc).__name__}: {exc}"]
 
 
 def cmd_supervise(args) -> int:
@@ -1593,9 +1792,8 @@ def cmd_lab(args) -> int:
 
 def gate_seals(root: Path) -> list[str]:
     """Печати: sidecar обязан сходиться с каноническим префиксом файла (fail-closed)."""
-    sys.path.insert(0, str(root))
     try:
-        from bin.seal import verify_all
+        verify_all = load_gate_module(root, "bin/seal.py").verify_all
     except Exception as exc:  # noqa: BLE001
         return [f"проверка печатей недоступна: {type(exc).__name__}"]
     problems = verify_all(root)
@@ -1631,18 +1829,17 @@ def gate_compile(root: Path) -> list[str]:
     Синтаксис ломается незаметно, а абсолютный путь к своему каталогу ломает тише:
     код зелёный, но проверяет другой репозиторий (F-0092, F-0093).
     """
-    import py_compile
-
     problems = []
     for path in sorted(list((root / "bin").glob("*.py")) + list((root / "core").glob("*.py"))):
         try:
-            py_compile.compile(str(path), doraise=True)
-        except py_compile.PyCompileError as exc:
-            problems.append(f"{path.name}: {str(exc.msg).splitlines()[-1][:90]}")
-    sys.path.insert(0, str(ROOT))
-    from bin.check_abs_paths import problems as abs_path_problems
-
-    problems += abs_path_problems(root)
+            compile(path.read_bytes(), str(path), "exec")
+        except SyntaxError as exc:
+            problems.append(f"{path.name}: {exc.msg}")
+    try:
+        abs_path_problems = load_gate_module(root, "bin/check_abs_paths.py").problems
+        problems += abs_path_problems(root)
+    except Exception as exc:  # noqa: BLE001
+        problems.append(f"проверка абсолютных путей недоступна: {type(exc).__name__}: {exc}")
     return problems
 
 
@@ -1650,8 +1847,7 @@ def gate_vectors(root: Path) -> list[str]:
     """Замороженные векторы должны воспроизводиться: иначе контракт для Rust сломан."""
     import hashlib
 
-    sys.path.insert(0, str(root))
-    from bin.seal import canonical
+    canonical = load_gate_module(root, "bin/seal.py").canonical
 
     problems = []
     vectors = root / "tests" / "vectors"
@@ -1686,8 +1882,6 @@ def gate_vectors(root: Path) -> list[str]:
 
 def gate_coverage(root: Path) -> list[str]:
     """Артефакт покрытия обязан совпадать с живым пересчётом по CLAIMS.md."""
-    import subprocess
-
     artifact = root / "research" / "claims-coverage.json"
     claims = root / "CLAIMS.md"
     if not claims.exists():
@@ -1695,15 +1889,15 @@ def gate_coverage(root: Path) -> list[str]:
     if not artifact.exists():
         return ["нет research/claims-coverage.json"]
     stored = json.loads(artifact.read_text(encoding="utf-8"))
-    probe = subprocess.run([__import__("sys").executable, str(root / "bin" / "coverage.py"),
-                            str(claims), "--out", str(root / "research" / "claims-coverage.tmp.json")],
-                           cwd=str(root), capture_output=True, text=True, timeout=300,
-                           encoding="utf-8", errors="replace")
-    fresh_path = root / "research" / "claims-coverage.tmp.json"
-    if probe.returncode not in (0, 1) or not fresh_path.exists():
-        return [f"пересчёт покрытия не удался: {probe.stderr.strip()[:80]}"]
-    fresh = json.loads(fresh_path.read_text(encoding="utf-8"))
-    fresh_path.unlink(missing_ok=True)
+    with tempfile.TemporaryDirectory(prefix="hs-coverage-") as temporary:
+        fresh_path = Path(temporary) / "claims-coverage.json"
+        probe = subprocess.run([sys.executable, str(root / "bin" / "coverage.py"),
+                                str(claims), "--out", str(fresh_path)],
+                               cwd=str(root), capture_output=True, text=True, timeout=300,
+                               encoding="utf-8", errors="replace", env=gate_env())
+        if probe.returncode not in (0, 1) or not fresh_path.exists():
+            return [f"пересчёт покрытия не удался: {probe.stderr.strip()[:80]}"]
+        fresh = json.loads(fresh_path.read_text(encoding="utf-8"))
     problems = []
     # Дрейф-гейт: артефакт обязан совпадать с живым пересчётом. С ADR-0058 сверяем и строгие
     # поля (strict_coverage/weak_expects/descriptive_artifacts) — иначе прибор мог бы молча
@@ -1717,9 +1911,7 @@ def gate_coverage(root: Path) -> list[str]:
 
 def gate_selfref(root: Path) -> list[str]:
     """Храповик самоссылочных утверждений: новых быть не может, старые обязаны убывать."""
-    sys.path.insert(0, str(ROOT))
-    from bin import selfref
-    return selfref.problems(root)
+    return load_gate_module(root, "bin/selfref.py").problems(root)
 
 
 def gate_bigfiles(root: Path) -> list[str]:
@@ -1765,7 +1957,8 @@ def gate_runs_index(root: Path) -> list[str]:
     if not script.exists():
         return ["нет bin/runs_index.py"]
     result = subprocess.run([sys.executable, str(script), "--check"],
-                            capture_output=True, text=True, encoding="utf-8", cwd=root)
+                            capture_output=True, text=True, encoding="utf-8", cwd=root,
+                            env=gate_env())
     if result.returncode == 0:
         return []
     return [line.strip(" -") for line in (result.stdout or "").splitlines() if line.strip().startswith("-")][:10] \
@@ -1807,26 +2000,27 @@ def cmd_gates(args) -> int:
     total = 0
     profile = getattr(args, "profile", "auto")
     skipped: list[tuple[str, str]] = []
-    for name, fn in checks:
-        try:
-            problems = fn(root)
-        except MissingData as exc:
-            # Гейт не может быть оценён здесь: данных нет. Это не «ok» и не «FAIL».
-            if profile == "full":
-                total += 1
-                print(f"[FAIL] {name}: 1 проблем")
-                print(f"   - {exc.reason} (профиль full: отсутствие данных считается провалом)")
-            else:
-                skipped.append((name, exc.reason))
-                print(f"[N/A] {name}: {exc.reason}")
-            continue
-        total += len(problems)
-        print(f"[{'ok' if not problems else 'FAIL'}] {name}: {len(problems)} проблем")
-        for p in problems[:20]:
-            print(f"   - {p}")
+    with no_bytecode():
+        for name, fn in checks:
+            try:
+                problems = fn(root)
+            except MissingData as exc:
+                # Гейт не может быть оценён здесь: данных нет. Это не «ok» и не «FAIL».
+                if profile == "full":
+                    total += 1
+                    print(f"[FAIL] {name}: 1 проблем")
+                    print(f"   - {exc.reason} (профиль full: отсутствие данных считается провалом)")
+                else:
+                    skipped.append((name, exc.reason))
+                    print(f"[N/A] {name}: {exc.reason}")
+                continue
+            total += len(problems)
+            print(f"[{'ok' if not problems else 'FAIL'}] {name}: {len(problems)} проблем")
+            for p in problems[:20]:
+                print(f"   - {p}")
     # Mutation probes — отдельный явный self-test: bin/gate_probe.py. Обычный gates
     # не мутирует worktree через probes и не перезаписывает их report. --no-probes
-    # сохранён как legacy flag; полный read-only контур W11 ещё не закрыт.
+    # сохранён как legacy flag; read-only критерий проверяет E-0087 отдельно.
     evaluated = len(checks) - len(skipped)
     tail = f"; N/A {len(skipped)} ({', '.join(name for name, _ in skipped)})" if skipped else ""
     print(f"\nпрофиль {profile}: оценено {evaluated} из {len(checks)} гейтов{tail}")
@@ -1952,6 +2146,11 @@ def cmd_selftest(args) -> int:
         docs = Path(tmp3) / "docs"
         docs.mkdir(parents=True)
         (docs / "CRITERIA.md").write_text("| K9 | нечто | неизвестно | | |\n", encoding="utf-8")
+        # Root-aware validator.loader читает и код, и данные из переданного root.
+        # В synthetic fixture поэтому нужен код критерия, а не только CRITERIA.md.
+        criteria_code = Path(tmp3) / "core" / "criteria.py"
+        criteria_code.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / "core" / "criteria.py", criteria_code)
         issues = gate_criteria(Path(tmp3))
         results.append((len(issues) >= 1, f"реестр критериев отбивает строку без способа установления ({len(issues)} замечаний)"))
 

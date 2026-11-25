@@ -1,0 +1,18 @@
+[ok] docs/root validators: docs=[]/['docs/CONTINUE.md: заявлено 1, фактически 2 (CLAIMS.md)', 'docs/CONTINUE.md: вернули число 1 для CLAIMS.md, а фактически 2'], controls=7/7, bad={}, origin=['criteria-code-B']/['seal-code-B'], stale_pyc_fresh=True
+[ok] lab dual-root: a=[], b=['program.next_hypotheses пуст: не сказано, что дальше']
+[ok] prereg dual-root: a=[], b=['P-1.json: нет полей id, date, question, hypothesis, criterion, arms, sensitivity']
+[ok] reviews dual-root: a=[], b=["R-1.md: вердикт 'maybe' вне словаря"]
+[ok] capabilities dual-root: a=[], b=['список инструментов в capabilities.json расходится с кодом'], stale_pyc_fresh=True
+[ok] rust dual-root: a=[], b=['артефакт libhs_core.rlib старше исходника journal.rs: тесты исполнялись над прежним кодом (F-BUILD-1). Запусти: python bin/rust_tests.py']
+[ok] compile wrote or failed: [], changed=[]
+[ok] coverage output=C:\Users\Admin\AppData\Local\Temp\hs-coverage-fw66hpak\claims-coverage.json, outside=True, problems=[]
+[ok] claims disposable: copied=5, forbidden=[], probe_forbidden=[], link_rejected=True, ignored_fail_closed=True, derived=False, problems=[]
+[ok] gate-loop rc=0, direct=[]/[], env=6/6, partial_rust_cli=True, bytecode=[], cli_stderr_tail=[]
+[ok] unknown rc=2, sandbox_called=False, report=False
+[ok] selection auto=1, full=3, rc=0/0
+[ok] all-N/A rc=1
+[ok] in-place rc=0, sandboxes=1, source_changed=False
+[ok] second runner blocked=True, child_rc=3
+[ok] exception=True, cleaned=True, weak_rc=1, safe_sandbox=True, creation_failed=True, partial_clean=True, transient_retry=True, persistent_lock_red=True, primary_sandbox=True, primary_copy=True, primary_selected=True, primary_claims=True, temp_leak_free=True
+
+16 checks, 0 failures

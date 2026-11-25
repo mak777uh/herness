@@ -14,11 +14,11 @@
 
 from __future__ import annotations
 
-import pathlib
 import re
 import sys
+from pathlib import Path
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 
 # Что где заявлено и как посчитать фактическое.
 CHECKS = [
@@ -29,17 +29,17 @@ CHECKS = [
 ]
 
 
-def count_rows(path: pathlib.Path, pattern: str) -> int:
+def count_rows(path: Path, pattern: str) -> int:
     if not path.exists():
         return -1
     return len(re.findall(pattern, path.read_text(encoding="utf-8", errors="replace"), re.M))
 
 
-def main() -> int:
+def main(root: Path = ROOT) -> int:
     problems: list[str] = []
     checked = 0
     for doc, claim_pattern, target, row_pattern in CHECKS:
-        path = ROOT / doc
+        path = root / doc
         if not path.exists():
             problems.append(f"нет документа {doc}")
             continue
@@ -50,9 +50,9 @@ def main() -> int:
         claimed = int(match.group(1))
         if target is None:
             # ADR считаем по файлам.
-            actual = len(list((ROOT / "docs").glob("ADR-*.md")))
+            actual = len(list((root / "docs").glob("ADR-*.md")))
         else:
-            actual = count_rows(ROOT / target, row_pattern)
+            actual = count_rows(root / target, row_pattern)
         checked += 1
         if actual != claimed:
             problems.append(
@@ -61,7 +61,7 @@ def main() -> int:
     # Числа из CONTINUE.md убраны намеренно: их держит файл, а не документ.
     # Но если кто-то вернёт число — оно обязано совпадать с файлом. Проверяем
     # это отдельно, чтобы возврат несоответствующего числа был находкой.
-    problems.extend(check_returned_numbers())
+    problems.extend(check_returned_numbers(root))
 
     if problems:
         print(f"[FAIL] документы: {len(problems)} проблем (проверено {checked})")
@@ -72,14 +72,14 @@ def main() -> int:
     return 0
 
 
-def check_returned_numbers() -> list[str]:
+def check_returned_numbers(root: Path = ROOT) -> list[str]:
     """Если в CONTINUE.md вернули число — оно должно совпадать с файлом.
 
     Числа убраны намеренно (F-DOC-1): документ отставал от файла, и я называл
     устаревшее число владельцу как факт. Здесь ловим возврат: число снова
     появилось — значит его надо сверять, иначе дефект вернётся молча.
     """
-    path = ROOT / "docs" / "CONTINUE.md"
+    path = root / "docs" / "CONTINUE.md"
     if not path.exists():
         return []
     text = path.read_text(encoding="utf-8", errors="replace")
@@ -94,7 +94,7 @@ def check_returned_numbers() -> list[str]:
         if not match:
             continue
         claimed = int(match.group(1))
-        actual = count_rows(ROOT / target, row_pattern)
+        actual = count_rows(root / target, row_pattern)
         if actual != claimed:
             problems.append(
                 f"docs/CONTINUE.md: вернули число {claimed} для {target}, "

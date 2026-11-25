@@ -1,0 +1,2 @@
+[ok] test_gates_w11.py: 16/16 checks, rc=0: 16 checks, 0 failures
+ suites: 1; выполнено: 1; N/A: 0; checks: 16; провалов: 0

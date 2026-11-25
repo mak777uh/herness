@@ -1,0 +1,190 @@
+E-0087 / W11 — независимое read-only повторное финальное ревью R2
+Дата: 2026-11-25T19:10:42Z
+Review baseline: 17f529ae160a1a66b4ec42559c263f9e42a7f1fd
+Экспериментальный baseline из sealed prereg: 423df52
+Candidate: uncommitted working tree; staged changes отсутствуют
+Sealed prereg: lab/prereg/GATES-READONLY-ROOTSAFE-R1.json
+
+ВЕРДИКТ: PASS
+Блокирующих findings: 0
+Исторический GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW.txt с NEEDS_CHANGES не перезаписывался.
+
+======================================================================
+1. ФИНАЛЬНЫЕ RAW SHA-256 — PASS
+======================================================================
+Повторно проверены до и после focused run:
+
+bin/hs.py
+  df1bf491ddceadaef130cc3f6f49536836428c1d45da5d8dabe94c364004e84c
+bin/gate_probe.py
+  92f318e33b52813b36663e10fcf753518bab995ed32afaeccdd0f4d3ae1df9cf
+bin/gen_capabilities.py
+  3756a7a8b1f4b705a8d130f211c15ab5cfeb4a2160945d4c33b0eb3484cf99de
+bin/binary_version.py
+  3cd099a332ec02ed4341b9a33ea7959cdd39ffe2cae6611427ce6a6fa4ff4249
+tests/test_gates_w11.py
+  83eec8c394657992b430503a8f62344e2d408cf2dc0161f9a99a1b5abd40b328
+tests/test_gates_readonly.py
+  ee99fb14b0b7eb11efde955817a6ecb830543a2390662b6cf6e649ba5c74dd4d
+
+Все шесть значений совпадают с переданными финальными.
+
+======================================================================
+2. F3 — STALE TIMESTAMP-VALID .PYC / FALSE GREEN: ЗАКРЫТ
+======================================================================
+Проверено по коду:
+- bin/hs.py:121-152: load_gate_module читает source bytes, создаёт отдельный module object и исполняет compile(data, str(path), "exec", dont_inherit=True) + exec(code, module.__dict__) на строках 147-148. SourceFileLoader.get_code/exec_module не вызываются.
+- bin/gen_capabilities.py:46-65: build(root) использует тот же явный compile/exec для root/core/tools.py на строках 62-63; get_code/exec_module отсутствуют.
+- Уникальное имя модуля включает path + digest source bytes; регистрация в sys.modules сохранена для dataclasses/imports.
+
+Проверено негативными контролями:
+- tests/test_gates_w11.py:229-242: gate loader; source old/new одинакового размера, фиксированный mtime, TIMESTAMP .pyc; после правки выполняется новое значение, stale_pyc_fresh=True.
+- tests/test_gates_w11.py:309-333: capabilities loader; b- -> c- при том же размере/mtime и timestamp-valid .pyc; capabilities_for() видит c-, stale_pyc_fresh=True.
+- Независимый focused run: оба маркера True.
+
+Вывод: timestamp-valid same-size/same-mtime stale .pyc не может подменить прочитанные source bytes в этих двух loader-путях. F3 закрыт.
+
+======================================================================
+3. F4 — РАЗНЫЕ MissingData / TRACEBACK В ОБЫЧНОМ CLI: ЗАКРЫТ
+======================================================================
+Проверено по коду:
+- bin/binary_version.py:32-41: standalone fallback MissingData; импорт bin.hs удалён.
+- bin/binary_version.py:64-75: problems(root, missing_data=MissingData) принимает injected class и при отсутствии hs-core вызывает именно его.
+- bin/hs.py:1635-1659: gate_rust передаёт свой MissingData в binary_problems(root, missing_data=MissingData) на строках 1654-1655 и ловит его на строках 1656-1658, превращая в обычный список проблем.
+- bin/hs.py:2003-2029: gate-loop печатает штатный [FAIL]/summary и возвращает nonzero при проблемах; непойманного traceback нет.
+
+Проверено реальным subprocess-контролем:
+- tests/test_gates_w11.py:523-556.
+- tests/test_gates_w11.py:528-545: disposable copy настоящего candidate; свежий synthetic core-rs/target/release/libhs_core.rlib; hs-core отсутствует; git init; запуск настоящего python <copy>/bin/hs.py gates --root <copy> --circuit a --profile full.
+- tests/test_gates_w11.py:546-551: требуются отсутствие Traceback и bin.hs.MissingData, наличие [FAIL] rust: и итогового «профиль full: оценено».
+- Независимый focused run: partial_rust_cli=True, cli_stderr_tail=[].
+
+Вывод: частичная Rust-сборка даёт штатный rust FAIL и summary без traceback. F4 закрыт.
+
+======================================================================
+4. F1/F2 И РОВНО 16 CHECKS — СОХРАНЕНЫ
+======================================================================
+F1, tracked-ignored fail-closed:
+- bin/hs.py:213-246: allowed и ignored получаются отдельными fail-closed git ls-files запросами; ignored вычитается до копирования.
+- bin/hs.py:221-233: OSError/timeout/nonzero преобразуются в MissingData.
+- bin/gate_probe.py:114-168: sandbox использует hs.disposable_files(), поэтому inherits тот же fail-closed фильтр.
+- tests/test_gates_w11.py:397-483: force-added lab/private/secret.txt, .env, .secrets, ignored/home/symlink controls; forbidden=[] и probe_forbidden=[], ignored_fail_closed=True.
+- Независимый read-only recount текущего repo по Git path metadata:
+    tracked_ignored=814
+    disposable_files=3915
+    admitted_ignored=0
+    admitted_symlinks_or_junctions=0
+    outside_root_sources=0
+  Содержимое ignored/secret файлов не читалось.
+
+F2, cleanup не маскирует primary:
+- bin/hs.py:164-178: cleanup_disposable добавляет cleanup note/cause и повторно выбрасывает primary.
+- bin/hs.py:249-277: disposable_copy; bin/hs.py:1495-1519: gate_claims_run.
+- bin/gate_probe.py:65-92: bounded retry; bin/gate_probe.py:114-168: sandbox; bin/gate_probe.py:676-706: _run_selected.
+- tests/test_gates_w11.py:682-889: combined primary+cleanup controls для sandbox/copy/selected/claims; persistent lock остаётся RED; transient retry работает; temp_leak_free=True.
+- Независимый focused run:
+    primary_sandbox=True, primary_copy=True, primary_selected=True, primary_claims=True,
+    transient_retry=True, persistent_lock_red=True, creation_failed=True,
+    partial_clean=True, temp_leak_free=True.
+
+Ровно 16 checks:
+- tests/test_gates_w11.py:892-920 содержит 16 test functions и возвращает 0 только при failed==0 и len(RESULTS)==16.
+- Независимый run: «16 checks, 0 failures».
+
+======================================================================
+5. PROTECTED BOUNDARY — PASS
+======================================================================
+Команда:
+  git diff --exit-code HEAD -- core-rs/src bin/bridge.py bin/net.py app.asar lab/prereg lab/registry.json lab/history history tests/test-manifest.json tests/test_bridge_win_isolation.py
+
+Результат: rc=0; protected status пуст; staged changes отсутствуют.
+Sealed prereg, registry, history и test manifest не изменены. app.asar в репозитории не tracked и отсутствует; установленный DeepSeek Harness/app.asar не читался и не изменялся.
+
+Дополнительно:
+- git diff --check HEAD — чисто.
+- git diff --name-only HEAD содержит 13 tracked файлов; protected paths среди них отсутствуют.
+- tests/test_gates_readonly.py diff только исключает gate_env из orchestration monkeypatch и подстраивает fake sandbox/root-specific store; критерии не ослаблены.
+
+======================================================================
+6. ORDINARY GATES / PROBE SEMANTICS — PASS
+======================================================================
+Ordinary gates:
+- bin/hs.py:97-118: gate_env/no_bytecode.
+- bin/hs.py:1495-1519: fast claims исполняются только в disposable copy.
+- bin/hs.py:1826-1843: gate_compile использует compile(bytes, ...), без py_compile/__pycache__.
+- bin/hs.py:1883-1909: coverage output во внешнем tempfile.
+- bin/hs.py:1968-2029: cmd_gates; mutation probe runner не вызывается, см. комментарий bin/hs.py:2021-2023.
+- bin/hs.py:1728-1799: reviews/prereg/lab/seals вызывают read-only collect/entries/validate/verify_all, а не write/main-пути.
+
+Probes:
+- bin/gate_probe.py:601-603: IN_PLACE={}; даже подменённое значение не используется run().
+- bin/gate_probe.py:676-726: каждый selected probe получает sandbox(ROOT); empty/all-N/A возвращает rc=1.
+- bin/gate_probe.py:729-748: unknown selection проверяется до lock/sandbox/report и возвращает rc=2; auto/full selection корректен.
+- bin/gate_probe.py:633-673: nonblocking msvcrt/flock lock вне source root, fd закрывается.
+- tests/test_gates_w11.py:567-679: unknown rc=2 без sandbox/report; all-N/A rc=1; in-place source_changed=False; второй runner blocked=True, child_rc=3.
+- Прочитанные текущие evidence без rerun:
+    research/outputs/gate-probes.txt: 32/32 caught, 2 N/A.
+    research/outputs/gate-probes-fast.txt: 17/17 caught.
+
+======================================================================
+7. ВЫПОЛНЕННЫЕ КОМАНДЫ
+======================================================================
+1) sha256sum bin/hs.py bin/gate_probe.py bin/gen_capabilities.py bin/binary_version.py tests/test_gates_w11.py tests/test_gates_readonly.py
+   Выполнено до и после focused run; все hash совпали.
+
+2) git status --short --branch
+   До/после focused run состав code/test/evidence изменений не менялся; staged changes отсутствуют.
+
+3) git diff --stat; git diff --numstat; git diff --check HEAD
+   Diff hygiene чисто; 13 tracked файлов.
+
+4) git diff --exit-code HEAD -- <protected paths из раздела 5>
+   rc=0.
+
+5) PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 GIT_OPTIONAL_LOCKS=0 python -B tests/test_gates_w11.py
+   Результат: 16 checks, 0 failures.
+   Ключевые маркеры: stale_pyc_fresh=True (оба loader), partial_rust_cli=True,
+   ignored_fail_closed=True, source_changed=False, all-N/A rc=1,
+   second runner blocked=True/child_rc=3, temp_leak_free=True.
+
+6) Read-only recount F1:
+   PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 GIT_OPTIONAL_LOCKS=0 python -B -c <git ls-files -ci + hs.disposable_files count>
+   Результат: 814 tracked-ignored, 3915 disposable files, admitted_ignored=0,
+   admitted_symlinks_or_junctions=0, outside_root_sources=0.
+
+7) Temp/bytecode check после focused run:
+   hs-gates-copy-*=0; gate-probe-*=0; hs-coverage-*=0; w11-*=0;
+   repo __pycache__=0; repo .pyc/.pyo=0.
+
+======================================================================
+8. ВНЕШНИЕ РЕЗУЛЬТАТЫ, ПРИНЯТЫЕ БЕЗ ПОВТОРНОГО ЗАПУСКА
+======================================================================
+Переданы как уже подтверждённые и не перезапускались без необходимости:
+- focused Windows и WSL: 16/16; manifest selection Windows/WSL: 16/16.
+- readonly: 9/9; binary_version: 4/4; capabilities: 4/4; manifest: 86 Python + 4 Rust.
+- full probes: 32/32 caught + 2 N/A, rc=0; FAST: 17/17.
+- clean disposable Windows selftest: 83 performed + 3 Linux N/A, 0 failed,
+  W18 14/14, status empty, overlay unchanged, rc=0.
+- final real ordinary gates snapshot: 4729/4729 files, 0 byte/mtime drift,
+  0 added/removed, pycache 0/0, status unchanged, gates rc=0,
+  31/33 evaluated with 2 N/A.
+- temp leftovers: 0.
+
+======================================================================
+9. ОГРАНИЧЕНИЯ
+======================================================================
+- Локальный повторный run выполнен только на Windows x64. POSIX/WSL результаты взяты из переданных внешних прогонов.
+- Полный bin/gate_probe.py не запускался; direct prohibition соблюдён. Проверены focused controls, код и сохранённый probe evidence.
+- selftest не запускался; clean disposable результат взят из внешнего прогона.
+- Все 86 Python + 4 Rust suites и реальный ordinary gates snapshot независимо не перезапускались; manifest/full/selftest/readonly результаты отмечены как внешние.
+- Ambient hostile GIT_DIR/GIT_WORK_TREE/TMPDIR, symlink swap race и cleanup после SIGKILL/power loss не моделировались; SIGKILL cleanup явно исключён sealed prereg.
+- Содержимое реальных ignored/secret файлов не читалось.
+- Код, тесты, evidence, sealed prereg, registry, history и protected production boundary не изменялись; commit/push не выполнялись.
+- Единственная запись этого ревью — research/outputs/GATES-READONLY-ROOTSAFE-R1-FINAL-REVIEW-R2.txt.
+
+======================================================================
+ИТОГ
+======================================================================
+Финальные hash совпадают. F3 и F4 закрыты реализацией и реальными негативными контролями; F1/F2 остаются закрытыми; focused suite даёт ровно 16/16. Protected boundary неизменна, ordinary gates не вызывают mutation probes, а probe semantics сохраняют disposable-only/lock/unknown/all-N/A fail-closed поведение. Блокирующих findings нет.
+
+ВЕРДИКТ: PASS

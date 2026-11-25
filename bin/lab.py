@@ -14,11 +14,11 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "lab" / "registry.json"
 
 
-def load() -> dict:
-    return json.loads(REGISTRY.read_text(encoding="utf-8"))
+def load(root: Path = ROOT) -> dict:
+    return json.loads((root / "lab" / "registry.json").read_text(encoding="utf-8"))
 
 
-def validate(data: dict) -> list[str]:
+def validate(data: dict, root: Path = ROOT) -> list[str]:
     problems: list[str] = []
     program = data.get("program", {})
     for field in ("name", "phase", "status_note"):
@@ -27,14 +27,14 @@ def validate(data: dict) -> list[str]:
     if not program.get("next_hypotheses"):
         problems.append("program.next_hypotheses пуст: не сказано, что дальше")
 
-    preregs = {path.stem for path in (ROOT / "lab" / "prereg").glob("*.json")}
+    preregs = {path.stem for path in (root / "lab" / "prereg").glob("*.json")}
     referenced = set()
     for experiment in data.get("experiments", []):
         exp_id = experiment.get("id", "?")
         prereg = experiment.get("prereg")
         if prereg:
             referenced.add(Path(prereg).stem)
-            if not (ROOT / prereg).exists():
+            if not (root / prereg).exists():
                 problems.append(f"{exp_id}: файла пре-регистрации нет ({prereg})")
         elif experiment.get("status") not in ("retro", "case"):
             problems.append(f"{exp_id}: нет пре-регистрации, а статус {experiment.get('status')}")
@@ -42,11 +42,11 @@ def validate(data: dict) -> list[str]:
         if experiment.get("status") in ("closed", "retro", "case"):
             if not conclusion:
                 problems.append(f"{exp_id}: закрыт без вывода (conclusion)")
-            elif not (ROOT / conclusion).exists():
+            elif not (root / conclusion).exists():
                 problems.append(f"{exp_id}: файла вывода нет ({conclusion})")
         claim = experiment.get("claim")
         if claim:
-            claims = (ROOT / "CLAIMS.md").read_text(encoding="utf-8")
+            claims = (root / "CLAIMS.md").read_text(encoding="utf-8")
             if f"| {claim} |" not in claims:
                 problems.append(f"{exp_id}: утверждения {claim} нет в CLAIMS.md")
 
@@ -56,12 +56,12 @@ def validate(data: dict) -> list[str]:
     return problems
 
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str], root: Path = ROOT) -> int:
     command = argv[0] if argv else "status"
-    data = load()
+    data = load(root)
 
     if command == "validate":
-        problems = validate(data)
+        problems = validate(data, root)
         for problem in problems:
             print(f"[FAIL] {problem}")
         if not problems:
@@ -79,7 +79,7 @@ def main(argv: list[str]) -> int:
     print("\nэксперименты:")
     for experiment in data.get("experiments", []):
         conclusion = experiment.get("conclusion") or "—"
-        exists = "есть" if experiment.get("conclusion") and (ROOT / experiment["conclusion"]).exists() else "нет"
+        exists = "есть" if experiment.get("conclusion") and (root / experiment["conclusion"]).exists() else "нет"
         print(f"  {experiment['id']:<7} {experiment.get('status', '?'):<7} {experiment.get('title', '')[:60].rstrip() + '…'}")
         print(f"          вывод: {conclusion} ({exists})")
     print("\nследующие гипотезы:")

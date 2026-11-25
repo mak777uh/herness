@@ -1,0 +1,241 @@
+E-0087 correction — независимое read-only ревью
+Дата: 25.11.2026
+Review baseline: 17f529ae160a1a66b4ec42559c263f9e42a7f1fd
+Candidate: uncommitted working tree; staged changes отсутствуют.
+Экспериментальный baseline из sealed prereg: 423df52 (не перепутан с review baseline).
+Вердикт: NEEDS_CHANGES
+
+Причина вердикта: две блокирующие находки. Disposable-копия допускает tracked-ignored файлы, а cleanup при устойчивой ошибке заменяет первичное исключение. Зелёные focused/regression suites не покрывают эти комбинации.
+
+======================================================================
+БЛОКИРУЮЩИЕ НАХОДКИ
+======================================================================
+
+[F1] HIGH / BLOCKER — tracked-ignored force-added файлы попадают в disposable copy
+Файлы:
+- bin/hs.py:193-219, особенно 201-204 (enumerator);
+- bin/hs.py:222-249 (disposable_copy);
+- bin/gate_probe.py:114-138, особенно 131-138 (probe sandbox).
+Связанный тестовый пробел: tests/test_gates_w11.py:374-432.
+
+Нарушение критерия:
+Требование исключает из disposable copy ignored/force-added секретные зоны. Команда
+    git ls-files -c -o --exclude-standard -z
+объединяет cached/tracked и untracked nonignored файлы. --exclude-standard не удаляет cached-файл, который игнорируется, но был force-added. Дополнительный denylist покрывает только фиксированные имена/каталоги; произвольный ignored путь вне него проходит.
+
+Воспроизводимый контрпример (выполнен изолированно, synthetic marker, не реальный секрет):
+1. Создать temp git repo.
+2. В .gitignore записать lab/private/.
+3. Создать lab/private/secret.txt с маркером SYNTHETIC-IGNORED-SECRET.
+4. Выполнить git add -f lab/private/secret.txt.
+5. Вызвать hs.disposable_files(root), hs.disposable_copy(root) и gate_probe.sandbox(root).
+Фактический вывод:
+    enumerator_contains_ignored= True
+    disposable_copy_contains_ignored= True
+    probe_sandbox_contains_ignored= True
+lab/private входит в COPY gate_probe, поэтому дефект затрагивает и claims-disposable, и probe sandbox.
+
+Дополнительное read-only свидетельство на текущем repo (содержимое файлов не читалось):
+    git ls-files -ci --exclude-standard -z -> 814 tracked-ignored путей, все под lab;
+    hs.disposable_files(root) -> 4727 путей;
+    tracked_ignored_admitted -> 814 из 814.
+Примеры допущенных путей: lab/h2/A/run-1/CYCLE.md, P16-RESULTS.md, P17-RESULTS.md, P18-RESULTS.md, SELF-WORK.md.
+
+Почему focused suite зелёный:
+Тест force-add только .secrets/forced.txt и .env, которые отсекает denylist. Произвольный ignored force-added путь lab/private/secret.txt не проверяется.
+
+Минимальный fix:
+- Отдельно fail-closed получить git ls-files -ci --exclude-standard -z; при OSError/timeout/nonzero бросать MissingData.
+- Вычесть этот набор из allowed set перед копированием.
+- Добавить focused regression с force-added lab/private/secret.txt (или другим ignored путём под COPY) и проверить отсутствие файла в hs.disposable_copy и gate_probe.sandbox.
+- Сохранить существующие symlink/junction и denylist проверки.
+
+[F2] HIGH / BLOCKER — cleanup маскирует первичную ошибку
+Файлы:
+- bin/gate_probe.py:675-697, особенно 695-697 (cleanup в finally);
+- bin/gate_probe.py:130-167, особенно 165-167 (cleanup в except);
+- bin/hs.py:1477-1484 (та же схема в gate_claims_run);
+- bin/hs.py:239-249 (та же схема в disposable_copy).
+
+Нарушение критерия:
+Bounded retry корректен сам по себе: после deadline устойчивый WinError 32 остаётся ошибкой. Но remove_disposable() вызывается из finally/except без сохранения активного первичного исключения. Если cleanup тоже падает, Python выбрасывает cleanup error вместо исходной ошибки gate/inject/copy/git init. Это прямым образом нарушает требование «retry не маскирует первичную ошибку».
+
+Воспроизводимый контрпример (выполнен на изолированных monkeypatch-объектах, без запуска bin/gate_probe.py и без его lock/temp dirs):
+A. sandbox:
+- shutil.copy2 бросает RuntimeError("PRIMARY-COPY");
+- shutil.rmtree устойчиво бросает PermissionError с winerror=32;
+- monotonic возвращает 0.0, затем 4.0 (deadline уже истёк);
+- вызов gate_probe.sandbox(root).
+Ожидалось: PRIMARY-COPY. Фактически:
+    sandbox_exception_type= PermissionError
+    message= [WinError 32] persistent sharing violation
+B. _run_selected:
+- fake sandbox возвращает temp-каталог;
+- gate бросает RuntimeError("PRIMARY-GATE");
+- cleanup устойчиво бросает тот же PermissionError.
+Ожидалось: PRIMARY-GATE. Фактически:
+    selected_exception_type= PermissionError
+    message= [WinError 32] persistent sharing violation
+
+Почему focused suite зелёный:
+tests/test_gates_w11.py:600-711 отдельно проверяет RuntimeError при успешном cleanup и persistent lock при отсутствии первичной ошибки. Комбинация «первичная ошибка + ошибка cleanup» не проверяется.
+
+Минимальный fix:
+- Во всех трёх путях сохранять первичное BaseException, выполнять cleanup, но при cleanup failure повторно выбрасывать primary; добавить к нему note/контекст с cleanup error.
+- Не превращать cleanup failure в успех и не терять исходный тип/сообщение.
+- Добавить combined negative control: PRIMARY-GATE/PRIMARY-COPY + persistent WinError 32; assert первичного типа/сообщения и наличия cleanup note.
+- Применить одинаковую схему к gate_probe.sandbox, gate_probe._run_selected, hs.disposable_copy и hs.gate_claims_run.
+
+======================================================================
+ПРОВЕРЕННЫЕ ТРЕБОВАНИЯ
+======================================================================
+
+1. Root-aware validators — PASS по коду и focused control.
+- bin/hs.py:121-149 load_gate_module использует абсолютный resolved path, проверяет containment в root и включает path + digest байтов в имя модуля.
+- Root-aware вызовы проверены для criteria/audit/failures/journals/docs/rust/capabilities/reviews/prereg/lab/seals/compile/vectors/selfref.
+- bin/gate_docs.py, bin/gate_rust.py, bin/build_reviews_index.py, bin/prereg.py, bin/lab.py принимают root; bin/gen_capabilities.py загружает root/core/tools.py новым module object.
+- Hostile cache control в test_gates_w11.py дал 7/7 и отдельно подтвердил выполнение изменённого кода root B.
+
+2. Cached module cross-root — блокирующего остатка не найдено.
+- load_gate_module не переиспользует cached module другого path/version.
+- gen_capabilities.create new module на каждый build; cached core.tools не используется.
+- seal/canonical и verify_journal загружаются из проверяемого root.
+
+3. PYTHONDONTWRITEBYTECODE=1 — PASS для Python-подпроцессов.
+- hs.gate_env():97-102 выставляет переменную.
+- cmd_gates оборачивает loop в no_bytecode():1968 onward.
+- env=gate_env() есть у claims/core claims/adoptions/autonomy/policy parity/requirements/coverage/runs index, а также rust_tests.py.
+- Focused recording control: 6/6 env, bytecode=[].
+- git-only вызовы gate_bigfiles/probe_bigfiles не имеют отдельного env=gate_env(); Python они не запускают. В обычном gate-loop переменная наследуется из no_bytecode(). Это не блокирующая оговорка.
+
+4. Disposable fail-closed / ignored / secrets / symlink — FAIL по F1.
+- Ошибки git enumeration преобразуются в MissingData; ошибки copy не проглатываются.
+- Denylist, _path_is_link и containment работают на focused symlink/junction control.
+- Но tracked-ignored force-added файлы допускаются: F1.
+
+5. Sandbox git init и autonomy/bigfiles semantics — PASS по коду и controls.
+- gate_probe.sandbox создаёт новый git repo без staging; GIT_CONFIG_NOSYSTEM=1 и GIT_CONFIG_GLOBAL=os.devnull.
+- Autonomy structural/staged probe и bigfiles index probe остаются caught; test_gates_w11.py проверяет оба набора.
+- Проверялся штатный ambient env; внешний GIT_DIR/GIT_WORK_TREE намеренно не моделировался.
+
+6. Unknown selection до записи — PASS.
+- gate_probe.run():720-736 проверяет profile и unknown names до lock/sandbox/report.
+- Focused: unknown rc=2, sandbox_called=False, report=False.
+
+7. All-N/A / empty selection RED — PASS.
+- _run_selected():716-717 возвращает 1, если rows пуст; all-N/A также не даёт успеха.
+- Focused: all-N/A rc=1.
+
+8. Lock — PASS.
+- gate_probe.locked():632-672 использует nonblocking msvcrt/flock, lock вне source root, fd всегда закрывается.
+- Focused cross-process control: второй runner blocked=True, child_rc=3.
+
+9. Cleanup при ошибке / retry — FAIL по F2.
+- Частичный sandbox удаляется, если cleanup успешен.
+- Transient retry работает; persistent lock остаётся RED, а не успехом.
+- Но первичная ошибка маскируется: F2.
+
+10. Production boundary — PASS.
+git diff --exit-code пуст для:
+core-rs/src, bin/bridge.py, bin/net.py, tests/test_bridge_win_isolation.py, app.asar.
+Также пуст для lab/prereg, lab/registry.json, lab/history, history, tests/test-manifest.json.
+
+11. Success criteria / пороги — PASS по diff и controls.
+- Sealed prereg, registry, history и test manifest не изменены.
+- Порог focused suite остался ровно 16; manifest 86 Python + 4 Rust.
+- Удалённый отдельный meta-loop в gate_capabilities не даёт эффективного ослабления: gen_capabilities.build разыменовывает обязательные keys meta, исключение превращается в gate problem. tests/test_capabilities.py: 4/4 ok.
+
+12. Focused suite — PASS.
+Команда:
+    PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 GIT_OPTIONAL_LOCKS=0 python -B tests/test_gates_w11.py
+Результат: 16 checks, 0 failures.
+main():714-742 действительно требует failed == 0 and len(RESULTS) == 16.
+
+13. Regression tests/test_gates_readonly.py — PASS.
+Та же bytecode-free среда, python -B tests/test_gates_readonly.py.
+Результат: проверок 9; провалов 0.
+main():242-263 требует ровно 9. Diff regression только исключает новый helper gate_env из списка gate_функций и подстраивает fake sandbox/root-specific store; критерии не ослаблены.
+
+14. Manifest — PASS.
+    python -B bin/test_manifest.py --check
+Результат: ok manifest: 86 Python + 4 Rust entries.
+
+15. Полный probe evidence — прочитан, но независимо не перезапускался по запрету пользователя.
+- research/outputs/gate-probes.txt: 34 пробы, 32/32 caught, 2 N/A (журналы, индекс прогонов).
+- research/outputs/gate-probes-fast.txt: 17/17 caught.
+- mtime gate-probes.txt 2026-11-25 19:49:06 позже mtime bin/gate_probe.py 19:33:46.
+- Наблюдавшийся фоновый PID 34804 к концу ревью отсутствовал. Его stdout/stderr/exit code недоступны; отчёт не содержит timestamp/exit code.
+
+16. Ordinary gates integration evidence — прочитан, но не заявлен как независимый rerun.
+- research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-INTEGRATION.txt заявляет gate rc=0, 4726/4726 без byte/mtime drift, __pycache__ 0, 31/33 evaluated, 2 N/A.
+- research/outputs/GATES-READONLY-ROOTSAFE-R1-INTEGRATION.txt и baseline report также прочитаны.
+- После reviewer tests: __pycache__ dirs=0, bytecode files=0; git diff --check чистый.
+
+======================================================================
+ФАЙЛЫ, КОТОРЫЕ ПРОВЕРЯЛИСЬ
+======================================================================
+
+Контракт и sealed материалы:
+- AGENTS.md
+- lab/prereg/GATES-READONLY-ROOTSAFE-R1.json
+- docs/WHERE-I-STOPPED.md
+- tests/test-manifest.json
+
+Изменённая реализация:
+- bin/hs.py
+- bin/gate_probe.py
+- bin/gate_docs.py
+- bin/gate_rust.py
+- bin/gen_capabilities.py
+- bin/build_reviews_index.py
+- bin/prereg.py
+- bin/lab.py
+
+Зависимости и механизмы:
+- core/criteria.py
+- core/audit.py
+- core/failures.py
+- core/tools.py
+- bin/binary_version.py
+- bin/store.py
+- bin/check_autonomy.py
+- bin/seal.py
+- bin/selfref.py
+- bin/check_abs_paths.py
+- bin/verify_journal.py
+- bin/test_manifest.py
+
+Тесты:
+- tests/test_gates_w11.py
+- tests/test_gates_readonly.py
+- tests/test_capabilities.py
+
+Evidence:
+- research/outputs/GATES-READONLY-ROOTSAFE-R1-BASELINE.txt
+- research/outputs/GATES-READONLY-ROOTSAFE-R1-INTEGRATION.txt
+- research/outputs/GATES-READONLY-ROOTSAFE-R1-CORRECTION-INTEGRATION.txt
+- research/outputs/gate-probes.txt
+- research/outputs/gate-probes-fast.txt
+
+Protected boundary проверен через git diff/status (содержимое не переписывалось и не использовалось как evidence):
+- core-rs/src
+- bin/bridge.py
+- bin/net.py
+- tests/test_bridge_win_isolation.py
+- app.asar
+- lab/prereg
+- lab/registry.json
+- lab/history
+- history
+
+======================================================================
+ОГРАНИЧЕНИЯ РЕВЬЮ
+======================================================================
+
+- Платформа только Windows x64; POSIX-ветки lock/symlink проверены статически, но не запускались.
+- Полный bin/gate_probe.py не запускался: соблюдён прямой запрет пользователя. F1/F2 проверены синтетическими temp repo и изолированными monkeypatch-controls.
+- F2 моделирует persistent WinError 32 подменой shutil.rmtree/time; это доказывает порядок исключений, но не является реальным удерживаемым файловым lock.
+- Содержимое реальных ignored файлов и секретов не читалось. Для F1 читались только git path metadata и synthetic marker.
+- Не запускались все 86 Python + 4 Rust тестов; manifest проверен, focused/regression/capabilities suites запущены отдельно.
+- Не проверялся сценарий ambient GIT_DIR/GIT_WORK_TREE и не проводился race-аудит symlink swap между проверкой и copy.
+- Код, тесты, prereg, registry, production boundary и история не изменялись; commit/push не выполнялись. Создан только этот разрешённый review artifact.

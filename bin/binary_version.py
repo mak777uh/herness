@@ -29,6 +29,18 @@ MAGIC_IN_SOURCE = re.compile(r'pub\s+const\s+MAGIC:\s*&\[u8;\s*4\]\s*=\s*b"([A-Z
 MAGIC_IN_BINARY = re.compile(rb"HSJ[0-9]")
 
 
+class MissingData(Exception):
+    """Standalone fallback; gate runner передаёт свой класс явно.
+
+    Импорт `bin.hs` здесь недопустим: при `python bin/hs.py` это другой модуль и
+    другой класс исключения, чем `__main__`, и штатный MissingData уходит в traceback.
+    """
+
+    def __init__(self, reason: str):
+        super().__init__(reason)
+        self.reason = reason
+
+
 def source_magic(path: Path = SOURCE) -> str | None:
     if not path.exists():
         return None
@@ -49,16 +61,18 @@ def binary_magics(path: Path) -> set[str]:
     return {chunk.decode("ascii") for chunk in MAGIC_IN_BINARY.findall(data)}
 
 
-def problems(root: Path = ROOT) -> list[str]:
-    """Расхождения формата. Пусто — совпадает; исключение MissingData — проверять нечего."""
+def problems(root: Path = ROOT, missing_data: type[Exception] = MissingData) -> list[str]:
+    """Расхождения формата. Пусто — совпадает; исключение MissingData — проверять нечего.
+
+    `missing_data` внедряет класс исключения вызывающего gate runner: так script
+    entrypoint и динамически загруженный validator используют один тип без import cycle.
+    """
     expected = source_magic(root / "core-rs" / "src" / "journal.rs")
     if expected is None:
         return ["core-rs/src/journal.rs: не найдена константа MAGIC — проверить нечем"]
     binary = find_binary(root)
     if binary is None:
-        from bin.hs import MissingData
-
-        raise MissingData("нет собранного hs-core: версию формата в бинарнике проверить нечем")
+        raise missing_data("нет собранного hs-core: версию формата в бинарнике проверить нечем")
     seen = binary_magics(binary)
     if not seen:
         return [f"{binary.name}: в бинарнике нет строки формата HSJ* — собран не из этого кода?"]

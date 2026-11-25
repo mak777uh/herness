@@ -6,14 +6,13 @@
 
 from __future__ import annotations
 
+import hashlib
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-from core.tools import GrepTool, ListTool, ReadTool, ShellTool  # noqa: E402
 
 MODALITIES = {
     "requires": "должно быть сделано",
@@ -44,9 +43,30 @@ WORKFLOW = [
 ]
 
 
-def build() -> dict:
+def build(root: Path = ROOT, tools_module=None) -> dict:
+    if tools_module is None:
+        path = (root / "core" / "tools.py").resolve()
+        data = path.read_bytes()
+        token = hashlib.sha256(str(path).encode("utf-8") + b"\0" + data).hexdigest()
+        name = "_herness_tools_" + token
+        spec = importlib.util.spec_from_file_location(name, path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"не удалось загрузить {path}")
+        tools_module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = tools_module
+        previous = sys.dont_write_bytecode
+        sys.dont_write_bytecode = True
+        try:
+            # Никакого get_code/exec_module: stale timestamp-valid .pyc не должен
+            # подменять source bytes выбранного root (E-0087 review F3).
+            code = compile(data, str(path), "exec", dont_inherit=True)
+            exec(code, tools_module.__dict__)
+        finally:
+            sys.dont_write_bytecode = previous
+
     tools = []
-    for cls in (ShellTool, ReadTool, GrepTool, ListTool):
+    for cls in (tools_module.ShellTool, tools_module.ReadTool,
+                tools_module.GrepTool, tools_module.ListTool):
         tools.append({"id": cls.name, "actions": list(cls.meta["actions"]),
                       "objects": list(cls.meta["objects"]), "effects": list(cls.meta["effects"])})
     tools.extend(EXTERNAL)
@@ -59,9 +79,9 @@ def build() -> dict:
     }
 
 
-def main() -> int:
-    data = build()
-    target = ROOT / "capabilities.json"
+def main(root: Path = ROOT) -> int:
+    data = build(root)
+    target = root / "capabilities.json"
     target.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"записано {target}: инструментов {len(data['tools'])}, шагов воркфлоу {len(data['workflow'])}")
     return 0
