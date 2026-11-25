@@ -1,0 +1,138 @@
+{
+  "id": "E-0089",
+  "title": "LIST-DETERMINISM-LIMIT-REMAINDER-R1: детерминированный list с limit 100 и точным остатком",
+  "date": "2026-11-25",
+  "baseline_commit": "e233dad0b238b005e34143913113f19c363be546",
+  "baseline_head": "e233dad0b238b005e34143913113f19c363be546",
+  "status": "open",
+  "schema": 2,
+  "criterion": "PASS только если list выбирает до 100 записей после детерминированной сортировки, каталоги идут первыми, при превышении лимита сообщает точный remainder, а registry/contracts/tests описывают одну и ту же семантику. Любой subset до сортировки, лимит 200, маркер без точного остатка или расхождение registry/Rust означает RED.",
+  "arms": [
+    "baseline e233dad без изменения runtime: новые Python/Rust focused suites обязаны быть RED",
+    "candidate: bounded deterministic selection с limit 100, точным remainder и согласованными registry/contracts",
+    "real integration: focused Windows/POSIX, Rust regressions, ordinary gates и чистый disposable selftest"
+  ],
+  "sensitivity": "Rust suite содержит ровно 8 tests: 0/99/100/101/200/201, permutation создания и dirs-first subset. Python suite содержит ровно 8 checks для contract/registry semantics. Baseline ожидает не менее 5 Rust failures и не менее 6 Python failures; PASS требует 8/8 на обоих поверхностях.",
+  "unit_of_analysis": "один вызов list на каталоге с заданным числом записей и порядком создания",
+  "primary_metric": "число focused tests/checks без failures при exact limit/remainder и byte-identical результате при перестановке порядка создания",
+  "test": "cargo test --lib w12_list_ -- --nocapture и python tests/test_list_contract.py на Windows и POSIX; затем cargo test --lib, test manifest, ordinary gates и чистый disposable selftest",
+  "stopping_rule": "Не ослаблять критерии после RED; при лимите не 100, remainder без полного подсчёта, недетерминированном subset или расхождении registry/contracts/Rust остановить closure как RED и сохранить evidence.",
+  "question": "Можно ли сохранить контрактный limit 100 и dirs-first порядок, выбирая subset только после детерминированной сортировки и сообщая точный remainder без неограниченного хранения всего каталога?",
+  "predecessor": "E-0088/C-0363 закрыл canonical policy; W12 discovery подтвердил list limit 200, subset до сортировки и marker без remainder",
+  "refs_search": {
+    "command": "python bin/hs.py refs search \"list determinism limit remainder truncation\"",
+    "result": "NOT PROVIDED",
+    "exit_code": 2,
+    "detail": "справочника нет: refs sync (пусто ≠ успех)"
+  },
+  "baseline_sha256": {
+    "core-rs/src/loopmod.rs": "74c77403d64f31c2fbc772fbc49c937fcbf238c8f1bb244eb387cb40e4fb2583",
+    "lab/tools/contracts.json": "d5dc1789caa7b4c4779110cadbfa08523a69c1f2e057693722260a2051675073",
+    "lab/tools/registry.jsonl": "0afc75ec3bf277ba4d48336c75368d2f7382d0963aa0b42c929472715de9b008",
+    "tests/test-manifest.json": "2a12c8c2ba0c2fa7c52645005e8bc534710a696ac27dcaaf59328b77da8c49b4",
+    "lab/registry.json": "0609bcb5766ab6f156bbb85a2aac843fc0fcdff060bd7365d3828167bd7813bd"
+  },
+  "baseline_hash_verification": "Все пять hashes сверены с checkout-представлением baseline_commit перед sealed baseline commit; loopmod.rs измерен как CRLF согласно .gitattributes (git blob LF имеет другой hash). Runtime implementation не менялся, diff содержит только новые tests.",
+  "baseline_test_tree_sha256": {
+    "core-rs/src/loopmod.rs": "73a570d29b1658e4b5f6c7f7b33e2bd4bb1b6a9000ad7b0d4946de12942d3cca",
+    "tests/test_list_contract.py": "34a20970ab05e49ba9d859c3eadbcec8d2c4c1dba4d6077e69b0f4d98c86428f",
+    "tests/test-manifest.json": "30b63565fa01d32610f45ac126f3b60cfabe3104056d6849a5d6834f187966ff",
+    "lab/registry.json": "c42b9950151620bb4dd14c7b6dc682c0028228f8631294420486dcda0b7c2122"
+  },
+  "baseline_red": {
+    "date": "2026-11-25",
+    "status": "RED",
+    "implementation_started": false,
+    "python": {
+      "command": "python tests/test_list_contract.py",
+      "exit_code": 1,
+      "checks": 8,
+      "passed": 1,
+      "failed": 7,
+      "artifact": "runs/exp-ci-residuals/e0089-list-red-python.txt",
+      "sha256": "96dc13e4172728c6b84716e78e834841a8775a45b6ee98bf50b31601700a896e"
+    },
+    "windows_rust": {
+      "command": "PATH=<repo cargo>;<WinLibs mingw64/bin>; cargo test --release --lib w12_list_ -- --nocapture",
+      "toolchain": "x86_64-pc-windows-gnu, rustc 1.99.1, WinLibs POSIX UCRT MinGW",
+      "clean": "rm -rf target/release/libhs_core.rlib target/release/deps/hs_core-* target/release/deps/libhs_core-*",
+      "exit_code": 1,
+      "tests": 8,
+      "passed": 3,
+      "failed": 5,
+      "artifact": "runs/exp-ci-residuals/e0089-list-red-rust-windows.txt",
+      "sha256": "df7f047bbae7dfe6cfafd05227a0e4cbb7a86456da573541b29138fac06c258c"
+    },
+    "posix_rust": {
+      "command": "wsl -d Ubuntu --exec bash -lc \"cd <core-rs> && rm -rf target/release/libhs_core.rlib target/release/deps/hs_core-* target/release/deps/libhs_core-* && CARGO_NET_OFFLINE=true rustup run stable cargo test --release --lib w12_list_ -- --nocapture\"",
+      "toolchain": "WSL Ubuntu stable, offline release",
+      "exit_code": 1,
+      "tests": 8,
+      "passed": 3,
+      "failed": 5,
+      "artifact": "runs/exp-ci-residuals/e0089-list-red-rust-posix.txt",
+      "sha256": "042850265c52475d1375df9b041d2c05762b0dc8a4f72f8980d0ca37bf808e5f"
+    },
+    "failed_tests": [
+      "w12_list_101_reports_remainder_one",
+      "w12_list_200_reports_remainder_one_hundred",
+      "w12_list_201_reports_remainder_one_hundred_one",
+      "w12_list_is_identical_under_creation_permutation",
+      "w12_list_selects_sorted_dirs_then_files"
+    ],
+    "manifest": "88 Python + 4 Rust entries; python bin/test_manifest.py --check rc=0",
+    "prereg_lab": "python bin/prereg.py rc=0; python bin/lab.py validate: 89 экспериментов, 7 следующих гипотез"
+  },
+  "known_baseline_failures": [
+    "runtime читает записи до 200 и только затем сортирует",
+    "при ровно 200 добавляется marker без доказанного remainder",
+    "marker не содержит числа оставшихся записей",
+    "registry обещает 100 и число остатка, но runtime даёт 200 и общий marker",
+    "contracts не объявляют deterministic order и exact remainder"
+  ],
+  "hypothesis": "Bounded top-k selection после чтения всех записей, сраздельный dirs/files heaps и общим total count дадут детерминированный dirs-first subset ровно до 100, точный remainder и не будут хранить весь каталог в памяти.",
+  "implementation_scope": [
+    "core-rs/src/loopmod.rs: LIST_LIMIT=100, bounded top-k selection, dirs-first sorting, exact remainder marker",
+    "lab/tools/contracts.json: явные deterministic order и remainder duties для list",
+    "lab/tools/registry.jsonl: version 4 и та же limit/order/remainder семантика",
+    "tests/test_list_contract.py ровно 8 checks, 8 Rust w12_list_ tests и регистрация Python suite в test manifest",
+    "не менять policy.json, bridge/net, authority model, thresholds, sealed history и production activation"
+  ],
+  "success_criteria": {
+    "focused_red_before_code": "Rust: 8 tests и не менее 5 failures; Python: 8 checks и не менее 6 failures; оба rc=1 на baseline",
+    "focused_windows": "Rust 8/8 и Python 8/8, 0 failures, rc=0",
+    "focused_posix": "Rust 8/8 и Python 8/8, 0 failures, rc=0",
+    "boundaries": "0/99/100 не содержат marker; 101/200/201 содержат ровно 100 entries и remainder 1/100/101",
+    "determinism": "перестановка порядка создания даёт byte-identical результат; dirs-first и сортировка выполняются до subset",
+    "bounded_selection": "runtime не хранит все записи каталога; heap для dirs и files ограничен LIST_LIMIT",
+    "contract_registry": "contracts и registry явно описывают limit 100, deterministic dirs-first order и exact remainder; Python 8/8",
+    "manifest": "88 Python + 4 Rust entries; test_list_contract.py проходит явный selection",
+    "regressions": "cargo test --lib rc=0; существующие list/closure/policy tests не ослаблены",
+    "ordinary_gates": "gates --profile auto: 31/33 evaluated, 2 N/A, rc=0",
+    "clean_selftest": "чистый Windows disposable selftest: 88 Python suites, 85 performed + 3 Linux N/A, 0 failed, W18 14/14",
+    "review": "независимый review PASS до closure",
+    "claims": "C-0364 проверена check_artifacts/verify_claims/coverage; lab validate; seal verify-all"
+  },
+  "negative_controls": [
+    "ровно 100 записей не должны получать ложный marker",
+    "ровно 200 записей должны дать remainder 100, а не 0 или общий marker",
+    "201 запись должна дать remainder 101 и не попасть в entries",
+    "обратный порядок создания не меняет выдачу",
+    "60 каталогов + 60 файлов: показаны все каталоги и первые 40 файлов, remainder 20"
+  ],
+  "stopping_rules": [
+    "Не менять limit 100 без отдельного решения владельца.",
+    "Не ослаблять gates, frozen thresholds, corpus и sealed E-0088 PASS.",
+    "Не переписывать sealed prereg/history; ошибки исправлять новым experiment/correction.",
+    "Не начинать production -r namespace correction: E-0085 RED и sealed stopping rule.",
+    "N/A/unknown/unsupported не считаются PASS; CI-PASS не подменяется локальным PASS."
+  ],
+  "not_claimed": [
+    "полный W12 enforcement matrix/data vocabulary",
+    "Tool Contract ↔ Relationship Contract parity",
+    "generator exact-six/dry-run",
+    "registry card resolution/tombstone",
+    "production runtime policy activation",
+    "полный CI-PASS"
+  ]
+}

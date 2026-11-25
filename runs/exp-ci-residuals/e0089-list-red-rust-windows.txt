@@ -1,0 +1,907 @@
+   Compiling version_check v0.9.5
+   Compiling proc-macro2 v1.0.107
+   Compiling typenum v1.20.1
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.27
+   Compiling semver v1.0.28
+   Compiling serde_core v1.0.229
+   Compiling cfg-if v1.0.5
+   Compiling cpufeatures v0.2.17
+   Compiling zmij v1.0.23
+   Compiling subtle v2.6.1
+   Compiling zeroize v1.9.1
+   Compiling serde v1.0.229
+   Compiling libc v0.2.191
+   Compiling serde_json v1.0.154
+   Compiling signature v2.2.0
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling ed25519 v2.2.3
+   Compiling hex v0.4.3
+   Compiling rustc_version v0.4.1
+   Compiling generic-array v0.14.7
+   Compiling curve25519-dalek v4.1.3
+   Compiling syn v2.0.119
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling ed25519-dalek v2.2.0
+   Compiling hs-core v0.1.0 (C:\Users\Admin\Documents\Qoder\2026-11-23\59e41fc7\herness\core-rs)
+warning: variable `result_tag` is assigned to, but never used
+    --> src\loopmod.rs:1881:21
+     |
+1881 |                 let mut result_tag = "err";
+     |                     ^^^^^^^^^^^^^^
+     |
+     = note: consider using `_result_tag` instead
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `result_tag` is never read
+    --> src\loopmod.rs:1886:25
+     |
+1886 |                         result_tag = "ok";
+     |                         ^^^^^^^^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> src\model.rs:992:13
+    |
+992 |         let mut link = HttpBridge::new("127.0.0.1", 9, "local-tk\r\nX: y", "m");
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `missing_error` is never used
+   --> src\head.rs:131:4
+    |
+131 | fn missing_error(reason: impl AsRef<str>) -> String {
+    |    ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `шаг_без_метки_TOOL_но_с_именем_инструмента_принимается` should have a snake case name
+    --> src\loopmod.rs:2972:8
+     |
+2972 |     fn шаг_без_метки_TOOL_но_с_именем_инструмента_принимается() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `шаг_без_метки_tool_но_с_именем_инструмента_принимается`
+     |
+     = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: function `стаб_заканчивается_как_End_а_не_как_ошибка` should have a snake case name
+    --> src\model.rs:1210:8
+     |
+1210 |     fn стаб_заканчивается_как_End_а_не_как_ошибка() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `стаб_заканчивается_как_end_а_не_как_ошибка`
+
+warning: function `недоступный_мост_это_Error_а_не_End` should have a snake case name
+    --> src\model.rs:1255:8
+     |
+1255 |     fn недоступный_мост_это_Error_а_не_End() {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `недоступный_мост_это_error_а_не_end`
+
+warning: `hs-core` (lib test) generated 7 warnings (run `cargo fix --lib -p hs-core --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 36.99s
+     Running unittests src\lib.rs (target\release\deps\hs_core-259fcefa1b627e8d.exe)
+
+running 8 tests
+test loopmod::tests::w12_list_empty_has_no_marker ... ok
+
+thread 'loopmod::tests::w12_list_101_reports_remainder_one' (40512) panicked at src\loopmod.rs:3486:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+  left: "f100.txt\t1"
+ right: "… (обрезано: показано 100, осталось 1)"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'loopmod::tests::w12_list_selects_sorted_dirs_then_files' (20844) panicked at src\loopmod.rs:3534:9:
+assertion `left == right` failed: d000/	каталог
+d001/	каталог
+d002/	каталог
+d003/	каталог
+d004/	каталог
+d005/	каталог
+d006/	каталог
+d007/	каталог
+d008/	каталог
+d009/	каталог
+d010/	каталог
+d011/	каталог
+d012/	каталог
+d013/	каталог
+d014/	каталог
+d015/	каталог
+d016/	каталог
+d017/	каталог
+d018/	каталог
+d019/	каталог
+d020/	каталог
+d021/	каталог
+d022/	каталог
+d023/	каталог
+d024/	каталог
+d025/	каталог
+d026/	каталог
+d027/	каталог
+d028/	каталог
+d029/	каталог
+d030/	каталог
+d031/	каталог
+d032/	каталог
+d033/	каталог
+d034/	каталог
+d035/	каталог
+d036/	каталог
+d037/	каталог
+d038/	каталог
+d039/	каталог
+d040/	каталог
+d041/	каталог
+d042/	каталог
+d043/	каталог
+d044/	каталог
+d045/	каталог
+d046/	каталог
+d047/	каталог
+d048/	каталог
+d049/	каталог
+d050/	каталог
+d051/	каталог
+d052/	каталог
+d053/	каталог
+d054/	каталог
+d055/	каталог
+d056/	каталог
+d057/	каталог
+d058/	каталог
+d059/	каталог
+f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+  left: 120
+ right: 101
+test loopmod::tests::w12_list_100_has_no_marker ... ok
+test loopmod::tests::w12_list_99_has_no_marker ... ok
+test loopmod::tests::w12_list_101_reports_remainder_one ... FAILED
+test loopmod::tests::w12_list_selects_sorted_dirs_then_files ... FAILED
+
+thread 'loopmod::tests::w12_list_200_reports_remainder_one_hundred' (25640) panicked at src\loopmod.rs:3494:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+f101.txt	1
+f102.txt	1
+f103.txt	1
+f104.txt	1
+f105.txt	1
+f106.txt	1
+f107.txt	1
+f108.txt	1
+f109.txt	1
+f110.txt	1
+f111.txt	1
+f112.txt	1
+f113.txt	1
+f114.txt	1
+f115.txt	1
+f116.txt	1
+f117.txt	1
+f118.txt	1
+f119.txt	1
+f120.txt	1
+f121.txt	1
+f122.txt	1
+f123.txt	1
+f124.txt	1
+f125.txt	1
+f126.txt	1
+f127.txt	1
+f128.txt	1
+f129.txt	1
+f130.txt	1
+f131.txt	1
+f132.txt	1
+f133.txt	1
+f134.txt	1
+f135.txt	1
+f136.txt	1
+f137.txt	1
+f138.txt	1
+f139.txt	1
+f140.txt	1
+f141.txt	1
+f142.txt	1
+f143.txt	1
+f144.txt	1
+f145.txt	1
+f146.txt	1
+f147.txt	1
+f148.txt	1
+f149.txt	1
+f150.txt	1
+f151.txt	1
+f152.txt	1
+f153.txt	1
+f154.txt	1
+f155.txt	1
+f156.txt	1
+f157.txt	1
+f158.txt	1
+f159.txt	1
+f160.txt	1
+f161.txt	1
+f162.txt	1
+f163.txt	1
+f164.txt	1
+f165.txt	1
+f166.txt	1
+f167.txt	1
+f168.txt	1
+f169.txt	1
+f170.txt	1
+f171.txt	1
+f172.txt	1
+f173.txt	1
+f174.txt	1
+f175.txt	1
+f176.txt	1
+f177.txt	1
+f178.txt	1
+f179.txt	1
+f180.txt	1
+f181.txt	1
+f182.txt	1
+f183.txt	1
+f184.txt	1
+f185.txt	1
+f186.txt	1
+f187.txt	1
+f188.txt	1
+f189.txt	1
+f190.txt	1
+f191.txt	1
+f192.txt	1
+f193.txt	1
+f194.txt	1
+f195.txt	1
+f196.txt	1
+f197.txt	1
+f198.txt	1
+f199.txt	1
+… (обрезано)
+  left: 201
+ right: 101
+
+thread 'loopmod::tests::w12_list_201_reports_remainder_one_hundred_one' (41524) panicked at src\loopmod.rs:3505:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+f101.txt	1
+f102.txt	1
+f103.txt	1
+f104.txt	1
+f105.txt	1
+f106.txt	1
+f107.txt	1
+f108.txt	1
+f109.txt	1
+f110.txt	1
+f111.txt	1
+f112.txt	1
+f113.txt	1
+f114.txt	1
+f115.txt	1
+f116.txt	1
+f117.txt	1
+f118.txt	1
+f119.txt	1
+f120.txt	1
+f121.txt	1
+f122.txt	1
+f123.txt	1
+f124.txt	1
+f125.txt	1
+f126.txt	1
+f127.txt	1
+f128.txt	1
+f129.txt	1
+f130.txt	1
+f131.txt	1
+f132.txt	1
+f133.txt	1
+f134.txt	1
+f135.txt	1
+f136.txt	1
+f137.txt	1
+f138.txt	1
+f139.txt	1
+f140.txt	1
+f141.txt	1
+f142.txt	1
+f143.txt	1
+f144.txt	1
+f145.txt	1
+f146.txt	1
+f147.txt	1
+f148.txt	1
+f149.txt	1
+f150.txt	1
+f151.txt	1
+f152.txt	1
+f153.txt	1
+f154.txt	1
+f155.txt	1
+f156.txt	1
+f157.txt	1
+f158.txt	1
+f159.txt	1
+f160.txt	1
+f161.txt	1
+f162.txt	1
+f163.txt	1
+f164.txt	1
+f165.txt	1
+f166.txt	1
+f167.txt	1
+f168.txt	1
+f169.txt	1
+f170.txt	1
+f171.txt	1
+f172.txt	1
+f173.txt	1
+f174.txt	1
+f175.txt	1
+f176.txt	1
+f177.txt	1
+f178.txt	1
+f179.txt	1
+f180.txt	1
+f181.txt	1
+f182.txt	1
+f183.txt	1
+f184.txt	1
+f185.txt	1
+f186.txt	1
+f187.txt	1
+f188.txt	1
+f189.txt	1
+f190.txt	1
+f191.txt	1
+f192.txt	1
+f193.txt	1
+f194.txt	1
+f195.txt	1
+f196.txt	1
+f197.txt	1
+f198.txt	1
+f199.txt	1
+… (обрезано)
+  left: 201
+ right: 101
+test loopmod::tests::w12_list_200_reports_remainder_one_hundred ... FAILED
+test loopmod::tests::w12_list_201_reports_remainder_one_hundred_one ... FAILED
+
+thread 'loopmod::tests::w12_list_is_identical_under_creation_permutation' (30444) panicked at src\loopmod.rs:3519:9:
+assertion `left == right` failed: f000.txt	1
+f001.txt	1
+f002.txt	1
+f003.txt	1
+f004.txt	1
+f005.txt	1
+f006.txt	1
+f007.txt	1
+f008.txt	1
+f009.txt	1
+f010.txt	1
+f011.txt	1
+f012.txt	1
+f013.txt	1
+f014.txt	1
+f015.txt	1
+f016.txt	1
+f017.txt	1
+f018.txt	1
+f019.txt	1
+f020.txt	1
+f021.txt	1
+f022.txt	1
+f023.txt	1
+f024.txt	1
+f025.txt	1
+f026.txt	1
+f027.txt	1
+f028.txt	1
+f029.txt	1
+f030.txt	1
+f031.txt	1
+f032.txt	1
+f033.txt	1
+f034.txt	1
+f035.txt	1
+f036.txt	1
+f037.txt	1
+f038.txt	1
+f039.txt	1
+f040.txt	1
+f041.txt	1
+f042.txt	1
+f043.txt	1
+f044.txt	1
+f045.txt	1
+f046.txt	1
+f047.txt	1
+f048.txt	1
+f049.txt	1
+f050.txt	1
+f051.txt	1
+f052.txt	1
+f053.txt	1
+f054.txt	1
+f055.txt	1
+f056.txt	1
+f057.txt	1
+f058.txt	1
+f059.txt	1
+f060.txt	1
+f061.txt	1
+f062.txt	1
+f063.txt	1
+f064.txt	1
+f065.txt	1
+f066.txt	1
+f067.txt	1
+f068.txt	1
+f069.txt	1
+f070.txt	1
+f071.txt	1
+f072.txt	1
+f073.txt	1
+f074.txt	1
+f075.txt	1
+f076.txt	1
+f077.txt	1
+f078.txt	1
+f079.txt	1
+f080.txt	1
+f081.txt	1
+f082.txt	1
+f083.txt	1
+f084.txt	1
+f085.txt	1
+f086.txt	1
+f087.txt	1
+f088.txt	1
+f089.txt	1
+f090.txt	1
+f091.txt	1
+f092.txt	1
+f093.txt	1
+f094.txt	1
+f095.txt	1
+f096.txt	1
+f097.txt	1
+f098.txt	1
+f099.txt	1
+f100.txt	1
+f101.txt	1
+f102.txt	1
+f103.txt	1
+f104.txt	1
+f105.txt	1
+f106.txt	1
+f107.txt	1
+f108.txt	1
+f109.txt	1
+f110.txt	1
+f111.txt	1
+f112.txt	1
+f113.txt	1
+f114.txt	1
+f115.txt	1
+f116.txt	1
+f117.txt	1
+f118.txt	1
+f119.txt	1
+f120.txt	1
+f121.txt	1
+f122.txt	1
+f123.txt	1
+f124.txt	1
+f125.txt	1
+f126.txt	1
+f127.txt	1
+f128.txt	1
+f129.txt	1
+f130.txt	1
+f131.txt	1
+f132.txt	1
+f133.txt	1
+f134.txt	1
+f135.txt	1
+f136.txt	1
+f137.txt	1
+f138.txt	1
+f139.txt	1
+f140.txt	1
+f141.txt	1
+f142.txt	1
+f143.txt	1
+f144.txt	1
+f145.txt	1
+f146.txt	1
+f147.txt	1
+f148.txt	1
+f149.txt	1
+  left: 150
+ right: 101
+test loopmod::tests::w12_list_is_identical_under_creation_permutation ... FAILED
+
+failures:
+
+failures:
+    loopmod::tests::w12_list_101_reports_remainder_one
+    loopmod::tests::w12_list_200_reports_remainder_one_hundred
+    loopmod::tests::w12_list_201_reports_remainder_one_hundred_one
+    loopmod::tests::w12_list_is_identical_under_creation_permutation
+    loopmod::tests::w12_list_selects_sorted_dirs_then_files
+
+test result: FAILED. 3 passed; 5 failed; 0 ignored; 0 measured; 160 filtered out; finished in 0.39s
+
+error: test failed, to rerun pass `--lib`

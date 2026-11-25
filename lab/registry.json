@@ -923,6 +923,17 @@
    "conclusion": "research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-CLOSURE.txt",
    "note": "Baseline 0002780; refs search NOT PROVIDED (rc=2); baseline RED 15 checks/13 failures сохранён. Candidate focused 15/15 Windows/POSIX, manifest 87 Python + 4 Rust, parity 23 rules, policy probe 4/4; canonical policy byte-exact. Первый clean selftest RED из-за Windows WinError 32 сохранён; чистый повтор PASS: 87 suites, 84 performed + 3 Linux N/A, 0 failed, W18 14/14 clean-clone. Независимый review PASS, 0 блокирующих findings. Implementation commit 1076297 отправлен; candidate CI 45698232164 и closure commit 98629da/run 45699781649: E-0088 suite 15/15, пять jobs success, общий failure только прежний Linux namespace positive B. Closure C-0363 зарегистрирован. Полный CI-PASS и остальные W12 slices не заявлены.",
    "updated": "2026-11-25"
+  },
+  {
+   "id": "E-0089",
+   "title": "LIST-DETERMINISM-LIMIT-REMAINDER-R1: детерминированный list с limit 100 и точным остатком",
+   "hypothesis": "Bounded top-k selection с раздельными dirs/files heaps и общим total count даст детерминированный dirs-first subset ровно до 100, точный remainder и не будет хранить весь каталог в памяти.",
+   "prereg": "lab/prereg/LIST-DETERMINISM-LIMIT-REMAINDER-R1.json",
+   "status": "open",
+   "claim": null,
+   "conclusion": null,
+   "note": "Baseline e233dad; refs search NOT PROVIDED (rc=2); runtime list читает до 200 до сортировки и не сообщает remainder. До implementation получен semantic RED: Windows/WSL Rust 8 tests, 3 passed/5 failed; Python 8 checks, 1 passed/7 failed. Prereg, suites, manifest 88 Python + 4 Rust и RED evidence зафиксированы отдельным baseline commit.",
+   "updated": "2026-11-25"
   }
  ]
 }

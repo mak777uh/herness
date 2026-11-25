@@ -51,6 +51,7 @@
     {"id": "test_journal_chain.py", "path": "tests/test_journal_chain.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_lean_imports.py", "path": "tests/test_lean_imports.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_live.py", "path": "tests/test_live.py", "runner": "custom-main", "minimum_checks": 1},
+    {"id": "test_list_contract.py", "path": "tests/test_list_contract.py", "runner": "custom-main", "minimum_checks": 8},
     {"id": "test_loop_budget.py", "path": "tests/test_loop_budget.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_loop_flail.py", "path": "tests/test_loop_flail.py", "runner": "custom-main", "minimum_checks": 1},
     {"id": "test_m1_journal.py", "path": "tests/test_m1_journal.py", "runner": "custom-main", "minimum_checks": 1},

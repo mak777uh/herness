@@ -3412,6 +3412,135 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
+    struct W12ListFixture(PathBuf);
+
+    impl W12ListFixture {
+        fn new(tag: &str) -> Self {
+            let dir = std::env::temp_dir().join(format!("hs-tools-{}-{tag}", std::process::id()));
+            std::fs::create_dir_all(&dir).unwrap();
+            Self(dir)
+        }
+
+        fn path(&self) -> &Path {
+            &self.0
+        }
+    }
+
+    impl Drop for W12ListFixture {
+        fn drop(&mut self) {
+            std::fs::remove_dir_all(&self.0).ok();
+        }
+    }
+
+    fn w12_list_files(tag: &str, count: usize, reverse: bool) -> W12ListFixture {
+        let fixture = W12ListFixture::new(tag);
+        for index in 0..count {
+            let number = if reverse { count - 1 - index } else { index };
+            std::fs::write(fixture.path().join(format!("f{number:03}.txt")), "x").unwrap();
+        }
+        fixture
+    }
+
+    fn w12_file_line(number: usize) -> String {
+        format!("f{number:03}.txt\t1")
+    }
+
+    fn w12_list_marker(remainder: usize) -> String {
+        format!("… (обрезано: показано 100, осталось {remainder})")
+    }
+
+    #[test]
+    fn w12_list_empty_has_no_marker() {
+        let dir = W12ListFixture::new("w12-list-empty");
+        assert_eq!(tool_list_in(".", dir.path()).unwrap(), "");
+    }
+
+    #[test]
+    fn w12_list_99_has_no_marker() {
+        let dir = w12_list_files("w12-list-99", 99, false);
+        let out = tool_list_in(".", dir.path()).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        let expected: Vec<String> = (0..99).map(w12_file_line).collect();
+        assert_eq!(lines, expected, "{out}");
+        assert!(!out.contains("обрезано"), "{out}");
+    }
+
+    #[test]
+    fn w12_list_100_has_no_marker() {
+        let dir = w12_list_files("w12-list-100", 100, false);
+        let out = tool_list_in(".", dir.path()).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        let expected: Vec<String> = (0..100).map(w12_file_line).collect();
+        assert_eq!(lines, expected, "{out}");
+        assert!(!out.contains("обрезано"), "{out}");
+    }
+
+    #[test]
+    fn w12_list_101_reports_remainder_one() {
+        let dir = w12_list_files("w12-list-101", 101, false);
+        let out = tool_list_in(".", dir.path()).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        let expected: Vec<String> = (0..100).map(w12_file_line).collect();
+        assert_eq!(lines.len(), 101, "{out}");
+        assert_eq!(&lines[..100], expected.iter().map(String::as_str).collect::<Vec<_>>(), "{out}");
+        assert_eq!(lines[100], w12_list_marker(1), "{out}");
+    }
+
+    #[test]
+    fn w12_list_200_reports_remainder_one_hundred() {
+        let dir = w12_list_files("w12-list-200", 200, false);
+        let out = tool_list_in(".", dir.path()).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(lines.len(), 101, "{out}");
+        assert_eq!(lines[0], w12_file_line(0), "{out}");
+        assert_eq!(lines[99], w12_file_line(99), "{out}");
+        assert_eq!(lines[100], w12_list_marker(100), "{out}");
+    }
+
+    #[test]
+    fn w12_list_201_reports_remainder_one_hundred_one() {
+        let dir = w12_list_files("w12-list-201", 201, false);
+        let out = tool_list_in(".", dir.path()).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(lines.len(), 101, "{out}");
+        assert_eq!(lines[0], w12_file_line(0), "{out}");
+        assert_eq!(lines[99], w12_file_line(99), "{out}");
+        assert_eq!(lines[100], w12_list_marker(101), "{out}");
+    }
+
+    #[test]
+    fn w12_list_is_identical_under_creation_permutation() {
+        let forward = w12_list_files("w12-list-forward", 150, false);
+        let reverse = w12_list_files("w12-list-reverse", 150, true);
+        let left = tool_list_in(".", forward.path()).unwrap();
+        let right = tool_list_in(".", reverse.path()).unwrap();
+        assert_eq!(left, right);
+        let lines: Vec<&str> = left.lines().collect();
+        assert_eq!(lines.len(), 101, "{left}");
+        assert_eq!(lines[0], w12_file_line(0), "{left}");
+        assert_eq!(lines[99], w12_file_line(99), "{left}");
+        assert_eq!(lines[100], w12_list_marker(50), "{left}");
+    }
+
+    #[test]
+    fn w12_list_selects_sorted_dirs_then_files() {
+        let dir = W12ListFixture::new("w12-list-dirs-first");
+        for index in 0..60 {
+            std::fs::create_dir_all(dir.path().join(format!("d{index:03}"))).unwrap();
+            std::fs::write(dir.path().join(format!("f{index:03}.txt")), "x").unwrap();
+        }
+        let out = tool_list_in(".", dir.path()).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(lines.len(), 101, "{out}");
+        for index in 0..60 {
+            assert_eq!(lines[index], format!("d{index:03}/\tкаталог"), "{out}");
+        }
+        for index in 0..40 {
+            assert_eq!(lines[60 + index], w12_file_line(index), "{out}");
+        }
+        assert_eq!(lines[100], w12_list_marker(20), "{out}");
+    }
+
     #[test]
     fn печать_считается_в_процессе() {
         let dir = fixture("seal");

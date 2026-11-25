@@ -18,6 +18,10 @@ lab/candidates/** text eol=lf
 # свидетельства, digest которых зафиксирован в пре-регистрациях (LF-байты до прогона)
 research/outputs/HEAD-SLICE-R1-2026-11-17.txt text eol=lf
 research/outputs/PILOT-GENERATOR-R1-2026-11-17.txt text eol=lf
+# E-0089 RED evidence: sha256 в prereg считается по исходным LF-байтам
+runs/exp-ci-residuals/e0089-list-red-python.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-red-rust-windows.txt text eol=lf
+runs/exp-ci-residuals/e0089-list-red-rust-posix.txt text eol=lf
 
 # Digest конституции запечатан в provenance карточки head и 20 карточек кандидатов
 # как sha256:e9d6f904… — он был измерен на CRLF checkout. Пиннинг делает эти байты
