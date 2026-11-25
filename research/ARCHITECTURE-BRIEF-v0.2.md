@@ -3,10 +3,10 @@
 Дата: 2026-11-24.
 Статус: ревизия для следующего раунда мультиагентного анализа; не implementation plan и не разрешение начинать runtime-реализацию.
 Исходный snapshot: `7352fd74e0a13f434c92b3c1e06d5f374680e186` плюс незакоммиченный локальный срез W10.
-Предыдущая ревизия: [`ARCHITECTURE-BRIEF-v0.1.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.1.md), 997 строк, 84 180 байт, SHA-256 `d1807d49a1da8298ef38373248c803d164cde5a8592bc2b65da881797f064af4`, сохранена без изменений.
-Более ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.md), сохранена без изменений.
-Ответы владельца: `C:/Users/Admin/Downloads/herness-owner-answers.md`, 182 строки, 9234 байта, SHA-256 `b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873`.
-Общие источники: [`EXTERNAL-AUDIT-NOTES.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/EXTERNAL-AUDIT-NOTES.md), [утверждённый план](C:/Users/Admin/.qoder/plans/final-river-bison.md) и три присланных архитектурных аудита.
+Предыдущая ревизия: [`ARCHITECTURE-BRIEF-v0.1.md`](ARCHITECTURE-BRIEF-v0.1.md), 997 строк, 84 117 байт, SHA-256 `a097b8ca2dc5b1253f14ac0aa614603f08bbb9c06eac302e6ee8c68c9e9cf276`, содержание сохранено; ссылки и digest обновлены portability-поправкой 25.11.2026.
+Более ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.md`](ARCHITECTURE-BRIEF-v0.md), содержание сохранено; ссылки обновлены portability-поправкой 25.11.2026.
+Ответы владельца: [точный .txt snapshot](sources/OWNER-ANSWERS-2026-11-24.txt), 182 строки, 9234 байта, SHA-256 `b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873`.
+Общие источники: [`EXTERNAL-AUDIT-NOTES.md`](EXTERNAL-AUDIT-NOTES.md), [утверждённый план](sources/APPROVED-PLAN-2026-11-23.txt) и три присланных архитектурных аудита.
 
 ## Статус и границы
 

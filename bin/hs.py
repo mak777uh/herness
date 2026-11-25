@@ -423,6 +423,7 @@ def gate_claims(root: Path) -> list[str]:
 
 
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+WINDOWS_ABSOLUTE_RE = re.compile(r"^[A-Za-z]:[\\/]")
 
 
 def gate_links(root: Path) -> list[str]:
@@ -441,6 +442,11 @@ def gate_links(root: Path) -> list[str]:
         for target in LINK_RE.findall(text):
             target = target.split("#", 1)[0].strip()
             if not target or target.startswith(("http://", "https://", "mailto:")):
+                continue
+            if WINDOWS_ABSOLUTE_RE.match(target):
+                problems.append(
+                    f"{path.relative_to(root)}: абсолютный Windows-путь -> {target}"
+                )
                 continue
             resolved = (path.parent / target).resolve()
             if not resolved.exists():

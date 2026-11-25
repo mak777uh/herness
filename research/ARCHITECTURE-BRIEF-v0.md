@@ -3,7 +3,7 @@
 Дата: 2026-11-24.
 Статус: рабочий бриф для решений владельца и последующего анализа несколькими агентами.
 Исходный snapshot: `7352fd74e0a13f434c92b3c1e06d5f374680e186` плюс незакоммиченный локальный срез W10.
-Основные источники: [утверждённый план](C:/Users/Admin/.qoder/plans/final-river-bison.md), [`research/EXTERNAL-AUDIT-NOTES.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/EXTERNAL-AUDIT-NOTES.md), Part 8, и присланные владельцем архитектурные аудиты.
+Основные источники: [утверждённый план](sources/APPROVED-PLAN-2026-11-23.txt), [`research/EXTERNAL-AUDIT-NOTES.md`](EXTERNAL-AUDIT-NOTES.md), Part 8, и присланные владельцем архитектурные аудиты.
 
 ## Статус и границы
 

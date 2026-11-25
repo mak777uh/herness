@@ -3,13 +3,13 @@
 Дата: 2026-11-24.
 Статус: ревизия для следующего раунда мультиагентного анализа; не implementation plan и не разрешение начинать runtime-реализацию.
 Исходная точка статической сверки: локальный HEAD `bd41718fe04e25398d50e81264c96a078bd0d9e0`; до начала этой ревизии worktree был clean. Аудиты E/F проверяли более ранний публичный snapshot `7352fd74e0a13f434c92b3c1e06d5f374680e186`, а не локальный W10/HEAD целиком.
-Предыдущая ревизия: [`ARCHITECTURE-BRIEF-v0.3.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.3.md), 1284 строки, 147 057 байт, SHA-256 `bb9f7300f26675bb24a1e58a155eb0833c827edfa8332b50fd02745543024d5c`, сохранена без изменений.
-Ревизия v0.2: [`ARCHITECTURE-BRIEF-v0.2.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.2.md), сохранена без изменений.
-Более ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.1.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.1.md), сохранена без изменений.
-Самая ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.md), сохранена без изменений.
-Ответы владельца: `C:/Users/Admin/Downloads/herness-owner-answers.md`, 182 строки, 9234 байта, SHA-256 `b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873`.
-Общие источники: [`EXTERNAL-AUDIT-NOTES.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/EXTERNAL-AUDIT-NOTES.md), [утверждённый план](C:/Users/Admin/.qoder/plans/final-river-bison.md), три прежних файловых архитектурных аудита, два разных аудита v0.2 (вставленный текст и приложенный файл) и два новых аудита v0.3 (E/F).
-Локальное evidence статической сверки: [`ARCH-BRIEF-V04-CODE-AUDIT-2026-11-24.txt`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/outputs/ARCH-BRIEF-V04-CODE-AUDIT-2026-11-24.txt). Это не runtime PASS и не разрешение на реализацию.
+Предыдущая ревизия: [`ARCHITECTURE-BRIEF-v0.3.md`](ARCHITECTURE-BRIEF-v0.3.md), 1284 строки, 147 008 байт, SHA-256 `6066428df5714c4cd4af280e642982d27e24cc52052c98ad367c1f4c87a67d56`, содержание сохранено; ссылки и digest обновлены portability-поправкой 25.11.2026.
+Ревизия v0.2: [`ARCHITECTURE-BRIEF-v0.2.md`](ARCHITECTURE-BRIEF-v0.2.md), содержание сохранено; ссылки и digest обновлены portability-поправкой 25.11.2026.
+Более ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.1.md`](ARCHITECTURE-BRIEF-v0.1.md), содержание сохранено; ссылки обновлены portability-поправкой 25.11.2026.
+Самая ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.md`](ARCHITECTURE-BRIEF-v0.md), содержание сохранено; ссылки обновлены portability-поправкой 25.11.2026.
+Ответы владельца: [точный .txt snapshot](sources/OWNER-ANSWERS-2026-11-24.txt), 182 строки, 9234 байта, SHA-256 `b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873`.
+Общие источники: [`EXTERNAL-AUDIT-NOTES.md`](EXTERNAL-AUDIT-NOTES.md), [утверждённый план](sources/APPROVED-PLAN-2026-11-23.txt), три прежних файловых архитектурных аудита, два разных аудита v0.2 (вставленный текст и приложенный файл) и два новых аудита v0.3 (E/F).
+Локальное evidence статической сверки: [`ARCH-BRIEF-V04-CODE-AUDIT-2026-11-24.txt`](outputs/ARCH-BRIEF-V04-CODE-AUDIT-2026-11-24.txt). Это не runtime PASS и не разрешение на реализацию.
 
 ## Статус и границы
 

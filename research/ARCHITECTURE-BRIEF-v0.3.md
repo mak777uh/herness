@@ -3,11 +3,11 @@
 Дата: 2026-11-24.
 Статус: ревизия для следующего раунда мультиагентного анализа; не implementation plan и не разрешение начинать runtime-реализацию.
 Исходный snapshot: `7352fd74e0a13f434c92b3c1e06d5f374680e186` плюс незакоммиченный локальный срез W10.
-Предыдущая ревизия: [`ARCHITECTURE-BRIEF-v0.2.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.2.md), 1171 строка, 119 992 байта, SHA-256 `c89bd99b00bd33076f7d23089d1b907f518c90936070bcea8eee868e5107203b`, сохранена без изменений.
-Более ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.1.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.1.md), сохранена без изменений.
-Самая ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/ARCHITECTURE-BRIEF-v0.md), сохранена без изменений.
-Ответы владельца: `C:/Users/Admin/Downloads/herness-owner-answers.md`, 182 строки, 9234 байта, SHA-256 `b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873`.
-Общие источники: [`EXTERNAL-AUDIT-NOTES.md`](C:/Users/Admin/Documents/Qoder/2026-11-23/59e41fc7/herness/research/EXTERNAL-AUDIT-NOTES.md), [утверждённый план](C:/Users/Admin/.qoder/plans/final-river-bison.md), три прежних файловых архитектурных аудита и два разных аудита v0.2 (вставленный текст и приложенный файл).
+Предыдущая ревизия: [`ARCHITECTURE-BRIEF-v0.2.md`](ARCHITECTURE-BRIEF-v0.2.md), 1171 строка, 119 941 байта, SHA-256 `372383068141fc26fa829cdf1990919fb77b81509888afa4c082288a75a52d15`, содержание сохранено; ссылки и digest обновлены portability-поправкой 25.11.2026.
+Более ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.1.md`](ARCHITECTURE-BRIEF-v0.1.md), содержание сохранено; ссылки обновлены portability-поправкой 25.11.2026.
+Самая ранняя ревизия: [`ARCHITECTURE-BRIEF-v0.md`](ARCHITECTURE-BRIEF-v0.md), содержание сохранено; ссылки обновлены portability-поправкой 25.11.2026.
+Ответы владельца: [точный .txt snapshot](sources/OWNER-ANSWERS-2026-11-24.txt), 182 строки, 9234 байта, SHA-256 `b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873`.
+Общие источники: [`EXTERNAL-AUDIT-NOTES.md`](EXTERNAL-AUDIT-NOTES.md), [утверждённый план](sources/APPROVED-PLAN-2026-11-23.txt), три прежних файловых архитектурных аудита и два разных аудита v0.2 (вставленный текст и приложенный файл).
 
 ## Статус и границы
 

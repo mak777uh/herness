@@ -1,0 +1,49 @@
+{
+  "schema": 2,
+  "id": "PORTABLE-BRIEF-LINKS-R1",
+  "date": "2026-11-25",
+  "question": "Можно ли сделать ссылки Decision brief переносимыми между Windows и POSIX, сохранив точные байты внешних источников и содержание ревизий?",
+  "hypothesis": "Если сохранить утверждённый план и ответы владельца как byte-exact .txt, заменить 21 абсолютную Windows-ссылку на repo-relative и научить link gate отвергать drive-letter пути независимо от ОС, то ссылки будут работать в чистом Windows/POSIX clone без потери исходных digest и содержания брифа.",
+  "criterion": "PASS только если baseline HEAD a6f03b0e9acd1e779510450c44579432c07377e9; исходные briefs имеют зафиксированные SHA-256; focused 8/8 на Windows и POSIX; в пяти briefs нет абсолютных Windows markdown-целей и все локальные ссылки разрешаются; копии плана и ответов совпадают с исходниками по 101675/9234 байта, 325/182 LF и SHA-256 62e1d9e3a62941e63272dd788424e764cc1bbd63e4b8144945983d03e7b4d92a/b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873; git check-attr text для обеих копий даёт unset; три revision hash/size/LF метаданные соответствуют фактическим предыдущим briefs; synthetic drive-letter ссылка отвергается gate даже когда путь существует на Windows, а relative ссылка принимается; полный Windows selftest, W18 14/14 и gates auto без FAIL; sealed history, production Rust, thresholds, N/A и corpus не изменены.",
+  "arms": [
+    "A (historical CI RED): Ubuntu link gate сообщает 21 битую абсолютную Windows-ссылку; Windows gate ошибочно принимает их, пока локальные файлы существуют.",
+    "B (portability correction): точные .txt источники, repo-relative ссылки, обновлённая revision metadata и ОС-независимый отказ gate для drive-letter целей.",
+    "C (controls): восемь focused checks, включая exact bytes/hash, raw git attributes, revision chain и positive/negative synthetic link gate."
+  ],
+  "sensitivity": "Focused suite проверяет ровно восемь controls и возвращает ненулевой rc при любом расхождении. Absolute-link control использует существующий на Windows внешний путь, поэтому не может пройти лишь из-за отсутствия файла на POSIX. Порог 8/8 не снижается; N/A не становится PASS; содержание briefs и sealed источники не переписываются.",
+  "unit_of_analysis": "пять research/ARCHITECTURE-BRIEF-v0*.md, две byte-exact source копии и bin/hs.py gate_links",
+  "primary_metric": "focused_controls=8/8; focused_failed=0; windows_rc=0; posix_rc=0; absolute_markdown_targets=0; unresolved_local_targets=0; plan_exact=1; owner_answers_exact=1; raw_attributes=2/2; revision_metadata=3/3; full_windows_selftest_rc=0; w18_controls=14/14",
+  "test": "python tests/test_portable_brief_links.py; python bin/test_manifest.py --check; python bin/hs.py selftest; python tests/test_w18_clean_clone.py; python bin/hs.py gates --profile auto; python bin/verify_claims.py --fast; python bin/seal.py verify-all; python bin/lab.py validate; python bin/prereg.py check",
+  "stopping_rule": "Сначала запечатать prereg и сохранить focused RED. Затем изменить только пять briefs, .gitattributes, bin/hs.py, добавить две source копии, один focused suite и один manifest entry. Остановиться при любом focused FAIL, несовпадении source digest, изменении sealed history, ослаблении gate/N/A/threshold/corpus или изменении содержания briefs сверх ссылок и revision metadata.",
+  "fixture": "Настоящие briefs и byte-exact внешние исходники; synthetic tempdir для positive/negative gate_links; сеть, секреты и owner keys не используются",
+  "environment": {
+    "host": "Windows 11 build 26300; POSIX/WSL выполняется отдельно; GitHub Ubuntu CI проверяет clean checkout",
+    "network": "нет",
+    "real_secrets": false,
+    "refs_search": "NOT PROVIDED: python bin/hs.py refs search вернул rc=2 «справочника нет: refs sync (пусто ≠ успех)»",
+    "baseline_head": "a6f03b0e9acd1e779510450c44579432c07377e9",
+    "baseline_hs_sha256": "cdd5da8aa4e364fcb757f7d920850099815782a1a0c2d0cf7b618a938deca92e",
+    "baseline_manifest_sha256": "9123109980d7872db263670e2aa9a5ebd3750eb2d400848a2d59ba8f6a1e4174",
+    "baseline_gitattributes_sha256": "8c9b83913976ca862defcc6dbae51853f61447b4b16e60e1a922bc337a335177",
+    "baseline_ci_log_sha256": "96e5b7007a8acec794c2188f73bb5a78aed0e47a90753664314ecc54cd4ffaad",
+    "ci_run": "45507844318",
+    "briefs": {
+      "v0": {"bytes": 55368, "lf": 563, "sha256": "13ca2a2d6558d6c5f1e5a2b459edaa2432d7a232a23552bd9504abde50126ce6"},
+      "v0.1": {"bytes": 84180, "lf": 997, "sha256": "d1807d49a1da8298ef38373248c803d164cde5a8592bc2b65da881797f064af4"},
+      "v0.2": {"bytes": 119992, "lf": 1171, "sha256": "c89bd99b00bd33076f7d23089d1b907f518c90936070bcea8eee868e5107203b"},
+      "v0.3": {"bytes": 147057, "lf": 1284, "sha256": "bb9f7300f26675bb24a1e58a155eb0833c827edfa8332b50fd02745543024d5c"},
+      "v0.4": {"bytes": 177237, "lf": 1389, "sha256": "e0a16ac232f5ec4db45260a531a651a9f6f816fbb3714dd21f539c9c7d7b76f3"}
+    },
+    "sources": {
+      "plan": {"original": "C:/Users/Admin/.qoder/plans/final-river-bison.md", "bytes": 101675, "lf": 325, "sha256": "62e1d9e3a62941e63272dd788424e764cc1bbd63e4b8144945983d03e7b4d92a"},
+      "owner_answers": {"original": "C:/Users/Admin/Downloads/herness-owner-answers.md", "bytes": 9234, "lf": 182, "sha256": "b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873"}
+    }
+  },
+  "known_limits": [
+    "Переносимость ссылок не доказывает истинность содержания briefs и не является runtime PASS",
+    "Source .txt исключены из markdown link gate намеренно: исходный план содержит собственные абсолютные markdown-ссылки",
+    "Windows-only selftest N/A, unshare positive-control, strict claims coverage и Lean↔Rust equivalence остаются отдельными residuals"
+  ],
+  "owner_decision": "Автономная разработка, commit и push в herness разрешены; production activation и внешняя публикация запрещены",
+  "runs": ["runs/exp-ci-residuals"]
+}
