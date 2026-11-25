@@ -1,0 +1,81 @@
+PORTABLE-BRIEF-LINKS-R1 — closure E-0081
+Дата: 2026-11-25
+Baseline HEAD: a6f03b0e9acd1e779510450c44579432c07377e9
+Implementation HEAD: 2a705364ad2264844247a5c452fcef8bbe9abb0e
+
+Вердикт: PASS — только E-0081 / PORTABLE-BRIEF-LINKS-R1.
+Двадцать одна абсолютная Windows-ссылка в Decision brief заменена на
+repo-relative. Это portability PASS, не runtime PASS и не полный CI-PASS.
+
+Focused controls: 8/8; провалов: 0 (Windows и WSL/POSIX).
+До реализации сохранён focused RED: 8 controls, 6 провалов — 21 абсолютная
+ссылка, две отсутствующие source-копии, два text attribute и Windows-слепота
+gate. RED log SHA-256:
+a7f8268fee4b7a9e83625a387e07bc0b7b2e49dbf660e9ed0bd96958cf841fda.
+
+Полный Windows selftest commit 2a70536 в чистом worktree: 80 Python suites,
+FAIL 0, rc=0; W18 clean-clone controls 14/14. Log SHA-256:
+eca319216e55bb39a2df8e3e674c5bd0db0a868a785ef7dd32b00c5593411e34.
+
+Фактический GitHub Ubuntu CI run 45514659872, headSha 2a70536:
+- job «гейты (профиль auto)» — success; link gate: 0 проблем;
+- test_portable_brief_links.py — 8/8, rc=0;
+- test_w18_clean_clone.py — 14/14, rc=0;
+- общий run остаётся failure: Ubuntu unshare positive-control даёт 503,
+  а Windows-only isolation явно возвращает N/A rc=2.
+Gates log SHA-256:
+151a215556bbc6c6725403f85218f88bdb774139d1794c69aeeeff72b4d2b1bd.
+Failed log SHA-256:
+3819ee9d6c05bf8414f1f8d713c429b8e6bdd03577475a6701b630d75f1cbcd3.
+
+Что измерено:
+1. В пяти research/ARCHITECTURE-BRIEF-v0*.md было 21 drive-letter markdown
+   target; после коррекции absolute=0, unresolved=0. Обычные битые relative
+   ссылки gate по-прежнему отвергает.
+2. Тело каждого brief после первого `## ` байт-в-байт совпадает с baseline
+   a6f03b0. Изменения ограничены верхней source/revision metadata: ссылки,
+   точные размеры/хеши предыдущих ревизий и отметка portability-поправки.
+3. Утверждённый план сохранён как research/sources/APPROVED-PLAN-2026-11-23.txt:
+   101675 байт, 325 LF, 0 CR, SHA-256
+   62e1d9e3a62941e63272dd788424e764cc1bbd63e4b8144945983d03e7b4d92a.
+4. Ответы владельца сохранены как research/sources/OWNER-ANSWERS-2026-11-24.txt:
+   9234 байта, 182 LF, 0 CR, SHA-256
+   b087ff12574815c1ae8e5d4eb312dffd2000263f479847ab210e3d4dfde59873.
+5. Оба source файла имеют git text attribute unset (`-text`); индекс и worktree
+   сохраняют LF. Формат .txt выбран намеренно: исходный план содержит свои
+   абсолютные markdown-ссылки, а link gate сканирует только .md.
+6. Revision metadata 3/3 соответствует фактическим предыдущим briefs:
+   - v0.1: 84117 байт, 997 LF, a097b8ca2dc5b1253f14ac0aa614603f08bbb9c06eac302e6ee8c68c9e9cf276;
+   - v0.2: 119941 байт, 1171 LF, 372383068141fc26fa829cdf1990919fb77b81509888afa4c082288a75a52d15;
+   - v0.3: 147008 байт, 1284 LF, 6066428df5714c4cd4af280e642982d27e24cc52052c98ad367c1f4c87a67d56.
+7. Sealed E-0081 prereg/sidecar сохранены:
+   - prereg SHA-256: a950d85eddec72474da81e51f53157fc76fcd3afd55eaf66272f9dde2b6e3ea1;
+   - sidecar SHA-256: 16cff25351d63b264f6673fd48d629b1c4c2f073e47ed7e7bd30c1a80d2a52cd.
+8. Независимый read-only review implementation завершён с verdict PASS,
+   substantive findings 0. Reviewer подтвердил body equality, exact sources,
+   attributes, revision chain, настоящий gate_links, baseline/current negative
+   control и границы CI status; файлы не менял.
+9. Финальные локальные controls после регистрации C-0356:
+   - verify_claims --fast: 317 утверждений, 0 провалов;
+   - lab validate: 81 эксперимент, 7 следующих гипотез;
+   - seals: 58/58, проблем 0; prereg: 70/70 sensitivity;
+   - coverage: 349/349 anchored; strict 198/346 = 0.57, ANCHORED_WEAK;
+   - gates auto: 31/33 assessed, N/A 2, FAIL 0, links 0;
+   - manifest: 80 Python suites + 4 Rust entries; focused portable: 8/8.
+   Сохранённые локальные final logs (runs/ исключён из git; эти хеши
+   предназначены только для сверки на текущей машине):
+   - runs/exp-ci-residuals/e0081-final-claims-windows.txt SHA-256:
+     33c7827431d77f4fff340ceafd327160748368cbfabc5379cb097c60b14fefe5;
+   - runs/exp-ci-residuals/e0081-final-gates-windows.txt SHA-256:
+     39d19dcc37545411acf68bb1873a0c69e63c88f0f8ebc62ab80e1d3fd61859bf.
+
+Границы:
+- Полный CI-PASS не заявлен: unshare positive-control и Windows-only N/A —
+  отдельные residuals следующего среза; N/A не PASS.
+- Source .txt не проверяются markdown link gate; их точность проверяют focused
+  bytes/LF/hash controls и raw git attributes.
+- Переносимость ссылок не доказывает истинность содержания briefs, runtime
+  изоляцию, Lean↔Rust equivalence или пригодность production activation.
+- Production Rust, Cargo.lock, thresholds, N/A semantics, sealed history и
+  существующий test corpus не изменены; добавлен один focused suite 8/8.
+- Внешняя публикация, реальные аккаунты, платежи и owner keys не использовались.
