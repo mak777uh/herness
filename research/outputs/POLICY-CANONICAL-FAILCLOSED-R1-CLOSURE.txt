@@ -69,6 +69,8 @@ runs/exp-ci-residuals/e0088-clean-selftest-r2.txt
   cb41a506309db5637eafdd66e61518fb2eeecfeb8858fe89196cf6ace5b19149
 runs/exp-ci-residuals/e0088-candidate-1076297-ci-failed.log
   c67682cf261ce4c5cc6d373cce1189438ab592fcba13fb82cc5e226ce6ba9ee0
+runs/exp-ci-residuals/e0088-closure-98629da-ci-failed.log
+  d1cd8cdae12e7da31d94dd73089b5f860561c84cf0b9e76b0c0622cbc713f35e
 
 ======================================================================
 EVIDENCE
@@ -97,6 +99,17 @@ E-0088 suite в CI: test_policy_canonical.py 15/15, rc=0; W11 suite 16/16; W18 1
 Полный CI-PASS не заявлен. Подробности и raw log hash — research/outputs/POLICY-CANONICAL-FAILCLOSED-R1-CI-REVIEW.txt.
 
 ======================================================================
+ФАКТИЧЕСКИЙ CI CLOSURE COMMIT
+======================================================================
+Closure commit 98629da46534719c96de1ad5f3f43ee509c589b6; run 45699781649 завершён completed/failure.
+Пять jobs success: утверждения, gates auto, plugin HSJ2, admission/test-only, Rust core.
+Единственный failed job — «негативные тесты инструмента», единственный failed step — Selftest.
+E-0088 suite 15/15; W11 suite 16/16; W18 14/14 mode=development-scope.
+Единственный failed suite — прежний test_bridge_net_namespace.py positive B: 503 вместо 200, net.py не исполнился, PID-namespace positive control и execution marker отсутствуют; C/D fail-closed прошли.
+Residual совпадает с candidate run 45698232164 и ранее зарегистрированным baseline; production bridge/namespace test не менялись.
+Полный CI-PASS не заявлен. Raw failed log: runs/exp-ci-residuals/e0088-closure-98629da-ci-failed.log; sha256 d1cd8cdae12e7da31d94dd73089b5f860561c84cf0b9e76b0c0622cbc713f35e.
+
+======================================================================
 CLOSURE CHECKS
 ======================================================================
 check_artifacts.py C-0363: ожидание найдено, rc=0.
@@ -120,4 +133,4 @@ N/A не PASS: два ordinary-gate N/A и три Linux suite N/A остаютс
 List limit/determinism/remainder, generator exact-six/dry-run, registry card resolution/tombstone и owner-gated runtime parity остаются отдельными slices.
 Production Rust, bridge/net, activation, authority model, thresholds, corpora и sealed history не менялись.
 Новые canonical rules или policy semantics не добавлялись.
-Candidate CI 45698232164 проверен: E-0088 suite 15/15, но полный run failure из-за прежнего Linux namespace positive B; полный CI-PASS не заявлен. Closure-commit CI проверяется отдельно после push.
+Candidate CI 45698232164 и closure-commit CI 45699781649 проверены: E-0088 suite 15/15, но оба полных run failure из-за прежнего Linux namespace positive B; полный CI-PASS не заявлен.
